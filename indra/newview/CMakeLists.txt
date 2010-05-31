@@ -1488,7 +1488,7 @@ if (LINUX)
       DEPENDS ${VIEWER_BINARY_NAME}
       )
 
-  set(product Emerald-${ARCH}-${VERSION_VIEWER})
+  set(product Emerald-Viewer-${ARCH}-${VERSION_VIEWER})
 
   add_custom_command(
       OUTPUT ${product}.tar.bz2

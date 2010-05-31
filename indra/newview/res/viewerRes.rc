@@ -156,8 +156,8 @@ TOOLMEDIAOPEN           CURSOR                  "toolmediaopen.cur"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,23,5,1631
- PRODUCTVERSION 1,23,5,1631
+ FILEVERSION 1,23,5,1634
+ PRODUCTVERSION 1,23,5,1634
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -174,12 +174,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Modular Systems"
             VALUE "FileDescription", "Emerald Viewer"
-            VALUE "FileVersion", "1.23.5.1631"
+            VALUE "FileVersion", "1.23.5.1634"
             VALUE "InternalName", "Emerald Viewer"
-            VALUE "LegalCopyright", "Copyright © 2001-2009, Linden Research, Inc."
+            VALUE "LegalCopyright", "Copyright © 2001-2010, Modular Systems, Inc."
             VALUE "OriginalFilename", "Emerald.exe"
             VALUE "ProductName", "Emerald Viewer"
-            VALUE "ProductVersion", "1.23.5.1631"
+            VALUE "ProductVersion", "1.23.5.1634"
         END
     END
     BLOCK "VarFileInfo"

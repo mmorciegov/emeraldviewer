@@ -861,11 +861,12 @@ void LLPanelLogin::loadLoginPage()
 
 	curl_free(curl_channel);
 	curl_free(curl_version);
-
+    
+    /* Do not send this parameter, as it usually contains usernames. [Discrete]
 	// Grid
 	char* curl_grid = curl_escape(LLViewerLogin::getInstance()->getGridLabel().c_str(), 0);
 	oStr << "&grid=" << curl_grid;
-	curl_free(curl_grid);
+	curl_free(curl_grid);*/
 
 	gViewerWindow->setMenuBackgroundColor(false, !LLViewerLogin::getInstance()->isInProductionGrid());
 	gLoginMenuBarView->setBackgroundColor(gMenuBarView->getBackgroundColor());
