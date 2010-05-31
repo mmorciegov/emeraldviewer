@@ -6856,10 +6856,6 @@ This enables you and other avatar's breasts to have actual physics applied to th
    The amount of "momentum" they can recieve. Lower for less bounce
 -Min Vel
    Percentage of the Max Vel that doesn't effect boob physics.
--Max Z
-   This is the max in either direction that the breasts can go.
--Z Influence
-   Changes how much your avatar's movement will effect the breasts. Higher = more effect.
 -Mass
    A higher value will seemingly increase the total effect
 

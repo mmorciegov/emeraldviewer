@@ -1812,7 +1812,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 
 	bool is_auto_response = false;
 	if(dialog == IM_NOTHING_SPECIAL) {
-		// detect auto responses from GreenLife and compatible viewers
+		// detect auto responses from Emerald and compatible viewers
 		is_auto_response = ( message.substr(0, 21) == "/me (auto-response): " );
 	}
 
@@ -1983,7 +1983,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 	{
 	case IM_CONSOLE_AND_CHAT_HISTORY:
 		// These are used for system messages, hence don't need the name,
-		// as it is always "GreenLife Emerald Viewer".
+		// as it is always "Emerald Viewer".
 	  	// *TODO:translate
 		args["MESSAGE"] = message;
 
@@ -2070,7 +2070,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 		}
 		else if (from_id.isNull())
 		{
-			// Messages from "GreenLife Emerald Viewer" ID don't go to IM history
+			// Messages from "Emerald Viewer" ID don't go to IM history
 			// messages which should be routed to IM window come from a user ID with name=SYSTEM_NAME
 			chat.mText = name + ": " + message;
 			LLFloaterChat::addChat(chat, FALSE, FALSE);
@@ -3300,7 +3300,7 @@ void process_teleport_start(LLMessageSystem *msg, void**)
 //	if (teleport_flags & TELEPORT_FLAGS_DISABLE_CANCEL)
 // [RLVa:KB] - Alternate: Emerald-370 | Checked: 2009-07-07 (RLVa-1.0.0d) | Added: RLVa-0.2.0b
 	// Emerald specific: disable cancel *only* due to RLV restrictions
-	if ( (teleport_flags & TELEPORT_FLAGS_DISABLE_CANCEL) && (!gRlvHandler.getCanCancelTp()) )
+	if ( /*(teleport_flags & TELEPORT_FLAGS_DISABLE_CANCEL) &&*/ (!gRlvHandler.getCanCancelTp()) )
 // [/RLVa:KB]
 	{
 		gViewerWindow->setProgressCancelButtonVisible(FALSE);
@@ -3340,7 +3340,7 @@ void process_teleport_progress(LLMessageSystem* msg, void**)
 //	if (teleport_flags & TELEPORT_FLAGS_DISABLE_CANCEL)
 // [RLVa:KB] - Alternate: Emerald-370 | Checked: 2009-07-07 (RLVa-1.0.0d) | Added: RLVa-0.2.0b
 	// Emerald specific: disable cancel *only* due to RLV restrictions
-	if ( (teleport_flags & TELEPORT_FLAGS_DISABLE_CANCEL) && (!gRlvHandler.getCanCancelTp()) )
+	if ( /*(teleport_flags & TELEPORT_FLAGS_DISABLE_CANCEL) &&*/ (!gRlvHandler.getCanCancelTp()) )
 // [/RLVa:KB]
 	{
 		gViewerWindow->setProgressCancelButtonVisible(FALSE);

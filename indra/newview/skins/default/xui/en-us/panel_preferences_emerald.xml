@@ -159,11 +159,11 @@
 		>
         <check_box bottom_delta="-20" enabled="true"
              follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-             label="Dialog Spam Prevention" left_delta="5" mouse_opaque="true"
+             label="Dialog Anti-Spam" left_delta="5" mouse_opaque="true"
              name="dialog_spam_prevention" radio_style="false" width="270" control_name="EmeraldDialogSpamEnabled" />
         <check_box bottom_delta="-20" enabled="true"
              follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-             label="CallingCard Spam Prevention" left_delta="0" mouse_opaque="true"
+             label="CallingCard Anti-Spam" left_delta="0" mouse_opaque="true"
              name="card_spam_prevention" radio_style="false" width="270" control_name="EmeraldCardSpamEnabled" />
         <spinner decimal_digits="1" follows="left|top" height="18" increment="1" initial_val="0"
            label="Count" label_width="50" left_delta="0" bottom_delta="-25" max_val="7" min_val="0"
@@ -177,7 +177,7 @@
            width="110" control_name="EmeraldSpamTime" />
         <view_border bevel_style="none" border_thickness="1" bottom_delta="0" follows="top|left" height="80" left="175" name="EmDivisor" width="0" />
         <text bottom_delta="65" follows="left|top" font="SansSerifSmall" height="16" left_delta="5" name="loltxt" width="512">
-          To clear the blacklist, turn the protection off then back on.
+To clear the blacklist, turn the protection off and back on.
 Count and Time are ADVANCED settings.
 Please use them ONLY if you know what you are doing.
 Recommended Settings are:
@@ -195,7 +195,7 @@ Recommended Settings are:
     name="EmRevPerm-toggle" control_name="EmeraldRevokePerms" width="160">
           <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0" mouse_opaque="true" name="0" width="98"
                   tool_tip="Follow the default behaviour.">
-            Disabled (Original behaviour)
+            Never (Original behaviour)
           </radio_item>
           <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0" mouse_opaque="true" name="1" width="98"
                   tool_tip="Will revoke permissions when you sit on an object.">
@@ -219,15 +219,15 @@ Recommended Settings are:
            label="Broadcast viewer effects" left_delta="0" mouse_opaque="true" name="EmBroadcastEffects-toggle" control_name="EmeraldBroadcastEffects" radio_style="false" width="270" />
       <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
            label="Broadcast camera focus point and pointer target" left_delta="0" mouse_opaque="true" name="EmBroadcastPointers-toggle" control_name="EmeraldBroadcastPointers" radio_style="false" width="270" />
-      <check_box bottom_delta="-30" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+      <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
            label="Enable the active CryoLife detection code" left_delta="0" mouse_opaque="true" name="EmCryo-toggle" control_name="EmeraldCryoDetection" width="270" />
     </panel>
     <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525"
 	   label="IM" left="1" mouse_opaque="true" name="Misc" width="418">
 <button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?" name="EmeraldHelp_IM" tool_tip="Click here for help regarding the settings in this page." right="490" width="18" />
+<button bottom_delta="0" follows="left|top" font="SansSerifSmall" height="18" right="470" name="otr_help_btn" width="98" label="What is OTR?"/>
       <!--[$PLOTR$]-->
-      <radio_group bottom="-85" draw_border="false" enabled="true" follows="left|top" height="80" left="290" mouse_opaque="true"
-		   name="EmeraldUseOTR" width="160">
+      <radio_group bottom="-120" draw_border="false" enabled="true" follows="left|top" height="80" left="270" mouse_opaque="true" name="EmeraldUseOTR" width="160">
         <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0" mouse_opaque="true" name="0" width="98"
                     tool_tip="Require use of OTR in IMs">
           Require use of OTR in IMs
@@ -245,15 +245,19 @@ Recommended Settings are:
           Decline use of OTR
         </radio_item>
       </radio_group>
-      <button bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="20" left="300" name="otr_help_btn" width="98" label="What is OTR?"/>
-      <check_box follows="left|top" left="290" bottom_delta="-20" enabled="true"
+      <check_box follows="left|top" left="270" bottom_delta="-20" enabled="true"
 		 font="SansSerifSmall" height="16" initial_value="false" mouse_opaque="true"
 		 name="EmeraldOTRInTypingStop-toggle" radio_style="false" width="98"
 		 control_name="EmeraldOTRInTypingStop"
 		 tool_tip="Put all OTR encrypted messages into IM_TYPING_STOP packets.  Incompatible with previous versions of OTR."
 		 label="Use typing_stop for OTR"/>
+      <check_box bottom_delta="-40" enabled="true"
+           follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
+           label="Vertical IM tabs (requires restart)" left="270" mouse_opaque="true"
+           name="vertical-imtabs-toggle" radio_style="false" width="270" control_name="EmeraldVerticalIMTabs" />
       <!--[/$PLOTR$]-->
-      <view_border bevel_style="none" border_thickness="1" bottom_delta="4" follows="top|left" height="100" left_delta="-30" name="OTRBorder" width="0" />
+
+      <view_border bevel_style="none" border_thickness="1" bottom_delta="40" follows="top|left" height="100" left="260" name="OTRBorder" width="0" />
       <check_box bottom="-25" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
            label="Announce incoming instant messages" left="10" mouse_opaque="true"
@@ -276,75 +280,68 @@ Recommended Settings are:
            name="EmeraldInstantMessageResponseAnyone" radio_style="false" width="270" />
       <check_box bottom_delta="-20" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Send as soon as they start typing" left_delta="25" mouse_opaque="true"
+           label="Send as soon as they start typing" left_delta="10" mouse_opaque="true"
            name="EmeraldInstantMessageShowOnTyping" radio_style="false" width="270" />
       <check_box bottom_delta="-20" enabled="true"
-           follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Don't show instant messages from people you've chosen to send auto-responses" left_delta="0" mouse_opaque="true"
-           name="EmeraldInstantMessageShowResponded" radio_style="false" width="270" />
+           follows="left|top" font="SansSerifSmall" height="26" initial_value="false"
+           label="Don't show IMs you auto-responsed to" left_delta="0" mouse_opaque="true"
+           name="EmeraldInstantMessageShowResponded" radio_style="false" width="170" />
       <check_box bottom_delta="-20" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Autorespond on every message, not just first one they send" left_delta="25" mouse_opaque="true"
+           label="Autorespond to every message" left_delta="0" mouse_opaque="true"
            name="EmeraldInstantMessageResponseRepeat" radio_style="false" width="270" />
       <text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
-           bottom_delta="-10" drop_shadow_visible="true" enabled="true" follows="left|top"
-           font="SansSerifSmall" h_pad="0" halign="left" height="10" left_delta="-50"
-           mouse_opaque="false" name="text_box1" v_pad="0" width="440">
-        Response Text: (Use #f for recipient's first name, #l for last name, #t for timestamp):
+           bottom_delta="-40" drop_shadow_visible="true" enabled="true" follows="left|top"
+           font="SansSerifSmall" h_pad="0" halign="left" height="20" left_delta="-10"
+           mouse_opaque="false" name="text_box1" v_pad="0" width="300">
+Response Text: (Use #f for recipient's first name,
+#l for last name,#t for timestamp):
       </text>
       <text_editor type="string" length="1" bottom_delta="-85" embedded_items="false" enabled="true" follows="left|top"
            font="SansSerifSmall" height="75" left_delta="0" max_length="225"
-           mouse_opaque="true" name="im_response" width="330" word_wrap="true" />
-      <check_box bottom_delta="-20" enabled="true"
+           mouse_opaque="true" name="im_response" width="230" word_wrap="true" />
+      <check_box bottom_delta="-30" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
            label="Send a item along with the response" left_delta="0" mouse_opaque="true"
            name="EmeraldInstantMessageResponseItem" radio_style="false" width="270" />
       <view_border blevel_style="in" bottom_delta="-20" follows="left|top" height="16" left_delta="0"
-			     mouse_opaque="false" name="im_give_drop_target_rect" width="400" />
+			     mouse_opaque="false" name="im_give_drop_target_rect" width="230" />
       <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 			     bottom_delta="0" drop_shadow_visible="true" follows="left|top"
 			     font="SansSerifSmall" h_pad="0" halign="center" height="16" left_delta="0"
 			     mouse_opaque="true" name="Give inventory"
-			     tool_tip="Drop a inventory item here." v_pad="2"
-			     width="400">
-        Drop a inventory item here to have it given along with the auto-response.
+			     tool_tip="Drop an inventory item here to have it given along with the auto-response." v_pad="2"
+			     width="230">
+        Drop an inventory item here
       </text>
       <view_border blevel_style="in" bottom_delta="-18" follows="left|top" height="16" left_delta="0"
-			     mouse_opaque="false" name="im_give_disp_rect" width="400" />
+			     mouse_opaque="false" name="im_give_disp_rect" width="230" />
       <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 			     bottom_delta="0" drop_shadow_visible="true" follows="left|top"
 			     font="SansSerifSmall" h_pad="0" halign="center" height="16" left_delta="0"
 			     mouse_opaque="true" name="im_give_disp_rect_txt"
 			     tool_tip="" v_pad="2"
-			     width="400">
+			     width="230">
         Currently set to: ITEM
       </text>
-      <check_box bottom_delta="-30" enabled="true"
-           follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Vertical IM tabs (requires restart)" left_delta="0" mouse_opaque="true"
-           name="vertical-imtabs-toggle" radio_style="false" width="270" control_name="EmeraldVerticalIMTabs" />
     </panel>
     <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="Chat" left="1" mouse_opaque="true" name="Chat" width="418">
 <button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?" name="EmeraldHelp_Chat" tool_tip="Click here for help regarding the settings in this page." right="490" width="18" />
-      <panel name="scanner_options" left="5" width="310" height="90" bottom_delta="-70" border="true" mouse_opaque="true"
-               bevel_style="in" background_visible="true" background_opaque="true" follows="top|left" bg_opaque_color="0,0,0,0.1"
-               bg_alpha_color="blue" can_resize="false" >
-      </panel>
-      <check_box bottom_delta="65" enabled="true"
+      <check_box bottom_delta="0" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Display radar info to chat" left_delta="0" mouse_opaque="true"
+           label="Display radar info to chat" left="10" mouse_opaque="true"
            name="radar_chat_toggle" radio_style="false" width="270" control_name="EmeraldRadarChatAlerts" />
       <check_box bottom_delta="-20" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Display on avatars entering / exiting simulator" left_delta="25" mouse_opaque="true"
+           label="Display on avatars entering / leaving simulator" left_delta="25" mouse_opaque="true"
            name="radar_chat_sim_toggle" radio_style="false" width="270" control_name="EmeraldRadarAlertSim" />
       <check_box bottom_delta="-20" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Display on avatars entering / exiting draw distance" left_delta="0" mouse_opaque="true"
+           label="Display on avatars entering / leaving draw distance" left_delta="0" mouse_opaque="true"
            name="radar_chat_draw_toggle" radio_style="false" width="270" control_name="EmeraldRadarAlertDraw" />
       <check_box bottom_delta="-20" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Display on avatars entering / exiting chat range" left_delta="0" mouse_opaque="true"
+           label="Display on avatars entering / leaving chat range" left_delta="0" mouse_opaque="true"
            name="radar_chat_chatrange_toggle" radio_style="false" width="270" control_name="EmeraldRadarAlertChatRange" />
 
       <check_box bottom_delta="-40" enabled="true"
@@ -425,18 +422,22 @@ Recommended Settings are:
          follows="left|top" font="SansSerifSmall" height="16"
          label="Show the Search Bar" left_delta="0" mouse_opaque="true"
          name="Search_bar-toggle" radio_style="false" width="270" control_name="ShowSearchBar" />
+      <check_box bottom_delta="-20" enabled="true"
+         follows="left|top" font="SansSerifSmall" height="16"
+         label="Always rez objects under the land group if possible." left_delta="0" mouse_opaque="true"
+         name="grouplandrez" radio_style="false" width="270" control_name="mm_alwaysRezWithLandGroup" />
       <check_box bottom_delta="-40" enabled="true"
          follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-         label="Enable Restrained Life [RLV] features" left_delta="0" mouse_opaque="true"
+         label="Enable Restrained Life [RLVa] features" left_delta="0" mouse_opaque="true"
          name="rlv-toggle" radio_style="false" width="270" control_name="RestrainedLife" />
 
-     <view_border bevel_style="none" border_thickness="1" bottom="-170" follows="top|left" height="60" left="280" name="EmDivisorBridge" width="200" />
+     <view_border bevel_style="none" border_thickness="1" bottom="-100" follows="top|left" height="60" left="280" name="EmDivisorBridge" width="200" />
       <check_box bottom_delta="40" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
          label="Enable LSL-Client Bridge" left_delta="0" mouse_opaque="true" name="EmeraldBuildBridge" radio_style="false" width="270" control_name="EmeraldBuildBridge" />
       <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
          label="Radar use bridge" left_delta="0" mouse_opaque="true" name="EmeraldUseBridgeRadar" radio_style="false" width="270" control_name="EmeraldUseBridgeRadar" />
       <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-         label="True users online status in profiles" left_delta="0" mouse_opaque="true" name="EmeraldUseBridgeOnline" radio_style="false" width="270" control_name="EmeraldUseBridgeOnline" />
+         label="True online status in profiles" left_delta="0" mouse_opaque="true" name="EmeraldUseBridgeOnline" radio_style="false" width="270" control_name="EmeraldUseBridgeOnline" />
 
 
 
@@ -608,13 +609,6 @@ Recommended Settings are:
            label="Render Avatar Invisible" left_delta="0" mouse_opaque="true"
            name="RenderAvInvisible" radio_style="false" width="270" control_name="RenderAvatarInvisible" />
 
-      <check_box bottom_delta="-40" enabled="true"
-           follows="left|top" font="SansSerifSmall" height="16"
-           label="Emerald Clothing Mode" left_delta="0" mouse_opaque="true"
-           name="WATTTT" radio_style="false" width="270" control_name="EmeraldClothingMode" />
-
-
-
 
       <text font="SansSerifSmall" name="BeamPrefs" follows="left|top" left="150" bottom="-150">
         Selection beam particle effects
@@ -774,9 +768,9 @@ Recommended Settings are:
 			     bottom_delta="0" drop_shadow_visible="true" follows="left|top"
 			     font="SansSerifSmall" h_pad="0" halign="center" height="16" left_delta="0"
 			     mouse_opaque="true" name="Give inventory"
-			     tool_tip="Drop a inventory item here." v_pad="2"
+			     tool_tip="Drop an inventory item here." v_pad="2"
 			     width="400">
-        Drop a inventory item here to have it added to the prim contents.
+        Drop an inventory item here to have it added to the prim contents.
       </text>
       <view_border blevel_style="in" bottom_delta="-18" follows="left|top" height="16" left_delta="0"
 			     mouse_opaque="false" name="im_give_disp_rect" width="400" />
@@ -1089,11 +1083,6 @@ from the Emerald viewer into the simulator for access via scripts.
              increment="1" label="Breast friction:"
              label_width="100" max_val="100" min_val="1" mouse_opaque="true"
              show_text="true" width="250" auto_resize="false" tool_tip=""/>
-      <slider bottom_delta="-20" left_delta="0" name="EmeraldBoobZInfluence" control_name="EmeraldBoobZInfluence"
-             decimal_digits="0" enabled="true" follows="left|top" height="18"
-             increment="1" label="Breast Z influence:"
-             label_width="100" max_val="100" min_val="1" mouse_opaque="true"
-             show_text="true" width="250" auto_resize="false" tool_tip=""/>
       <slider bottom_delta="-20" left_delta="0" name="EmeraldBoobFrictionFraction" control_name="EmeraldBoobFrictionFraction"
              decimal_digits="0" enabled="true" follows="left|top" height="18"
              increment="1" label="Breast min vel:"
@@ -1106,10 +1095,6 @@ from the Emerald viewer into the simulator for access via scripts.
       <check_box bottom_delta="-40" enabled="true" follows="left|top" font="SansSerifSmall"
            height="16" label="Enable New Shiny rendering" left="5"
            mouse_opaque="true" name="EmeraldNewShiny" control_name="EmeraldNewShiny" width="126" />
-
-      <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall"
-           height="16" label="Enable Shadow rendering" left="5"
-           mouse_opaque="true" name="EmeraldShadowsON" control_name="EmeraldShadowsON" width="126" />
 <!--
       <button bottom_delta="-40" follows="left|top" font="SansSerifSmall" height="20" label="Shadows ON" name="Emerald_ShadowsON" 
               tool_tip="Turn on the rendering of dynamic shadows cast by objects inworld. Result may vary, and the having it on may affect the framerate negatively." left="10" width="100" />

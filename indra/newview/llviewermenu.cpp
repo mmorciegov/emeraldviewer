@@ -2203,8 +2203,9 @@ class LLSelfEnableRemoveAllAttachments : public view_listener_t
 				LLVOAvatar::attachment_map_t::iterator curiter = iter++;
 				LLViewerJointAttachment* attachment = curiter->second;
 //				if (attachment->getObject())
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c) | Modified: RLVa-0.2.0c
-				if ( (attachment->getObject()) && ( (!rlv_handler_t::isEnabled()) || (gRlvHandler.isDetachable(curiter->first)) ) )
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
+				if ( (attachment->getObject()) && 
+					 ((!rlv_handler_t::isEnabled()) || (!gRlvHandler.isLockedAttachment(curiter->first, RLV_LOCK_REMOVE))) )
 // [/RLVa:KB]
 				{
 					new_value = true;
@@ -2457,8 +2458,8 @@ bool handle_go_to()
 	LLVector3d pos = LLToolPie::getInstance()->getPick().mPosGlobal;
 	if(!gSavedSettings.getBOOL("EmeraldDoubleClickTeleport"))
 	{
-// [RLVa:KB] - Alternate: Emerald-370 | Checked: 2009-07-06 (RLVa-1.0.0c)
-		if ( (rlv_handler_t::isEnabled()) && gAgent.forwardGrabbed() && (gRlvHandler.hasLockedAttachment()) )
+// [RLVa:KB] - Alternate: Emerald | Checked: 2009-07-06 (RLVa-1.0.0c)
+		if ( (rlv_handler_t::isEnabled()) && (gAgent.forwardGrabbed()) && (gRlvHandler.hasLockedAttachment(RLV_LOCK_REMOVE)) )
 		{
 			return true;
 		}
@@ -4838,8 +4839,8 @@ class LLToolsReleaseKeys : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
-		if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment()) )
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
+		if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment(RLV_LOCK_REMOVE)) )
 		{
 			return true;
 		}
@@ -4855,9 +4856,9 @@ class LLToolsEnableReleaseKeys : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
 		gMenuHolder->findControl(userdata["control"].asString())->setValue( 
-				gAgent.anyControlGrabbed() && ( (!rlv_handler_t::isEnabled()) || (!gRlvHandler.hasLockedAttachment() ) ) );
+			gAgent.anyControlGrabbed() && ( (!rlv_handler_t::isEnabled()) || (!gRlvHandler.hasLockedAttachment(RLV_LOCK_REMOVE) ) ) );
 // [/RLVa:KB]
 		//gMenuHolder->findControl(userdata["control"].asString())->setValue( gAgent.anyControlGrabbed() );
 		return true;
@@ -6239,11 +6240,13 @@ private:
 			if (index > 0)
 				attachment_point = get_if_there(gAgent.getAvatarObject()->mAttachmentPoints, index, (LLViewerJointAttachment*)NULL);
 
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
 			if ( (rlv_handler_t::isEnabled()) &&
-				 ( ((index == 0) && (gRlvHandler.hasLockedAttachment())) ||			 // Can't wear on default attach point
-				   ((index > 0) && (!gRlvHandler.isDetachable(attachment_point))) || // Can't replace locked attachment
-				   (gRlvHandler.hasBehaviour(RLV_BHVR_REZ)) ) )						 // Attach on rezzed object == "Take"
+				 ( ((index == 0) && (gRlvHandler.hasLockedAttachment(RLV_LOCK_ANY))) ||		 // Can't wear on default attach point
+				   ((index > 0) &&                                                           // or replace a locked attachment
+				    ((gRlvHandler.isLockedAttachment(attachment_point->getObject(), RLV_LOCK_REMOVE)) ||
+					 (gRlvHandler.isLockedAttachment(attachment_point, RLV_LOCK_ADD)) ) ) || // or wear on a non-attachable attach point
+				   (gRlvHandler.hasBehaviour(RLV_BHVR_REZ)) ) )								 // Attach on rezzed object == "Take"
 			{
 				setObjectSelection(NULL); // Clear the selection or it'll get stuck
 				return true;
@@ -6357,15 +6360,15 @@ class LLAttachmentDrop : public view_listener_t
 			return true;
 		}
 
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
 		if (rlv_handler_t::isEnabled()) 
 		{
-			if (gRlvHandler.hasLockedAttachment())
+			if (gRlvHandler.hasLockedAttachment(RLV_LOCK_REMOVE))
 			{
 				// NOTE: copy/paste of the code in enable_detach()
-				LLObjectSelectionHandle hSelect = LLSelectMgr::getInstance()->getSelection();
-				RlvSelectHasLockedAttach functor;
-				if ( (hSelect->isAttachment()) && (hSelect->getFirstRootNode(&functor, FALSE)) )
+				LLObjectSelectionHandle hSelection = LLSelectMgr::getInstance()->getSelection();
+				RlvSelectHasLockedAttach functor(RLV_LOCK_REMOVE);
+				if ( (hSelection->isAttachment()) && (hSelection->getFirstRootNode(&functor, FALSE)) )
 					return true;
 			}
 			else if (gRlvHandler.hasBehaviour(RLV_BHVR_REZ))
@@ -6393,8 +6396,8 @@ void handle_detach_from_avatar(void* user_data)
 
 	if (attached_object)
 	{
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c) | Modified: RLVa-0.2.0d
-		if ( (rlv_handler_t::isEnabled()) && (!gRlvHandler.isDetachable(attached_object)) )
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
+		if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.isLockedAttachment(attached_object, RLV_LOCK_REMOVE)) )
 		{
 			return;
 		}
@@ -6482,12 +6485,12 @@ class LLAttachmentDetach : public view_listener_t
 			return true;
 		}
 
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5) | Modified: RLVa-1.0.5
 		// NOTE: copy/paste of the code in enable_detach()
-		if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment()) )
+		if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment(RLV_LOCK_REMOVE)) )
 		{
 			LLObjectSelectionHandle hSelect = LLSelectMgr::getInstance()->getSelection();
-			RlvSelectHasLockedAttach functor;
+			RlvSelectHasLockedAttach functor(RLV_LOCK_REMOVE);
 			if ( (hSelect->isAttachment()) && (hSelect->getFirstRootNode(&functor, FALSE)) )
 				return FALSE;
 		}
@@ -6598,16 +6601,16 @@ BOOL enable_detach(void*)
 		// ...if it's you, good to detach
 		if (avatar->getID() == gAgent.getID())
 		{
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5) | Modified: RLVa-1.0.5
 			// NOTE: this code is reused as-is in LLAttachmentDetach::handleEvent() and LLAttachmentDrop::handleEvent()
-			//       so any changes here should be reflected there as well (I think it's in a number of other places as well by now)
+			//       so any changes here should be reflected there as well
 
 			// RELEASE-RLVa: LLSelectMgr::sendDetach() and LLSelectMgr::sendDropAttachment() call sendListToRegions with
 			//               SEND_ONLY_ROOTS so we only need to examine the roots which saves us time
-			if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment()) )
+			if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment(RLV_LOCK_REMOVE)) )
 			{
 				LLObjectSelectionHandle hSelect = LLSelectMgr::getInstance()->getSelection();
-				RlvSelectHasLockedAttach functor;
+				RlvSelectHasLockedAttach functor(RLV_LOCK_REMOVE);
 				if ( (hSelect->isAttachment()) && (hSelect->getFirstRootNode(&functor, FALSE)) )
 					return FALSE;
 			}
@@ -6634,7 +6637,7 @@ class LLAttachmentEnableDetach : public view_listener_t
 // Used to tell if the selected object can be attached to your avatar.
 BOOL object_selected_and_point_valid(void *user_data)
 {
-// [RLVa:KB] - Checked: 2009-07-05 (RLVa-1.0.0b)
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5) | Modified: RLVa-1.0.5
 	if (rlv_handler_t::isEnabled())
 	{
 		// RELEASE-RLVa: look at the caller graph for this function on every new release
@@ -6644,9 +6647,11 @@ BOOL object_selected_and_point_valid(void *user_data)
 		//      - enabler set up in LLVOAvatar::buildCharacter() => Rezzed prim / right-click / "Attach >" [user_data == pAttachPt]
 		//      - enabler set up in LLVOAvatar::buildCharacter() => Rezzed prim / Edit menu / "Attach Object" [user_data == pAttachPt]
 		LLViewerJointAttachment* pAttachPt = (LLViewerJointAttachment*)user_data;
-		if  ( ((!pAttachPt) && (gRlvHandler.hasLockedAttachment())) ||		// Don't allow attach to default attach point
-			  ((pAttachPt) && (!gRlvHandler.isDetachable(pAttachPt))) ||	// Don't allow replacing of locked attachment
-			  (gRlvHandler.hasBehaviour(RLV_BHVR_REZ)) )					// Attaching a rezzed object == "Take"
+		if  ( ( (!pAttachPt) && (gRlvHandler.hasLockedAttachment(RLV_LOCK_ANY)) ) ||	// Don't allow attach to default attach point
+			  ( (pAttachPt) &&															// Don't allow replacing of a locked attachment
+			    ( (gRlvHandler.isLockedAttachment(pAttachPt->getObject(), RLV_LOCK_REMOVE)) ||
+			      (gRlvHandler.isLockedAttachment(pAttachPt, RLV_LOCK_ADD)) ) ) ||		// or wear on a non-attachable attach point
+			  (gRlvHandler.hasBehaviour(RLV_BHVR_REZ)) )								// Attaching a rezzed object == "Take"
 		{
 			return FALSE;
 		}
@@ -6723,7 +6728,7 @@ BOOL object_attached(void *user_data)
 // [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
 	return ( 
 		      (attachment->getObject() != NULL) && 
-			  ( (!rlv_handler_t::isEnabled()) || (gRlvHandler.isDetachable(attachment->getObject())) )
+			  ( (!rlv_handler_t::isEnabled()) || (!gRlvHandler.isLockedAttachment(attachment->getObject(), RLV_LOCK_REMOVE)) )
 		   );
 // [/RLVa:KB]
 //	return attachment->getObject() != NULL;
@@ -6865,12 +6870,13 @@ class LLToolsSelectedScriptAction : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
-		if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment()) )
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
+		// We'll allow resetting the scripts of objects on a non-attachable attach point since they wouldn't be able to circumvent anything
+		if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment(RLV_LOCK_REMOVE)) )
 		{
-			LLObjectSelectionHandle selectHandle = LLSelectMgr::getInstance()->getSelection();
-			RlvSelectHasLockedAttach functor;
-			if ( (selectHandle->isAttachment()) && (selectHandle->getFirstNode(&functor)) )
+			LLObjectSelectionHandle hSelection = LLSelectMgr::getInstance()->getSelection();
+			RlvSelectHasLockedAttach functor(RLV_LOCK_REMOVE);
+			if ( (hSelection->isAttachment()) && (hSelection->getFirstNode(&functor)) )
 				return true;
 		}
 // [/RLVa:KB]
@@ -6956,9 +6962,9 @@ void handle_dump_image_list(void*)
 
 void handle_test_male(void*)
 {
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
 	if ( (rlv_handler_t::isEnabled()) && 
-		 ( (gRlvHandler.hasLockedAttachment()) || 
+		 ( (gRlvHandler.hasLockedAttachment(RLV_LOCK_ANY)) || 
 		   (gRlvHandler.hasBehaviour(RLV_BHVR_ADDOUTFIT)) || (gRlvHandler.hasBehaviour(RLV_BHVR_REMOUTFIT)) ) )
 	{
 		return;
@@ -6971,9 +6977,9 @@ void handle_test_male(void*)
 
 void handle_test_female(void*)
 {
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
 	if ( (rlv_handler_t::isEnabled()) && 
-		 ( (gRlvHandler.hasLockedAttachment()) || 
+		 ( (gRlvHandler.hasLockedAttachment(RLV_LOCK_ANY)) || 
 		   (gRlvHandler.hasBehaviour(RLV_BHVR_ADDOUTFIT)) || (gRlvHandler.hasBehaviour(RLV_BHVR_REMOUTFIT)) ) )
 	{
 		return;
@@ -7125,16 +7131,16 @@ BOOL enable_more_than_one_selected(void* )
 
 static bool is_editable_selected()
 {
-// [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c) | Modified: RLVa-1.0.0c
+// [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
 	// RELEASE-RLVa: check that this still isn't called by anything but script actions in the Tools menu
-	if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment()) )
+	if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasLockedAttachment(RLV_LOCK_REMOVE)) )
 	{
-		LLObjectSelectionHandle selectHandle = LLSelectMgr::getInstance()->getSelection();
+		LLObjectSelectionHandle hSelection = LLSelectMgr::getInstance()->getSelection();
 
 		// NOTE: this is called for 5 different menu items so we'll trade accuracy for efficiency and only
 		//       examine root nodes (LLToolsSelectedScriptAction::handleEvent() will catch what we miss)
-		RlvSelectHasLockedAttach functor;
-		if ( (selectHandle->isAttachment()) && (selectHandle->getFirstRootNode(&functor)) )
+		RlvSelectHasLockedAttach functor(RLV_LOCK_REMOVE);
+		if ( (hSelection->isAttachment()) && (hSelection->getFirstRootNode(&functor)) )
 		{
 			return false;
 		}

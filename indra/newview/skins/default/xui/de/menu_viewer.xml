@@ -249,7 +249,6 @@
 		<menu_item_check label="Objekt Suche" name="Area Search"/>
 		<menu_item_check label="Avatar Liste" name="Avatar List"/>
 		<menu_item_check label="Teleport Verlauf" name="Teleport History"/>
-		<menu_item_check label="Lua Konsole" name="Lua Console"/>
     <menu_item_check label="Asset Browser" name="asset browser"/>
     <menu_item_check label="AO" name="AO"/>
     </menu_item_check>

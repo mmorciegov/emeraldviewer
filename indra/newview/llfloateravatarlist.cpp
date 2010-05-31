@@ -180,7 +180,7 @@ void chat_avatar_status(std::string name, LLUUID key, ERadarAlertType type, bool
 		if(chat.mText != "")
 		{
 			chat.mSourceType = CHAT_SOURCE_SYSTEM;
-			LLFloaterChat::addChatHistory(chat);
+			LLFloaterChat::addChat(chat);
 		}
 	}
 }
