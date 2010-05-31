@@ -129,9 +129,9 @@ class JCZtake : public LLEventTimer
 public:
 	static BOOL ztakeon;
 
-	JCZtake() : LLEventTimer(0.1f)
+	JCZtake() : LLEventTimer(2.0f)
 	{
-		ztakeon = TRUE;
+		ztakeon = FALSE;
 		cmdline_printchat("initialized");
 	}
 	~JCZtake()
@@ -141,46 +141,43 @@ public:
 	BOOL tick()
 	{
 		{
-			LLViewerObject* root_object = LLSelectMgr::getInstance()->getSelection()->getFirstRootObject();
-			if(root_object && !root_object->isDead())
+			LLMessageSystem *msg = gMessageSystem;
+			for(LLObjectSelection::iterator itr=LLSelectMgr::getInstance()->getSelection()->begin();
+				itr!=LLSelectMgr::getInstance()->getSelection()->end();++itr)
 			{
-				LLViewerObject::child_list_t children=root_object->getChildren();
-				LLMessageSystem    *msg = gMessageSystem;
-				for(LLViewerObject::child_list_t::const_iterator itr=children.begin();itr!=children.end();++itr)
+				LLSelectNode* node = (*itr);
+				LLViewerObject* object = node->getObject();
+				U32 localid=object->getLocalID();
+				if(done_prims.find(localid) == done_prims.end())
 				{
-					LLViewerObject* object = (*itr);
-					U32 localid=object->getLocalID();
-					if(done_prims.find(localid) == done_prims.end())
-					{
-						done_prims.insert(localid);
-						std::string name = llformat("%.1f x %.1f x %.1f",object->getScale().mV[VX],object->getScale().mV[VY],object->getScale().mV[VZ]);
-						cmdline_printchat(std::string("Rename&take ")+name);
-						msg->newMessageFast(_PREHASH_ObjectName);
-						msg->nextBlockFast(_PREHASH_AgentData);
-						msg->addUUIDFast(_PREHASH_AgentID,gAgent.getID());
-						msg->addUUIDFast(_PREHASH_SessionID,gAgent.getSessionID());
-						msg->nextBlockFast(_PREHASH_ObjectData);
-						msg->addU32Fast(_PREHASH_LocalID,localid);
-						msg->addStringFast(_PREHASH_Name,name);
-						gAgent.sendReliableMessage();
+					done_prims.insert(localid);
+					std::string name = llformat("%fx%fx%f",object->getScale().mV[VX],object->getScale().mV[VY],object->getScale().mV[VZ]);
+					cmdline_printchat(std::string("Rename&take ")+name);
+					msg->newMessageFast(_PREHASH_ObjectName);
+					msg->nextBlockFast(_PREHASH_AgentData);
+					msg->addUUIDFast(_PREHASH_AgentID,gAgent.getID());
+					msg->addUUIDFast(_PREHASH_SessionID,gAgent.getSessionID());
+					msg->nextBlockFast(_PREHASH_ObjectData);
+					msg->addU32Fast(_PREHASH_LocalID,localid);
+					msg->addStringFast(_PREHASH_Name,name);
+					gAgent.sendReliableMessage();
 
-						msg->newMessageFast(_PREHASH_DeRezObject);
-						msg->nextBlockFast(_PREHASH_AgentData);
-						msg->addUUIDFast(_PREHASH_AgentID,gAgent.getID());
-						msg->addUUIDFast(_PREHASH_SessionID,gAgent.getSessionID());
-						msg->nextBlockFast(_PREHASH_AgentBlock);
-						msg->addUUIDFast(_PREHASH_GroupID,LLUUID::null);
-						msg->addU8Fast(_PREHASH_Destination,4);
-						msg->addUUIDFast(_PREHASH_DestinationID,LLUUID::null);
-						LLUUID rand;
-						rand.generate();
-						msg->addUUIDFast(_PREHASH_TransactionID,rand);
-						msg->addU8Fast(_PREHASH_PacketCount,1);
-						msg->addU8Fast(_PREHASH_PacketNumber,0);
-						msg->nextBlockFast(_PREHASH_ObjectData);
-						msg->addU32Fast(_PREHASH_ObjectLocalID,localid);
-						gAgent.sendReliableMessage();
-					}
+					msg->newMessageFast(_PREHASH_DeRezObject);
+					msg->nextBlockFast(_PREHASH_AgentData);
+					msg->addUUIDFast(_PREHASH_AgentID,gAgent.getID());
+					msg->addUUIDFast(_PREHASH_SessionID,gAgent.getSessionID());
+					msg->nextBlockFast(_PREHASH_AgentBlock);
+					msg->addUUIDFast(_PREHASH_GroupID,LLUUID::null);
+					msg->addU8Fast(_PREHASH_Destination,4);
+					msg->addUUIDFast(_PREHASH_DestinationID,LLUUID::null);
+					LLUUID rand;
+					rand.generate();
+					msg->addUUIDFast(_PREHASH_TransactionID,rand);
+					msg->addU8Fast(_PREHASH_PacketCount,1);
+					msg->addU8Fast(_PREHASH_PacketNumber,0);
+					msg->nextBlockFast(_PREHASH_ObjectData);
+					msg->addU32Fast(_PREHASH_ObjectLocalID,localid);
+					gAgent.sendReliableMessage();
 				}
 			}
 		}
@@ -263,6 +260,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					if (status == "on" )
 					{
 						gSavedSettings.setBOOL("EmeraldAOEnabled",TRUE);
+						LLFloaterAO::init();
 						LLFloaterAO::run();
 					}
 					else if (status == "off" )
@@ -413,7 +411,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					cmdline_tp2name(name);
 				}
 				return false;
-			}else if (command == "xyzzy")
+			}else if (revised_text == "xyzzy")
 			{
 				//Zwag: I wonder how many people will actually get this?
 				cmdline_printchat("Nothing happens.");

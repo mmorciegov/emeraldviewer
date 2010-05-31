@@ -709,7 +709,7 @@ class Linux_i686Manifest(LinuxManifest):
             self.path("libELFIO.so")
             self.path("libopenjpeg.so.1.3.0", "libopenjpeg.so.1.3")
             self.path("libalut.so")
-            self.path("libopenal.so")
+            self.path("libopenal.so", "libopenal.so.1")
 #            self.path("liblua5.1.so")
             self.path("libz.so.1", "libz.so")
             self.path("libotr.so.2.2.0", "libotr.so.2")

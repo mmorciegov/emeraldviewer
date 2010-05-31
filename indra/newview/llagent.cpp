@@ -588,8 +588,6 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 	}
 
 	mHUDTargetZoom = 1.f;
-	mThirdPersonHeadOffset=LLVector3(0.0f,0.0f,1.0f);
-	gSavedSettings.setVector3("FocusOffsetDefault",LLVector3(1.0f,0.0f,1.0f));
 }
 
 // Handle any actions that need to be performed when the main app gains focus
@@ -4037,11 +4035,11 @@ void LLAgent::handleScrollWheel(S32 clicks)
 			if(gKeyboard->getKeyDown(KEY_CONTROL))
 			{
 				//mCameraOffsetDefault.mV[2]+=clicks/10.0f;;
-				mThirdPersonHeadOffset.mV[2]+=clicks/10.0f;
+				mThirdPersonHeadOffset.mV[2]+=clicks/10.0f; 
 				
-			}else if(gKeyboard->getKeyDown(KEY_ALT))
+			}else if(gKeyboard->getKeyDown(KEY_SHIFT))
 			{
-				gSavedSettings.setVector3("FocusOffsetDefault",
+				 gSavedSettings.setVector3("FocusOffsetDefault",
 					gSavedSettings.getVector3("FocusOffsetDefault") + LLVector3(0.0f,0.0f,clicks/10.0f));
 			}else
 			{
@@ -4265,6 +4263,11 @@ void LLAgent::changeCameraToThirdPerson(BOOL animate)
 	gViewerWindow->getWindow()->resetBusyCount();
 
 	mCameraZoomFraction = INITIAL_ZOOM_FRACTION;
+	
+	gSavedSettings.setVector3("FocusOffsetDefault",LLVector3(1.0f,0.0f,1.0f));
+	mCameraOffsetDefault = gSavedSettings.getVector3("CameraOffsetDefault");
+	mThirdPersonHeadOffset=LLVector3(0.0f,0.0f,1.0f);
+
 
 	if (mAvatarObject.notNull())
 	{

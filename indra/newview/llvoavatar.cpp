@@ -737,6 +737,7 @@ F32 LLVOAvatar::sUnbakedTime = 0.f;
 F32 LLVOAvatar::sUnbakedUpdateTime = 0.f;
 F32 LLVOAvatar::sGreyTime = 0.f;
 F32 LLVOAvatar::sGreyUpdateTime = 0.f;
+bool LLVOAvatar::sDoProperArc = true;
 
 //-----------------------------------------------------------------------------
 // Helper functions
@@ -1021,6 +1022,7 @@ LLVOAvatar::LLVOAvatar(const LLUUID& id,
 	sBoobConfig.friction         = EmeraldBoobUtils::convertFriction(gSavedSettings.getF32("EmeraldBoobFriction"));
 	sBoobConfig.enabled          = gSavedSettings.getBOOL("EmeraldBreastPhysicsToggle");
 	sBoobConfig.XYInfluence		 = gSavedSettings.getF32("EmeraldBoobXYInfluence");
+	sDoProperArc				 = (bool)gSavedSettings.getBOOL("EmeraldUseProperArc");
 
 
 	if (gNoRender)
@@ -9868,20 +9870,33 @@ void LLVOAvatar::idleUpdateRenderCost()
 		}
 	}
 	
-	std::set<LLUUID>::const_iterator tex_iter;
-	for(tex_iter = textures.begin();tex_iter != textures.end();++tex_iter)
+	if(sDoProperArc)
 	{
-		LLViewerImage* img = gImageList.getImage(*tex_iter);
-		if(img)
+		std::set<LLUUID>::const_iterator tex_iter;
+		for(tex_iter = textures.begin();tex_iter != textures.end();++tex_iter)
 		{
-			shame += (img->getHeight() * img->getWidth()) >> 4;
+			LLViewerImage* img = gImageList.getImage(*tex_iter);
+			if(img)
+			{
+				shame += (img->getHeight() * img->getWidth()) >> 4;
+			}
 		}
 	}
 	shame += textures.size() * 5;
 
 	setDebugText(llformat("%d", shame));
-	F32 green = 1.f-llclamp(((F32) shame-1024.f)/1024.f, 0.f, 1.f);
-	F32 red = llmin((F32) shame/1024.f, 1.f);
+	F32 green;
+	F32 red;
+	if(sDoProperArc)
+	{
+		green = 1.f-llclamp(((F32)shame-1000000.f)/1000000.f, 0.f, 1.f);
+		red = llmin((F32)shame/1000000.f, 1.f);
+	}
+	else
+	{
+		green = 1.f-llclamp(((F32)shame-1024.f)/1024.f, 0.f, 1.f);
+		red = llmin((F32)shame/1024.f, 1.f);
+	}
 	mText->setColor(LLColor4(red,green,0,1));
 }
 
@@ -9941,6 +9956,10 @@ U32 calc_shame(LLVOVolume* volume, std::set<LLUUID> &textures)
 	U32 particles = 0;
 	U32 bump = 0;
 	U32 planar = 0;
+	U32 scale = 0;
+
+	const LLVector3& sc = volume->getScale();
+	scale += (U32) sc.mV[0] + (U32) sc.mV[1] + (U32) sc.mV[2];
 
 	if (volume->isFlexible())
 	{
@@ -10003,7 +10022,14 @@ U32 calc_shame(LLVOVolume* volume, std::set<LLUUID> &textures)
 		}
 	}
 
-	shame += invisi + shiny + glow + alpha*4 + flexi*8 + animtex*4 + particles*16 + bump*4 + planar;
+	if(LLVOAvatar::sDoProperArc)
+	{
+		shame += invisi + shiny + glow + alpha*4 + flexi*8 + animtex*4 + particles*16 + bump*4 + planar;
+	}
+	else
+	{
+		shame += invisi + shiny + glow + alpha*4 + flexi*8 + animtex*4 + particles*16+bump*4+scale+planar;
+	}
 
 	LLViewerObject::const_child_list_t& child_list = volume->getChildren();
 	for (LLViewerObject::child_list_t::const_iterator iter = child_list.begin();
