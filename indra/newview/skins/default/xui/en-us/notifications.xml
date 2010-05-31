@@ -6419,7 +6419,7 @@ The URL you clicked cannot be opened from this web browser.
        text="No"/>
     </form>
   </notification>
-  
+
   <notification
    icon="notify.tga"
    name="QueryEmeraldOTR"
@@ -6438,7 +6438,66 @@ The URL you clicked cannot be opened from this web browser.
        text="No"/>
     </form>
   </notification>
-  
+  <notification
+   icon="notify.tga"
+   name="EmeraldStealth"
+   type="alertmodal">
+    This will go through your settings and disable any features that may be used to determine what client you are running.
+    This Means that some features will be disabled, and although you will not be warned if you choose to turn some of them back on,
+    they may be used to identify that your client has emerald features.
+    Currently clicking yes will 
+    * disable OTR auto responce 
+    * disable rainbow colored selection beams 
+    * disable custom beam shapes 
+    * disable advanced detection of cryolife 
+    * disable clothing protection 
+    * disable GUS 
+    * disable selection beam stream 
+    * disable radar key chat 
+    If you really wish to turn off these features, press yes.
+    <form name="form">
+      <button
+       index="0"
+       name="Yes"
+       text="Yes"/>
+      <button
+       index="1"
+       name="No"
+       text="No"/>
+    </form>
+  </notification>
+  <notification
+   icon="notify.tga"
+   name="EmeraldNoStealth"
+   type="alertmodal">
+    This will change your settings to re-enable all of the features that stealth mode may turn off.  This may turn on features that you did not have activated before stealth mode.  If you wish to do this, press yes.
+    <form name="form">
+      <button
+       index="0"
+       name="Yes"
+       text="Yes"/>
+      <button
+       index="1"
+       name="No"
+       text="No"/>
+    </form>
+  </notification>
+  <notification
+   icon="notify.tga"
+   name="EmeraldRadarChat"
+   type="alertmodal">
+    A script you own is requesting access to your radar's data so it can lower lag, would you like to allow this? Unless you are trying to hide that you are using Emerald, this is OK to allow.
+    <form name="form">
+      <button
+       index="1"
+       name="Yes"
+       text="Yes"/>
+      <button
+       index="0"
+       name="No"
+       text="No"/>
+    </form>
+  </notification>
   <notification
 	   icon="notifytip.tga"
 	   name="BlockedDialogs"
@@ -6573,6 +6632,39 @@ Help text will go here, please update notifications.xml
 the related entries are at the bottom of the file.
 
 Build
+
+  </notification>
+  <notification
+   icon="alertmodal.tga"
+   label="Emerald Help"
+   name="EmeraldHelp_IRC"
+   type="alertmodal">
+Help text will go here, please update notifications.xml
+the related entries are at the bottom of the file.
+
+IRC
+
+  </notification>
+  <notification
+   icon="alertmodal.tga"
+   label="Emerald Help"
+   name="EmeraldHelp_UtilityStream"
+   type="alertmodal">
+Help text will go here, please update notifications.xml
+the related entries are at the bottom of the file.
+
+Utility Stream
+
+  </notification>
+  <notification
+   icon="alertmodal.tga"
+   label="Emerald Help"
+   name="EmeraldHelp_Inventory"
+   type="alertmodal">
+Help text will go here, please update notifications.xml
+the related entries are at the bottom of the file.
+
+Inventory
 
   </notification>
 

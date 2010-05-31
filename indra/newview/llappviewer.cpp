@@ -68,6 +68,7 @@
 #include "llurlhistory.h"
 #include "llfirstuse.h"
 #include "llrender.h"
+#include "greenlife_utility_stream.h"
 
 #include "llweb.h"
 #include "llsecondlifeurls.h"
@@ -2068,6 +2069,12 @@ bool LLAppViewer::initConfiguration()
 #else
 	gWindowTitle = gSecondLife + std::string(" ") + gArgs;
 #endif
+	//gWindowTitle += std::string(" ") + EMERALD_BRANCH;
+	gWindowTitle += llformat(" %d.%d.%d.%d",
+		LL_VERSION_MAJOR,
+		LL_VERSION_MINOR,
+		LL_VERSION_PATCH,
+		LL_VERSION_BUILD);
 	LLStringUtil::truncate(gWindowTitle, 255);
 
 	//RN: if we received a URL, hand it off to the existing instance.
@@ -3333,13 +3340,22 @@ void LLAppViewer::idle()
 	    gAgentPilot.updateTarget();
 	    gAgent.autoPilot(&yaw);
     
+		static GUS utilityStream;
+
 	    static LLFrameTimer agent_update_timer;
-		static LLFrameTimer stream_update_timer;
+		
+		static LLFrameTimer JSstream_update_timer;
+		static LLFrameTimer GUS_update_timer;
+		static LLFrameTimer GUS_FE_update_timer;
 	    static U32 				last_control_flags;
     
 	    //	When appropriate, update agent location to the simulator.
 	    F32 agent_update_time = agent_update_timer.getElapsedTimeF32();
-		F32 stream_update_time = stream_update_timer.getElapsedTimeF32();
+
+		F32 JSstream_update_time = JSstream_update_timer.getElapsedTimeF32();
+		F32 GUS_update_time = GUS_update_timer.getElapsedTimeF32();
+		F32 GUS_FE_update_time = GUS_update_timer.getElapsedTimeF32();
+
 	    BOOL flags_changed = gAgent.controlFlagsDirty() || (last_control_flags != gAgent.getControlFlags());
     
 		//Name Short - Added to adjust agent updates.
@@ -3358,16 +3374,27 @@ void LLAppViewer::idle()
 			}
 		    agent_update_timer.reset();
 	    }
-		//theGenius Indigo - Joystick data is streamed inworld on a specific channel
 		BOOL canSend = gAgent.getTeleportState() == LLAgent::TELEPORT_NONE && !LLAppViewer::instance()->logoutRequestSent() && gAgent.getRegion() != NULL;
 		if(canSend)
 		{
-		   F32 JoystickStreamFrequency = gSavedSettings.getF32("JoystickStreamRefresh");
-		   if(gSavedSettings.getBOOL("JoystickStreamEnabled") && (stream_update_time > (1.0f / max(JoystickStreamFrequency, 0.0001f))))
-		   {
+			//theGenius Indigo - Joystick data is streamed inworld on a specific channel
+			F32 JoystickStreamFrequency = gSavedSettings.getF32("JoystickStreamRefresh"); //Joystick data stream refresh frequency
+			if(gSavedSettings.getBOOL("JoystickStreamEnabled") && (JSstream_update_time > (1.0f / max(JoystickStreamFrequency, 0.0001f))))
+			{
 				LLViewerJoystick::getInstance()->cansend(); //Allow data to be sent on the next joystick scan
-				stream_update_timer.reset();
-		   }
+				JSstream_update_timer.reset();
+			}
+			F32 GUS_freq = llclamp(gSavedSettings.getF32("EmeraldGUSRefresh"), 0.0001f, 10.f); //Greenlife Utility Stream refresh frequency
+			if(gSavedSettings.getBOOL("EmeraldGUSEnabled") && (GUS_update_time > (1.0f / GUS_freq)))
+			{
+			   if(utilityStream.streamData())GUS_update_timer.reset();
+			   utilityStream.FELimiter_dec();
+			}
+			F32 GUS_FE_freq = llclamp(gSavedSettings.getF32("EmeraldGUSFastEventsRefresh"), 0.0001f, 20.f); //Greenlife Utility Stream (Fast Event) refresh frequency
+			if(gSavedSettings.getBOOL("EmeraldGUSEnabled") && gSavedSettings.getBOOL("EmeraldGUSFastEventsEnabled") && (GUS_FE_update_time > (1.0f / min(max(GUS_FE_freq, 0.0001f), 20.f))))
+			{
+			   if(utilityStream.fastEvent())GUS_FE_update_timer.reset();
+			}
 		}
 	}
 

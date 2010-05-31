@@ -3234,9 +3234,9 @@ bool LLInventoryCollectFunctor::itemTransferCommonlyAllowed(LLInventoryItem* ite
 
 	switch(item->getType())
 	{
-	case LLAssetType::AT_CALLINGCARD:
-		// not allowed
-		break;
+	//case LLAssetType::AT_CALLINGCARD:
+	//	// not allowed
+	//	break;
 		
 	case LLAssetType::AT_OBJECT:
 		my_avatar = gAgent.getAvatarObject();

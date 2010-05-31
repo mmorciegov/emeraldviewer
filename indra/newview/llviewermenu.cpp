@@ -2337,6 +2337,75 @@ class LLObjectExport : public view_listener_t
 	}
 };
 
+//Madgeek - Option in pie menu to disable objects if you are an estate manager.
+class LLObjectEnableObjectDisable : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		bool new_value = false;
+		LLViewerRegion* region = gAgent.getRegion();
+		if (region)
+		{
+			if (region->canManageEstate())
+			{
+				new_value = true;
+			}
+		}
+		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
+		return true;
+	}
+};
+
+//Madgeek - Option in pie menu to disable objects if you are an estate manager.
+class LLObjectDisable : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		LLViewerRegion* region = gAgent.getRegion();
+		if (region)
+		{
+			if (region->canManageEstate())
+			{
+				bool start_message = true;
+				for (LLObjectSelection::root_iterator iter = LLSelectMgr::getInstance()->getSelection()->root_begin();
+					iter != LLSelectMgr::getInstance()->getSelection()->root_end(); iter++)
+				{
+					LLSelectNode* selectNode = *iter;
+					LLViewerObject* object = selectNode->getObject();
+
+					if (object)
+					{
+						if (start_message)
+						{
+							gMessageSystem->newMessageFast(_PREHASH_ParcelDisableObjects);
+							gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+							gMessageSystem->addUUIDFast(_PREHASH_AgentID,	gAgent.getID());
+							gMessageSystem->addUUIDFast(_PREHASH_SessionID,gAgent.getSessionID());
+							gMessageSystem->nextBlockFast(_PREHASH_ParcelData);
+							gMessageSystem->addS32Fast(_PREHASH_LocalID, -1);
+							gMessageSystem->addS32Fast(_PREHASH_ReturnType, RT_NONE);
+							start_message = false;
+						}
+
+						gMessageSystem->nextBlockFast(_PREHASH_TaskIDs);
+						gMessageSystem->addUUIDFast(_PREHASH_TaskID, object->getID());
+
+						if (gMessageSystem->isSendFullFast(_PREHASH_TaskIDs))
+						{
+							gMessageSystem->sendReliable(region->getHost());
+							start_message = true;
+						}
+					}
+				}
+				if (!start_message)
+				{
+					gMessageSystem->sendReliable(region->getHost());
+				}
+			}
+		}
+		return true;
+	}
+};
 
 bool handle_go_to()
 {
@@ -8690,6 +8759,7 @@ void initialize_menus()
 	addMenu(new LLObjectReturn(), "Object.Return");
 	addMenu(new LLObjectReportAbuse(), "Object.ReportAbuse");
 	addMenu(new LLObjectExport(), "Object.Export");
+	addMenu(new LLObjectDisable(), "Object.Disable");
 	addMenu(new LLObjectMute(), "Object.Mute");
 	addMenu(new LLObjectBuy(), "Object.Buy");
 	addMenu(new LLObjectEdit(), "Object.Edit");
@@ -8704,6 +8774,7 @@ void initialize_menus()
 	addMenu(new LLObjectEnableReportAbuse(), "Object.EnableReportAbuse");
 	addMenu(new LLObjectEnableMute(), "Object.EnableMute");
 	addMenu(new LLObjectEnableBuy(), "Object.EnableBuy");
+	addMenu(new LLObjectEnableObjectDisable(), "Object.EnableDisableObject");
 
 	/*addMenu(new LLObjectVisibleTouch(), "Object.VisibleTouch");
 	addMenu(new LLObjectVisibleCustomTouch(), "Object.VisibleCustomTouch");

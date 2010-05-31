@@ -87,6 +87,8 @@
 #include "llselectmgr.h"
 #include "llfloateropenobject.h"
 
+#include "exporttracker.h"
+
 // Helpers
 // bug in busy count inc/dec right now, logic is complex... do we really need it?
 void inc_busy_count()
@@ -445,6 +447,14 @@ void LLInvFVBridge::getClipboardEntries(bool show_asset_id, std::vector<std::str
 			disabled_items.push_back(std::string("Copy Asset UUID"));
 		}
 	}
+	if (show_asset_id)
+	{
+		items.push_back(std::string("Export"));
+		if ( (! ( isItemPermissive() || gAgent.isGodlike() ) ))
+		{
+			disabled_items.push_back(std::string("Export"));
+		}
+	}
 
 	items.push_back(std::string("Copy Separator"));
 
@@ -733,9 +743,10 @@ LLInvFVBridge* LLInvFVBridge::createBridge(LLAssetType::EType asset_type,
 // +=================================================+
 // |        LLItemBridge                             |
 // +=================================================+
-
+void cmdline_printchat(std::string message);
 void LLItemBridge::performAction(LLFolderView* folder, LLInventoryModel* model, std::string action)
 {
+	//cmdline_printchat("item="+action);
 	if ("open" == action)
 	{
 		openItem();
@@ -3609,6 +3620,12 @@ std::string LLLSLTextBridge::sPrefix("Script: ");
 LLUIImagePtr LLLSLTextBridge::getIcon() const
 {
 	return get_item_icon(LLAssetType::AT_SCRIPT, LLInventoryType::IT_LSL, 0, FALSE);
+}
+
+void LLLSLTextBridge::performAction(LLFolderView* folder, LLInventoryModel* model, std::string action)
+{
+	//cmdline_printchat(action);
+	LLItemBridge::performAction(folder, model, action);
 }
 
 void LLLSLTextBridge::openItem()

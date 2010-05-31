@@ -272,6 +272,7 @@ public:
 	void updateSpeakersList(const LLSD& speaker_updates);
 	void processSessionUpdate(const LLSD& update);
 	void setSpeakers(const LLSD& speaker_list);
+	void setIRCSpeakers(const LLSD& speaker_list);
 	LLVoiceChannel* getVoiceChannel() { return mVoiceChannel; }
 	EInstantMessage getDialogType() const { return mDialog; }
 

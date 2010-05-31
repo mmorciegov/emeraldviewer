@@ -283,11 +283,11 @@ static void otrwui_gone_secure(
         context->active_fingerprint->trust &&
         *(context->active_fingerprint->trust))
     {
-        otr_log_message_getstring_name(session_id, "otr_log_start_private");
+        //otr_log_message_getstring_name(session_id, "otr_log_start_private");
     }
     else
     {
-        otr_log_message_getstring_name(session_id, "otr_log_start_unverified");
+        //otr_log_message_getstring_name(session_id, "otr_log_start_unverified");
     }
     otr_show_status(session_id);
 }
@@ -323,11 +323,11 @@ static void otrwui_still_secure(
         context->active_fingerprint->trust &&
         *(context->active_fingerprint->trust))
     {
-        otr_log_message_getstring_name(session_id, "otr_log_still_private");
+        //otr_log_message_getstring_name(session_id, "otr_log_still_private");
     }
     else
     {
-        otr_log_message_getstring_name(session_id, "otr_log_still_unverified");
+        //otr_log_message_getstring_name(session_id, "otr_log_still_unverified");
     }
     otr_show_status(session_id);
 }

@@ -2,14 +2,18 @@
 <panel border="true" bottom="-409" enabled="true" follows="left|top|right|bottom"
      height="408" label="Emerald" left="102" mouse_opaque="true"
      name="Emerald panel" width="517">
-  <tab_container label="o.o" bottom="0" height="408" left="0" mouse_opaque="false" name="tab"
+  <tab_container label="Emerald Prefs" bottom="0" height="408" left="0" mouse_opaque="false" name="tabs"
+	     tab_min_width="50" tab_position="top" width="500" bg_opaque_color="0,0,0,0.0">
+  <tab_container label="Page 1" bottom="0" height="408" left="0" mouse_opaque="false" name="tab"
 	     tab_min_width="50" tab_position="top" width="500" bg_opaque_color="0,0,0,0.0">
     <panel border="true" bottom="-408" follows="left|top|right|bottom" height="408"
 		     label="TP/Login" left="1" mouse_opaque="true" name="Teleport/Login" width="517">
 <button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?" name="EmeraldHelp_TeleportLogin" tool_tip="Click here for help regarding the settings in this page." right="490" width="18" />
       <check_box bottom="-30" enabled="true"
+
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
            label="Double-click Teleport" left="10" mouse_opaque="true"
+
            name="double_click_tp_toggle" radio_style="false" width="270" control_name="EmeraldDoubleClickTeleport" />
       <check_box bottom_delta="-0" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
@@ -90,6 +94,8 @@
              tool_tip="Revert Production Grid Voice Server"
              left="10"
              bottom="-40"
+
+
              width="100"
              height="20"
              font="SansSerifSmall"
@@ -130,8 +136,9 @@
     <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525"
 		     label="Shields" left="1" mouse_opaque="true" name="Shields" width="418">
 <button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?" name="EmeraldHelp_Shields" tool_tip="Click here for help regarding the settings in this page." right="490" width="18" />
-      <check_box bottom="-30" enabled="true"
-           follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
+<button bottom="-30" follows="left|top" font="SansSerifSmall" height="18" label="Stealth Mode" name="EmeraldPrefs_Stealth" tool_tip="Click here to load the Stealth preset." right="300" width="100" />
+<button bottom_delta="0" follows="left|top" font="SansSerifSmall" height="18" label="Full Features Mode" name="EmeraldPrefs_FullFeatures" tool_tip="Click here to load the Full Features preset." left_delta="100" width="130" />
+      <check_box bottom="-30" enabled="true" follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
            label="Clothing Layer Protection" left="10" mouse_opaque="true"
            name="clothing_protect_toggle" radio_style="false" width="270" control_name="EmeraldClothingLayerProtection" />
       <panel
@@ -219,33 +226,32 @@ Recommended Settings are:
       <!--[$PLOTR$]-->
       <radio_group bottom="-85" draw_border="false" enabled="true" follows="left|top" height="80" left="290" mouse_opaque="true"
 		   name="EmeraldUseOTR" width="160">
-        <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0"
-		    name="0" width="98" mouse_opaque="true"
-                    tool_tip="Require use of OTR in IMs"
-		    >Require use of OTR in IMs</radio_item>
-        <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0"
-		    name="1" width="98" mouse_opaque="true"
-                    tool_tip="Request OTR if available."
-		    >Request OTR if available</radio_item>
-        <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0"
-		    name="2" width="98" mouse_opaque="true"
-                    tool_tip="Accept OTR requests."
-		    >Accept OTR requests</radio_item>
-        <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0"
-		    name="3" width="98"  mouse_opaque="true" 
-                    tool_tip="Decline use of OTR."
-		    >Decline use of OTR</radio_item>
+        <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0" mouse_opaque="true" name="0" width="98"
+                    tool_tip="Require use of OTR in IMs">
+          Require use of OTR in IMs
+        </radio_item>
+        <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0" mouse_opaque="true" name="1" width="98"
+                    tool_tip="Request OTR if available.">
+          Request OTR if available
+        </radio_item>
+        <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0" mouse_opaque="true" name="2" width="98"
+                    tool_tip="Accept OTR requests.">
+          Accept OTR requests
+        </radio_item>
+        <radio_item type="string" length="1" bottom_delta="-10" enabled="true" height="16" left_delta="0" mouse_opaque="true" name="3" width="98"
+                    tool_tip="Decline use of OTR.">
+          Decline use of OTR
+        </radio_item>
       </radio_group>
-      <button follows="left|top" font="SansSerifSmall" bottom_delta="0" right="490" height="20" width="80" 
-	      name="otr_help_btn" label="What is OTR?"/>
+      <button bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="20" left="300" name="otr_help_btn" width="98" label="What is OTR?"/>
       <check_box follows="left|top" left="290" bottom_delta="-20" enabled="true"
 		 font="SansSerifSmall" height="16" initial_value="false" mouse_opaque="true"
 		 name="EmeraldOTRInTypingStop-toggle" radio_style="false" width="98"
 		 control_name="EmeraldOTRInTypingStop"
 		 tool_tip="Put all OTR encrypted messages into IM_TYPING_STOP packets.  Incompatible with previous versions of OTR."
 		 label="Use typing_stop for OTR"/>
-      <view_border bevel_style="none" border_thickness="1" bottom_delta="4" follows="top|left" height="100" left_delta="-25" name="OTRBorder" width="0" />
       <!--[/$PLOTR$]-->
+      <view_border bevel_style="none" border_thickness="1" bottom_delta="4" follows="top|left" height="100" left_delta="-30" name="OTRBorder" width="0" />
       <check_box bottom="-25" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
            label="Announce incoming instant messages" left="10" mouse_opaque="true"
@@ -268,12 +274,12 @@ Recommended Settings are:
            name="EmeraldInstantMessageResponseAnyone" radio_style="false" width="270" />
       <check_box bottom_delta="-20" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Don't show instant messages from people you've chosen to send auto-responses" left_delta="25" mouse_opaque="true"
-           name="EmeraldInstantMessageShowResponded" radio_style="false" width="270" />
+           label="Send as soon as they start typing" left_delta="25" mouse_opaque="true"
+           name="EmeraldInstantMessageShowOnTyping" radio_style="false" width="270" />
       <check_box bottom_delta="-20" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Send as soon as they start typing" left_delta="0" mouse_opaque="true"
-           name="EmeraldInstantMessageShowOnTyping" radio_style="false" width="270" />
+           label="Don't show instant messages from people you've chosen to send auto-responses" left_delta="0" mouse_opaque="true"
+           name="EmeraldInstantMessageShowResponded" radio_style="false" width="270" />
       <check_box bottom_delta="-20" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
            label="Autorespond on every message, not just first one they send" left_delta="25" mouse_opaque="true"
@@ -311,7 +317,7 @@ Recommended Settings are:
 			     width="400">
         Currently set to: ITEM
       </text>
-      <check_box bottom_delta="-40" enabled="true"
+      <check_box bottom_delta="-30" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
            label="Show money changes in local chat" left_delta="0" mouse_opaque="true"
            name="EmMoneyChat-toggle" radio_style="false" width="270" control_name="EmeraldShowMoneyChangeInChat" />
@@ -327,9 +333,11 @@ Recommended Settings are:
       <panel
             name="avatar_options"
             left="5"
+
             width="310"
             height="75"
             bottom="-80"
+
             border="true"
             mouse_opaque="true"
             bevel_style="in"
@@ -420,7 +428,7 @@ Recommended Settings are:
          label="Allow MU* poses" left_delta="0" mouse_opaque="true"
          name="AllowMUpose-toggle" radio_style="false" width="270" control_name="EmeraldAllowMUpose"
 		tool_tip="Allow MU* pose style in chat and IM (with ':' as a synonymous to '/me ')" />
-      <check_box bottom_delta="-40" enabled="true"
+      <check_box bottom_delta="-20" enabled="true"
          follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
          label="Enable Restrained Life [RLV] features (requires restart)" left_delta="0" mouse_opaque="true"
          name="rlv-toggle" radio_style="false" width="270" control_name="RestrainedLife" />
@@ -428,13 +436,9 @@ Recommended Settings are:
     <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525"
            label="CmdLine" left="1" mouse_opaque="true" name="CmdLine" width="418">
 <button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?" name="EmeraldHelp_CmdLine" tool_tip="Click here for help regarding the settings in this page." right="490" width="18" />
-      <text bottom="-20" follows="left|top" font="SansSerifSmall" height="16" left="5" name="loltxt1" width="512">
-        ("cmd" in the usage and examples refers to the text in the textbox)
-Leave any command blank to deactivate it.
-      </text>
-      <check_box bottom_delta="-40" enabled="true"
+      <check_box bottom_delta="-20" enabled="true"
            follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
-           label="Enable usage of chat bar as a command line" left_delta="0" mouse_opaque="true"
+           label="Enable usage of chat bar as a command line" left="5" mouse_opaque="true"
            name="chat_cmd_toggle" radio_style="false" width="270" control_name="EmeraldCmdLine" />
       <text bottom_delta="-18" follows="left|top" font="SansSerifSmall" height="16" left_delta="10" name="loltxt2" width="512">
         Teleport to a position within the region
@@ -471,6 +475,9 @@ Leave any command blank to deactivate it.
       <text bottom_delta="-18" follows="left|top" font="SansSerifSmall" height="16" left_delta="0" name="loltxt6" width="512">
         Rez a platform (diam. optional, 0-30m)
 (usage: cmd diameter) (ex: cmd 25)
+
+
+
       </text>
       <line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-30"
            follows="left|top" font="SansSerifSmall" height="20" left_delta="0"
@@ -563,9 +570,11 @@ Leave any command blank to deactivate it.
       <panel
              name="antispam_options"
              left="5"
+
              width="150"
              height="75"
              bottom="-90"
+
              border="true"
              mouse_opaque="true"
              bevel_style="in"
@@ -791,6 +800,163 @@ you up or down without altering your shape.
 	tool_tip="Default behaviour is to show the axis on the center of mass of a linkset. If enabled, the axis will be shown on the root prim of the linkset instead."
            name="EmBuildPrefsActualRoot_toggle" control_name="EmeraldBuildPrefs_ActualRoot" radio_style="false" width="270" />
     </panel>
+  </tab_container>
 
+
+
+
+
+  <tab_container label="Page 2" bottom="0" height="408" left="0" mouse_opaque="false" name="tab2"
+	     tab_min_width="50" tab_position="top" width="500" bg_opaque_color="0,0,0,0.0">
+    <panel border="true" bottom="-408" follows="left|top|right|bottom" height="408"
+		     label="IRC" left="1" mouse_opaque="true" name="IRC" width="517">
+<button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?" name="EmeraldHelp_IRC" tool_tip="Click here for help regarding the settings in this page." right="490" width="18" />
+      <text bottom="-20" follows="left|top" font="SansSerifSmall" height="16" left="150" name="IRC-colors" width="512">
+        Colors used to display IRC Messages:
+      </text>
+      <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom="-75"
+           can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top"
+           height="50" label="Channel" left="2" mouse_opaque="true"
+           name="colorswatch" tool_tip="Click to open Color Picker" width="50" control_name="EmeraldIRC_ColorChannel" />
+      <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom_delta="0"
+           can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top"
+           height="50" label="Action" left_delta="55" mouse_opaque="true"
+           name="colorswatch" tool_tip="Click to open Color Picker" width="50" control_name="EmeraldIRC_ColorAction" />
+      <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom_delta="0"
+           can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top"
+           height="50" label="Private" left_delta="55" mouse_opaque="true"
+           name="colorswatch" tool_tip="Click to open Color Picker" width="50" control_name="EmeraldIRC_ColorPrivate" />
+      <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom_delta="0"
+           can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top"
+           height="50" label="Notice" left_delta="55" mouse_opaque="true"
+           name="colorswatch" tool_tip="Click to open Color Picker" width="50" control_name="EmeraldIRC_ColorNotice" />
+      <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom_delta="0"
+           can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top"
+           height="50" label="Join" left_delta="55" mouse_opaque="true"
+           name="colorswatch" tool_tip="Click to open Color Picker" width="50" control_name="EmeraldIRC_ColorJoin" />
+      <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom_delta="0"
+           can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top"
+           height="50" label="Quit" left_delta="55" mouse_opaque="true"
+           name="colorswatch" tool_tip="Click to open Color Picker" width="50" control_name="EmeraldIRC_ColorQuit" />
+      <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom_delta="0"
+           can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top"
+           height="50" label="Kick" left_delta="55" mouse_opaque="true"
+           name="colorswatch" tool_tip="Click to open Color Picker" width="50" control_name="EmeraldIRC_ColorKick" />
+      <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom_delta="0"
+           can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top"
+           height="50" label="Nick" left_delta="55" mouse_opaque="true"
+           name="colorswatch" tool_tip="Click to open Color Picker" width="50" control_name="EmeraldIRC_ColorNick" />
+      <color_swatch border_color="0.45098, 0.517647, 0.607843, 1" bottom_delta="0"
+           can_apply_immediately="true" color="1, 1, 1, 1" follows="left|top"
+           height="50" label="System" left_delta="55" mouse_opaque="true"
+           name="colorswatch" tool_tip="Click to open Color Picker" width="50" control_name="EmeraldIRC_ColorSystem" />
+    </panel>
+		<panel border="true" bottom="-580" follows="left|top|right|bottom" height="525"
+			label="Utility Stream" left="1" mouse_opaque="true" name="Utility Stream" width="418">
+<button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?" name="EmeraldHelp_UtilityStream" tool_tip="Click here for help regarding the settings in this page." right="490" width="18" />
+			<check_box bottom="-30" enabled="true"
+					follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
+					label="Enable Greenlife Utility Stream" left="5" mouse_opaque="true"
+					tool_tip="Enable Greenlife Utility Stream (GUS)"
+					name="GUS Enable" radio_style="false" width="128" control_name="EmeraldGUSEnabled" />
+			<panel
+			name="gus_panel"
+			left_delta="0"
+			width="280"
+			height="45"
+			bottom="-90"
+			border="true"
+			mouse_opaque="true"
+			bevel_style="in"
+			background_visible="true"
+			background_opaque="true"
+			follows="top|left"
+			bg_opaque_color="0,0,0,0.1"
+			bg_alpha_color="blue"
+			can_resize="false"
+			>
+			<spinner bottom_delta="-20" decimal_digits="0" follows="left|top" height="16"
+					increment="1" label="Channel" label_width="65"
+					left_delta="5" max_val="99999" min_val="-9999" mouse_opaque="true"
+					name="Channel" width="128" control_name="EmeraldGUSChannel" />
+			<check_box bottom_delta="0" enabled="true"
+					follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
+					label="Enable FastEvents" left_delta="138" mouse_opaque="true"
+					tool_tip="Enable Greenlife Utility Stream FastEvents (GUS-FE)"
+					name="GUS-FE Enable" radio_style="false" width="128" control_name="EmeraldGUSFastEventsEnabled" />
+			<spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16"
+					increment="0.5" label="GUS Rate" label_width="65"
+					left_delta="-138" max_val="10.00" min_val="0.50" mouse_opaque="true"
+					name="Refresh Rate" width="128" control_name="EmeraldGUSRefresh" />
+			<spinner bottom_delta="0" decimal_digits="5" follows="left|top" height="16"
+					increment="0.5" label="GUS-FE Rate" label_width="65"
+					left_delta="138" max_val="20.00" min_val="1.00" mouse_opaque="true"
+					name="Fast Event Refresh Rate" width="128" control_name="EmeraldGUSFastEventsRefresh" />
+			</panel>
+			<!-- 
+					GUS FEATURES:
+					THESE ARE AS COLUMNS; ADDITIONAL ROWS PER GUS / GUS-FE COLUMNS!
+			-->
+			<!-- GUS COLUMN -->
+			<panel
+			name="gus_feature_column"
+			left_delta="0"
+			width="134"
+			height="45"
+			bottom_delta="-60"
+			border="true"
+			mouse_opaque="true"
+			bevel_style="in"
+			background_visible="true"
+			background_opaque="true"
+			follows="top|left"
+			bg_opaque_color="0,0,0,0.1"
+			bg_alpha_color="blue"
+			can_resize="false"
+			>
+			<text bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="16" left_delta="5" name="rofltxt1" width="512">
+			GUS Variables:
+			</text>
+			<check_box bottom_delta="-20" enabled="true"
+					follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
+					label="Eyeball Rotation" left_delta="5" mouse_opaque="true"
+					tool_tip="Enable streaming of the avatar mesh eyeball rotation; useful for prim-eyes for certain avatars..."
+					name="Eyeball Rotation" radio_style="false" width="128" control_name="EmeraldGUSEyeRot" />
+			</panel>
+			<!-- GUS-FE COLUMN -->
+			<panel
+			name="gus-fe_feature_column"
+			left_delta="146"
+			width="134"
+			height="45"
+			bottom_delta="0"
+			border="true"
+			mouse_opaque="true"
+			bevel_style="in"
+			background_visible="true"
+			background_opaque="true"
+			follows="top|left"
+			bg_opaque_color="0,0,0,0.1"
+			bg_alpha_color="blue"
+			can_resize="false"
+			>
+			<text bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="16" left_delta="5" name="rofltxt2" width="512">
+			GUS-FE Variables:
+			</text>
+			<check_box bottom_delta="-20" enabled="true"
+					follows="left|top" font="SansSerifSmall" height="16" initial_value="false"
+					label="Eyelid State" left_delta="5" mouse_opaque="true"
+					tool_tip="Enable streaming of the avatar mesh eyelid state; useful for prim-eyes for certain avatars..."
+					name="Eyelid State" radio_style="false" width="128" control_name="EmeraldGUSEyelidState" />
+			</panel>
+			<text bottom_delta="-40" follows="left|top" font="SansSerifSmall" height="16" left_delta="-146" name="rofltxt3" width="512">
+					EXPERIMENTAL: The Greenlife Utility Stream is used for streaming information
+from the Emerald viewer into the simulator for access via scripts.
+			</text>
+		</panel>
+    
+
+
+  </tab_container>
   </tab_container>
 </panel>

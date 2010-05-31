@@ -3005,7 +3005,38 @@ Klicken Sie auf „Akzeptieren“, um dem Chat beizutreten, oder auf „Ablehnen
       <button name="No" text="Nein"/>
     </form>
   </notification>
-  
+  <notification name="EmeraldStealth">
+    Deaktiviert alle Funktionen durch die andere erkennen können das sie Emerald benutzen.
+    Es gibt keine Warnung wenn sie einzelne Funktionen selber wieder reaktivieren durch die Emerald erkannt werden kann!
+    Folgende Funktionen werden deaktiviert
+    * OTR automatische Antwort
+    * Regenbogen Effekt
+    * Eigene Effekt Partikel
+    * verbesserte CryoLife Erkennung
+    * Aktuelle KLeidung schützen
+    * GUS
+    * Auswahl Effekt Daten per Chat senden
+    * Viewer Radar Daten per Chat senden
+    Möchten sie den Stealth Modus aktivieren?
+    <form name="form">
+      <button name="Yes" text="Ja"/>
+      <button name="No" text="Nein"/>
+    </form>
+  </notification>
+  <notification name="EmeraldNoStealth">
+    Reaktiviert alle Einstellungen die durch den Stealth Modus abgeschaltet wurden. Reaktiviert möglicherweise Funktionen die sie vor dem Stealth Modus deaktiviert hatten. Reaktivieren?
+    <form name="form">
+      <button name="Yes" text="Ja"/>
+      <button name="No" text="Nein"/>
+    </form>
+  </notification>
+  <notification name="EmeraldRadarChat">
+    Eines ihrer Scripte möchte gern auf die Daten ihres Viewer Radars zugreifen um weniger zu verursachen.
+    <form name="form">
+      <button name="Yes" text="Ja"/>
+      <button name="No" text="Nein"/>
+    </form>
+  </notification>  
   <notification name="BlockedDialogs">
 	Blockierte Dialoge von [FIRST] [LAST]'s Objekt ([KEY])
   </notification>
@@ -3095,6 +3126,27 @@ Sollte das Problem fortbestehen, finden Sie weitere Hilfestellung unter: http://
   the related entries are at the bottom of the file.
 
   Build
+
+  </notification>
+  <notification label="Emerald Help" name="EmeraldHelp_IRC">
+  Help text will go here, please update notifications.xml
+  the related entries are at the bottom of the file.
+
+  IRC
+
+  </notification>
+  <notification label="Emerald Help" name="EmeraldHelp_UtilityStream">
+  Help text will go here, please update notifications.xml
+  the related entries are at the bottom of the file.
+
+  Utility Stream
+
+  </notification>
+  <notification label="Emerald Help" name="EmeraldHelp_Inventory">
+  Help text will go here, please update notifications.xml
+  the related entries are at the bottom of the file.
+
+  Inventory
 
   </notification>
 </notifications>

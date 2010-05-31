@@ -198,6 +198,10 @@ LLUUID LLIMMgr::computeSessionID(
 	const LLUUID& other_participant_id)
 {
 	LLUUID session_id;
+	if( IM_SESSION_IRC_START == dialog)
+	{
+		session_id = other_participant_id;
+	}else
 	if (IM_SESSION_GROUP_START == dialog)
 	{
 		// slam group session_id to the group_id (other_participant_id)
@@ -206,6 +210,7 @@ LLUUID LLIMMgr::computeSessionID(
 	else if (IM_SESSION_CONFERENCE_START == dialog)
 	{
 		session_id.generate();
+		
 	}
 	else if (IM_SESSION_INVITE == dialog)
 	{
@@ -829,7 +834,7 @@ LLUUID LLIMMgr::addSession(
 			name,
 			ids,
 			dialog,
-			TRUE);
+			TRUE);	
 
 		if ( !floater ) return LLUUID::null;
 

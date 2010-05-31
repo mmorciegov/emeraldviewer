@@ -208,6 +208,8 @@ public:
 public:
 	static void		onCustomizeStart();
 	static void		onCustomizeEnd();
+	U8              mCheckingCryolife;
+    BOOL            mIsCryolife;
 
 public:
 	static void		dumpTotalLocalTextureByteCount();

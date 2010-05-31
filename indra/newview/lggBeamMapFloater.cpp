@@ -1,6 +1,6 @@
 /* Copyright (c) 2009
  *
- * Modular Systems Ltd. All rights reserved.
+ * LordGregGreg Back. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
  * without modification, are permitted provided that the following
@@ -16,7 +16,7 @@
  *      may be used to endorse or promote products derived from this
  *      software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY MODULAR SYSTEMS LTD AND CONTRIBUTORS �AS IS�
+ * THIS SOFTWARE IS PROVIDED BY MODULAR SYSTEMS LTD AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MODULAR SYSTEMS OR CONTRIBUTORS
@@ -153,7 +153,7 @@ BOOL lggBeamMapFloater::postBuild(void)
 	childSetAction("beamshape_clear",onClickClear,this);
 	childSetAction("beamshape_load",onClickLoad,this);
 	getChild<LLColorSwatchCtrl>("back_color_swatch")->setCommitCallback(onBackgroundChange);
-	getChild<LLColorSwatchCtrl>("beam_color_swatch")->setColor(LLColor4::red1);
+	getChild<LLColorSwatchCtrl>("beam_color_swatch")->setColor(LLColor4::red);
 	
 	
 	return true;

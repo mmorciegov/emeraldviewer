@@ -21,6 +21,8 @@
 		<menu_item_call label="Zurückgeben..." name="Return..." />
 		<pie_menu label="Mehr &gt;" name="Rate Menu">
 			<menu_item_call label="Melden..." name="Report Abuse..."/>
+      <menu_item_call label="Export" name="Export"/>
+			<menu_item_call label="Deaktivieren" name="Disable">/>
 			<menu_item_call label="Stummschalten" name="Object Mute" />
 			<menu_item_call label="Untersuchen" name="Object Inspect" />
 		</pie_menu>

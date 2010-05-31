@@ -188,6 +188,8 @@
 #include "llfloateravatarlist.h"
 #include "jcfloater_animation_list.h"
 #include "jcfloater_areasearch.h"
+#include "exporttracker.h"
+#include "llfloaterteleporthistory.h"
 
 #if LL_LIBXUL_ENABLED
 #include "llmozlib.h"
@@ -945,7 +947,11 @@ bool idle_startup()
 
 		//guna make a beams directior here too /lgg		
 		std::string lgg_beams_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "beams", ""));
-		LLFile::mkdir(lgg_beams_path_name.c_str());		
+		LLFile::mkdir(lgg_beams_path_name.c_str());	
+
+		//guna make a ircgroups directior here too /lgg		
+		std::string lgg_ircgroups_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "IRCGroups", ""));
+		LLFile::mkdir(lgg_ircgroups_path_name.c_str());	
 
 
 		if (show_connect_box)
@@ -2560,6 +2566,11 @@ bool idle_startup()
 		LLFirstUse::ClientTags();
 		LLFirstUse::EmeraldOTR();
 
+		// Add login location to teleport history 'teleported-into'
+		LLVector3 agent_pos=gAgent.getPositionAgent();
+		LLViewerRegion* regionp = gAgent.getRegion();
+		gFloaterTeleportHistory->addEntry(regionp->getName(),(S16)agent_pos.mV[0],(S16)agent_pos.mV[1],(S16)agent_pos.mV[2],false);
+
 		// Let the map know about the inventory.
 		if(gFloaterWorldMap)
 		{
@@ -3132,6 +3143,13 @@ void pass_processObjectPropertiesFamily(LLMessageSystem *msg, void**)
 	JCFloaterAreaSearch::processObjectPropertiesFamily(msg,0);
 }
 
+void pass_processObjectProperties(LLMessageSystem *msg, void**)
+{
+	// send it to 'observers'
+//	JCExportTracker::processObjectProperties(msg,0);
+	LLSelectMgr::processObjectProperties(msg,0);
+}
+
 void register_viewer_callbacks(LLMessageSystem* msg)
 {
 	msg->setHandlerFuncFast(_PREHASH_LayerData,				process_layer_data );
@@ -3174,7 +3192,7 @@ void register_viewer_callbacks(LLMessageSystem* msg)
 
 	msg->setHandlerFuncFast(_PREHASH_ImprovedInstantMessage,	process_improved_im);
 	msg->setHandlerFuncFast(_PREHASH_ScriptQuestion,			process_script_question);
-	msg->setHandlerFuncFast(_PREHASH_ObjectProperties,			LLSelectMgr::processObjectProperties, NULL);
+	msg->setHandlerFuncFast(_PREHASH_ObjectProperties,			pass_processObjectProperties, NULL);
 	msg->setHandlerFuncFast(_PREHASH_ObjectPropertiesFamily,	pass_processObjectPropertiesFamily, NULL);
 	msg->setHandlerFunc("ForceObjectSelect", LLSelectMgr::processForceObjectSelect);
 

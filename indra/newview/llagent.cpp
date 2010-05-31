@@ -134,6 +134,7 @@
 #include "llappviewer.h"
 #include "llviewerjoystick.h"
 #include "llfollowcam.h"
+#include "llfloaterteleporthistory.h"
 
 using namespace LLVOAvatarDefines;
 
@@ -2808,17 +2809,6 @@ void LLAgent::startTyping()
 		sendAnimationRequest(ANIM_AGENT_TYPE, ANIM_REQUEST_START);
 	}
 	gChatBar->sendChatFromViewer("", CHAT_TYPE_START, FALSE);
-
-	// Addition for avatar list support.
-	// Makes the fact that this avatar is typing appear in the list
-	if ( LLFloaterAvatarList::getInstance() )
-	{
-		LLAvatarListEntry *ent = LLFloaterAvatarList::getInstance()->getAvatarEntry(getID());
-		if ( NULL != ent )
-		{
-			ent->setActivity(ACTIVITY_TYPING);
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -6216,6 +6206,9 @@ void LLAgent::teleportRequest(
 	const LLVector3& pos_local)
 {
 	LLViewerRegion* regionp = getRegion();
+
+	// Set last region data for teleport history
+	gAgent.setLastRegionData(regionp->getName(),gAgent.getPositionAgent());
 	if(regionp && teleportCore())
 	{
 		llinfos << "TeleportRequest: '" << region_handle << "':" << pos_local
@@ -6257,6 +6250,8 @@ void LLAgent::teleportViaLandmark(const LLUUID& landmark_asset_id)
 // [/RLVa:KB]
 
 	LLViewerRegion *regionp = getRegion();
+	// Set last region data for teleport history
+	gAgent.setLastRegionData(regionp->getName(),gAgent.getPositionAgent());
 	if(regionp && teleportCore())
 	{
 		LLMessageSystem* msg = gMessageSystem;
@@ -6272,6 +6267,8 @@ void LLAgent::teleportViaLandmark(const LLUUID& landmark_asset_id)
 void LLAgent::teleportViaLure(const LLUUID& lure_id, BOOL godlike)
 {
 	LLViewerRegion* regionp = getRegion();
+	// Set last region data for teleport history
+	gAgent.setLastRegionData(regionp->getName(),gAgent.getPositionAgent());
 	if(regionp && teleportCore())
 	{
 		U32 teleport_flags = 0x0;
@@ -8144,6 +8141,22 @@ void LLAgent::parseTeleportMessages(const std::string& xml_filename)
 			} //end if ( message exists and has a name)
 		} //end for (all message in set)
 	}//end for (all message sets in xml file)
+}
+
+void LLAgent::setLastRegionData(std::string regionName, LLVector3 agentCoords)
+{
+	mLastRegion = regionName;
+	mLastCoordinates = agentCoords;
+}
+
+std::string LLAgent::getLastRegion()
+{
+	return mLastRegion;
+}
+
+LLVector3 LLAgent::getLastCoords()
+{
+	return mLastCoordinates;
 }
 
 // EOF

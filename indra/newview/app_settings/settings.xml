@@ -1,6 +1,32 @@
 <?xml version="1.0" ?>
 <llsd>
   <map>
+    <key>InventorySearchType</key>
+    <map>
+      <key>Comment</key>
+      <string>Controls what type of inventory search we perform.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>U32</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>ColorllFunction</key>
+    <map>
+      <key>Comment</key>
+      <string>Color for llFunction builtins in the script editor.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Color3</string>
+      <key>Value</key>
+      <array>
+        <real>0.5</real>
+        <real>0.0</real>
+        <real>0.15</real>
+      </array>
+    </map>
 <key>zmm_deffov</key>
   <map>
     <key>Comment</key>
@@ -3332,6 +3358,17 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>EmeraldCryoDetect</key>
+    <map>
+      <key>Comment</key>
+      <string>Passivly scan for cryo life using advanced detection</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>EmeraldAllowPhantomToggle</key>
     <map>
       <key>Comment</key>
@@ -3689,7 +3726,7 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-	<key>EmeraldCardSpamEnabled</key>
+    <key>EmeraldCardSpamEnabled</key>
     <map>
       <key>Comment</key>
       <string>Enables CallingCard Spam Prevention</string>
@@ -3809,6 +3846,17 @@
       <string>String</string>
       <key>Value</key>
       <string>rezplat</string>
+    </map>
+    <key>EmeraldCopyObjKeySeparator</key> <!-- Madgeek -->
+    <map>
+      <key>Comment</key>
+      <string>This chunk of text goes between keys when you use the Copy Key button with multiple objects selected.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>, </string>
     </map>
     <key>EmeraldPlatformSize</key>
     <map>
@@ -4029,6 +4077,150 @@
       <string>Boolean</string>
       <key>Value</key>
       <integer>1</integer>
+    </map>
+    <key>EmeraldIRC_ColorChannel</key>
+    <map>
+      <key>Comment</key>
+      <string>IRC_ColorChannel</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>1.0</real>
+        <real>1.0</real>
+        <real>0.8</real>
+        <real>1.0</real>
+      </array>
+    </map>
+    <key>EmeraldIRC_ColorAction</key>
+    <map>
+      <key>Comment</key>
+      <string>EmeraldIRC_ColorAction</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>1.0</real>
+        <real>0.8</real>
+        <real>1.0</real>
+        <real>1.0</real>
+      </array>
+    </map>
+    <key>EmeraldIRC_ColorPrivate</key>
+    <map>
+      <key>Comment</key>
+      <string>Color of new objects textures</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>0.8</real>
+        <real>1.0</real>
+        <real>1.0</real>
+        <real>1.0</real>
+      </array>
+    </map>
+    <key>EmeraldIRC_ColorNotice</key>
+    <map>
+      <key>Comment</key>
+      <string>Color of new objects textures</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>0.9</real>
+        <real>0.9</real>
+        <real>1.0</real>
+        <real>1.0</real>
+      </array>
+    </map>
+    <key>EmeraldIRC_ColorJoin</key>
+    <map>
+      <key>Comment</key>
+      <string>Color of new objects textures</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>1.0</real>
+        <real>0.9</real>
+        <real>0.9</real>
+        <real>1.0</real>
+      </array>
+    </map>
+    <key>EmeraldIRC_ColorQuit</key>
+    <map>
+      <key>Comment</key>
+      <string>Color of new objects textures</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>1.0</real>
+        <real>0.5</real>
+        <real>0.5</real>
+        <real>1.0</real>
+      </array>
+    </map>
+    <key>EmeraldIRC_ColorKick</key>
+    <map>
+      <key>Comment</key>
+      <string>Color of new objects textures</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>1.0</real>
+        <real>0.4</real>
+        <real>0.4</real>
+        <real>1.0</real>
+      </array>
+    </map>
+    <key>EmeraldIRC_ColorNick</key>
+    <map>
+      <key>Comment</key>
+      <string>Color of new objects textures</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>1.0</real>
+        <real>0.7</real>
+        <real>0.9</real>
+        <real>1.0</real>
+      </array>
+    </map>
+    <key>EmeraldIRC_ColorSystem</key>
+    <map>
+      <key>Comment</key>
+      <string>Color of new objects textures</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>0.7</real>
+        <real>1.0</real>
+        <real>0.7</real>
+        <real>1.0</real>
+      </array>
     </map>
     <key>EmeraldKeepUnpackedCacheFiles</key>
     <map>
@@ -4437,6 +4629,39 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>EmeraldExportProperties</key>
+    <map>
+      <key>Comment</key>
+      <string>o.o</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>EmeraldExportInventory</key>
+    <map>
+      <key>Comment</key>
+      <string>o.o</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>EmeraldExportTextures</key>
+    <map>
+      <key>Comment</key>
+      <string>o.o</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>EnableRippleWater</key>
     <map>
       <key>Comment</key>
@@ -4673,7 +4898,6 @@
         <integer>0</integer>
       </array>
     </map>
-    <key>OtrFloaterSmpRect</key>
     <key>OtrFloaterSmpDialogRect</key>
     <map>
       <key>Comment</key>
@@ -5787,6 +6011,83 @@
 	  <string>S32</string>
 	  <key>Value</key>
 	  <real>13900</real>
+	</map>
+	<key>EmeraldGUSEnabled</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Enable the Greenlife Utility Stream</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>Boolean</string>
+	  <key>Value</key>
+	  <real>0</real>
+	</map>
+	<key>EmeraldGUSChannel</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Chat-channel to whisper GUS data</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>S32</string>
+	  <key>Value</key>
+	  <real>16000</real>
+	</map>
+	<key>EmeraldGUSRefresh</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Frequency for updating standard GUS data</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>5.0</real>
+	</map>
+	<key>EmeraldGUSFastEventsEnabled</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Enable GUS Fast Events for rapidly-changing GUS variables (channel is one higher than EmeraldGUSChannel)</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>Boolean</string>
+	  <key>Value</key>
+	  <real>0</real>
+	</map>
+	<key>EmeraldGUSFastEventsRefresh</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Frequency for updating rapidly-changing GUS varibles</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>20.0</real>
+	</map>
+	<key>EmeraldGUSEyeRot</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Stream avatar eyeball mesh rotation using the Greenlife Utility Stream (GUS)</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>Boolean</string>
+	  <key>Value</key>
+	  <real>0</real>
+	</map>
+	<key>EmeraldGUSEyelidState</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Stream avatar eyelid state using the Greenlife Utility Stream (GUS)</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>Boolean</string>
+	  <key>Value</key>
+	  <real>0</real>
 	</map>
     <key>FlyingAtExit</key>
     <map>
@@ -12960,6 +13261,17 @@
     <map>
       <key>Comment</key>
       <string>Enables OTR info dialog</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>WarnEmeraldRadarChat</key>
+    <map>
+      <key>Comment</key>
+      <string>Enables radarchat info dialog</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>

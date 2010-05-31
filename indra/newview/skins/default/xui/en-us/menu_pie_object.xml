@@ -56,7 +56,10 @@
         				<on_visible function="Object.VisibleExport" />
         				<on_enable function="Object.EnableExport" />
       </menu_item_call>
-			<menu_item_separator />
+			<menu_item_call enabled="false" label="Disable" mouse_opaque="true" name="Disable">
+				<on_click function="Object.Disable" />
+				<on_enable function="Object.EnableDisableObject" />
+			</menu_item_call>
 			<menu_item_call enabled="false" label="Mute" mouse_opaque="true" name="Object Mute">
 				<on_click function="Object.Mute" />
 				<on_enable function="Object.EnableMute" />

@@ -2015,6 +2015,7 @@ bool LLToolDragAndDrop::handleGiveDragAndDrop(LLUUID dest_agent, LLUUID session_
 	// check the type
 	switch(cargo_type)
 	{
+	case DAD_CALLINGCARD:
 	case DAD_TEXTURE:
 	case DAD_SOUND:
 	case DAD_LANDMARK:
@@ -2069,7 +2070,6 @@ bool LLToolDragAndDrop::handleGiveDragAndDrop(LLUUID dest_agent, LLUUID session_
 		}
 		break;
 	}
-	case DAD_CALLINGCARD:
 	default:
 		*accept = ACCEPT_NO;
 		break;

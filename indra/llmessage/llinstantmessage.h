@@ -163,6 +163,8 @@ enum EInstantMessage
 
 	IM_TYPING_START = 41,
 	IM_TYPING_STOP = 42,
+	
+	IM_SESSION_IRC_START = 43,
 
 	IM_COUNT
 };

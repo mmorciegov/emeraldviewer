@@ -1,3 +1,4 @@
+
 /** 
  * @file LLPanelEmerald.cpp
  * @brief General preferences panel in preferences floater
@@ -197,6 +198,9 @@ BOOL LLPanelEmerald::postBuild()
 		
 	//childSetCommitCallback("material",onComboBoxCommit);
 	//childSetCommitCallback("combobox shininess",onComboBoxCommit);
+	getChild<LLButton>("EmeraldPrefs_Stealth")->setClickedCallback(onStealth, this);
+	getChild<LLButton>("EmeraldPrefs_FullFeatures")->setClickedCallback(onNoStealth, this);
+	
 	getChild<LLButton>("custom_beam_btn")->setClickedCallback(onCustomBeam, this);
 	getChild<LLButton>("refresh_beams")->setClickedCallback(onRefresh,this);
 	getChild<LLButton>("delete_beam")->setClickedCallback(onBeamDelete,this);
@@ -227,6 +231,14 @@ BOOL LLPanelEmerald::postBuild()
 	childSetValue("EmeraldUseOTR", LLSD((S32)gSavedSettings.getU32("EmeraldUseOTR"))); // [$PLOTR$]
 	getChild<LLButton>("otr_help_btn")->setClickedCallback(onClickOtrHelp, this);      // [/$PLOTR$]
 
+	childSetCommitCallback("EmeraldGUSEnabled", onUpdateGUSEnabled);
+	childSetCommitCallback("EmeraldGUSChannel", onUpdateGUSChannel);
+	childSetCommitCallback("EmeraldGUSRefresh", onUpdateGUSRate);
+	childSetCommitCallback("EmeraldGUSFastEventsEnabled", onUpdateGUSEnabled);
+	childSetCommitCallback("EmeraldGUSFastEventsRefresh", onUpdateGUSRate);
+	childSetCommitCallback("EmeraldGUSEyeRot", onUpdateGUSFeatures);
+	childSetCommitCallback("EmeraldGUSEyelidState", onUpdateGUSFeatures);
+
 	initHelpBtn("EmeraldHelp_TeleportLogin",	"EmeraldHelp_TeleportLogin");
 	initHelpBtn("EmeraldHelp_Voice",			"EmeraldHelp_Voice");
 	initHelpBtn("EmeraldHelp_Shields",			"EmeraldHelp_Shields");
@@ -235,6 +247,9 @@ BOOL LLPanelEmerald::postBuild()
 	initHelpBtn("EmeraldHelp_CmdLine",			"EmeraldHelp_CmdLine");
 	initHelpBtn("EmeraldHelp_Avatar",			"EmeraldHelp_Avatar");
 	initHelpBtn("EmeraldHelp_Build",			"EmeraldHelp_Build");
+	initHelpBtn("EmeraldHelp_IRC",				"EmeraldHelp_IRC");
+	initHelpBtn("EmeraldHelp_UtilityStream",	"EmeraldHelp_UtilityStream");
+	initHelpBtn("EmeraldHelp_Inventory",		"EmeraldHelp_Inventory");
 
 	LLView *target_view = getChild<LLView>("im_give_drop_target_rect");
 	if(target_view)
@@ -336,6 +351,7 @@ void LLPanelEmerald::apply()
 	gSavedSettings.setBOOL("EmeraldDoubleClickTeleportMode", childGetValue("EmeraldDoubleClickTeleportMode").asBoolean());
 	gSavedSettings.setU32("EmeraldUseOTR", (U32)childGetValue("EmeraldUseOTR").asReal());
 	gLggBeamMaps.forceUpdate();
+	onUpdateGUS(new LLUICtrl(), this);
 }
 
 void LLPanelEmerald::cancel()
@@ -352,6 +368,52 @@ void LLPanelEmerald::onCustomBeam(void* data)
 	//LLPanelEmerald* self =(LLPanelEmerald*)data;
 	LggBeamMap::show(true);
 
+}
+void LLPanelEmerald::onStealth(void* data)
+{
+	//LLPanelEmerald* self =(LLPanelEmerald*)data;
+	LLNotifications::instance().add("EmeraldStealth", LLSD(),LLSD(), callbackEmeraldStealth);
+	
+
+}
+void LLPanelEmerald::callbackEmeraldStealth(const LLSD &notification, const LLSD &response)
+{
+	//gSavedSettings.setWarning("EmeraldOTR", FALSE);
+	S32 option = LLNotification::getSelectedOption(notification, response);
+	if ( option == 0 )
+	{
+		gSavedSettings.setU32("EmeraldUseOTR",(U32)0);
+		gSavedSettings.setBOOL("EmeraldRainbowBeam",false);
+		gSavedSettings.setString("EmeraldBeamShape","===OFF===");
+		gSavedSettings.setBOOL("EmeraldCryoDetect",false);
+		gSavedSettings.setBOOL("EmeraldGUSEnabled",false);
+		gSavedSettings.setBOOL("EmeraldClothingLayerProtection",false);
+		gSavedSettings.setBOOL("EmeraldParticleChat",false);
+		gSavedSettings.setBOOL("EmeraldRadarChatKeys",false);
+	}
+}
+void LLPanelEmerald::onNoStealth(void* data)
+{
+	//LLPanelEmerald* self =(LLPanelEmerald*)data;
+	
+	LLNotifications::instance().add("EmeraldNoStealth", LLSD(),LLSD(), callbackEmeraldNoStealth);
+	
+
+}
+
+void LLPanelEmerald::callbackEmeraldNoStealth(const LLSD &notification, const LLSD &response)
+{
+	//gSavedSettings.setWarning("EmeraldOTR", FALSE);
+	S32 option = LLNotification::getSelectedOption(notification, response);
+	if ( option == 0 )
+	{
+		gSavedSettings.setU32("EmeraldUseOTR",(U32)2);
+		gSavedSettings.setBOOL("EmeraldRainbowBeam",true);
+		gSavedSettings.setString("EmeraldBeamShape","Emerald");
+		gSavedSettings.setBOOL("EmeraldCryoDetect",true);
+		gSavedSettings.setBOOL("EmeraldGUSEnabled",true);
+		gSavedSettings.setBOOL("EmeraldClothingLayerProtection",true);
+	}
 }
 void LLPanelEmerald::beamUpdateCall(LLUICtrl* crtl, void* userdata)
 {
@@ -467,6 +529,37 @@ void LLPanelEmerald::onClickSetMirror(void* user_data)
 }
 
 
+void LLPanelEmerald::onUpdateGUSEnabled(LLUICtrl* ctrl, void* userdata)
+{
+	LLPanelEmerald* self = (LLPanelEmerald*)userdata;
+	gSavedPerAccountSettings.setBOOL("EmeraldGUSEnabled", self->childGetValue("EmeraldGUSEnabled").asBoolean());
+	gSavedPerAccountSettings.setBOOL("EmeraldGUSFastEventsEnabled", self->childGetValue("EmeraldGUSFastEventsEnabled").asBoolean());
+}
+void LLPanelEmerald::onUpdateGUSChannel(LLUICtrl* ctrl, void* userdata)
+{
+	LLPanelEmerald* self = (LLPanelEmerald*)userdata;
+	gSavedPerAccountSettings.setS32("EmeraldGUSChannel", self->childGetValue("EmeraldGUSChannel").asReal());
+}
+void LLPanelEmerald::onUpdateGUSRate(LLUICtrl* ctrl, void* userdata)
+{
+	LLPanelEmerald* self = (LLPanelEmerald*)userdata;
+	gSavedPerAccountSettings.setF32("EmeraldGUSRefresh", llclamp((F32)self->childGetValue("EmeraldGUSRefresh").asReal(), 0.0001f, 10.f));
+	gSavedPerAccountSettings.setF32("EmeraldGUSFastEventsRefresh", llclamp((F32)self->childGetValue("EmeraldGUSFastEventRefresh").asReal(), 0.0001f, 20.f));
+}
+void LLPanelEmerald::onUpdateGUSFeatures(LLUICtrl* ctrl, void* userdata)
+{
+	LLPanelEmerald* self = (LLPanelEmerald*)userdata;
+	gSavedPerAccountSettings.setBOOL("EmeraldGUSEyeRot", self->childGetValue("EmeraldGUSEyeRot").asBoolean());
+	gSavedPerAccountSettings.setBOOL("EmeraldGUSEyelidState", self->childGetValue("EmeraldGUSEyelidState").asBoolean());
+}
+void LLPanelEmerald::onUpdateGUS(LLUICtrl* ctrl, void* userdata)
+{
+	//update everything
+	onUpdateGUSEnabled(ctrl, userdata);
+	onUpdateGUSChannel(ctrl, userdata);
+	onUpdateGUSRate(ctrl, userdata);
+	onUpdateGUSFeatures(ctrl, userdata);
+}
 /*
 //static 
 void LLPanelEmerald::onClickSilver(void* data)

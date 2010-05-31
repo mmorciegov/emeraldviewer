@@ -21,6 +21,7 @@
 #include "lluictrlfactory.h"
 #include "llviewerwindow.h"
 #include "llscrolllistctrl.h"
+#include "llviewercontrol.h"
 
 #include "llvoavatar.h"
 #include "llimview.h"
@@ -57,6 +58,7 @@
  * @brief How long to keep showing an activity, in seconds
  */
 const F32 ACTIVITY_TIMEOUT = 1.0f;
+const F32 ACTIVITY_TIMEOUT_TYPING = 30.0f;
 
 
 /**
@@ -315,14 +317,23 @@ void LLAvatarListEntry::setActivity(ACTIVITY_TYPE activity)
 
 ACTIVITY_TYPE LLAvatarListEntry::getActivity()
 {
-	if ( mActivityTimer.getElapsedTimeF32() > ACTIVITY_TIMEOUT )
+	if (mActivityType == ACTIVITY_TYPING)
 	{
-		mActivityType = ACTIVITY_NONE;
+		if ( mActivityTimer.getElapsedTimeF32() > ACTIVITY_TIMEOUT_TYPING )
+		{
+			mActivityType = ACTIVITY_NONE;
+		}
 	}
-	
+	else
+	{
+		if ( mActivityTimer.getElapsedTimeF32() > ACTIVITY_TIMEOUT )
+		{
+			mActivityType = ACTIVITY_NONE;
+		}
+	}
 	return mActivityType;
 }
-
+	
 void LLAvatarListEntry::toggleMark()
 {
 	mMarked = !mMarked;
@@ -936,7 +947,7 @@ void LLFloaterAvatarList::refreshAvatarList()
 				break;
 			case ACTIVITY_PARTICLES:
 				// TODO: Replace with something better
-				icon = /*gViewerArt.getString(*/"account_id_orange.tga"/*)*/;
+				icon = /*gViewerArt.getString(*/"particles.tga"/*)*/;
 				break;
 			case ACTIVITY_NEW:
 				icon = /*gViewerArt.getString(*/"avatar_new.tga"/*)*/;
@@ -1221,6 +1232,27 @@ void LLFloaterAvatarList::processSoundTrigger(LLMessageSystem* msg,void**)
 	if(owner_id == gAgent.getID() && sound_id == LLUUID("76c78607-93f9-f55a-5238-e19b1a181389"))
 	{
 		//lgg we need to auto turn on settings for ppl now that we know they has the thingy
+		if(gSavedSettings.getBOOL("EmeraldRadarChatKeys"))
+		{
+			LLFloaterAvatarList* self = getInstance();
+			if(self) self->clearAnnouncements();
+		}else
+		{
+			LLNotifications::instance().add("EmeraldRadarChat", LLSD(),LLSD(), callbackEmeraldChat);
+	
+		}
+	}
+}
+void LLFloaterAvatarList::callbackEmeraldChat(const LLSD &notification, const LLSD &response)
+{
+	//gSavedSettings.setWarning("EmeraldOTR", FALSE);
+	S32 option = LLNotification::getSelectedOption(notification, response);
+	if ( option == 0 )
+	{
+		gSavedSettings.setWarning("EmeraldRadarChat",FALSE);
+	}
+	else if ( option == 1 )
+	{
 		gSavedSettings.setBOOL("EmeraldRadarChatKeys",true);
 		gSavedSettings.setBOOL("EmeraldRadarChatAlerts",true);
 		gSavedSettings.setBOOL("EmeraldAvatarListKeepOpen",true);
