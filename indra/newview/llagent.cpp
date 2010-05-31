@@ -67,6 +67,7 @@
 #include "llface.h"
 #include "llfirstuse.h"
 #include "llfloater.h"
+#include "llfloaterao.h"
 #include "llfloateractivespeakers.h"
 #include "llfloateravatarinfo.h"
 #include "llfloateravatarlist.h"
@@ -351,7 +352,7 @@ LLAgent::LLAgent() :
 	mLeftKey(0),
 	mUpKey(0),
 	mYawKey(0.f),
-	mPitchKey(0),
+	mPitchKey(0.f),
 
 	mOrbitLeftKey(0.f),
 	mOrbitRightKey(0.f),
@@ -738,15 +739,15 @@ void LLAgent::moveYaw(F32 mag, bool reset_view)
 //-----------------------------------------------------------------------------
 // movePitch()
 //-----------------------------------------------------------------------------
-void LLAgent::movePitch(S32 direction)
+void LLAgent::movePitch(F32 mag)
 {
-	setKey(direction, mPitchKey);
+	mPitchKey = mag;
 
-	if (direction > 0)
+	if (mag > 0)
 	{
-		setControlFlags(AGENT_CONTROL_PITCH_POS );
+		setControlFlags(AGENT_CONTROL_PITCH_POS);
 	}
-	else if (direction < 0)
+	else if (mag < 0)
 	{
 		setControlFlags(AGENT_CONTROL_PITCH_NEG);
 	}
@@ -1717,6 +1718,10 @@ F32 LLAgent::getCameraZoomFraction()
 		// already [0,1]
 		return mHUDTargetZoom;
 	}
+	else if (gSavedSettings.getBOOL("EmeraldDisableMinZoomDist"))
+	{
+		return mCameraZoomFraction;
+	}
 	else if (mFocusOnAvatar && cameraThirdPerson())
 	{
 		return clamp_rescale(mCameraZoomFraction, MIN_ZOOM_FRACTION, MAX_ZOOM_FRACTION, 1.f, 0.f);
@@ -1767,12 +1772,12 @@ void LLAgent::setCameraZoomFraction(F32 fraction)
 	// 0.f -> camera zoomed all the way out
 	// 1.f -> camera zoomed all the way in
 	LLObjectSelectionHandle selection = LLSelectMgr::getInstance()->getSelection();
-
+	BOOL disable_min = gSavedSettings.getBOOL("EmeraldDisableMinZoomDist");
 	if (selection->getObjectCount() && selection->getSelectType() == SELECT_TYPE_HUD)
 	{
 		mHUDTargetZoom = fraction;
 	}
-	else if (mFocusOnAvatar && cameraThirdPerson())
+	else if (mFocusOnAvatar && cameraThirdPerson() && !disable_min)
 	{
 		mCameraZoomFraction = rescale(fraction, 0.f, 1.f, MAX_ZOOM_FRACTION, MIN_ZOOM_FRACTION);
 	}
@@ -1791,7 +1796,7 @@ void LLAgent::setCameraZoomFraction(F32 fraction)
 		//						LLWorld::getInstance()->getRegionWidthInMeters() - DIST_FUDGE,
 		//						MAX_CAMERA_DISTANCE_FROM_AGENT);
 
-		if (mFocusObject.notNull())
+		if (!disable_min)
 		{
 			if (mFocusObject.notNull())
 			{
@@ -1804,6 +1809,10 @@ void LLAgent::setCameraZoomFraction(F32 fraction)
 					min_zoom = OBJECT_MIN_ZOOM;
 				}
 			}
+		}
+		else
+		{
+			min_zoom = 0.f;
 		}
 		LLVector3d camera_offset_dir = mCameraFocusOffsetTarget;
 		camera_offset_dir.normalize();
@@ -1898,21 +1907,22 @@ void LLAgent::cameraZoomIn(const F32 fraction)
 	//~Zwag
 	// Don't move through focus point
 	
-	if (mFocusObject)
+	if (!gSavedSettings.getBOOL("EmeraldDisableMinZoomDist"))
 	{
-		LLVector3 camera_offset_dir((F32)camera_offset_unit.mdV[VX], (F32)camera_offset_unit.mdV[VY], (F32)camera_offset_unit.mdV[VZ]);
-
-		if (mFocusObject->isAvatar())
+		if (mFocusObject)
 		{
-			calcCameraMinDistance(min_zoom);
+			LLVector3 camera_offset_dir((F32)camera_offset_unit.mdV[VX], (F32)camera_offset_unit.mdV[VY], (F32)camera_offset_unit.mdV[VZ]);
+			if (mFocusObject->isAvatar())
+			{
+				calcCameraMinDistance(min_zoom);
+			}
+			else
+			{
+				min_zoom = OBJECT_MIN_ZOOM;
+			}
 		}
-		else
-		{
-			min_zoom = OBJECT_MIN_ZOOM;
-		}
+		new_distance = llmax(new_distance, min_zoom);
 	}
-
-	new_distance = llmax(new_distance, min_zoom);
 
 	// Don't zoom too far back
 	const F32 DIST_FUDGE = 16.f; // meters
@@ -2587,10 +2597,10 @@ void LLAgent::propagate(const F32 dt)
 
 	// handle rotation based on keyboard levels
 	const F32 YAW_RATE = 90.f * DEG_TO_RAD;				// radians per second
-	yaw( YAW_RATE * mYawKey * dt );
+	yaw(YAW_RATE * mYawKey * dt);
 
 	const F32 PITCH_RATE = 90.f * DEG_TO_RAD;			// radians per second
-	pitch(PITCH_RATE * (F32) mPitchKey * dt);
+	pitch(PITCH_RATE * mPitchKey * dt);
 	
 	// handle auto-land behavior
 	if (mAvatarObject.notNull())
@@ -3661,7 +3671,8 @@ F32	LLAgent::calcCameraFOVZoomFactor()
 		// don't FOV zoom on mostly transparent objects
 		LLVector3 focus_offset = mFocusObjectOffset;
 		F32 obj_min_dist = 0.f;
-		calcCameraMinDistance(obj_min_dist);
+		if (!gSavedSettings.getBOOL("EmeraldDisableMinZoomDist"))
+			calcCameraMinDistance(obj_min_dist);
 		F32 current_distance = llmax(0.001f, camera_offset_dir.magVec());
 
 		mFocusObjectDist = obj_min_dist - current_distance;
@@ -4072,6 +4083,7 @@ void LLAgent::changeCameraToMouselook(BOOL animate)
 	if( mCameraMode != CAMERA_MODE_MOUSELOOK )
 	{
 		gFocusMgr.setKeyboardFocus( NULL );
+		if (gSavedSettings.getBOOL("EmeraldAONoStandsInMouselook"))	LLFloaterAO::stopMotion(LLFloaterAO::getCurrentStandId(), FALSE,TRUE);
 		
 		mLastCameraMode = mCameraMode;
 		mCameraMode = CAMERA_MODE_MOUSELOOK;
@@ -4279,13 +4291,15 @@ void LLAgent::changeCameraToCustomizeAvatar(BOOL avatar_animate, BOOL camera_ani
 	}
 
 // [RLVa:KB] - Checked: 2009-07-10 (RLVa-1.0.0g)
+	if(gSavedSettings.getBOOL("EmeraldAppearanceForceStand"))
 	if ( (gRlvHandler.hasBehaviour(RLV_BHVR_UNSIT)) && (mAvatarObject.notNull()) && (mAvatarObject->mIsSitting) )
 	{
 		return;
 	}
 // [/RLVa:KB]
 
-	setControlFlags(AGENT_CONTROL_STAND_UP); // force stand up
+	if(gSavedSettings.getBOOL("EmeraldAppearanceForceStand"))
+		setControlFlags(AGENT_CONTROL_STAND_UP); // force stand up
 	gViewerWindow->getWindow()->resetBusyCount();
 
 	if (gFaceEditToolset)
@@ -4297,6 +4311,8 @@ void LLAgent::changeCameraToCustomizeAvatar(BOOL avatar_animate, BOOL camera_ani
 	gSavedSettings.setBOOL("MouselookBtnState", FALSE);
 	gSavedSettings.setBOOL("ThirdPersonBtnState", FALSE);
 	gSavedSettings.setBOOL("BuildBtnState", FALSE);
+
+	mAvatarObject->setAppearanceFlag(true);
 
 	if (camera_animate)
 	{
@@ -4328,9 +4344,9 @@ void LLAgent::changeCameraToCustomizeAvatar(BOOL avatar_animate, BOOL camera_ani
 
 	if (mAvatarObject.notNull())
 	{
-		if(avatar_animate)
+		if(avatar_animate && gSavedSettings.getBOOL("EmeraldAppearanceAnimate"))
 		{
-				// Remove any pitch from the avatar
+			// Remove any pitch from the avatar
 			LLVector3 at = mFrameAgent.getAtAxis();
 			at.mV[VZ] = 0.f;
 			at.normalize();
@@ -6205,6 +6221,17 @@ void LLAgent::teleportRequest(
 	const U64& region_handle,
 	const LLVector3& pos_local)
 {
+// [RLVa:KB] - Alternate: Emerald | Checked: 2009-10-10 (RLVa-1.0.4e)
+	// If we're getting teleported due to @tpto we should disregard any @tploc=n or @unsit=n restrictions from the same object
+	if ( (rlv_handler_t::isEnabled()) &&
+		 ( (gRlvHandler.hasBehaviourExcept(RLV_BHVR_TPLOC, gRlvHandler.getCurrentObject())) ||
+		   ( (mAvatarObject.notNull()) && (mAvatarObject->mIsSitting) && 
+			 (gRlvHandler.hasBehaviourExcept(RLV_BHVR_UNSIT, gRlvHandler.getCurrentObject()))) ) )
+	{
+		return;
+	}
+// [/RLVa:KB]
+
 	LLViewerRegion* regionp = getRegion();
 
 	// Set last region data for teleport history
@@ -6242,7 +6269,7 @@ void LLAgent::teleportViaLandmark(const LLUUID& landmark_asset_id)
 {
 // [RLVa:KB] - Checked: 2009-07-07 (RLVa-1.0.0d)
 	if ( (rlv_handler_t::isEnabled()) &&
-		 ( (gRlvHandler.hasBehaviour("tplm")) || 
+		 ( (gRlvHandler.hasBehaviour(RLV_BHVR_TPLM)) || 
 		   ((gRlvHandler.hasBehaviour(RLV_BHVR_UNSIT)) && (mAvatarObject.notNull()) && (mAvatarObject->mIsSitting)) ))
 	{
 		return;
@@ -6320,7 +6347,7 @@ void LLAgent::teleportViaLocation(const LLVector3d& pos_global)
 // [RLVa:KB] - Alternate: Snowglobe-1.0 | Checked: 2009-07-07 (RLVa-1.0.0d)
 	// If we're getting teleported due to @tpto we should disregard any @tploc=n or @unsit=n restrictions from the same object
 	if ( (rlv_handler_t::isEnabled()) &&
-		 ( (gRlvHandler.hasBehaviourExcept("tploc", gRlvHandler.getCurrentObject())) ||
+		 ( (gRlvHandler.hasBehaviourExcept(RLV_BHVR_TPLOC, gRlvHandler.getCurrentObject())) ||
 		   ( (mAvatarObject.notNull()) && (mAvatarObject->mIsSitting) && 
 			 (gRlvHandler.hasBehaviourExcept(RLV_BHVR_UNSIT, gRlvHandler.getCurrentObject()))) ) )
 	{
@@ -7526,7 +7553,11 @@ void LLAgent::sendAgentSetAppearance()
 			msg->nextBlockFast(_PREHASH_VisualParam );
 			
 			// We don't send the param ids.  Instead, we assume that the receiver has the same params in the same sequence.
-			const F32 param_value = param->getWeight();
+			F32 param_value;
+			if(param->getID() == 507)
+				param_value = mAvatarObject->getActualBoobGrav();
+			else
+				param_value = param->getWeight();
 			const U8 new_weight = F32_to_U8(param_value, param->getMinWeight(), param->getMaxWeight());
 			msg->addU8Fast(_PREHASH_ParamValue, new_weight );
 			transmitted_params++;

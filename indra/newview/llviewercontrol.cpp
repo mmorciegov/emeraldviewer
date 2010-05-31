@@ -65,7 +65,7 @@
 #include "llnotify.h"
 #include "llkeyboard.h"
 #include "llerrorcontrol.h"
-#include "llversionviewer.h"
+//#include "llversionviewer.h"
 #include "llappviewer.h"
 #include "llvosurfacepatch.h"
 #include "llvowlsky.h"
@@ -163,6 +163,49 @@ static bool handleAvatarLODChanged(const LLSD& newvalue)
 static bool handleAvatarMaxVisibleChanged(const LLSD& newvalue)
 {
 	LLVOAvatar::sMaxVisible = (U32) newvalue.asInteger();
+	return true;
+}
+
+static bool handleAvMorphTimeChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sAvMorphTime = (F32) newvalue.asReal();
+	return true;
+}
+
+
+static bool handleAvatarBoobMassChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sBoobMass = (F32) newvalue.asReal();
+	return true;
+}
+
+static bool handleAvatarBoobHardnessChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sBoobHardness = (F32) newvalue.asReal();
+	return true;
+}
+
+static bool handleAvatarBoobVelMaxChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sBoobVelMax = (F32) newvalue.asReal();
+	return true;
+}
+
+static bool handleAvatarBoobFrictionChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sBoobFriction = (F32) newvalue.asReal();
+	return true;
+}
+
+static bool handleAvatarBoobFrictionFractionChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sBoobFrictionFraction = (F32) newvalue.asReal();
+	return true;
+}
+
+static bool handleAvatarBoobToggleChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sBoobToggle = (BOOL) newvalue.asReal();
 	return true;
 }
 
@@ -505,6 +548,14 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("RenderDelayCreation")->getSignal()->connect(boost::bind(&handleRenderDelayCreationChanged, _1));
 	gSavedSettings.getControl("RenderUnloadedAvatar")->getSignal()->connect(boost::bind(&handleRenderUnloadedAvatarChanged, _1));
 	gSavedSettings.getControl("RenderGamma")->getSignal()->connect(boost::bind(&handleGammaChanged, _1));
+	gSavedSettings.getControl("AvatarMorphTime")->getSignal()->connect(boost::bind(&handleAvMorphTimeChanged, _1));
+	gSavedSettings.getControl("EmeraldNewShiny")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _1));
+	gSavedSettings.getControl("EmeraldBoobMass")->getSignal()->connect(boost::bind(&handleAvatarBoobMassChanged, _1));
+	gSavedSettings.getControl("EmeraldBoobHardness")->getSignal()->connect(boost::bind(&handleAvatarBoobHardnessChanged, _1));
+	gSavedSettings.getControl("EmeraldBoobVelMax")->getSignal()->connect(boost::bind(&handleAvatarBoobVelMaxChanged, _1));
+	gSavedSettings.getControl("EmeraldBoobFriction")->getSignal()->connect(boost::bind(&handleAvatarBoobFrictionChanged, _1));
+	gSavedSettings.getControl("EmeraldBoobFrictionFraction")->getSignal()->connect(boost::bind(&handleAvatarBoobFrictionFractionChanged, _1));
+	gSavedSettings.getControl("EmeraldBreastPhysicsToggle")->getSignal()->connect(boost::bind(&handleAvatarBoobToggleChanged, _1));
 	gSavedSettings.getControl("RenderFogRatio")->getSignal()->connect(boost::bind(&handleFogRatioChanged, _1));
 	gSavedSettings.getControl("RenderMaxPartCount")->getSignal()->connect(boost::bind(&handleMaxPartCountChanged, _1));
 	gSavedSettings.getControl("RenderDynamicLOD")->getSignal()->connect(boost::bind(&handleRenderDynamicLODChanged, _1));
@@ -613,7 +664,7 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("VectorizeEnable")->getSignal()->connect(boost::bind(&handleVectorizeChanged, _1));
 	gSavedSettings.getControl("VectorizeProcessor")->getSignal()->connect(boost::bind(&handleVectorizeChanged, _1));
 	gSavedSettings.getControl("VectorizeSkin")->getSignal()->connect(boost::bind(&handleVectorizeChanged, _1));
-	gSavedSettings.getControl("EnableVoiceChat")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
+	gSavedPerAccountSettings.getControl("EnableVoiceChat")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
 	gSavedSettings.getControl("PTTCurrentlyEnabled")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
 	gSavedSettings.getControl("PushToTalkButton")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
 	gSavedSettings.getControl("PushToTalkToggle")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));

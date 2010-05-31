@@ -166,6 +166,8 @@ enum EInstantMessage
 	
 	IM_SESSION_IRC_START = 43,
 
+	IM_PRIVATE_IRC = 44,
+
 	IM_COUNT
 };
 

@@ -298,11 +298,22 @@ void LLFolderViewItem::refreshFromListener()
 		else
 			mLabelCreator = creator_name;*/
 		
+		//Label for desc search
+		std::string desc;
+		if(item)
+		{
+			if(!item->getDescription().empty())
+			{
+				desc = item->getDescription();
+			}
+		}
+		mLabelDesc = desc;
+
 		//Label for name search
 		mLabel = mListener->getDisplayName();
 
 		//Build label for combined search - RK
-		mLabelAll = mLabel + " " + mLabelCreator;
+		mLabelAll = mLabel + " " + mLabelCreator + " " + mLabelDesc;
 
 		setIcon(mListener->getIcon());
 		time_t creation_date = mListener->getCreationDate();
@@ -322,32 +333,53 @@ void LLFolderViewItem::refresh()
 	
 	std::string searchable_label(mLabel);
 	std::string searchable_label_creator(mLabelCreator);
+	std::string searchable_label_desc(mLabelDesc);
 	std::string searchable_label_all(mLabelAll);
 
 	//add the (no modify), (no transfer) etc stuff to each label.
 	searchable_label.append(mLabelSuffix);
 	searchable_label_creator.append(mLabelSuffix);
+	searchable_label_desc.append(mLabelSuffix);
 	searchable_label_all.append(mLabelSuffix);
 
 	//all labels need to be uppercase.
 	LLStringUtil::toUpper(searchable_label);
 	LLStringUtil::toUpper(searchable_label_creator);
+	LLStringUtil::toUpper(searchable_label_desc);
 	LLStringUtil::toUpper(searchable_label_all);
 
-	if (mSearchableLabel.compare(searchable_label) || 
-		mSearchableLabelCreator.compare(searchable_label_creator))
+	if (mSearchableLabel.compare(searchable_label) ||
+		mSearchableLabelCreator.compare(searchable_label_creator) ||
+		mSearchableLabelDesc.compare(searchable_label_creator))
 	{
 		mSearchableLabel.assign(searchable_label);
 		mSearchableLabelCreator.assign(searchable_label_creator);
+		mSearchableLabelDesc.assign(searchable_label_desc);
 		mSearchableLabelAll.assign(searchable_label_all);
 
 		dirtyFilter();
 		//some part of label has changed, so overall width has potentially changed
 		if (mParentFolder)
-		{
 			mParentFolder->requestArrange();
-		}
 	}
+	
+	/*if(mSearchableLabelCreator.compare(searchable_label_creator))
+	{
+		mSearchableLabelCreator.assign(searchable_label_creator);
+
+		dirtyFilter();
+		if(mParentFolder)
+			mParentFolder->requestArrange();
+	}
+
+	if(mSearchableLabelDesc.compare(searchable_label_desc))
+	{
+		mSearchableLabelDesc.assign(searchable_label_desc);
+
+		dirtyFilter();
+		if(mParentFolder)
+			mParentFolder->requestArrange();
+	}*/
 
 	S32 label_width = sFont->getWidth(mLabel);
 	if( mLabelSuffix.size() )   
@@ -632,11 +664,12 @@ void LLFolderViewItem::rename(const std::string& new_name)
 	}
 }
 
-const std::string& LLFolderViewItem::getSearchableLabel() const
+const std::string& LLFolderViewItem::getSearchableLabel(U32 search_type = 0) const
 {
-	U32 search_type = gSavedSettings.getU32("InventorySearchType");
-	if(search_type == 4)
+	if(search_type == 3)
 		return mSearchableLabelAll;
+	else if(search_type == 2)
+		return mSearchableLabelDesc;
 	else if(search_type == 1)
 		return mSearchableLabelCreator;
 	else
@@ -999,9 +1032,10 @@ void LLFolderViewItem::draw()
 		{
 			// don't draw backgrounds for zero-length strings
 			S32 filter_string_length = mRoot->getFilterSubString().size();
-			if (filter_string_length > 0)
+			std::string combined_string = mLabel + mLabelSuffix;
+			if ((filter_string_length > 0) && (combined_string.find(mRoot->getFilterSubString()) != -1))
 			{
-				std::string combined_string = mLabel + mLabelSuffix;
+//				llinfos << "mLabel " << mLabel<< " mLabelSuffix " << mLabelSuffix << " mLabel " << mLabel << " mLabel " << mLabel << llendl;
 				S32 left = llround(text_left) + sFont->getWidth(combined_string, 0, mStringMatchOffset) - 1;
 				S32 right = left + sFont->getWidth(combined_string, mStringMatchOffset, filter_string_length) + 2;
 				S32 bottom = llfloor(getRect().getHeight() - sFont->getLineHeight() - 3);
@@ -4575,13 +4609,51 @@ BOOL LLInventoryFilter::check(LLFolderViewItem* item)
 	}
 	LLFolderViewEventListener* listener = item->getListener();
 	const LLUUID& item_id = listener->getUUID();
-	mSubStringMatchOffset = mFilterSubString.size() ? item->getSearchableLabel().find(mFilterSubString) : std::string::npos;
-	BOOL passed = (0x1 << listener->getInventoryType() & mFilterOps.mFilterTypes || listener->getInventoryType() == LLInventoryType::IT_NONE)
-					&& (mFilterSubString.size() == 0 || mSubStringMatchOffset != std::string::npos)
+	
+	//When searching for all labels, we need to explode the filter string
+	//Into an array, and then compare each string to the label seperately
+	//Otherwise the filter substring needs to be 
+	//formatted in the same order as the label - Richard Keast
+	U32 search_type = gSavedSettings.getU32("InventorySearchType");
+
+	BOOL passed;
+	//Added ability to toggle this type of searching for all labels cause it's convienient - RKeast
+	if(search_type == 3 || gSavedSettings.getBOOL("ShowPartialSearchResults"))
+	{
+		std::istringstream i(mFilterSubString);
+		std::string blah;
+		
+		LLDynamicArray<std::string> search_array;
+
+		while(i >> blah)
+		{
+			search_array.put(blah);
+		}
+		
+		BOOL subStringMatch = true;
+		for(int i = 0; i < search_array.getLength(); i++)
+		{
+			mSubStringMatchOffset = (search_array.get(i)).size() ? item->getSearchableLabel(search_type).find(search_array.get(i)) : std::string::npos;
+			subStringMatch = subStringMatch && ((search_array.get(i)).size() == 0 || mSubStringMatchOffset != std::string::npos);
+		}
+
+		passed = (0x1 << listener->getInventoryType() & mFilterOps.mFilterTypes || listener->getInventoryType() == LLInventoryType::IT_NONE)
+					&& (subStringMatch)
 					&& (mFilterWorn == false || gAgent.isWearingItem(item_id) ||
-						gAgent.getAvatarObject() && gAgent.getAvatarObject()->isWearingAttachment(item_id))
+						(gAgent.getAvatarObject() && gAgent.getAvatarObject()->isWearingAttachment(item_id)))
 					&& ((listener->getPermissionMask() & mFilterOps.mPermissions) == mFilterOps.mPermissions)
 					&& (listener->getCreationDate() >= earliest && listener->getCreationDate() <= mFilterOps.mMaxDate);
+	}	
+	else
+	{
+		mSubStringMatchOffset = mFilterSubString.size() ? item->getSearchableLabel(search_type).find(mFilterSubString) : std::string::npos;
+		passed = (0x1 << listener->getInventoryType() & mFilterOps.mFilterTypes || listener->getInventoryType() == LLInventoryType::IT_NONE)
+						&& (mFilterSubString.size() == 0 || mSubStringMatchOffset != std::string::npos)
+						&& (mFilterWorn == false || gAgent.isWearingItem(item_id) ||
+							(gAgent.getAvatarObject() && gAgent.getAvatarObject()->isWearingAttachment(item_id)))
+						&& ((listener->getPermissionMask() & mFilterOps.mPermissions) == mFilterOps.mPermissions)
+						&& (listener->getCreationDate() >= earliest && listener->getCreationDate() <= mFilterOps.mMaxDate);
+	}
 	return passed;
 }
 

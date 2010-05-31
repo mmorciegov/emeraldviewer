@@ -213,10 +213,11 @@ void LLFloaterChatterBox::draw()
 
 	LLMultiFloater::draw();
 }
-
 void LLFloaterChatterBox::onOpen()
 {
 	gSavedSettings.setBOOL("ShowCommunicate", TRUE);
+	
+
 }
 
 void LLFloaterChatterBox::onClose(bool app_quitting)

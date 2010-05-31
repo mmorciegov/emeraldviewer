@@ -1,6 +1,7 @@
 #include "llviewerprecompiledheaders.h"
 #include "llagent.h"
 #include "lldrawpoolalpha.h"
+#include "llfirstuse.h"
 #include "llfloateravatarlist.h"
 #include "llfloaterbeacons.h"
 #include "llfloaterchat.h"
@@ -93,10 +94,10 @@ inline bool rlvIsWearingItem(const LLInventoryItem* pItem)
 static bool rlvParseNotifyOption(const std::string& strOption, S32& nChannel, std::string& strFilter)
 {
 	boost_tokenizer tokens(strOption, boost::char_separator<char>(";", "", boost::keep_empty_tokens));
-	boost_tokenizer::iterator itTok = tokens.begin();
+	boost_tokenizer::const_iterator itTok = tokens.begin();
 
 	// Extract and sanity check the first token (required) which is the channel
-	if ( (itTok == tokens.end()) || (!LLStringUtil::convertToS32(*itTok, nChannel)) || (!rlvIsValidChannel(nChannel)) )
+	if ( (itTok == tokens.end()) || (!LLStringUtil::convertToS32(*itTok, nChannel)) || (!rlvIsValidReplyChannel(nChannel)) )
 		return false;
 
 	// Second token (optional) is the filter
@@ -274,7 +275,7 @@ bool RlvHandler::isDetachableExcept(S32 idxAttachPt, LLViewerObject *pObj) const
 	return true;
 }
 
-// Checked: 2009-05-31 (RLVa-0.2.0e) | Modified: RLVa-0.2.0e
+// Checked: 2009-09-06 (RLVa-1.0.2b) | Modified: RLVa-1.0.2b
 bool RlvHandler::setDetachable(S32 idxAttachPt, const LLUUID& idRlvObj, bool fDetachable)
 {
 	// Sanity check - make sure it's an object we know about
@@ -284,20 +285,16 @@ bool RlvHandler::setDetachable(S32 idxAttachPt, const LLUUID& idRlvObj, bool fDe
 
 	if (!fDetachable)
 	{
-		// Sanity check - make sure it's not already marked undetachable by this object (NOTE: m_Attachments is a *multimap*, not a map)
-		for (rlv_detach_map_t::const_iterator itAttach = m_Attachments.lower_bound(idxAttachPt), 
-				endAttach = m_Attachments.upper_bound(idxAttachPt); itAttach != endAttach; ++itAttach)
-		{
-			if (itObj->second.m_UUID == itAttach->second)
-				return false;
-		}
+		#ifdef RLV_EXPERIMENTAL_FIRSTUSE
+			//LLFirstUse::useRlvDetach();
+		#endif // RLV_EXPERIMENTAL_FIRSTUSE
 
+		// NOTE: m_Attachments can contain duplicate <idxAttachPt, idRlvObj> pairs (ie @detach:spine=n,detach=n from an attachment on spine)
 		m_Attachments.insert(std::pair<S32, LLUUID>(idxAttachPt, itObj->second.m_UUID));
 		return true;
 	}
 	else
 	{
-		// NOTE: m_Attachments is a *multimap*, not a map
 		for (rlv_detach_map_t::iterator itAttach = m_Attachments.lower_bound(idxAttachPt), 
 				endAttach = m_Attachments.upper_bound(idxAttachPt); itAttach != endAttach; ++itAttach)
 		{
@@ -323,11 +320,11 @@ bool RlvHandler::setDetachable(S32 idxAttachPt, const LLUUID& idRlvObj, bool fDe
 			LLViewerInventoryItem* pItem = gInventory.getItem(idItem);
 			if (pItem)
 			{
-				if (-1 != pItem->getName().find(RLV_FOLDER_FLAG_NOSTRIP))
+				if (std::string::npos != pItem->getName().find(RLV_FOLDER_FLAG_NOSTRIP))
 					return false;
 
 				LLViewerInventoryCategory* pFolder = gInventory.getCategory(pItem->getParentUUID());
-				if ( (pFolder) && (-1 != pFolder->getName().find(RLV_FOLDER_FLAG_NOSTRIP)) )
+				if ( (pFolder) && (std::string::npos != pFolder->getName().find(RLV_FOLDER_FLAG_NOSTRIP)) )
 					return false;
 			}
 		}
@@ -339,27 +336,47 @@ bool RlvHandler::setDetachable(S32 idxAttachPt, const LLUUID& idRlvObj, bool fDe
 // Behaviour related functions
 //
 
-bool RlvHandler::hasBehaviourExcept(const std::string& strBehaviour, const LLUUID& idObj) const
-{
-	for (rlv_object_map_t::const_iterator itObj = m_Objects.begin(); itObj != m_Objects.end(); ++itObj)
-		if ( (idObj != itObj->second.m_UUID) && (itObj->second.hasBehaviour(strBehaviour)) )
-			return true;
-	return false;
-}
-
 bool RlvHandler::hasBehaviourExcept(ERlvBehaviour eBehaviour, const std::string& strOption, const LLUUID& idObj) const
 {
 	for (rlv_object_map_t::const_iterator itObj = m_Objects.begin(); itObj != m_Objects.end(); ++itObj)
-		if ( (idObj != itObj->second.m_UUID) && (itObj->second.hasBehaviour(eBehaviour, strOption)) )
+		if ( (idObj != itObj->second.m_UUID) && (itObj->second.hasBehaviour(eBehaviour, strOption, false)) )
 			return true;
 	return false;
 }
 
-bool RlvHandler::hasBehaviourExcept(const std::string& strBehaviour, const std::string& strOption, const LLUUID& idObj) const
+// Checked: 2009-10-04 (RLVa-1.0.4c) | Modified: RLVa-1.0.4c
+bool RlvHandler::isException(ERlvBehaviour eBhvr, const RlvExceptionOption& varOption, ERlvExceptionCheck typeCheck) const
 {
-	for (rlv_object_map_t::const_iterator itObj = m_Objects.begin(); itObj != m_Objects.end(); ++itObj)
-		if ( (idObj != itObj->second.m_UUID) && (itObj->second.hasBehaviour(strBehaviour, strOption)) )
-			return true;
+	// We need to "strict check" exceptions only if: the restriction is actually in place *and* (isPermissive(eBhvr) == FALSE)
+	if (RLV_CHECK_DEFAULT == typeCheck)
+		typeCheck = ( (hasBehaviour(eBhvr)) && (!isPermissive(eBhvr)) ) ? RLV_CHECK_STRICT : RLV_CHECK_PERMISSIVE;
+
+	std::list<LLUUID> objList;
+	if (RLV_CHECK_STRICT == typeCheck)
+	{
+		// If we're "strict checking" then we need the UUID of every object that currently has 'eBhvr' restricted
+		for (rlv_object_map_t::const_iterator itObj = m_Objects.begin(); itObj != m_Objects.end(); ++itObj)
+			if (itObj->second.hasBehaviour(eBhvr, !hasBehaviour(RLV_BHVR_PERMISSIVE)))
+				objList.push_back(itObj->first);
+	}
+
+	for (rlv_exception_map_t::const_iterator itException = m_Exceptions.lower_bound(eBhvr), 
+			endException = m_Exceptions.upper_bound(eBhvr); itException != endException; ++itException)
+	{
+		if (itException->second.varOption == varOption)
+		{
+			// For permissive checks we just return on the very first match
+			if (RLV_CHECK_PERMISSIVE == typeCheck)
+				return true;
+
+			// For strict checks we don't return until the list is empty (every object with 'eBhvr' restricted also contains the exception)
+			std::list<LLUUID>::iterator itList = std::find(objList.begin(), objList.end(), itException->second.idObject);
+			if (itList != objList.end())
+				objList.erase(itList);
+			if (objList.empty())
+				return true;
+		}
+	}
 	return false;
 }
 
@@ -475,6 +492,10 @@ BOOL RlvHandler::processCommand(const LLUUID& uuid, const std::string& strCmd, b
 				}
 			}
 			break;
+		case RLV_TYPE_CLEAR:
+			fRet = processClearCommand(uuid, rlvCmd);
+			notifyBehaviourObservers(rlvCmd, !fFromObj);
+			break;
 		case RLV_TYPE_FORCE:		// Checked:
 			fRet = processForceCommand(uuid, rlvCmd);
 			break;
@@ -482,32 +503,6 @@ BOOL RlvHandler::processCommand(const LLUUID& uuid, const std::string& strCmd, b
 			fRet = processReplyCommand(uuid, rlvCmd);
 			break;
 		case RLV_TYPE_UNKNOWN:		// Checked:
-			{
-				if ("clear" == rlvCmd.getBehaviour())
-				{
-					const std::string& strFilter = rlvCmd.getParam(); std::string strCmdRem;
-
-					rlv_object_map_t::const_iterator itObj = m_Objects.find(uuid);
-					if (itObj != m_Objects.end())	// No sense in @clear'ing if we don't have any commands for this object
-					{
-						const RlvObject& rlvObj = itObj->second; bool fContinue = true;
-						for (rlv_command_list_t::const_iterator itCmd = rlvObj.m_Commands.begin(), itCurCmd; 
-								((fContinue) && (itCmd != rlvObj.m_Commands.end())); )
-						{
-							itCurCmd = itCmd++;		// Point itCmd ahead so it won't get invalidated if/when we erase a command
-
-							const RlvCommand& rlvCmdRem = *itCurCmd;
-							if ( (strFilter.empty()) || (-1 != rlvCmdRem.asString().find(strFilter)) )
-							{
-								fContinue = (rlvObj.m_Commands.size() > 1); // rlvObj will become invalid once we remove the last command
-								strCmdRem = rlvCmdRem.getBehaviour() + ":" + rlvCmdRem.getOption() + "=y";
-								processCommand(uuid, strCmdRem, false);
-							}
-						}
-						fRet = TRUE;
-					}
-				}
-			}
 			break;
 		#ifdef LL_GNUC
 		default:
@@ -532,7 +527,11 @@ BOOL RlvHandler::processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 	const std::string& strOption = rlvCmd.getOption();
 
 	if ( (RLV_BHVR_UNKNOWN != eBehaviour) && (strOption.empty()) )
+	{
+		if (rlvCmd.isStrict())
+			addException(uuid, RLV_BHVR_PERMISSIVE, eBehaviour);
 		m_Behaviours[eBehaviour]++;
+	}
 
 	switch (eBehaviour)
 	{
@@ -679,6 +678,13 @@ BOOL RlvHandler::processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 					pAvList->close();
 			}
 			break;
+		case RLV_BHVR_FARTOUCH:
+			{
+				#ifdef RLV_EXPERIMENTAL_FIRSTUSE
+					//LLFirstUse::useRlvFartouch();
+				#endif // RLV_EXPERIMENTAL_FIRSTUSE
+			}
+			break;
 		case RLV_BHVR_FLY:					// @fly=n					- Checked: 2009-07-05 (RLVa-1.0.0c)
 			{
 				// If currently flying, simulate clicking the Fly button [see LLToolBar::onClickFly()]
@@ -721,9 +727,9 @@ BOOL RlvHandler::processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 		case RLV_BHVR_SHOWHOVERTEXT:		// @showhovertext:<uuid>=n	- Checked: 2009-07-09 (RLVa-0.2.2a) | Modified: RLVa-1.0.0f
 			{
 				LLUUID idException(strOption);
-				if (!idException.isNull())	// If there's an option it should be a valid UUID
+				if (idException.notNull())	// If there's an option it should be a valid UUID
 				{
-					addException(eBehaviour, LLUUID(strOption));
+					addException(uuid, eBehaviour, idException);
 
 					// Clear the object's hover text
 					LLViewerObject* pObj = gObjectList.findObject(idException);
@@ -743,6 +749,13 @@ BOOL RlvHandler::processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 				}
 			}
 			break;
+		case RLV_BHVR_SENDCHANNEL:			// @sendchannel:<uuid>=add	- Checked: 2009-10-05 (RLVa-1.0.4a) | Modified: RLVa-1.0.4a
+			{
+				S32 nChannel;	// If there's an option it should be a valid (=positive and non-zero) chat channel
+				if ( (!strOption.empty()) && (LLStringUtil::convertToS32(strOption, nChannel)) && (nChannel > 0) )
+					addException(uuid, eBehaviour, nChannel);
+			}
+			break;
 		case RLV_BHVR_RECVCHAT:				// @recvchat:<uuid>=add		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 		case RLV_BHVR_RECVEMOTE:			// @recvemote:<uuid>=add	- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 		case RLV_BHVR_RECVIM:				// @recvim:<uuid>=add		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
@@ -750,15 +763,19 @@ BOOL RlvHandler::processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 		case RLV_BHVR_TPLURE:				// @tplure:<uuid>=add		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 		case RLV_BHVR_ACCEPTTP:				// @accepttp:<uuid>=add		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 			{
-				addException(eBehaviour, LLUUID(strOption));
+				LLUUID idException(strOption);
+				if (idException.notNull())	// If there's an option it should be a valid UUID
+					addException(uuid, eBehaviour, LLUUID(strOption));
 			}
 			break;
-		default:
+		case RLV_BHVR_UNKNOWN:
 			{
 				// Give our observers a chance to handle any command we don't
 				RlvEvent rlvEvent(uuid, rlvCmd);
 				m_Emitter.update(&RlvObserver::onAddCommand, rlvEvent);
 			}
+			break;
+		default:
 			break;
 	}
 	return TRUE; // Add command success/failure is decided by RlvObject::addCommand()
@@ -782,28 +799,25 @@ BOOL RlvHandler::processRemoveCommand(const LLUUID& uuid, const RlvCommand& rlvC
 	const std::string& strOption = rlvCmd.getOption();
 
 	if ( (RLV_BHVR_UNKNOWN != eBehaviour) && (strOption.empty()) )
+	{
+		if (rlvCmd.isStrict())
+			removeException(uuid, RLV_BHVR_PERMISSIVE, eBehaviour);
 		m_Behaviours[eBehaviour]--;
+	}
 
 	switch (eBehaviour)
 	{
 		case RLV_BHVR_DETACH:				// @detach[:<option>]=y		- Checked: 2009-08-04 (RLVa-1.0.1d) | Modified: RLVa-1.0.1d
 			{
-				S32 idxAttachPt;
+				S32 idxAttachPt = 0;
 				if (strOption.empty())												// @detach=y
 				{
-					// The object may or may not (if it got detached) still exist so clean up the hard way
-					if (m_Objects.find(uuid) != m_Objects.end())
-					{
-						for (rlv_detach_map_t::const_iterator itAttach = m_Attachments.begin(), endAttach = m_Attachments.end();
-							itAttach != endAttach; ++itAttach)
-						{
-							if (itAttach->second == uuid)
-							{
-								setDetachable(itAttach->first, uuid, true); // <- invalidates our iterators on return
-								break;
-							}
-						}
-					}
+					// The object may or may not (if it got detached) still exist
+					rlv_object_map_t::const_iterator itObj = m_Objects.find(uuid);
+					if (itObj != m_Objects.end())
+						idxAttachPt = itObj->second.m_idxAttachPt;
+					if (idxAttachPt)
+						setDetachable(idxAttachPt, uuid, true);
 				}
 				else if ((idxAttachPt = getAttachPointIndex(strOption, true)))		// @detach:<attachpt>=y
 				{
@@ -875,9 +889,9 @@ BOOL RlvHandler::processRemoveCommand(const LLUUID& uuid, const RlvCommand& rlvC
 		case RLV_BHVR_SHOWHOVERTEXT:		// @showhovertext:<uuid>=y	- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 			{
 				LLUUID idException(strOption);
-				if (!idException.isNull())	// If there's an option it should be a valid UUID
+				if (idException.notNull())	// If there's an option it should be a valid UUID
 				{
-					removeException(eBehaviour, LLUUID(strOption));
+					removeException(uuid, eBehaviour, idException);
 
 					// Restore the object's hover text
 					LLViewerObject* pObj = gObjectList.findObject(idException);
@@ -902,6 +916,13 @@ BOOL RlvHandler::processRemoveCommand(const LLUUID& uuid, const RlvCommand& rlvC
 				}
 			}
 			break;
+		case RLV_BHVR_SENDCHANNEL:			// @sendchannel:<uuid>=rem	- Checked: 2009-10-05 (RLVa-1.0.4a) | Modified: RLVa-1.0.4a
+			{
+				S32 nChannel;	// If there's an option it should be a valid (=positive and non-zero) chat channel
+				if ( (!strOption.empty()) && (LLStringUtil::convertToS32(strOption, nChannel)) && (nChannel > 0) )
+					removeException(uuid, eBehaviour, nChannel);
+			}
+			break;
 		case RLV_BHVR_RECVCHAT:				// @recvchat:<uuid>=rem		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 		case RLV_BHVR_RECVEMOTE:			// @recvemote:<uui>=red		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 		case RLV_BHVR_RECVIM:				// @recvim:<uuid>=rem		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
@@ -909,18 +930,51 @@ BOOL RlvHandler::processRemoveCommand(const LLUUID& uuid, const RlvCommand& rlvC
 		case RLV_BHVR_TPLURE:				// @recvim:<uuid>=rem		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 		case RLV_BHVR_ACCEPTTP:				// @accepttp:<uuid>=rem		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 			{
-				removeException(eBehaviour, LLUUID(strOption));
+				LLUUID idException(strOption);
+				if (idException.notNull())	// If there's an option it should be a valid UUID
+					removeException(uuid, eBehaviour, LLUUID(strOption));
 			}
 			break;
-		default:
+		case RLV_BHVR_UNKNOWN:
 			{
 				// Give our observers a chance to handle any command we don't
 				RlvEvent rlvEvent(uuid, rlvCmd);
 				m_Emitter.update(&RlvObserver::onRemoveCommand, rlvEvent);
 			}
 			break;
+		default:
+			break;
 	}
 	return TRUE; // Remove commands don't fail, doesn't matter what we return here
+}
+
+BOOL RlvHandler::processClearCommand(const LLUUID& idObj, const RlvCommand& rlvCmd)
+{
+	const std::string& strFilter = rlvCmd.getParam(); std::string strCmdRem;
+
+	rlv_object_map_t::const_iterator itObj = m_Objects.find(idObj);
+	if (itObj != m_Objects.end())	// No sense in clearing if we don't have any commands for this object
+	{
+		const RlvObject& rlvObj = itObj->second; bool fContinue = true;
+		for (rlv_command_list_t::const_iterator itCmd = rlvObj.m_Commands.begin(), itCurCmd; 
+				((fContinue) && (itCmd != rlvObj.m_Commands.end())); )
+		{
+			itCurCmd = itCmd++;		// Point itCmd ahead so it won't get invalidated if/when we erase a command
+
+			const RlvCommand& rlvCmdRem = *itCurCmd; strCmdRem = rlvCmdRem.asString();
+			if ( (strFilter.empty()) || (std::string::npos != strCmdRem.find(strFilter)) )
+			{
+				fContinue = (rlvObj.m_Commands.size() > 1); // rlvObj will become invalid once we remove the last command
+				processCommand(idObj, strCmdRem.append("=y"), false);
+			}
+		}
+	}
+
+	// Let our observers know about clear commands
+	RlvEvent rlvEvent(idObj, rlvCmd);
+	m_Emitter.update(&RlvObserver::onClearCommand, rlvEvent);
+
+	return TRUE; // Don't fail clear commands even if the object didn't exist since it confuses people
 }
 
 BOOL RlvHandler::processForceCommand(const LLUUID& idObj, const RlvCommand& rlvCmd) const
@@ -954,10 +1008,8 @@ BOOL RlvHandler::processForceCommand(const LLUUID& idObj, const RlvCommand& rlvC
 				{
 					LLVector3d posGlobal;
 
-					typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-					boost::char_separator<char> sep("/", "", boost::keep_empty_tokens);
-					tokenizer tokens(strOption, sep); int idx = 0;
-					for (tokenizer::iterator itToken = tokens.begin(); itToken != tokens.end(); ++itToken)
+					boost_tokenizer tokens(strOption, boost::char_separator<char>("/", "", boost::keep_empty_tokens)); int idx = 0;
+					for (boost_tokenizer::const_iterator itToken = tokens.begin(); itToken != tokens.end(); ++itToken)
 					{
 						if (idx < 3)
 							LLStringUtil::convertToF64(*itToken, posGlobal[idx++]);
@@ -1012,12 +1064,14 @@ BOOL RlvHandler::processForceCommand(const LLUUID& idObj, const RlvCommand& rlvC
 				}
 			}
 			break;
-		default:
+		case RLV_BHVR_UNKNOWN:
 			{
 				// Give our observers a chance to handle any command we don't
 				RlvEvent rlvEvent(idObj, rlvCmd);
 				fHandled = m_Emitter.update(&RlvObserver::onForceCommand, rlvEvent);
 			}
+			break;
+		default:
 			break;
 	}
 	return fHandled; // If we handled it then it'll still be TRUE; if an observer doesn't handle it'll be FALSE
@@ -1035,6 +1089,9 @@ BOOL RlvHandler::processReplyCommand(const LLUUID& uuid, const RlvCommand& rlvCm
 	{
 		case RLV_BHVR_VERSION:			// @version=<channel>				  - Checked: 2009-07-12 (RLVa-1.0.0h)
 			strReply = getVersionString();
+			break;
+		case RLV_BHVR_VERSIONNUM:		// @versionnum=<channel>			  - Checked: 2009-10-04 (RLVa-1.0.4b) | Added: RLVa-1.0.4b
+			strReply = getVersionNumString();
 			break;
 		case RLV_BHVR_GETOUTFIT:		// @getoufit[:<layer>]=<channel>	  - Checked: 2009-07-12 (RLVa-1.0.0h) | Modified: RLVa-0.2.0d
 			{
@@ -1173,7 +1230,7 @@ BOOL RlvHandler::processReplyCommand(const LLUUID& uuid, const RlvCommand& rlvCm
 		case RLV_BHVR_GETINVWORN:		// @getinvworn[:path]=<channel>		  - Checked:
 			onGetInvWorn(rlvCmd.getOption(), strReply);
 			break;
-		case RLV_BHVR_FINDFOLDER:		// @findfolder:<criteria>=<channel>   - Checked: 2009-07-12 (RLVa-1.0.0h)
+		case RLV_BHVR_FINDFOLDER:		// @findfolder:<criteria>=<channel>   - Checked: 2009-08-26 (RLVa-1.0.2a) | Modified: RLVa-1.0.2a
 			{
 				// COMPAT-RLV: RLV 1.16.1 returns the first random folder it finds (probably tries to match "" to a folder name?)
 				//             (just going to stick with what's there for now... no option => no folder)
@@ -1181,7 +1238,8 @@ BOOL RlvHandler::processReplyCommand(const LLUUID& uuid, const RlvCommand& rlvCm
 				if ( (!strOption.empty()) && (findSharedFolders(strOption, folders)) )
 				{
 					// We need to return an "in depth" result so whoever has the most '/' is our lucky winner
-					int maxSlashes = 0, curSlashes; std::string strFolderName;
+					// (maxSlashes needs to be initialized to -1 since children of the #RLV folder won't have '/' in their shared path)
+					int maxSlashes = -1, curSlashes; std::string strFolderName;
 					for (S32 idxFolder = 0, cntFolder = folders.count(); idxFolder < cntFolder; idxFolder++)
 					{
 						strFolderName = getSharedPath(folders.get(idxFolder));
@@ -1230,12 +1288,14 @@ BOOL RlvHandler::processReplyCommand(const LLUUID& uuid, const RlvCommand& rlvCm
 				strReply = uuid.asString();
 			}
 			break;
-		default:
+		case RLV_BHVR_UNKNOWN:
 			{
 				// Give our observers a chance to handle any command we don't
 				RlvEvent rlvEvent(uuid, rlvCmd);
 				return m_Emitter.update(&RlvObserver::onReplyCommand, rlvEvent);
 			}
+			break;
+		default:
 			break;
 	}
 
@@ -1315,15 +1375,18 @@ void RlvHandler::onAttach(LLViewerJointAttachment* pAttachPt, bool fFullyLoaded)
 	rlv_object_map_t::iterator itObj = m_Objects.find(pObj->getID());
 	if (itObj != m_Objects.end())
 	{
+		// Save the attachment point index
+		itObj->second.m_idxAttachPt = idxAttachPt;
+
 		// If it's an attachment we processed commands for but that only just rezzed in we need to mark it as existing in gObjectList
 		if (!itObj->second.m_fLookup)
 			itObj->second.m_fLookup = true;
 
 		// In both cases we should check for "@detach=n" and actually lock down the attachment point it got attached to
-		if (itObj->second.hasBehaviour(RLV_BHVR_DETACH))
+		if (itObj->second.hasBehaviour(RLV_BHVR_DETACH, false))
 		{
 			// (Copy/paste from processAddCommand)
-			setDetachable(pObj, pObj->getID(), false);
+			setDetachable(idxAttachPt, pObj->getID(), false);
 
 			if (pObj->isHUDAttachment())
 				LLPipeline::sShowHUDAttachments = TRUE;	// Prevents hiding of locked HUD attachments
@@ -1373,29 +1436,15 @@ void RlvHandler::onAttach(LLViewerJointAttachment* pAttachPt, bool fFullyLoaded)
 				 (!getAttachPoint(pFolder, true)) )
 			{
 				// It's no mod and its parent folder doesn't contain an attach point
-				LLInventoryModel::cat_array_t*  pFolders;
-				LLInventoryModel::item_array_t* pItems;
-				gInventory.getDirectDescendentsOf(pFolder->getUUID(), pFolders, pItems);
-
-				if (pItems)
+				if ( (1 == rlvGetDirectDescendentsCount(pFolder, LLAssetType::AT_OBJECT)) && (NEW_CATEGORY_NAME == pFolder->getName()) )
 				{
-					int cntObjects = 0;
-					for (S32 idxItem = 0, cntItem = pItems->size(); idxItem < cntItem; idxItem++)
-					{
-						if (LLAssetType::AT_OBJECT == pItems->get(idxItem)->getType())
-							cntObjects++;
-					}
-
 					// Only rename if there's exactly 1 object/attachment inside of it [see LLFolderBridge::renameItem()]
-					if ( (1 == cntObjects) && (NEW_CATEGORY_NAME == pFolder->getName()) )
-					{
-						std::string strName = ".(" + strAttachPt + ")";
+					std::string strName = ".(" + strAttachPt + ")";
 
-						pFolder->rename(strName);
-						pFolder->updateServer(FALSE);
-						gInventory.updateCategory(pFolder);
-						//gInventory.notifyObservers(); <- done further down in LLVOAvatar::attachObject()
-					}
+					pFolder->rename(strName);
+					pFolder->updateServer(FALSE);
+					gInventory.updateCategory(pFolder);
+					//gInventory.notifyObservers(); <- done further down in LLVOAvatar::attachObject()
 				}
 			}
 		}
@@ -1585,7 +1634,7 @@ void RlvHandler::filterChat(std::string& strUTF8Text, bool fFilterEmote) const
 			{
 				strUTF8Text = "...";				// Emote contains illegal character (or character sequence)
 			}
-			else if (!hasBehaviour("emote"))
+			else if (!hasBehaviour(RLV_BHVR_EMOTE))
 			{
 				int idx = strUTF8Text.find('.');	// Truncate at 20 characters or at the dot (whichever is shorter)
 				strUTF8Text = utf8str_chtruncate(strUTF8Text, ( (idx > 0) && (idx < 20) ) ? idx + 1 : 20);
@@ -1690,17 +1739,18 @@ bool RlvHandler::redirectChatOrEmote(const std::string& strUTF8Text) const
 			return false;	// @sendchat wouldn't filter it so @redirchat won't redirect it either
 	}
 
-	bool fSendChannel = hasBehaviour("sendchannel");
+	bool fSendChannel = hasBehaviour(RLV_BHVR_SENDCHANNEL); S32 nChannel = 0;
 	for (rlv_object_map_t::const_iterator itObj = m_Objects.begin(); itObj != m_Objects.end(); ++itObj)
 	{
 		for (rlv_command_list_t::const_iterator itCmd = itObj->second.m_Commands.begin(), 
 				endCmd = itObj->second.m_Commands.end(); itCmd != endCmd; ++itCmd)
 		{
-			if ( ( ((!fIsEmote) && (RLV_BHVR_REDIRCHAT == itCmd->getBehaviourType())) ||
-				   ((fIsEmote) && (RLV_BHVR_REDIREMOTE == itCmd->getBehaviourType())) ) && 
-				 ( (!fSendChannel) || (hasBehaviour("sendchannel", itCmd->getOption())) ) )
+			if ( ( ((!fIsEmote) && (RLV_BHVR_REDIRCHAT == itCmd->getBehaviourType())) ||	// Redirect if: (not an emote and @redirchat
+				   ((fIsEmote) && (RLV_BHVR_REDIREMOTE == itCmd->getBehaviourType())) ) &&	// OR an emote and @rediremote)
+				 (LLStringUtil::convertToS32(itCmd->getOption(), nChannel)) &&				// AND the channel is a number
+				 ( (!fSendChannel) || (isException(RLV_BHVR_SENDCHANNEL, nChannel)) ) )		// AND we're allowed to send to that channel
 			{
-				rlvSendChatReply(itCmd->getOption(), strUTF8Text);
+				rlvSendChatReply(nChannel, strUTF8Text);
 			}
 		}
 	}
@@ -1872,10 +1922,8 @@ LLViewerInventoryCategory* RlvHandler::getSharedFolder(const std::string& strPat
 		return NULL;
 
 	// Walk the path (starting at the root)
-	typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-	boost::char_separator<char> sep("/", "", boost::drop_empty_tokens);
-	tokenizer tokens(strPath, sep);
-	for (tokenizer::iterator itToken = tokens.begin(); itToken != tokens.end(); ++itToken)
+	boost_tokenizer tokens(strPath, boost::char_separator<char>("/", "", boost::drop_empty_tokens));
+	for (boost_tokenizer::const_iterator itToken = tokens.begin(); itToken != tokens.end(); ++itToken)
 	{
 		pFolder = getSharedFolder(pFolder->getUUID(), *itToken);
 		if (!pFolder)
@@ -2110,15 +2158,10 @@ void RlvHandler::onForceRemOutfit(const LLUUID& idObj, const std::string& strOpt
 	for (int idxType = 0; idxType < WT_COUNT; idxType++)
 	{
 		type = (EWearableType)idxType;
+		if (LLAssetType::AT_CLOTHING != LLWearable::typeToAssetType(type))
+			continue; // Only strip clothing, not bodyparts
 
-		// Only strip clothing (that's currently worn and not marked "nostrip")
-		if ( (LLAssetType::AT_CLOTHING != LLWearable::typeToAssetType(type)) ||	
-			 (!gAgent.getWearable(type)) || (!isStrippable(gAgent.getWearableItem(type))) )
-		{
-			continue;
-		}
-
-		if ( (typeOption == type) || (strOption.empty()) )
+		if ( ((typeOption == type) || (strOption.empty())) && (gAgent.getWearable(type)) && (isStrippable(gAgent.getWearableItem(type))) )
 		{
 			#ifdef RLV_EXPERIMENTAL_COMPOSITES
 				// If we're stripping something that's part of a composite folder then we should @detachthis instead
@@ -2246,7 +2289,7 @@ void RlvHandler::onForceWear(const std::string& strPath, bool fAttach, bool fMat
 								// Simulate wearing an object to a specific attachment point (copy/paste to suppress replacement dialog)
 								// LLAttachObject::handleEvent() => rez_attachment()
 								LLViewerJointAttachment* pAttachPt = getAttachPoint(pItem, true);
-								if ( (pAttachPt) && (isDetachable(pAttachPt->getObject())) )
+								if ( (pAttachPt) && (isDetachable(pAttachPt)) )
 								{
 									#if RLV_TARGET < RLV_MAKE_TARGET(1, 23, 0)			// Version: 1.22.11
 										LLAttachmentRezAction* rez_action = new LLAttachmentRezAction;
@@ -2506,7 +2549,7 @@ BOOL RlvHandler::setEnabled(BOOL fEnable)
 
 BOOL RlvHandler::canDisable()
 {
-	return TRUE;
+	return FALSE;
 }
 
 void RlvHandler::clearState()

@@ -63,6 +63,8 @@
 #include "lldirpicker.h"
 
 #include "llweb.h" // [$PLOTR$/]
+#include "lggBeamColorMapFloater.h"
+#include "llsliderctrl.h"
 
 ////////begin drop utility/////////////
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -186,12 +188,19 @@ BOOL LLPanelEmerald::postBuild()
 	getChild<LLComboBox>("material")->setSimple(gSavedSettings.getString("EmeraldBuildPrefs_Material"));
 	getChild<LLComboBox>("combobox shininess")->setSimple(gSavedSettings.getString("EmeraldBuildPrefs_Shiny"));
 	
-	getChild<LLSlider>("EmeraldBeamShapeScale")->setCommitCallback(beamUpdateCall);
-	getChild<LLSlider>("EmeraldMaxBeamsPerSecond")->setCommitCallback(beamUpdateCall);
+
+	LLSliderCtrl* mShapeScaleSlider = getChild<LLSliderCtrl>("EmeraldBeamShapeScale",TRUE,FALSE);
+	mShapeScaleSlider->setCommitCallback(&LLPanelEmerald::beamUpdateCall);
+	mShapeScaleSlider->setCallbackUserData(this);
+
+	LLSliderCtrl* mBeamsPerSecondSlider = getChild<LLSliderCtrl>("EmeraldMaxBeamsPerSecond",TRUE,FALSE);
+	mBeamsPerSecondSlider->setCommitCallback(&LLPanelEmerald::beamUpdateCall);
+	mBeamsPerSecondSlider->setCallbackUserData(this);
 
 	getChild<LLComboBox>("material")->setCommitCallback(onComboBoxCommit);
 	getChild<LLComboBox>("combobox shininess")->setCommitCallback(onComboBoxCommit);
 	getChild<LLComboBox>("EmeraldBeamShape_combo")->setCommitCallback(onComboBoxCommit);
+	getChild<LLComboBox>("BeamColor_combo")->setCommitCallback(onComboBoxCommit);
 	getChild<LLTextureCtrl>("texture control")->setDefaultImageAssetID(LLUUID("89556747-24cb-43ed-920b-47caed15465f"));
 	getChild<LLTextureCtrl>("texture control")->setCommitCallback(onTexturePickerCommit);
 
@@ -201,11 +210,19 @@ BOOL LLPanelEmerald::postBuild()
 	getChild<LLButton>("EmeraldPrefs_Stealth")->setClickedCallback(onStealth, this);
 	getChild<LLButton>("EmeraldPrefs_FullFeatures")->setClickedCallback(onNoStealth, this);
 	
+
+	getChild<LLButton>("BeamColor_new")->setClickedCallback(onCustomBeamColor, this);
+	getChild<LLButton>("BeamColor_refresh")->setClickedCallback(onRefresh,this);
+	getChild<LLButton>("BeamColor_delete")->setClickedCallback(onBeamColorDelete,this);
+			
 	getChild<LLButton>("custom_beam_btn")->setClickedCallback(onCustomBeam, this);
 	getChild<LLButton>("refresh_beams")->setClickedCallback(onRefresh,this);
 	getChild<LLButton>("delete_beam")->setClickedCallback(onBeamDelete,this);
+
 	getChild<LLButton>("revert_production_voice_btn")->setClickedCallback(onClickVoiceRevertProd, this);
 	getChild<LLButton>("revert_debug_voice_btn")->setClickedCallback(onClickVoiceRevertDebug, this);
+
+	getChild<LLButton>("EmeraldBreastReset")->setClickedCallback(onClickBoobReset, this);
 	
 
 	childSetCommitCallback("production_voice_field", onCommitApplyControl);//onCommitVoiceProductionServerName);
@@ -223,6 +240,7 @@ BOOL LLPanelEmerald::postBuild()
 	childSetCommitCallback("EmeraldCmdTeleportToCam", onCommitApplyControl);
 	childSetCommitCallback("EmeraldCmdLineKeyToName", onCommitApplyControl);
 	childSetCommitCallback("EmeraldCmdLineOfferTp", onCommitApplyControl);
+	childSetCommitCallback("EmeraldCmdLineAO", onCommitApplyControl);
 
 	childSetCommitCallback("X Modifier", onCommitSendAppearance);
 	childSetCommitCallback("Y Modifier", onCommitSendAppearance);
@@ -231,18 +249,11 @@ BOOL LLPanelEmerald::postBuild()
 	childSetValue("EmeraldUseOTR", LLSD((S32)gSavedSettings.getU32("EmeraldUseOTR"))); // [$PLOTR$]
 	getChild<LLButton>("otr_help_btn")->setClickedCallback(onClickOtrHelp, this);      // [/$PLOTR$]
 
-	childSetCommitCallback("EmeraldGUSEnabled", onUpdateGUSEnabled);
-	childSetCommitCallback("EmeraldGUSChannel", onUpdateGUSChannel);
-	childSetCommitCallback("EmeraldGUSRefresh", onUpdateGUSRate);
-	childSetCommitCallback("EmeraldGUSFastEventsEnabled", onUpdateGUSEnabled);
-	childSetCommitCallback("EmeraldGUSFastEventsRefresh", onUpdateGUSRate);
-	childSetCommitCallback("EmeraldGUSEyeRot", onUpdateGUSFeatures);
-	childSetCommitCallback("EmeraldGUSEyelidState", onUpdateGUSFeatures);
-
 	initHelpBtn("EmeraldHelp_TeleportLogin",	"EmeraldHelp_TeleportLogin");
 	initHelpBtn("EmeraldHelp_Voice",			"EmeraldHelp_Voice");
 	initHelpBtn("EmeraldHelp_Shields",			"EmeraldHelp_Shields");
 	initHelpBtn("EmeraldHelp_IM",				"EmeraldHelp_IM");
+	initHelpBtn("EmeraldHelp_Chat",				"EmeraldHelp_Chat");
 	initHelpBtn("EmeraldHelp_Misc",				"EmeraldHelp_Misc");
 	initHelpBtn("EmeraldHelp_CmdLine",			"EmeraldHelp_CmdLine");
 	initHelpBtn("EmeraldHelp_Avatar",			"EmeraldHelp_Avatar");
@@ -250,6 +261,7 @@ BOOL LLPanelEmerald::postBuild()
 	initHelpBtn("EmeraldHelp_IRC",				"EmeraldHelp_IRC");
 	initHelpBtn("EmeraldHelp_UtilityStream",	"EmeraldHelp_UtilityStream");
 	initHelpBtn("EmeraldHelp_Inventory",		"EmeraldHelp_Inventory");
+	initHelpBtn("EmeraldHelp_Effects",			"EmeraldHelp_Effects");
 
 	LLView *target_view = getChild<LLView>("im_give_drop_target_rect");
 	if(target_view)
@@ -305,6 +317,7 @@ BOOL LLPanelEmerald::postBuild()
 void LLPanelEmerald::refresh()
 {
 	LLComboBox* comboBox = getChild<LLComboBox>("EmeraldBeamShape_combo");
+	
 
 	if(comboBox != NULL) 
 	{
@@ -317,6 +330,21 @@ void LLPanelEmerald::refresh()
 		}
 		comboBox->setSimple(gSavedSettings.getString("EmeraldBeamShape"));
 	}
+
+	comboBox = getChild<LLComboBox>("BeamColor_combo");
+	if(comboBox != NULL) 
+	{
+		comboBox->removeall();
+		comboBox->add("===OFF===");
+		std::vector<std::string> names = gLggBeamMaps.getColorsFileNames();
+		for(int i=0; i<(int)names.size(); i++) 
+		{
+			comboBox->add(names[i]);
+		}
+		comboBox->setSimple(gSavedSettings.getString("EmeraldBeamColorFile"));
+	}
+
+
 	//mSkin = gSavedSettings.getString("SkinCurrent");
 	//getChild<LLRadioGroup>("skin_selection")->setValue(mSkin);
 }
@@ -351,7 +379,6 @@ void LLPanelEmerald::apply()
 	gSavedSettings.setBOOL("EmeraldDoubleClickTeleportMode", childGetValue("EmeraldDoubleClickTeleportMode").asBoolean());
 	gSavedSettings.setU32("EmeraldUseOTR", (U32)childGetValue("EmeraldUseOTR").asReal());
 	gLggBeamMaps.forceUpdate();
-	onUpdateGUS(new LLUICtrl(), this);
 }
 
 void LLPanelEmerald::cancel()
@@ -363,11 +390,42 @@ void LLPanelEmerald::onClickVoiceRevertProd(void* data)
 	gSavedSettings.setString("vivoxProductionServerName", "bhr.vivox.com");
 	self->getChild<LLLineEditor>("production_voice_field")->setValue("bhr.vivox.com");
 }
+
+void LLPanelEmerald::onClickBoobReset(void* data)
+{
+	LLPanelEmerald* self = (LLPanelEmerald*)data;
+	LLControlVariable *var;
+
+	var = self->findControl("EmeraldBoobMass");
+	self->getChild<LLSliderCtrl>("EmeraldBoobMass")->setValue(var->getDefault());
+	var->resetToDefault();
+
+	var = self->findControl("EmeraldBoobHardness");
+	self->getChild<LLSliderCtrl>("EmeraldBoobHardness")->setValue(var->getDefault());
+	var->resetToDefault();
+
+	var = self->findControl("EmeraldBoobVelMax");
+	self->getChild<LLSliderCtrl>("EmeraldBoobVelMax")->setValue(var->getDefault());
+	var->resetToDefault();
+
+	var = self->findControl("EmeraldBoobFriction");
+	self->getChild<LLSliderCtrl>("EmeraldBoobFriction")->setValue(var->getDefault());
+	var->resetToDefault();
+
+	var = self->findControl("EmeraldBoobFrictionFraction");
+	self->getChild<LLSliderCtrl>("EmeraldBoobFrictionFraction")->setValue(var->getDefault());
+	var->resetToDefault();
+}
+
 void LLPanelEmerald::onCustomBeam(void* data)
 {
 	//LLPanelEmerald* self =(LLPanelEmerald*)data;
-	LggBeamMap::show(true);
+	LggBeamMap::show(true, data);
 
+}
+void LLPanelEmerald::onCustomBeamColor(void* data)
+{
+	LggBeamColorMap::show(true,data);
 }
 void LLPanelEmerald::onStealth(void* data)
 {
@@ -385,11 +443,13 @@ void LLPanelEmerald::callbackEmeraldStealth(const LLSD &notification, const LLSD
 		gSavedSettings.setU32("EmeraldUseOTR",(U32)0);
 		gSavedSettings.setBOOL("EmeraldRainbowBeam",false);
 		gSavedSettings.setString("EmeraldBeamShape","===OFF===");
-		gSavedSettings.setBOOL("EmeraldCryoDetect",false);
+		gSavedSettings.setBOOL("EmeraldCryoDetection",false);
 		gSavedSettings.setBOOL("EmeraldGUSEnabled",false);
 		gSavedSettings.setBOOL("EmeraldClothingLayerProtection",false);
 		gSavedSettings.setBOOL("EmeraldParticleChat",false);
 		gSavedSettings.setBOOL("EmeraldRadarChatKeys",false);
+		gSavedSettings.setBOOL("EmeraldUseBridgeOnline",false);
+		gSavedSettings.setBOOL("EmeraldUseBridgeRadar",false);
 	}
 }
 void LLPanelEmerald::onNoStealth(void* data)
@@ -410,9 +470,12 @@ void LLPanelEmerald::callbackEmeraldNoStealth(const LLSD &notification, const LL
 		gSavedSettings.setU32("EmeraldUseOTR",(U32)2);
 		gSavedSettings.setBOOL("EmeraldRainbowBeam",true);
 		gSavedSettings.setString("EmeraldBeamShape","Emerald");
-		gSavedSettings.setBOOL("EmeraldCryoDetect",true);
-		gSavedSettings.setBOOL("EmeraldGUSEnabled",true);
+		//gSavedSettings.setBOOL("EmeraldCryoDetect",true);
+		//gSavedSettings.setBOOL("EmeraldGUSEnabled",true);
 		gSavedSettings.setBOOL("EmeraldClothingLayerProtection",true);
+		gSavedSettings.setBOOL("EmeraldBuildBridge",true);
+		gSavedSettings.setBOOL("EmeraldUseBridgeOnline",true);
+		gSavedSettings.setBOOL("EmeraldUseBridgeRadar",true);
 	}
 }
 void LLPanelEmerald::beamUpdateCall(LLUICtrl* crtl, void* userdata)
@@ -483,6 +546,33 @@ void LLPanelEmerald::onBeamDelete(void* data)
 	}
 	self->refresh();
 }
+void LLPanelEmerald::onBeamColorDelete(void* data)
+{
+	LLPanelEmerald* self = (LLPanelEmerald*)data;
+
+	LLComboBox* comboBox = self->getChild<LLComboBox>("BeamColor_combo");
+
+	if(comboBox != NULL) 
+	{
+		std::string filename = comboBox->getValue().asString()+".xml";
+		std::string path_name1(gDirUtilp->getExpandedFilename( LL_PATH_APP_SETTINGS , "beamsColors", filename));
+		std::string path_name2(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "beamsColors", filename));
+
+		if(gDirUtilp->fileExists(path_name1))
+		{
+			LLFile::remove(path_name1);
+			gSavedSettings.setString("EmeraldBeamColorFile","===OFF===");
+		}
+		if(gDirUtilp->fileExists(path_name2))
+		{
+			LLFile::remove(path_name2);
+			gSavedSettings.setString("EmeraldBeamColorFile","===OFF===");
+		}
+	}
+	self->refresh();
+}
+
+
 
 //workaround for lineeditor dumbness in regards to control_name
 void LLPanelEmerald::onCommitApplyControl(LLUICtrl* caller, void* user_data)
@@ -528,38 +618,6 @@ void LLPanelEmerald::onClickSetMirror(void* user_data)
 	}
 }
 
-
-void LLPanelEmerald::onUpdateGUSEnabled(LLUICtrl* ctrl, void* userdata)
-{
-	LLPanelEmerald* self = (LLPanelEmerald*)userdata;
-	gSavedPerAccountSettings.setBOOL("EmeraldGUSEnabled", self->childGetValue("EmeraldGUSEnabled").asBoolean());
-	gSavedPerAccountSettings.setBOOL("EmeraldGUSFastEventsEnabled", self->childGetValue("EmeraldGUSFastEventsEnabled").asBoolean());
-}
-void LLPanelEmerald::onUpdateGUSChannel(LLUICtrl* ctrl, void* userdata)
-{
-	LLPanelEmerald* self = (LLPanelEmerald*)userdata;
-	gSavedPerAccountSettings.setS32("EmeraldGUSChannel", self->childGetValue("EmeraldGUSChannel").asReal());
-}
-void LLPanelEmerald::onUpdateGUSRate(LLUICtrl* ctrl, void* userdata)
-{
-	LLPanelEmerald* self = (LLPanelEmerald*)userdata;
-	gSavedPerAccountSettings.setF32("EmeraldGUSRefresh", llclamp((F32)self->childGetValue("EmeraldGUSRefresh").asReal(), 0.0001f, 10.f));
-	gSavedPerAccountSettings.setF32("EmeraldGUSFastEventsRefresh", llclamp((F32)self->childGetValue("EmeraldGUSFastEventRefresh").asReal(), 0.0001f, 20.f));
-}
-void LLPanelEmerald::onUpdateGUSFeatures(LLUICtrl* ctrl, void* userdata)
-{
-	LLPanelEmerald* self = (LLPanelEmerald*)userdata;
-	gSavedPerAccountSettings.setBOOL("EmeraldGUSEyeRot", self->childGetValue("EmeraldGUSEyeRot").asBoolean());
-	gSavedPerAccountSettings.setBOOL("EmeraldGUSEyelidState", self->childGetValue("EmeraldGUSEyelidState").asBoolean());
-}
-void LLPanelEmerald::onUpdateGUS(LLUICtrl* ctrl, void* userdata)
-{
-	//update everything
-	onUpdateGUSEnabled(ctrl, userdata);
-	onUpdateGUSChannel(ctrl, userdata);
-	onUpdateGUSRate(ctrl, userdata);
-	onUpdateGUSFeatures(ctrl, userdata);
-}
 /*
 //static 
 void LLPanelEmerald::onClickSilver(void* data)

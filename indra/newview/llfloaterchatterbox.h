@@ -149,12 +149,20 @@ public:
 	{
 		if (visible(instance, key))
 		{
+			if(instance->getHost())
+			{
 			LLFloaterChatterBox::hideInstance();
+			}
+			else
+			{
+				VisibilityPolicy<LLFloater>::hide(instance, key);
+			}
 		}
 	}
 
 protected:
 	LLTabContainer* mTabs;
+
 };
 
 #endif // LL_LLFLOATERCHATTERBOX_H

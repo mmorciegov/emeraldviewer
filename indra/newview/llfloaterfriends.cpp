@@ -784,10 +784,10 @@ void LLPanelFriends::onClickExport(void* user_data)
 		//count += 1;
 	}
 
-	std::vector<std::string> uris;
-	LLViewerLogin::getInstance()->getLoginURIs(uris);
+	LLViewerLogin* vl = LLViewerLogin::getInstance();
+	std::string grid_uri = vl->getCurrentGridURI();
 	//LLStringUtil::toLower(uris[0]);
-	llsd["GRID"] = uris[0];
+	llsd["GRID"] = grid_uri;
 
 
 	llofstream export_file;
@@ -817,9 +817,9 @@ void LLPanelFriends::onClickImport(void* user_data)
 	LLSDSerialize::fromXMLDocument(data, importer);
 	if(data.has("GRID"))
 	{
-		std::vector<std::string> uris;
-		LLViewerLogin::getInstance()->getLoginURIs(uris);
-		std::string grid = uris[0];
+		LLViewerLogin* vl = LLViewerLogin::getInstance();
+		std::string grid_uri = vl->getCurrentGridURI();
+		std::string grid = grid_uri;
 		if(grid != data["GRID"])return;
 		data.erase("GRID");
 	}

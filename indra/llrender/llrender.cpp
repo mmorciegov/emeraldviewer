@@ -951,7 +951,7 @@ void LLRender::vertex3f(const GLfloat& x, const GLfloat& y, const GLfloat& z)
 	//the range of mVerticesp, mColorsp and mTexcoordsp is [0, 4095]
 	if (mCount > 4094)
 	{
-	//	llwarns << "GL immediate mode overflow.  Some geometry not drawn." << llendl;
+		//llwarns << "GL immediate mode overflow.  Some geometry not drawn." << llendl;
 		return;
 	}
 

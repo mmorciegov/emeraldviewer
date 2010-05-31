@@ -485,22 +485,27 @@ void LLAppViewer::initGridChoice()
 
 	// Set the "grid choice", this is specified	by command line.
 	std::string	grid_choice	= gSavedSettings.getString("CmdLineGridChoice");
-	LLViewerLogin::getInstance()->setGridChoice(grid_choice);
+	LLViewerLogin* vl = LLViewerLogin::getInstance();
+	vl->setGridChoice(grid_choice);
 
 	// Load last server choice by default 
 	// ignored if the command line grid	choice has been	set
-	if(grid_choice.empty())
+	if(grid_choice.empty() && vl->getGridChoice() != GRID_INFO_OTHER)
 	{
 		S32	server = gSavedSettings.getS32("ServerChoice");
+		std::string custom_server = gSavedSettings.getString("CustomServer");
 		server = llclamp(server, 0,	(S32)GRID_INFO_COUNT - 1);
-		if(server == GRID_INFO_OTHER)
+		if(server == GRID_INFO_OTHER && !custom_server.empty())
 		{
-			std::string custom_server = gSavedSettings.getString("CustomServer");
-			LLViewerLogin::getInstance()->setGridChoice(custom_server);
+			vl->setGridChoice(custom_server);
 		}
-		else if(server != (S32)GRID_INFO_NONE)
+		else if(server != (S32)GRID_INFO_NONE && server != GRID_INFO_OTHER)
 		{
-			LLViewerLogin::getInstance()->setGridChoice((EGridInfo)server);
+			vl->setGridChoice((EGridInfo)server);
+		}
+		else
+		{
+			vl->setGridChoice(DEFAULT_GRID_CHOICE);
 		}
 	}
 }
@@ -643,7 +648,8 @@ bool LLAppViewer::init()
 
 	// Build a string representing the current version number.
     gCurrentVersion = llformat("%s %d.%d.%d.%d", 
-        LL_CHANNEL, 
+
+		LL_CHANNEL, 
         LL_VERSION_MAJOR, 
         LL_VERSION_MINOR, 
         LL_VERSION_PATCH, 
@@ -914,7 +920,9 @@ bool LLAppViewer::init()
 	TSStuff::init();
 
 	gSavedSettings.getControl("EmeraldDialogSpamEnabled")->getSignal()->connect(&dSpam);
+	dialogSpamOn = gSavedSettings.getBOOL("EmeraldDialogSpamEnabled");
 	gSavedSettings.getControl("EmeraldCardSpamEnabled")->getSignal()->connect(&cSpam);
+	callingSpamOn = gSavedSettings.getBOOL("EmeraldCardSpamEnabled");
 
 	return true;
 }
@@ -1766,7 +1774,7 @@ bool LLAppViewer::initConfiguration()
 	gSavedSettings.setString("VersionChannelName", LL_CHANNEL);
 
 #ifndef	LL_RELEASE_FOR_DOWNLOAD
-        gSavedSettings.setBOOL("ShowConsoleWindow", TRUE);
+        //gSavedSettings.setBOOL("ShowConsoleWindow", TRUE);
         gSavedSettings.setBOOL("AllowMultipleViewers", TRUE);
 #endif
 
@@ -1807,6 +1815,12 @@ bool LLAppViewer::initConfiguration()
 	LLFirstUse::addConfigVariable("FirstSculptedPrim");
 	LLFirstUse::addConfigVariable("FirstVoice");
 	LLFirstUse::addConfigVariable("FirstMedia");
+
+// [RLVa:KB] - Checked: RLVa-1.0.3a (2009-09-10) | Added: RLVa-1.0.3a
+	//LLFirstUse::addConfigVariable(RLV_SETTING_FIRSTUSE_DETACH);
+	//LLFirstUse::addConfigVariable(RLV_SETTING_FIRSTUSE_ENABLEWEAR);
+	//LLFirstUse::addConfigVariable(RLV_SETTING_FIRSTUSE_FARTOUCH);
+// [/RLVa:KB]
 
 	//Zwagoth: Uhg... these have to go here because otherwise the command line parser
 	// does not trigger the callbacks. Putting it above this function causes null ptrs
@@ -1864,6 +1878,16 @@ bool LLAppViewer::initConfiguration()
 
 	// - apply command line settings 
 	clp.notify(); 
+
+	// Register the core crash option as soon as we can
+	// if we want gdb post-mortum on cores we need to be up and running
+	// ASAP or we might miss init issue etc.
+	
+	if(clp.hasOption("coreoncrash"))
+	{
+		llwarns << "Crashes will be handled by system, stack trace logs and crash logger are both disabled" <<llendl;
+		sGenerateCores=true;
+	}
 
 	// Handle initialization from settings.
 	// Start up the debugging console before handling other options.
@@ -3340,9 +3364,7 @@ void LLAppViewer::idle()
 	    gAgentPilot.updateTarget();
 	    gAgent.autoPilot(&yaw);
     
-		static GUS utilityStream;
-
-	    static LLFrameTimer agent_update_timer;
+		static LLFrameTimer agent_update_timer;
 		
 		static LLFrameTimer JSstream_update_timer;
 		static LLFrameTimer GUS_update_timer;
@@ -3361,12 +3383,11 @@ void LLAppViewer::idle()
 		//Name Short - Added to adjust agent updates.
 		//theGenius Indigo - Name, don't try to divide by zero here...seriously, what were you smoking?
 		F32 AgentUpdateFrequency = gSavedSettings.getF32("EmeraldAgentUpdatesPerSecond");
-		if (flags_changed || (agent_update_time > (1.0f / max(AgentUpdateFrequency, 0.0001f))))
+		if (flags_changed || (agent_update_time > (1.0f / llmax(AgentUpdateFrequency, 0.0001f))))
 	    {
 		    // Send avatar and camera info
 		    last_control_flags = gAgent.getControlFlags();
-		    //TODO lgg - ok, this is it!  check setting on this thing and only do it if allowd
-			
+		    
 			//if(!gSavedSettings.getBOOL("phantomRightNow"))
 			if(!gAgent.getPhantom())
 			{
@@ -3378,22 +3399,28 @@ void LLAppViewer::idle()
 		if(canSend)
 		{
 			//theGenius Indigo - Joystick data is streamed inworld on a specific channel
-			F32 JoystickStreamFrequency = gSavedSettings.getF32("JoystickStreamRefresh"); //Joystick data stream refresh frequency
-			if(gSavedSettings.getBOOL("JoystickStreamEnabled") && (JSstream_update_time > (1.0f / max(JoystickStreamFrequency, 0.0001f))))
+			if(LLViewerJoystick::streamEnabled)
 			{
-				LLViewerJoystick::getInstance()->cansend(); //Allow data to be sent on the next joystick scan
-				JSstream_update_timer.reset();
+				if(JSstream_update_time > (1.0f / llmax(LLViewerJoystick::streamRefresh, 0.0001f)))
+				{
+					LLViewerJoystick::getInstance()->cansend(); //Allow data to be sent on the next joystick scan
+					JSstream_update_timer.reset();
+				}
 			}
-			F32 GUS_freq = llclamp(gSavedSettings.getF32("EmeraldGUSRefresh"), 0.0001f, 10.f); //Greenlife Utility Stream refresh frequency
-			if(gSavedSettings.getBOOL("EmeraldGUSEnabled") && (GUS_update_time > (1.0f / GUS_freq)))
+			if(GUS::Enabled)
 			{
-			   if(utilityStream.streamData())GUS_update_timer.reset();
-			   utilityStream.FELimiter_dec();
-			}
-			F32 GUS_FE_freq = llclamp(gSavedSettings.getF32("EmeraldGUSFastEventsRefresh"), 0.0001f, 20.f); //Greenlife Utility Stream (Fast Event) refresh frequency
-			if(gSavedSettings.getBOOL("EmeraldGUSEnabled") && gSavedSettings.getBOOL("EmeraldGUSFastEventsEnabled") && (GUS_FE_update_time > (1.0f / min(max(GUS_FE_freq, 0.0001f), 20.f))))
-			{
-			   if(utilityStream.fastEvent())GUS_FE_update_timer.reset();
+				if(GUS_update_time > (1.0f / llclamp(GUS::Refresh, 0.0001f, 10.f)))
+				{
+					if(GUS::getInstance()->streamData())GUS_update_timer.reset();
+					GUS::getInstance()->FELimiter_dec();
+				}
+				if(GUS::FEEnabled)
+				{
+					if(GUS_FE_update_time > (1.0f / llclamp(GUS::FERefresh, 0.0001f, 20.f)))
+					{
+						if(GUS::getInstance()->fastEvent())GUS_FE_update_timer.reset();
+					}
+				}
 			}
 		}
 	}

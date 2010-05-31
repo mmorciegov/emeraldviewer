@@ -97,8 +97,8 @@ BEGIN
     LTEXT           "In the space below, please briefly describe what you were doing",IDC_STATIC,3,48,208,8
     LTEXT           "or trying to do just prior to the crash.",IDC_STATIC,3,56,204,8
     LTEXT           "If you don't wish to send Modular Systems a crash report, press Don't Send.",IDC_STATIC,3,90,223,8
-    LTEXT           "This report is NOT read by customer support.  If you have billing or",IDC_STATIC,3,68,208,8
-    LTEXT           "other questions, please go to: www.modularsystems.sl",IDC_STATIC,3,76,206,8
+    LTEXT           "",IDC_STATIC,3,68,208,8
+    LTEXT           "",IDC_STATIC,3,76,206,8
     CONTROL         "Remember this choice",IDC_CHECK_AUTO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,3,193,89,13
 END
 

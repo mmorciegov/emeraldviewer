@@ -15,7 +15,14 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "tslua.h"
-#include "lua.hpp"
+
+// Lia says: I don't know if this is the 'correct' way to do this, so please
+//  yell at me if it is wrong. >_>  Fix for standalone builds.
+#ifdef LL_STANDALONE
+ #include <lua5.1/lua.hpp>
+#else
+ #include "lua.hpp"
+#endif
 
 class TSInternalLua {
 public:

@@ -923,8 +923,8 @@ std::string LLItemBridge::getLabelSuffix() const
 	{
 		LLPermissions perm = item->getPermissions();
 		// it's a bit confusing to put nocopy/nomod/etc on calling cards.
-		if(LLAssetType::AT_CALLINGCARD != item->getType()
-		   && perm.getOwner() == gAgent.getID())
+		if(/*LLAssetType::AT_CALLINGCARD != item->getType()
+		   && */perm.getOwner() == gAgent.getID())
 		{
 			BOOL copy = item->getPermissions().allowCopyBy(gAgent.getID());
 			BOOL mod = item->getPermissions().allowModifyBy(gAgent.getID());
@@ -2656,7 +2656,7 @@ void LLLandmarkBridge::performAction(LLFolderView* folder, LLInventoryModel* mod
 			// because you'll probably arrive at a telehub instead
 			if( gFloaterWorldMap )
 			{
-				gFloaterWorldMap->trackLandmark( item->getAssetUUID() );
+				gFloaterWorldMap->trackLandmark(item->getUUID());  // remember this must be the item UUID, not the asset UUID
 			}
 		}
 	}
@@ -2704,6 +2704,7 @@ static bool open_landmark_callback(const LLSD& notification, const LLSD& respons
 	S32 option = LLNotification::getSelectedOption(notification, response);
 
 	LLUUID asset_id = notification["payload"]["asset_id"].asUUID();
+	LLUUID item_id = notification["payload"]["item_id"].asUUID();
 	if (option == 0)
 	{
 		// HACK: This is to demonstrate teleport on double click for landmarks
@@ -2713,7 +2714,7 @@ static bool open_landmark_callback(const LLSD& notification, const LLSD& respons
 		// because you'll probably arrive at a telehub instead
 		if( gFloaterWorldMap )
 		{
-			gFloaterWorldMap->trackLandmark( asset_id );
+			gFloaterWorldMap->trackLandmark( item_id ); // remember this is the item UUID not the asset UUID
 		}
 	}
 
@@ -2732,6 +2733,7 @@ void LLLandmarkBridge::openItem()
 		// open_landmark(item, std::string("  ") + getPrefix() + item->getName(), FALSE);
 		LLSD payload;
 		payload["asset_id"] = item->getAssetUUID();
+		payload["item_id"] = item->getUUID();
 		LLNotifications::instance().add("TeleportFromLandmark", LLSD(), payload);
 	}
 }
@@ -2972,7 +2974,7 @@ void open_notecard(LLViewerInventoryItem* inv_item,
 				   BOOL take_focus)
 {
 // [RLVa:KB] - Checked: 2009-07-06 (RLVa-1.0.0c)
-	if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasBehaviour("viewnote")) )
+	if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasBehaviour(RLV_BHVR_VIEWNOTE)) )
 	{
 		return;
 	}
@@ -3515,12 +3517,12 @@ void LLObjectBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 				// commented out for DEV-32347
 				//items.push_back(std::string("Restore to Last Position"));
 
-// [RLVa:KB] - Version: 1.23.4 | Checked: 2009-07-06 (RLVa-1.0.0c) | Modified: RLVa-0.2.0c
+// [RLVa:KB] - Version: 1.23.4 | Checked: 2009-09-08 (RLVa-1.0.2c) | Modified: RLVa-1.0.2c
 				// Only enable "Wear" if there is an attach point name *and* there isn't a worn attachment there that's currently locked
 				if ( (rlv_handler_t::isEnabled()) && (!RlvSettings::getEnableWear()) && (gRlvHandler.hasLockedAttachment()) )
 				{
 					LLViewerJointAttachment* pAttachPt = gRlvHandler.getAttachPoint(item, true);
-					if ( (!pAttachPt) || (!gRlvHandler.isDetachable(pAttachPt->getObject())) )
+					if ( (!pAttachPt) || (!gRlvHandler.isDetachable(pAttachPt)) )
 						disabled_items.push_back(std::string("Object Wear"));
 				}
 // [/RLVa:KB]
@@ -3624,8 +3626,15 @@ LLUIImagePtr LLLSLTextBridge::getIcon() const
 
 void LLLSLTextBridge::performAction(LLFolderView* folder, LLInventoryModel* model, std::string action)
 {
-	//cmdline_printchat(action);
-	LLItemBridge::performAction(folder, model, action);
+	cmdline_printchat(action);
+	if ("export" == action)
+	{
+		//cmdline_printchat("export?");
+		//lol
+		LLViewerInventoryItem* item = getItem();
+		JCExportTracker::mirror(item);
+	}
+	else LLItemBridge::performAction(folder, model, action);
 }
 
 void LLLSLTextBridge::openItem()
@@ -4078,7 +4087,7 @@ void wear_inventory_category_on_avatar_step2( BOOL proceed, void* userdata )
 			for (S32 idxObj = obj_item_array.count() - 1; idxObj >= 0; idxObj--)
 			{
 				LLViewerJointAttachment* pAttachPt = gRlvHandler.getAttachPoint(obj_item_array.get(idxObj).get(), true);
-				if ( ((!pAttachPt) || (!gRlvHandler.isDetachable(pAttachPt->getObject()))) )
+				if ( ((!pAttachPt) || (!gRlvHandler.isDetachable(pAttachPt))) )
 					obj_item_array.remove(idxObj);
 			}
 			obj_count = obj_item_array.count();
@@ -4264,9 +4273,10 @@ void wear_attachments_on_avatar(const std::set<LLUUID>& item_ids, BOOL remove)
 			if ( (gInventory.isObjectDescendentOf(*it, gAgent.getInventoryRootID())) )
 			{
 //				items.put(item);
-// [RLVa:KB] - Version: 1.23.4 | Checked: 2009-07-06 (RLVa-1.0.0c) | Modified: RLVa-1.0.0c
-				if ( (!rlv_handler_t::isEnabled()) || (RlvSettings::getEnableWear()) ||
-					 (!gRlvHandler.hasLockedAttachment()) || (gRlvHandler.getAttachPoint(item, true) != NULL) )
+// [RLVa:KB] - Version: 1.23.4 | Checked: 2009-09-11 (RLVa-1.0.2c) | Modified: RLVa-1.0.2c
+				LLViewerJointAttachment* pAttachPt = NULL;
+				if ( (!rlv_handler_t::isEnabled()) || (RlvSettings::getEnableWear()) || (!gRlvHandler.hasLockedAttachment()) || 
+					 (((pAttachPt = gRlvHandler.getAttachPoint(item, true)) != NULL) && (gRlvHandler.isDetachable(pAttachPt))) )
 				{
 					items.put(item);
 				}

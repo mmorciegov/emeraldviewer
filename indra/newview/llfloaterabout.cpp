@@ -116,15 +116,17 @@ LLFloaterAbout::LLFloaterAbout()
 
 	// Version string
 #ifdef EMERALD_BRANCH
+#define LITERAL(x) #x
+#define ASSTRING(x) LITERAL(x)
 	std::string version = LLAppViewer::instance()->getSecondLifeTitle()
 		+ llformat(" %d.%d.%d (%d) %s %s (%s) %s\n",
 			LL_VERSION_MAJOR, LL_VERSION_MINOR, LL_VERSION_PATCH, LL_VIEWER_BUILD,
 			__DATE__, __TIME__,
-			LL_CHANNEL, EMERALD_BRANCH);
+			LL_CHANNEL, ASSTRING(EMERALD_BRANCH));
 #else
 	std::string version = LLAppViewer::instance()->getSecondLifeTitle()
 		+ llformat(" %d.%d.%d (%d) %s %s (%s)\n",
-			LL_VERSION_MAJOR, LL_VERSION_MINOR, LL_VERSION_PATCH, LL_VIEWER_BUILD,
+			LL_VERSION_MAJOR, LL_VERSION_MINOR, LL_VERSION_PATCH, LL_VERSION_BUILD,
 			__DATE__, __TIME__,
 			LL_CHANNEL);
 #endif

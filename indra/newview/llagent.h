@@ -463,7 +463,7 @@ public:
 	void			moveLeftNudge(S32 direction);
 	void			moveUp(S32 direction);
 	void			moveYaw(F32 mag, bool reset_view = true);
-	void			movePitch(S32 direction);
+	void			movePitch(F32 mag);
 
 	void			setOrbitLeftKey(F32 mag)				{ mOrbitLeftKey = mag; }
 	void			setOrbitRightKey(F32 mag)				{ mOrbitRightKey = mag; }

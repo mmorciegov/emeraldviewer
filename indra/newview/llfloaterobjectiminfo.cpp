@@ -220,7 +220,7 @@ void LLFloaterObjectIMInfo::update(const LLUUID& object_id, const std::string& n
 	std::string tempname = name;
 
 	size_t found = tempname.find(" ");
-	while(found != string::npos)
+	while(found != std::string::npos)
 	{
 		tempname.replace(found, 1, "");
 		found = tempname.find(" ");

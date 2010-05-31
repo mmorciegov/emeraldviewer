@@ -69,6 +69,7 @@
 #include "llviewerregion.h"
 
 #include "llfirstuse.h"
+#include "lggIrcGroupHandler.h"
 
 //
 // Globals
@@ -526,7 +527,8 @@ void LLIMMgr::toggle(void*)
 
 LLIMMgr::LLIMMgr() :
 	mFriendObserver(NULL),
-	mIMReceived(FALSE)
+	mIMReceived(FALSE),
+	mIMUnreadCount(0)
 {
 	mFriendObserver = new LLIMViewFriendObserver(this);
 	LLAvatarTracker::instance().addObserver(mFriendObserver);
@@ -612,6 +614,33 @@ void LLIMMgr::addMessage(
 	// create IM window as necessary
 	if(!floater)
 	{
+		BOOL all_groups_muted = gSavedSettings.getBOOL("EmeraldMuteAllGroups");
+		if (gSavedSettings.getBOOL("EmeraldMuteGroupWhenNoticesDisabled")
+			|| all_groups_muted)
+		{
+			LLGroupData *group_data = NULL;
+
+			// Search for this group in the agent's groups list
+			LLDynamicArray<LLGroupData>::iterator i;
+
+			for (i = gAgent.mGroups.begin(); i != gAgent.mGroups.end(); i++)
+			{
+				if (i->mID == session_id)
+				{
+					group_data = &*i;
+					break;
+				}
+			}
+
+			// If the group is in our list and set up to not accept notices, and the Emerald
+			// option to mute such is enabled, return.
+
+			if (group_data && (!group_data->mAcceptNotices || all_groups_muted))
+			{
+				return;
+			}
+		}
+
 		std::string name = from;
 		if(!session_name.empty() && session_name.size()>1)
 		{
@@ -686,6 +715,7 @@ void LLIMMgr::addMessage(
 
 		//notify of a new IM
 		notifyNewIM();
+		mIMUnreadCount++;
 	}
 }
 
@@ -729,11 +759,17 @@ void LLIMMgr::notifyNewIM()
 void LLIMMgr::clearNewIMNotification()
 {
 	mIMReceived = FALSE;
+	mIMUnreadCount = 0;
 }
 
 BOOL LLIMMgr::getIMReceived() const
 {
 	return mIMReceived;
+}
+
+int LLIMMgr::getIMUnreadCount()
+{
+	return mIMUnreadCount;
 }
 
 // This method returns TRUE if the local viewer has a session
@@ -771,6 +807,7 @@ LLUUID LLIMMgr::addSession(
 	EInstantMessage dialog,
 	const LLUUID& other_participant_id)
 {
+	//lggtodo
 	LLUUID session_id = computeSessionID(dialog, other_participant_id);
 
 	LLFloaterIMPanel* floater = findFloaterBySession(session_id);
@@ -1164,6 +1201,10 @@ LLFloaterIMPanel* LLIMMgr::createFloater(
 	{
 		llwarns << "Creating LLFloaterIMPanel with null session ID" << llendl;
 	}
+	if(glggIrcGroupHandler.trySendPrivateImToID("",other_participant_id,true))
+	{
+		dialog = IM_PRIVATE_IRC;
+	}
 
 	llinfos << "LLIMMgr::createFloater: from " << other_participant_id 
 			<< " in session " << session_id << llendl;
@@ -1189,7 +1230,10 @@ LLFloaterIMPanel* LLIMMgr::createFloater(
 	{
 		llwarns << "Creating LLFloaterIMPanel with null session ID" << llendl;
 	}
-
+	if(glggIrcGroupHandler.trySendPrivateImToID("",other_participant_id,true))
+	{
+		dialog = IM_PRIVATE_IRC;
+	}
 	llinfos << "LLIMMgr::createFloater: from " << other_participant_id 
 			<< " in session " << session_id << llendl;
 	LLFloaterIMPanel* floater = new LLFloaterIMPanel(session_label,

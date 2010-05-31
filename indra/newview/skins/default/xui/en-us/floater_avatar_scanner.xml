@@ -37,6 +37,7 @@
 		<column name="avatar_icon" label="Icon" width="20" />
 		<column name="avatar_name" label="Name" dynamicwidth="true" />
 		<column name="distance" label="Distance" width="70"/>
+    <column name="time" label="Time" width="60" />
 		<column name="age" label="Age" width="50"/>
 		<!-- <column name="payment_data" label="Payment" width="80"/> -->
 		<!-- TrustNet Score -->
@@ -415,6 +416,17 @@
 				   initial_value="true" enabled="true" radio_style="false"
                    control_name="EmeraldAvatarListKeepOpen"
 			   tool_tip="Hides floater instead of closing to still announce in chat" />
+      <check_box height="16" label="Enable Avatar Age Alert"
+				   left="180" bottom_delta="63" name="agealert"
+				   width="200" follows="bottom|left"
+				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
+				   initial_value="true" enabled="true" radio_style="false"
+                    control_name="EmeraldAvatarAgeAlert"
+			   tool_tip="Enables Avatar Age Alert" />
+      <spinner bottom_delta="130" decimal_digits="0" follows="left|top" height="16"
+          left="200" increment="1" initial_val="3" max_val="9999" min_val="0"
+          mouse_opaque="true" name="AgeAlertDays" label="Age Alert Treshold" label_width="100"
+          tool_tip="Age Alert Treshold" width="160" />
     </panel>
 	</tab_container>
 	

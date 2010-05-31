@@ -1,6 +1,6 @@
 /* Copyright (c) 2009
  *
- * LordGregGreg Back. All rights reserved.
+ * Greg Hendrickson (LordGregGreg Back). All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or
  * without modification, are permitted provided that the following
@@ -47,9 +47,17 @@
 #include "llcolorswatch.h"
 #include "lggBeamMaps.h"
 
+
 #include "llsdserialize.h"
+#include "llpanelemerald.h"
+#include "llfocusmgr.h"
 class lggPoint;
 class lggBeamMapFloater;
+
+const F32 CONTEXT_CONE_IN_ALPHA = 0.0f;
+const F32 CONTEXT_CONE_OUT_ALPHA = 1.f;
+const F32 CONTEXT_FADE_TIME = 0.08f;
+
 
 ////////////////////////////////////////////////////////////////////////////
 // lggBeamMapFloater
@@ -64,6 +72,9 @@ public:
 	BOOL handleMouseDown(S32 x,S32 y,MASK mask);
 	void update();
 	BOOL handleRightMouseDown(S32 x,S32 y,MASK mask);
+	
+	void setData(void* data);
+	LLPanelEmerald * empanel;
 
 	void draw();
 	void clearPoints();
@@ -80,6 +91,8 @@ public:
 	
 private:
 	static void onBackgroundChange(LLUICtrl* ctrl, void* userdata);
+
+	F32 mContextConeOpacity;
 };
 class lggPoint
 {
@@ -96,6 +109,52 @@ void lggBeamMapFloater::clearPoints()
 }
 void lggBeamMapFloater::draw()
 {
+
+	LLRect swatch_rect;
+	LLButton* createButton = empanel->getChild<LLButton>("custom_beam_btn");
+
+	createButton->localRectToOtherView(createButton->getLocalRect(), &swatch_rect, this);
+	LLRect local_rect = getLocalRect();
+	if (gFocusMgr.childHasKeyboardFocus(this) && createButton->isInVisibleChain() && mContextConeOpacity > 0.001f)
+	{
+		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
+		LLGLEnable(GL_CULL_FACE);
+		gGL.begin(LLRender::QUADS);
+		{
+			gGL.color4f(0.f, 0.f, 0.f, CONTEXT_CONE_IN_ALPHA * mContextConeOpacity);
+			gGL.vertex2i(swatch_rect.mLeft, swatch_rect.mTop);
+			gGL.vertex2i(swatch_rect.mRight, swatch_rect.mTop);
+			gGL.color4f(0.f, 0.f, 0.f, CONTEXT_CONE_OUT_ALPHA * mContextConeOpacity);
+			gGL.vertex2i(local_rect.mRight, local_rect.mTop);
+			gGL.vertex2i(local_rect.mLeft, local_rect.mTop);
+
+			gGL.color4f(0.f, 0.f, 0.f, CONTEXT_CONE_OUT_ALPHA * mContextConeOpacity);
+			gGL.vertex2i(local_rect.mLeft, local_rect.mTop);
+			gGL.vertex2i(local_rect.mLeft, local_rect.mBottom);
+			gGL.color4f(0.f, 0.f, 0.f, CONTEXT_CONE_IN_ALPHA * mContextConeOpacity);
+			gGL.vertex2i(swatch_rect.mLeft, swatch_rect.mBottom);
+			gGL.vertex2i(swatch_rect.mLeft, swatch_rect.mTop);
+
+			gGL.color4f(0.f, 0.f, 0.f, CONTEXT_CONE_OUT_ALPHA * mContextConeOpacity);
+			gGL.vertex2i(local_rect.mRight, local_rect.mBottom);
+			gGL.vertex2i(local_rect.mRight, local_rect.mTop);
+			gGL.color4f(0.f, 0.f, 0.f, CONTEXT_CONE_IN_ALPHA * mContextConeOpacity);
+			gGL.vertex2i(swatch_rect.mRight, swatch_rect.mTop);
+			gGL.vertex2i(swatch_rect.mRight, swatch_rect.mBottom);
+
+			gGL.color4f(0.f, 0.f, 0.f, CONTEXT_CONE_OUT_ALPHA * mContextConeOpacity);
+			gGL.vertex2i(local_rect.mLeft, local_rect.mBottom);
+			gGL.vertex2i(local_rect.mRight, local_rect.mBottom);
+			gGL.color4f(0.f, 0.f, 0.f, CONTEXT_CONE_IN_ALPHA * mContextConeOpacity);
+			gGL.vertex2i(swatch_rect.mRight, swatch_rect.mBottom);
+			gGL.vertex2i(swatch_rect.mLeft, swatch_rect.mBottom);
+		}
+		gGL.end();
+	}
+
+	mContextConeOpacity = lerp(mContextConeOpacity, gSavedSettings.getF32("PickerContextOpacity"), LLCriticalDamp::getInterpolant(CONTEXT_FADE_TIME));
+
+
 	//getChild<LLPanel>("beamshape_draw")->setBackgroundColor(getChild<LLColorSwatchCtrl>("back_color_swatch")->get());
 	LLFloater::draw();
 	LLRect rec  = getChild<LLPanel>("beamshape_draw")->getRect();
@@ -134,7 +193,7 @@ lggBeamMapFloater::~lggBeamMapFloater()
 	//if(mCallback) mCallback->detach();
 }
 
-lggBeamMapFloater::lggBeamMapFloater(const LLSD& seed)
+lggBeamMapFloater::lggBeamMapFloater(const LLSD& seed):mContextConeOpacity(0.0f)
 {
 	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_beamshape.xml");
 	
@@ -172,6 +231,16 @@ BOOL lggBeamMapFloater::handleMouseDown(S32 x,S32 y,MASK mask)
 	}
 	
 	return LLFloater::handleMouseDown(x,y,mask);
+}
+void lggBeamMapFloater::setData(void* data)
+{
+	empanel = (LLPanelEmerald*)data;
+	if(empanel)
+	{
+
+		gFloaterView->getParentFloater(empanel)->addDependentFloater(this);
+	}
+
 }
 BOOL lggBeamMapFloater::handleRightMouseDown(S32 x,S32 y,MASK mask)
 {
@@ -252,6 +321,12 @@ void lggBeamMapFloater::onClickSave(void* data)
 	LLSDSerialize::toPrettyXML(main, export_file);
 	export_file.close();
 	gSavedSettings.setString("EmeraldBeamShape",gDirUtilp->getBaseFileName(filename,true));
+
+	if(self->empanel)
+	{
+
+		self->empanel->refresh();
+	}
 	
 }
 
@@ -301,10 +376,17 @@ void lggBeamMapFloater::onClickLoad(void* data)
 	
 }
 
-void LggBeamMap::show(BOOL showin)
+void LggBeamMap::show(BOOL showin, void * data)
 {
 	//lggBeamMapFloater* beam_floater = 
 	if(showin)
-	lggBeamMapFloater::showInstance();
+	{
+
+	
+		lggBeamMapFloater* beam_floater = lggBeamMapFloater::showInstance();
+		beam_floater->setData(data);
+
+
+	}
 	//beam_floater->update();
 }

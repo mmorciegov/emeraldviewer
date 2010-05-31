@@ -11,6 +11,7 @@
  * Removed usage of globals
  * Removed TrustNET
  * Added utilization of "minimap" data
+ * Added bridge info -lgg
  */
 
 #include "llviewerprecompiledheaders.h"
@@ -52,6 +53,8 @@
 #include "llworld.h"
 
 #include "llsdutil.h"
+#include "jc_lslviewerbridge.h"
+#include "v3dmath.h"
 
 // Timeouts
 /**
@@ -122,7 +125,8 @@ typedef enum e_radar_alert_type
 {
 	ALERT_TYPE_SIM = 0,
 	ALERT_TYPE_DRAW = 1,
-	ALERT_TYPE_CHATRANGE = 2
+	ALERT_TYPE_CHATRANGE = 2,
+	ALERT_TYPE_AGE = 3
 } ERadarAlertType;
 void chat_avatar_status(std::string name, LLUUID key, ERadarAlertType type, bool entering)
 {
@@ -141,32 +145,48 @@ void chat_avatar_status(std::string name, LLUUID key, ERadarAlertType type, bool
 		case ALERT_TYPE_SIM:
 			if(gSavedSettings.getBOOL("EmeraldRadarAlertSim"))
 			{
+				chat.mFromName = name;
+				chat.mURL = llformat("secondlife:///app/agent/%s/about",key.asString().c_str());
 				chat.mText = name+" has "+(entering ? "entered" : "left")+" the sim.";// ("+key.asString()+")";
 			}
 			break;
 		case ALERT_TYPE_DRAW:
 			if(gSavedSettings.getBOOL("EmeraldRadarAlertDraw"))
 			{
+				chat.mFromName = name;
+				chat.mURL = llformat("secondlife:///app/agent/%s/about",key.asString().c_str());
 				chat.mText = name+" has "+(entering ? "entered" : "left")+" draw distance.";// ("+key.asString()+")";
 			}
 			break;
 		case ALERT_TYPE_CHATRANGE:
 			if(gSavedSettings.getBOOL("EmeraldRadarAlertChatRange"))
 			{
+				chat.mFromName = name;
+				chat.mURL = llformat("secondlife:///app/agent/%s/about",key.asString().c_str());
 				chat.mText = name+" has "+(entering ? "entered" : "left")+" chat range.";// ("+key.asString()+")";
+			}
+			break;
+		case ALERT_TYPE_AGE:
+			if(gSavedSettings.getBOOL("EmeraldAvatarAgeAlert"))
+			{
+				chat.mFromName = name;
+				chat.mURL = llformat("secondlife:///app/agent/%s/about",key.asString().c_str());
+
+				make_ui_sound("EmeraldAvatarAgeAlertSoundUUID");
+				chat.mText = name+" has triggered your avatar age alert.";
 			}
 			break;
 		}
 		if(chat.mText != "")
 		{
 			chat.mSourceType = CHAT_SOURCE_SYSTEM;
-			LLFloaterChat::addChat(chat);
+			LLFloaterChat::addChatHistory(chat);
 		}
 	}
 }
 
 LLAvatarListEntry::LLAvatarListEntry(const LLUUID& id, const std::string &name, const LLVector3d &position, BOOL isLinden) :
-		mID(id), mName(name), mPosition(position), mDrawPosition(), mMarked(FALSE), mFocused(FALSE), mIsLinden(isLinden), mActivityType(ACTIVITY_NEW), mAccountTitle(""),
+		mID(id), mName(name), mTime(time(NULL)), mPosition(position), mDrawPosition(), mAlert(FALSE), mMarked(FALSE), mFocused(FALSE), mIsLinden(isLinden), mActivityType(ACTIVITY_NEW), mAccountTitle(""),
 			mUpdateTimer(), mActivityTimer(), mFrame(gFrameCount), mInSimFrame(U32_MAX), mInDrawFrame(U32_MAX), mInChatFrame(U32_MAX)
 {
 }
@@ -175,6 +195,7 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 {
 	if ( mActivityType == ACTIVITY_DEAD )
 	{
+		resetTime();
 		setActivity(ACTIVITY_NEW);
 	}
 
@@ -190,7 +211,18 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 		mDrawPosition.setZero();
 	}
 
-	mPosition = position;
+	//lgg if we already got a Z value from the bridge, dont over write it here
+	if(position.mdV[VZ] == 0.0)
+	{
+		mPosition.mdV[VX] = position.mdV[VX];
+		mPosition.mdV[VY] = position.mdV[VY];
+		mNeedBridgeAssist = true;
+	}else
+	{
+		//all normal
+		mNeedBridgeAssist = false;
+		mPosition = position;
+	}
 
 	mFrame = gFrameCount;
 	if(this_sim)
@@ -218,6 +250,11 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 LLVector3d LLAvatarListEntry::getPosition()
 {
 	return mPosition;
+}
+
+BOOL LLAvatarListEntry::getNeedsBridgeAssist()
+{
+	return mNeedBridgeAssist;
 }
 
 bool LLAvatarListEntry::getAlive()
@@ -270,6 +307,16 @@ void LLAvatarListEntry::setName(std::string name)
 std::string LLAvatarListEntry::getName()
 {
 	return mName;
+}
+
+time_t LLAvatarListEntry::getTime()
+{
+	return mTime;
+}
+
+void LLAvatarListEntry::resetTime()
+{
+	mTime = time(NULL);
 }
 
 LLUUID LLAvatarListEntry::getID()
@@ -334,6 +381,16 @@ ACTIVITY_TYPE LLAvatarListEntry::getActivity()
 	return mActivityType;
 }
 	
+void LLAvatarListEntry::setAlert()
+{
+	mAlert = TRUE;
+}
+
+BOOL LLAvatarListEntry::getAlert()
+{
+	return mAlert;
+}
+
 void LLAvatarListEntry::toggleMark()
 {
 	mMarked = !mMarked;
@@ -344,12 +401,33 @@ BOOL LLAvatarListEntry::isMarked()
 	return mMarked;
 }
 
+
+class LggPosCallback : public JCBridgeCallback
+{
+public:
+	LggPosCallback(std::vector<LLUUID> inavatars)
+	{
+		avatars = inavatars;
+	}
+
+	void fire(LLSD data)
+	{
+		//printchat("lol, \n"+std::string(LLSD::dumpXML(data)));
+		LLFloaterAvatarList::processBridgeReply(avatars,data);
+	}
+
+private:
+	std::vector<LLUUID> avatars;
+};
+
+
 BOOL LLAvatarListEntry::isDead()
 {
 	return getEntryAgeSeconds() > DEAD_KEEP_TIME;
 }
 
 LLFloaterAvatarList* LLFloaterAvatarList::sInstance = NULL;
+
 
 LLFloaterAvatarList::LLFloaterAvatarList() :  LLFloater(std::string("avatar list"))
 {
@@ -490,6 +568,13 @@ BOOL LLFloaterAvatarList::postBuild()
 	childSetAction("ar_btn", onClickAR, this);
 	childSetAction("teleport_btn", onClickTeleport, this);
 	childSetAction("estate_eject_btn", onClickEjectFromEstate, this);
+
+	childSetCommitCallback("agealert", onClickAgeAlert,this);
+	childSetValue("agealert",gSavedSettings.getBOOL("EmeraldAvatarAgeAlert"));
+
+	childSetCommitCallback("AgeAlertDays",onClickAgeAlertDays,this);
+	childSetValue("AgeAlertDays",gSavedSettings.getF32("EmeraldAvatarAgeAlertDays"));
+
 
 	// *FIXME: Uncomment once onClickRefresh has been restored
 	//setDefaultBtn("refresh_btn");
@@ -738,6 +823,10 @@ void LLFloaterAvatarList::refreshAvatarList()
 
 
 	std::map<LLUUID, LLAvatarListEntry>::iterator iter;
+
+	std::string toSendToBridge("");
+	std::vector<LLUUID> avatarsToSendToBridge;
+
 	for(iter = mAvatars.begin(); iter != mAvatars.end(); iter++)
 	{
 		LLSD element;
@@ -770,7 +859,15 @@ void LLFloaterAvatarList::refreshAvatarList()
 		{
 			flagForFedUpDistance = true;
 			distance = 9000;
+			
 		}
+		if(ent->getNeedsBridgeAssist() )
+		{
+			toSendToBridge += std::string("|") +av_id.asString();
+			avatarsToSendToBridge.push_back(av_id);
+			//we might not send this depending on the last time we did
+		}
+		
 		delta.mdV[2] = 0.0f;
 		F32 side_distance = (F32)delta.magVec();
 
@@ -844,6 +941,12 @@ void LLFloaterAvatarList::refreshAvatarList()
 		
 		if ( avinfo_status == DATA_RETRIEVED )
 		{
+			if ((avinfo.getAge() < gSavedSettings.getF32("EmeraldAvatarAgeAlertDays")) && !ent->getAlert())
+			{
+				ent->setAlert();
+				chat_avatar_status(ent->getName().c_str(),av_id,ALERT_TYPE_AGE, true);
+			}
+
 			element["columns"][LIST_AGE]["column"] = "age";
 			element["columns"][LIST_AGE]["type"] = "text";
 			element["columns"][LIST_AGE]["value"] = avinfo.getAge();
@@ -975,6 +1078,16 @@ void LLFloaterAvatarList::refreshAvatarList()
 		//element["columns"][LIST_PAYMENT]["column"] = "payment_data";
 		//element["columns"][LIST_PAYMENT]["type"] = "text";
 
+		S32 seentime = (S32)difftime( time(NULL) , ent->getTime() );
+		S32 hours = (S32)(seentime / (60*60));
+		S32 mins = (S32)((seentime - hours*(60*60)) / 60);
+		S32 secs = (S32)((seentime - hours*(60*60) - mins*60));
+
+		element["columns"][LIST_TIME]["column"] = "time";
+		element["columns"][LIST_TIME]["type"] = "text";
+		element["columns"][LIST_TIME]["color"] = gColors.getColor("DefaultListText").getValue();
+		element["columns"][LIST_TIME]["value"] = llformat("%d:%02d:%02d", hours,mins,secs);
+
 		element["columns"][LIST_CLIENT]["column"] = "client";
 		element["columns"][LIST_CLIENT]["type"] = "text";
 		LLColor4 avatar_name_color = gColors.getColor( "AvatarNameColor" );
@@ -1012,7 +1125,19 @@ void LLFloaterAvatarList::refreshAvatarList()
 			//llinfos << "Data for avatar " << ent->getName() << " didn't arrive yet, retrying" << llendl;
 		}
 	}
+	
+	//lgg send batch of names to bridge
+	if((toSendToBridge != "" ) && gSavedSettings.getBOOL("EmeraldUseBridgeRadar"))
+	{
+		F32 timeNow = gFrameTimeSeconds;
+		if( (timeNow - mlastBridgeCallTime) > 20)
+		{
+			mlastBridgeCallTime = timeNow;
+			JCLSLBridge::bridgetolsl("pos"+toSendToBridge, new LggPosCallback(avatarsToSendToBridge));
 
+		}
+		
+	}
 	// finish
 	mAvatarList->sortItems();
 	mAvatarList->selectMultiple(selected);
@@ -1103,6 +1228,55 @@ void LLFloaterAvatarList::sendAvatarPropertiesRequest(LLUUID avid)
 	gAgent.sendReliableMessage();
 
 	mAvatars[avid].mAvatarInfo.requestStarted();
+}
+
+// static
+void LLFloaterAvatarList::processBridgeReply(std::vector<LLUUID> avatars, LLSD bridgeResponce)
+{
+	if(!sInstance)return;
+
+	LLFloaterAvatarList* self = sInstance;
+
+
+	//lgg
+	for(int i=0;i<(int)bridgeResponce.size();i++)
+	{
+
+		// Verify that the avatar is in the list, if not, ignore.
+		if ( self->mAvatarList->getItemIndex(avatars[i]) < 0 )
+		{
+			return;
+		}
+
+		LLAvatarListEntry *entry = &self->mAvatars[avatars[i]];
+
+		std::string toParse = bridgeResponce[i].asString();
+		
+		llinfos << "trying to parse " << toParse.c_str() << llendl;
+		
+		LLVector3d v;
+		char * pch = strtok ((char *)toParse.c_str()," ,<>");
+		std::string toParseOut("");
+		while (pch != NULL)
+		{
+			toParseOut += std::string(" ") + std::string(pch);
+			pch = strtok (NULL, " ,<>");
+		}
+		if(toParseOut.length() > 1)
+			toParseOut = toParseOut.substr(1);
+
+		//llinfos << "ok now trying to parse " << toParseOut.c_str() << llendl;
+
+
+		S32 count = sscanf( toParseOut.c_str(), "%lf %lf %lf", v.mdV + 0, v.mdV + 1, v.mdV + 2 );
+		if( 3 == count )
+		{
+			llinfos << "setting new height" << llendl;
+			entry->mPosition =v;
+		}
+	}
+		
+
 }
 
 // static
@@ -1238,7 +1412,8 @@ void LLFloaterAvatarList::processSoundTrigger(LLMessageSystem* msg,void**)
 			if(self) self->clearAnnouncements();
 		}else
 		{
-			LLNotifications::instance().add("EmeraldRadarChat", LLSD(),LLSD(), callbackEmeraldChat);
+			if(gSavedSettings.getWarning("EmeraldRadarChat"))
+				LLNotifications::instance().add("EmeraldRadarChat", LLSD(),LLSD(), callbackEmeraldChat);
 	
 		}
 	}
@@ -1323,6 +1498,19 @@ LLAvatarListEntry * LLFloaterAvatarList::getAvatarEntry(LLUUID avatar)
 	//return &mAvatars[avatar];
 }
 
+void LLFloaterAvatarList::onClickAgeAlert(LLUICtrl* ctrl,void *userdata)
+{
+	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
+	gSavedSettings.setBOOL("EmeraldAvatarAgeAlert", avlist->childGetValue("agealert"));
+}
+
+void LLFloaterAvatarList::onClickAgeAlertDays(LLUICtrl* ctrl,void *userdata)
+{
+	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
+	gSavedSettings.setF32("EmeraldAvatarAgeAlertDays", avlist->childGetValue("AgeAlertDays").asInteger());
+}
+
+
 //static
 void LLFloaterAvatarList::onClickMark(void *userdata)
 {
@@ -1392,7 +1580,23 @@ void LLFloaterAvatarList::onDoubleClick(void *userdata)
  	LLScrollListItem *item =   self->mAvatarList->getFirstSelected();
 	LLUUID agent_id = item->getUUID();
 
-	gAgent.lookAtObject(agent_id, CAMERA_POSITION_OBJECT);
+	//gAgent.lookAtObject(agent_id, CAMERA_POSITION_OBJECT);
+	lookAtAvatar(agent_id);
+}
+
+void LLFloaterAvatarList::lookAtAvatar(LLUUID &uuid)
+{ // twisted laws
+    LLViewerObject* voavatar = gObjectList.findObject(uuid);
+    if(voavatar && voavatar->isAvatar())
+    {
+        gAgent.setFocusOnAvatar(FALSE, FALSE);
+        gAgent.changeCameraToThirdPerson();
+        gAgent.setFocusGlobal(voavatar->getPositionGlobal(),uuid);
+        gAgent.setCameraPosAndFocusGlobal(voavatar->getPositionGlobal() 
+                + LLVector3d(3.5,1.35,0.75) * voavatar->getRotation(), 
+                                                voavatar->getPositionGlobal(), 
+                                                uuid );
+    }
 }
 
 void LLFloaterAvatarList::removeFocusFromAll()
@@ -1926,6 +2130,7 @@ void LLFloaterAvatarList::onClickTeleport(void* userdata)
 void LLFloaterAvatarList::checkAnnouncements()
 {
 	LLViewerRegion* regionp = gAgent.getRegion();
+	if(!regionp)return;//ALWAYS VALIDATE DATA
 	std::ostringstream ids;
 	std::set<LLUUID> new_set;
 	static int last_transact_num = 0;
@@ -1950,6 +2155,7 @@ void LLFloaterAvatarList::checkAnnouncements()
 	}
 
 	// Where the heck are iterators in LLDynamicArray?
+	if (!regionp) return; // caused crash if logged out/connection lost
 	for (int i = 0; i < regionp->mMapAvatarIDs.count(); i++)
 	{
 		const LLUUID &id = regionp->mMapAvatarIDs.get(i);
