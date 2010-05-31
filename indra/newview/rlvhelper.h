@@ -1,12 +1,12 @@
 #ifndef RLV_HELPER_H
 #define RLV_HELPER_H
 
+#include "llboost.h"
 #include "llinventorymodel.h"
 #include "llselectmgr.h"
 #include "llviewercontrol.h"
+#include "llviewerobjectlist.h"
 #include "llwlparamset.h"
-
-#include <boost/tokenizer.hpp>
 
 #include "rlvmultistringsearch.h"
 
@@ -49,13 +49,13 @@
 
 // Version of the specifcation we support
 const S32 RLV_VERSION_MAJOR = 1;
-const S32 RLV_VERSION_MINOR = 19;
-const S32 RLV_VERSION_PATCH = 0;
+const S32 RLV_VERSION_MINOR = 20;
+const S32 RLV_VERSION_PATCH = 1;
 
 // Implementation version
 const S32 RLVa_VERSION_MAJOR = 1;
 const S32 RLVa_VERSION_MINOR = 0;
-const S32 RLVa_VERSION_PATCH = 0;
+const S32 RLVa_VERSION_PATCH = 1;
 const S32 RLVa_VERSION_BUILD = 7;
 
 // The official viewer version we're patching against
@@ -156,6 +156,7 @@ enum ERlvBehaviour {
 	RLV_BHVR_SHOWHOVERTEXTWORLD,	// "showhovertextworld"
 	RLV_BHVR_SHOWHOVERTEXTHUD,		// "showhovertexthud"
 	RLV_BHVR_SHOWHOVERTEXT,			// "showhovertext"
+	RLV_BHVR_NOTIFY,				// "notify"
 
 	RLV_BHVR_COUNT,
 	RLV_BHVR_UNKNOWN
@@ -248,7 +249,7 @@ typedef std::list<RlvCommand> rlv_command_list_t;
 class RlvObject
 {
 public:
-	RlvObject(const LLUUID& uuid) : m_UUID(uuid) {}
+	RlvObject(const LLUUID& uuid) : m_UUID(uuid), m_nLookupMisses(0) { m_fLookup = (NULL != gObjectList.findObject(uuid)); }
 
 	BOOL addCommand(const RlvCommand& rlvCmd);
 	BOOL removeCommand(const RlvCommand& rlvCmd);
@@ -262,8 +263,10 @@ public:
 
 	const rlv_command_list_t* getCommandList() const { return &m_Commands; }
 protected:
-	LLUUID             m_UUID;
-	rlv_command_list_t m_Commands;
+	LLUUID             m_UUID;				// The object's UUID
+	bool               m_fLookup;			// TRUE if the object existed in gObjectList at one point in time
+	S16                m_nLookupMisses;		// Count of unsuccessful lookups in gObjectList by the GC
+	rlv_command_list_t m_Commands;			// List of behaviours held by this object (in the order they were received)
 
 	friend class RlvHandler;
 };
@@ -330,7 +333,6 @@ public:
 
 	virtual bool operator()(LLInventoryCategory* pFolder, LLInventoryItem* pItem);
 
-	S32           getDirectDescendentsCount(const LLInventoryCategory* pFolder, LLAssetType::EType type) const;
 	const LLUUID& getFoldedParent(const LLUUID& idFolder) const;
 protected:
 	bool         m_fAttach;
@@ -356,27 +358,11 @@ protected:
 struct RlvRetainedCommand
 {
 public:
-	LLUUID      idObject;
 	std::string strObject;
+	LLUUID      idObject;
 	std::string strCmd;
-	bool        fImmediate;
-	S16         nLookupMisses;
 
-	RlvRetainedCommand(const LLUUID& uuid, const std::string& cmd) 
-		: idObject(uuid), strCmd(cmd), nLookupMisses(0), fImmediate(false)
-	{
-		fImmediate = isImmediate(cmd);
-	}
-
-	static bool isImmediate(const std::string& strCmd)
-	{
-		int idx = strCmd.rfind('=');
-		if ( (-1 != idx) && (-1 == strCmd.find_first_not_of("0123456789", idx + 1)) )
-			return true;
-		return false;
-	}
-
-	bool operator ==(const LLUUID& uuid) const { return idObject == uuid; }
+	RlvRetainedCommand(const std::string obj, const LLUUID& uuid, const std::string& cmd) : strObject(obj), idObject(uuid), strCmd(cmd) {}
 private:
 	RlvRetainedCommand();
 };
@@ -415,10 +401,12 @@ private:
 #define RLV_SETTING_FORBIDGIVETORLV		"RestrainedLifeForbidGiveToRLV"
 
 #define RLV_SETTING_ENABLEWEAR			"RLVaEnableWear"
+#define RLV_SETTING_ENABLELEGACYNAMING  "RLVaEnableLegacyNaming"
 #define RLV_SETTING_HIDELOCKEDLAYER		"RLVaHideLockedLayers"
 #define RLV_SETTING_HIDELOCKEDATTACH	"RLVaHideLockedAttachments"
 #define RLV_SETTING_HIDELOCKEDINVENTORY	"RLVaHideLockedInventory"
 #define RLV_SETTING_LOGINLASTLOCATION	"RLVaLoginLastLocation"
+#define RLV_SETTING_SHOWNAMETAGS		"RLVaShowNameTags"
 
 inline BOOL rlvGetSettingBOOL(const std::string& strSetting, BOOL fDefault)
 {
@@ -444,11 +432,37 @@ public:
 		static BOOL getLoginLastLocation()	{ return rlvGetPerUserSettingsBOOL(RLV_SETTING_LOGINLASTLOCATION, TRUE); }
 		static void updateLoginLastLocation();
 	#endif // RLV_EXTENSION_STARTLOCATION
+
+	static BOOL fShowNameTags;
 };
 
 // ============================================================================
 /*
- * Various helper classes/timers/functors/functions
+ * State keeping classes/structure
+ *
+ */
+
+struct RlvRedirInfo
+{
+	S16 nRedirChat;
+	S16 nRedirEmote;
+
+	RlvRedirInfo() : nRedirChat(0), nRedirEmote(0) {}
+	bool isActive() { return (nRedirChat + nRedirEmote) != 0; }
+};
+
+struct RlvReattachInfo
+{
+	LLUUID idItem;
+	bool   fInInventory;
+	bool   fAssetSaved;
+
+	RlvReattachInfo() : idItem(), fInInventory(false), fAssetSaved(false) {}
+};
+
+// ============================================================================
+/*
+ * Various helper classes/timers/functors
  *
  */
 
@@ -457,6 +471,17 @@ class RlvGCTimer : public LLEventTimer
 public:
 	RlvGCTimer() : LLEventTimer(30.0) {}
 	virtual BOOL tick();
+};
+
+class RlvCurrentlyWorn : public LLInventoryFetchObserver
+{
+public:
+	RlvCurrentlyWorn() {}
+	~RlvCurrentlyWorn() {}
+	virtual void done() {}
+
+	static void fetchWorn();
+	void fetchItem(const LLUUID& idItem);
 };
 
 struct RlvSelectHasLockedAttach : public LLSelectedNodeFunctor
@@ -478,14 +503,27 @@ struct RlvSelectIsSittingOn : public LLSelectedNodeFunctor
 	LLXform* m_pObject;
 };
 
-void rlvStringReplace(std::string& strText, std::string strFrom, const std::string& strTo);
-bool rlvCanDeleteOrReturn();
-BOOL rlvAttachToEnabler(void* pParam);
+// ============================================================================
+/*
+ * Various helper functions
+ *
+ */
 
-inline bool rlvIsEmote(const std::string& strUTF8Text)
-{
-	return (strUTF8Text.length() > 4) && ( (strUTF8Text.compare(0, 4, "/me ") == 0) || (strUTF8Text.compare(0, 4, "/me'") == 0) );
-}
+BOOL rlvAttachToEnabler(void* pParam);
+bool rlvCanDeleteOrReturn();
+S32  rlvGetDirectDescendentsCount(const LLInventoryCategory* pFolder, LLAssetType::EType type);
+bool rlvIsEmote(const std::string& strUTF8Text);
+bool rlvIsValidChannel(S32 nChannel);
+bool rlvIsWearingItem(const LLInventoryItem* pItem);
+
+void rlvForceDetach(LLViewerJointAttachment* pAttachPt);
+void rlvSendBusyMessage(const LLUUID& idTo, const std::string& strMsg, const LLUUID& idSession = LLUUID::null);
+bool rlvSendChatReply(const std::string& strChannel, const std::string& strReply);
+bool rlvSendChatReply(S32 nChannel, const std::string& strReply);
+
+void rlvStringReplace(std::string& strText, std::string strFrom, const std::string& strTo);
+std::string rlvGetFirstParenthesisedText(const std::string& strText, std::string::size_type* pidxMatch = NULL);
+std::string rlvGetLastParenthesisedText(const std::string& strText, std::string::size_type* pidxStart = NULL);
 
 #ifdef RLV_ADVANCED_TOGGLE_RLVA
 	// "Advanced / RLVa / Enable RLV" menu option
@@ -494,7 +532,7 @@ inline bool rlvIsEmote(const std::string& strUTF8Text)
 #endif // RLV_ADVANCED_TOGGLE_RLVA
 
 // ============================================================================
-// RlvCommand inlined member functions
+// Inlined class member functions
 //
 
 inline bool RlvCommand::operator ==(const RlvCommand& rhs) const
@@ -502,6 +540,38 @@ inline bool RlvCommand::operator ==(const RlvCommand& rhs) const
 	// The specification notes that "@detach=n" is semantically identical to "@detach=add" (same for "y" and "rem"
 	return (m_strBehaviour == rhs.m_strBehaviour) && (m_strOption == rhs.m_strOption) &&
 		( (RLV_TYPE_UNKNOWN != m_eParamType) ? (m_eParamType == rhs.m_eParamType) : (m_strParam == rhs.m_strParam) );
+}
+
+inline void RlvCurrentlyWorn::fetchItem(const LLUUID& idItem)
+{ 
+	if (idItem.notNull()) 
+	{
+		LLInventoryFetchObserver::item_ref_t idItems; 
+		idItems.push_back(idItem);
+		fetchItems(idItems);
+	}
+}
+
+// ============================================================================
+// Inlined helper functions
+//
+
+inline bool rlvIsEmote(const std::string& strUTF8Text)
+{
+	return (strUTF8Text.length() > 4) && ( (strUTF8Text.compare(0, 4, "/me ") == 0) || (strUTF8Text.compare(0, 4, "/me'") == 0) );
+}
+
+// Checked: 2009-08-05 (RLVa-1.0.1e) | Added: RLVa-1.0.0e
+inline bool rlvIsValidChannel(S32 nChannel)
+{
+	return (nChannel >= 0) && (CHAT_CHANNEL_DEBUG != nChannel);
+}
+
+// Checked: 2009-08-05 (RLVa-1.0.1e) | Added: RLVa-1.0.0e
+inline bool rlvSendChatReply(const std::string& strChannel, const std::string& strReply)
+{
+	S32 nChannel;
+	return (LLStringUtil::convertToS32(strChannel, nChannel)) ? rlvSendChatReply(nChannel, strReply) : false;
 }
 
 // ============================================================================

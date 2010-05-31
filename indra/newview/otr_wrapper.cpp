@@ -14,7 +14,7 @@
    License for more details.
  
    You should have received a copy of the GNU Lesser General Public
-   License along with Libgcrypt; if not, write to the Free Software
+   License along with the viewer; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
@@ -40,8 +40,9 @@ OTR_Wrapper::~OTR_Wrapper()
     }
 }
 
-#if 1 // $TODO$ use some debug compile flag?
-static void otrwui_trace(const char *msg)
+#define otrwui_tracing 1 // $TODO$ use some debug compile flag?
+#if otrwui_tracing
+extern "C" void otrwui_trace(const char *msg)
 {
     llinfos << "$PLOTR$TRACE$" << msg << llendl;
 }
@@ -121,6 +122,8 @@ static void otrwui_create_privkey(
      * desired. */
     if (gOTR)
     {
+        LLUUID session_id = *((LLUUID*)opdata);
+        otr_log_message_getstring(session_id, "otr_gen_key_please_wait");
         std::string path =
             gDirUtilp->getExpandedFilename(
                 LL_PATH_PER_SL_ACCOUNT, OTR_PRIVATE_KEYS_FILE);
@@ -133,7 +136,6 @@ static int otrwui_is_logged_in(
     void *opdata, const char *accountname,
     const char *protocol, const char *recipient)
 {
-    otrwui_trace("otrwui_is_logged_in()");
     /* Report whether you think the given user is online.  Return 1 if
      * you think he is, 0 if you think he isn't, -1 if you're not sure.
      *
@@ -144,9 +146,20 @@ static int otrwui_is_logged_in(
 	const LLRelationship* info = NULL;
 	info = LLAvatarTracker::instance().getBuddyInfo(recipient_uuid);
     int result;
-    if (!info)                  result = -1;
+    if (!info)                  result = 1; // hack, should be -1.  but we'll pretend non-friends are always online
     else if (!info->isOnline()) result = 0;
     else                        result = 1;
+#if otrwui_tracing
+    std::string msg = "otrwui_is_logged_in()";
+    switch(result)
+    {
+    case -1: msg += " -1 unknown"; break;
+    case  0: msg += " 0 no, logged out"; break;
+    case  1: msg += " 1 yes, logged in"; break;
+    default: msg += " ? imposible result"; break;
+    }
+    otrwui_trace(msg.c_str());
+#endif
     return result;
 }
 
@@ -166,7 +179,7 @@ static void otrwui_inject_message(
     {
         LLUUID sessionUUID = *((LLUUID*)opdata);
         LLUUID otherUUID(recipient);
-        deliver_message(message, sessionUUID, otherUUID, IM_NOTHING_SPECIAL);
+        otr_deliver_message(message, sessionUUID, otherUUID, IM_NOTHING_SPECIAL);
     }
 }
 
@@ -178,23 +191,6 @@ static void otrwui_notify(
 {
     /* Display a notification message for a particular accountname /
      * protocol / username conversation. */
-	 //accountname is a uuid.  protocol is "SecondLife". recipient is their uuid.
-	/*LLUUID rec = LLUUID(std::string(username));
-	std::string my_name;
-	gAgent.buildFullname(my_name);
-	pack_instant_message(
-		gMessageSystem,
-		gAgent.getID(),
-		FALSE,
-		gAgent.getSessionID(),
-		rec,
-		my_name,
-		std::string(title)+"\n"+std::string(secondary),
-		IM_OFFLINE,
-		IM_NOTHING_SPECIAL,
-		LLIMMgr::computeSessionID(IM_NOTHING_SPECIAL,rec));*/
-
-
     std::string trace = "otrwui_notify: \n";
     trace += "title(";     trace += title;     trace += ")\n";
     trace += "primary(";   trace += primary;   trace += ")\n";
@@ -293,7 +289,7 @@ static void otrwui_gone_secure(
     {
         otr_log_message_getstring_name(session_id, "otr_log_start_unverified");
     }
-    show_otr_status(session_id);
+    otr_show_status(session_id);
 }
 
 static void otrwui_gone_insecure(
@@ -308,7 +304,7 @@ static void otrwui_gone_insecure(
     }
     LLUUID session_id = *((LLUUID*)opdata);
     otr_log_message_getstring(session_id, "otr_log_gone_insecure");
-    show_otr_status(session_id);
+    otr_show_status(session_id);
 }
 
 static void otrwui_still_secure(
@@ -333,7 +329,7 @@ static void otrwui_still_secure(
     {
         otr_log_message_getstring_name(session_id, "otr_log_still_unverified");
     }
-    show_otr_status(session_id);
+    otr_show_status(session_id);
 }
 
 static void otrwui_log_message(
@@ -348,7 +344,7 @@ static int otrwui_max_message_size(
     void *opdata, ConnContext *context)
 {
     /* Find the maximum message size supported by this protocol. */
-    return (MAX_MSG_BUF_SIZE - 1);
+    return (MAX_MSG_BUF_SIZE - 24);
 }
 
 static const char *otrwui_account_name(
@@ -374,8 +370,62 @@ static void otrwui_account_name_free(
     free((void *)account_name);
 }
 
+// static
+void OTR_Wrapper::stopAll()
+{
+    otrwui_trace("OTR_Wrapper::stopAll()");
+    if (!gOTR) return;
+    if (gOTR->userstate)
+    {
+        for (ConnContext *context = gOTR->userstate->context_root; context; context = context->next)
+        {
+            if (context && (OTRL_MSGSTATE_ENCRYPTED == context->msgstate))
+            {
+                LLUUID their_uuid = LLUUID(context->username);
+                LLUUID session_uuid = LLIMMgr::computeSessionID(IM_NOTHING_SPECIAL, their_uuid);
+                LLFloaterIMPanel* pan = gIMMgr->findFloaterBySession(session_uuid);
+                if (pan)
+                {
+                    llinfos << "$PLOTR$ found IM pannel, pan->doOtrStop()" << llendl;
+                    pan->doOtrStop();
+                }
+                else
+                {
+                    char my_uuid[UUID_STR_SIZE];
+                    gAgent.getID().toString(&(my_uuid[0]));
+                    llinfos << "$PLOTR$ didn't find IM panel, going lower level"
+                            << " c->accountname:" << context->accountname // this avatar, aka me
+                            << " c->protocol:"    << context->protocol    // secondlife, IRC, yahoo...
+                            << " c->username:"    << context->username    // other participant
+                            << " session_uuid:"   << session_uuid
+                            << llendl;
+                    otrl_message_disconnect(
+                        gOTR->get_userstate(), 
+                        gOTR->get_uistate(), 
+                        &session_uuid,
+                        context->accountname,
+                        context->protocol,
+                        context->username);
+                }
+            }
+        }
+    }
+}
+
+// static
+void OTR_Wrapper::logout()
+{
+    otrwui_trace("OTR_Wrapper::logout()");
+    if (!gOTR) return;
+    OTR_Wrapper::stopAll();
+    delete gOTR;
+    gOTR = NULL;
+}
+
+// static
 void OTR_Wrapper::init()
 {
+    otrwui_trace("OTR_Wrapper::init()");
     if (! gOTR)
     {
         gOTR = new OTR_Wrapper;
@@ -414,6 +464,24 @@ void OTR_Wrapper::init()
                 gDirUtilp->getExpandedFilename(
                     LL_PATH_PER_SL_ACCOUNT, OTR_PUBLIC_KEYS_FILE);
             otrl_privkey_read_fingerprints(gOTR->userstate, pubpath.c_str(), NULL, NULL);
+#if 0 // this will gen a key, if the user doesn't have one, at init() time
+            if (gOTR && gOTR->userstate)
+            {
+                OtrlPrivKey *r = gOTR->userstate->privkey_root;
+                OtrlPrivKey *k = gOTR->userstate->privkey_root;
+                while (k && (k != r))
+                {
+                    if (0 == strcmp(gOTR->get_protocolid(), k->protocol))
+                    {
+                        return;
+                    }
+                }
+                char my_uuid[UUID_STR_SIZE];
+                gAgent.getID().toString(&(my_uuid[0]));
+                otrl_privkey_generate(gOTR->userstate, privpath.c_str(),
+                                      my_uuid, gOTR->get_protocolid());
+            }
+#endif
         }
     }
 }

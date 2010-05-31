@@ -1,6 +1,7 @@
 #include "llviewerprecompiledheaders.h"
 #include "llagent.h"
 #include "llviewerobject.h"
+#include "llviewerstats.h"
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
 #include "llwlparammanager.h"
@@ -134,7 +135,7 @@ void RlvCommand::initLookupTable()
 				"getstatus", "getstatusall", "getinv", "getinvworn", "findfolder", "findfolders", "attach", "attachall", "detachall",
 				"getpath", "attachthis", "attachallthis", "detachthis", "detachallthis", "fartouch", "showworldmap", "showminimap",
 				"showloc", "tpto", "accepttp", "shownames", "fly", "getsitid", "setdebug", "setenv", "detachme", 
-				"showhovertextall", "showhovertextworld", "showhovertexthud", "showhovertext"
+				"showhovertextall", "showhovertextworld", "showhovertexthud", "showhovertext", "notify"
 			};
 
 		for (int idxBvhr = 0; idxBvhr < RLV_BHVR_COUNT; idxBvhr++)
@@ -230,7 +231,7 @@ std::string RlvObject::getStatusString(const std::string& strMatch) const
 	for (rlv_command_list_t::const_iterator itCmd = m_Commands.begin(); itCmd != m_Commands.end(); ++itCmd)
 	{
 		strCmd = itCmd->asString();
-		if ( (strMatch.empty()) || (-1 != strCmd.find(strMatch)) )
+		if ( (strMatch.empty()) || (std::string::npos != strCmd.find(strMatch)) )
 		{
 			if (!strStatus.empty())
 				strStatus.push_back('/');
@@ -248,7 +249,7 @@ std::string RlvObject::getStatusString(const std::string& strMatch) const
  */
 
 // Checked: 2009-05-26 (RLVa-0.2.0d) | Modified: RLVa-0.2.0d
-S32 RlvWearableItemCollector::getDirectDescendentsCount(const LLInventoryCategory* pFolder, LLAssetType::EType type) const
+S32 rlvGetDirectDescendentsCount(const LLInventoryCategory* pFolder, LLAssetType::EType type)
 {
 	S32 cntType = 0;
 	if (pFolder)
@@ -279,7 +280,7 @@ const LLUUID& RlvWearableItemCollector::getFoldedParent(const LLUUID& idFolder) 
 	return (m_Folding.end() == itFolder) ? idFolder : itFolder->second;
 }
 
-// Checked: 2009-05-26 (RLVa-0.2.0d) | Modified: RLVa-0.2.0d
+// Checked: 2009-07-29 (RLVa-1.0.1b) | Modified: RLVa-1.0.1b
 bool RlvWearableItemCollector::onCollectFolder(const LLInventoryCategory* pFolder)
 {
 	const LLUUID& idParent = pFolder->getParentUUID();
@@ -295,9 +296,7 @@ bool RlvWearableItemCollector::onCollectFolder(const LLInventoryCategory* pFolde
 			return false;
 	#endif // RLV_EXTENSION_FLAG_NOSTRIP
 
-	if ( (gRlvHandler.getAttachPoint(pFolder, true)) &&							// Check for .(<attachpt) type folder and...
-		 ((!m_fAttach) ||														// ... on detach we don't care about its children...
-		  (1 == getDirectDescendentsCount(pFolder, LLAssetType::AT_OBJECT))) )	// ... but on attach there can only be 1 attachment
+	if (gRlvHandler.isFoldedFolder(pFolder, m_fAttach))							// Check for folder that should get folded under its parent
 	{
 		m_Tentative.push_front(pFolder->getUUID());
 		m_Folding.insert(std::pair<LLUUID, LLUUID>(pFolder->getUUID(), idParent));
@@ -316,13 +315,6 @@ bool RlvWearableItemCollector::onCollectFolder(const LLInventoryCategory* pFolde
 		m_Folding.insert(std::pair<LLUUID, LLUUID>(pFolder->getUUID(), idParent));
 	}
 	#endif // RLV_EXPERIMENTAL_COMPOSITES
-	#ifdef RLV_EXTENSION_FLAG_NOSTRIP
-	else if (strFolder == ".("RLV_FOLDER_FLAG_NOSTRIP")")						// .(nostrip) folder
-	{
-		m_Tentative.push_front(pFolder->getUUID());
-		m_Folding.insert(std::pair<LLUUID, LLUUID>(pFolder->getUUID(), idParent));
-	}
-	#endif // RLV_EXTENSION_FLAG_NOSTRIP
 
 	return false;
 }
@@ -391,28 +383,6 @@ bool RlvSelectIsSittingOn::apply(LLSelectNode* pNode)
 	return (pNode->getObject()) && (pNode->getObject()->getRootEdit() == m_pObject);
 }
 
-// Checked: 2009-07-04 (RLVa-1.0.0a)
-void rlvStringReplace(std::string& strText, std::string strFrom, const std::string& strTo)
-{
-	if (strFrom.empty())
-		return;
-
-	size_t lenFrom = strFrom.length();
-	size_t lenTo = strTo.length();
-
-	std::string strTemp(strText);
-	LLStringUtil::toLower(strTemp);
-	LLStringUtil::toLower(strFrom);
-
-	std::string::size_type idxCur, idxStart = 0, idxOffset = 0;
-	while ( (idxCur = strTemp.find(strFrom, idxStart)) != std::string::npos)
-	{
-		strText.replace(idxCur + idxOffset, lenFrom, strTo);
-		idxStart = idxCur + lenFrom;
-		idxOffset += lenTo - lenFrom;
-	}
-}
-
 // Checked: 2009-07-05 (RLVa-1.0.0b) | Modified: RLVa-0.2.0g
 bool rlvCanDeleteOrReturn()
 {
@@ -455,6 +425,35 @@ BOOL RlvGCTimer::tick()
 	return !fContinue;
 }
 
+void RlvCurrentlyWorn::fetchWorn()
+{
+	LLInventoryFetchObserver::item_ref_t idItems;
+
+	// Fetch all currently worn clothing layers and body parts
+	for (int type = 0; type < (int)WT_COUNT; type++)
+	{
+		const LLUUID& idItem = gAgent.getWearableItem((EWearableType)type);
+		if (idItem.notNull())
+			idItems.push_back(idItem);
+	}
+
+	// Fetch all currently worn attachments
+	LLVOAvatar* pAvatar = gAgent.getAvatarObject();
+	if (pAvatar)
+	{
+		for (LLVOAvatar::attachment_map_t::const_iterator itAttach = pAvatar->mAttachmentPoints.begin(); 
+			 itAttach != pAvatar->mAttachmentPoints.end(); ++itAttach)
+		{
+			const LLUUID& idItem = itAttach->second->getItemID();
+			if (idItem.notNull())
+				idItems.push_back(idItem);
+		}
+	}
+
+	RlvCurrentlyWorn f;
+	f.fetchItems(idItems);
+}
+
 // =========================================================================
 
 // Checked: 2009-06-03 (RLVa-0.2.0h) | Added: RLVa-0.2.0h
@@ -486,6 +485,8 @@ RlvWLSnapshot* RlvWLSnapshot::takeSnapshot()
 }
 
 // =========================================================================
+
+BOOL RlvSettings::fShowNameTags = FALSE;
 
 #ifdef RLV_EXTENSION_STARTLOCATION
 	// Checked: 2009-07-08 (RLVa-1.0.0e) | Modified: RLVa-0.2.1d
@@ -531,5 +532,143 @@ RlvWLSnapshot* RlvWLSnapshot::takeSnapshot()
 		return rlv_handler_t::isEnabled();
 	}
 #endif // RLV_ADVANCED_TOGGLE_RLVA
+
+// =========================================================================
+// Message sending functions
+//
+
+// Checked: 2009-08-11 (RLVa-1.0.1h) | Added: RLVa-1.0.1h
+void rlvForceDetach(LLViewerJointAttachment* pAttachPt)
+{
+	// Copy/paste from handle_detach_from_avatar()
+	LLViewerObject* attached_object = pAttachPt->getObject();
+	if (attached_object)
+	{
+		gMessageSystem->newMessage("ObjectDetach");
+		gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+		gMessageSystem->addUUIDFast(_PREHASH_AgentID, gAgent.getID() );
+		gMessageSystem->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+
+		gMessageSystem->nextBlockFast(_PREHASH_ObjectData);
+		gMessageSystem->addU32Fast(_PREHASH_ObjectLocalID, attached_object->getLocalID());
+		gMessageSystem->sendReliable( gAgent.getRegionHost() );
+	}
+}
+
+void rlvSendBusyMessage(const LLUUID& idTo, const std::string& strMsg, const LLUUID& idSession)
+{
+	// (See process_improved_im)
+	std::string strFullName;
+	gAgent.buildFullname(strFullName);
+
+	pack_instant_message(gMessageSystem, gAgent.getID(), FALSE, gAgent.getSessionID(), idTo, strFullName,
+		strMsg, IM_ONLINE, IM_BUSY_AUTO_RESPONSE, idSession);
+	gAgent.sendReliableMessage();
+}
+
+// Checked: 2009-08-05 (RLVa-1.0.1e) | Modified: RLVa-1.0.1e
+bool rlvSendChatReply(S32 nChannel, const std::string& strReply)
+{
+	if (!rlvIsValidChannel(nChannel))
+		return false;
+
+	// Copy/paste from send_chat_from_viewer()
+	LLMessageSystem* msg = gMessageSystem;
+	msg->newMessageFast(_PREHASH_ChatFromViewer);
+	msg->nextBlockFast(_PREHASH_AgentData);
+	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+	msg->nextBlockFast(_PREHASH_ChatData);
+	msg->addStringFast(_PREHASH_Message, strReply);
+	msg->addU8Fast(_PREHASH_Type, CHAT_TYPE_SHOUT);
+	msg->addS32("Channel", nChannel);
+	gAgent.sendReliableMessage();
+	LLViewerStats::getInstance()->incStat(LLViewerStats::ST_CHAT_COUNT);
+
+	return true;
+}
+
+// =========================================================================
+// String helper functions
+//
+
+// Checked: 2009-07-04 (RLVa-1.0.0a)
+void rlvStringReplace(std::string& strText, std::string strFrom, const std::string& strTo)
+{
+	if (strFrom.empty())
+		return;
+
+	size_t lenFrom = strFrom.length();
+	size_t lenTo = strTo.length();
+
+	std::string strTemp(strText);
+	LLStringUtil::toLower(strTemp);
+	LLStringUtil::toLower(strFrom);
+
+	std::string::size_type idxCur, idxStart = 0, idxOffset = 0;
+	while ( (idxCur = strTemp.find(strFrom, idxStart)) != std::string::npos)
+	{
+		strText.replace(idxCur + idxOffset, lenFrom, strTo);
+		idxStart = idxCur + lenFrom;
+		idxOffset += lenTo - lenFrom;
+	}
+}
+
+// Checked: 2009-07-29 (RLVa-1.0.1b) | Added: RLVa-1.0.1b
+std::string rlvGetFirstParenthesisedText(const std::string& strText, std::string::size_type* pidxMatch /*=NULL*/)
+{
+	if (pidxMatch)
+		*pidxMatch = std::string::npos;	// Assume we won't find anything
+
+	std::string::size_type idxIt, idxStart; int cntLevel = 1;
+	if ((idxStart = strText.find_first_of('(')) == std::string::npos)
+		return std::string();
+
+	const char* pstrText = strText.c_str(); idxIt = idxStart;
+	while ( (cntLevel > 0) && (idxIt < strText.length()) )
+	{
+		if ('(' == pstrText[++idxIt])
+			cntLevel++;
+		else if (')' == pstrText[idxIt])
+			cntLevel--;
+	}
+
+	if (idxIt < strText.length())
+	{
+		if (pidxMatch)
+			*pidxMatch = idxStart;	// Return the character index of the starting '('
+		return strText.substr(idxStart + 1, idxIt - idxStart - 1);
+	}
+	return std::string();
+}
+
+// Checked: 2009-07-29 (RLVa-1.0.1b) | Added: RLVa-1.0.1b
+std::string rlvGetLastParenthesisedText(const std::string& strText, std::string::size_type* pidxStart /*=NULL*/)
+{
+	if (pidxStart)
+		*pidxStart = std::string::npos;	// Assume we won't find anything
+
+	// Extracts the last - matched - parenthesised text from the input string
+	std::string::size_type idxIt, idxEnd; int cntLevel = 1;
+	if ((idxEnd = strText.find_last_of(')')) == std::string::npos)
+		return std::string();
+
+	const char* pstrText = strText.c_str(); idxIt = idxEnd;
+	while ( (cntLevel > 0) && (idxIt >= 0) )
+	{
+		if (')' == pstrText[--idxIt])
+			cntLevel++;
+		else if ('(' == pstrText[idxIt])
+			cntLevel--;
+	}
+
+	if ( (idxIt >= 0) && (idxIt < strText.length()) )	// NOTE: allow for std::string::size_type to be signed or unsigned
+	{
+		if (pidxStart)
+			*pidxStart = idxIt;		// Return the character index of the starting '('
+		return strText.substr(idxIt + 1, idxEnd - idxIt - 1);
+	}
+	return std::string();
+}
 
 // =========================================================================

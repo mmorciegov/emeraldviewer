@@ -180,6 +180,7 @@ if (LINUX)
   if (VIEWER)
     add_definitions(-DAPPID=secondlife)
     add_definitions(-fvisibility=hidden)
+    add_definitions(-msse2)
     # don't catch SIGCHLD in our base application class for the viewer - some of our 3rd party libs may need their *own* SIGCHLD handler to work.  Sigh!  The viewer doesn't need to catch SIGCHLD anyway.
     add_definitions(-DLL_IGNORE_SIGCHLD)
     if (NOT STANDALONE)
@@ -189,7 +190,7 @@ if (LINUX)
   endif (VIEWER)
 
   set(CMAKE_CXX_FLAGS_DEBUG "-fno-inline ${CMAKE_CXX_FLAGS_DEBUG}")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O2 ${CMAKE_CXX_FLAGS_RELEASE}")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${CMAKE_CXX_FLAGS_RELEASE}")
 endif (LINUX)
 
 

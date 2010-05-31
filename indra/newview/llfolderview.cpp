@@ -568,7 +568,11 @@ void LLFolderViewItem::preview( void )
 	{
 		if (mListener->getInventoryType() == LLInventoryType::IT_OBJECT && gSavedSettings.getBOOL("EmeraldDoubleClickWearInventoryObjects"))
 		{
-			mListener->performAction(NULL, &gInventory, "attach");
+			LLVOAvatar* avatar = gAgent.getAvatarObject();
+			if(avatar->isWearingAttachment(mListener->getUUID()))
+				mListener->performAction(NULL, &gInventory, "detach");
+			else
+				mListener->performAction(NULL, &gInventory, "attach");
 		}else
 		{
 			mListener->previewItem();

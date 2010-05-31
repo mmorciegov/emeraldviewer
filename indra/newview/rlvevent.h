@@ -155,8 +155,68 @@ class RlvEventEmitter
 class RlvBehaviourObserver
 {
 public:
-	virtual ~RlvBehaviourObserver() { };
-	virtual void changed() = 0;
+	virtual ~RlvBehaviourObserver() {}
+	virtual void changed(const RlvCommand& rlvCmd, bool fInternal) = 0;
+};
+
+// ============================================================================
+
+class RlvBehaviourNotifyObserver : public RlvBehaviourObserver
+{
+public:
+	virtual ~RlvBehaviourNotifyObserver() { }
+
+	void changed(const RlvCommand& rlvCmd, bool fInternal)
+	{
+		if ( (fInternal) || ((RLV_TYPE_ADD != rlvCmd.getParamType()) && (RLV_TYPE_REMOVE != rlvCmd.getParamType())) )
+			return;
+
+		std::string strCmd = rlvCmd.asString();
+		std::string strNotify = llformat("/%s=%c", strCmd.c_str(), (RLV_TYPE_ADD == rlvCmd.getParamType()) ? 'n' : 'y');
+
+		for (std::multimap<LLUUID, notifyData>::const_iterator itNotify = m_Notifications.begin(); 
+				itNotify != m_Notifications.end(); ++itNotify)
+		{
+			if ( (itNotify->second.strFilter.empty()) || (std::string::npos != strCmd.find(itNotify->second.strFilter)) )
+				rlvSendChatReply(itNotify->second.nChannel, strNotify);
+		}
+	}
+
+	void addNotify(const LLUUID& idObj, S32 nChannel, const std::string& strFilter)
+	{
+		m_Notifications.insert(std::pair<LLUUID, notifyData>(idObj, notifyData(nChannel, strFilter)));
+	}
+
+	void clearNotify(const LLUUID& idObj)
+	{
+		m_Notifications.erase(idObj);
+	}
+
+	bool hasNotify()
+	{
+		return (m_Notifications.size() != 0);
+	}
+
+	void removeNotify(const LLUUID& idObj, S32 nChannel, const std::string& strFilter)
+	{
+		for (std::multimap<LLUUID, notifyData>::iterator itNotify = m_Notifications.lower_bound(idObj), 
+				endNotify = m_Notifications.upper_bound(idObj); itNotify != endNotify; ++itNotify)
+		{
+			if ( (itNotify->second.nChannel == nChannel) && (itNotify->second.strFilter == strFilter) )
+			{
+				m_Notifications.erase(itNotify);
+				break;
+			}
+		}
+	}
+protected:
+	struct notifyData
+	{
+		S32         nChannel;
+		std::string strFilter;
+		notifyData(S32 channel, const std::string& filter) : nChannel(channel), strFilter(filter) {}
+	};
+	std::multimap<LLUUID, notifyData> m_Notifications;
 };
 
 // ============================================================================

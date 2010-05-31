@@ -7,7 +7,7 @@
 #ifndef IMPORTTRACKER_H
 #define IMPORTTRACKER_H
 
-#include "llagent.h"
+//#include "llagent.h"
 
 using namespace std;
 
@@ -16,7 +16,13 @@ class ImportTracker
 	public:
 		enum ImportState { IDLE, WAND, BUILDING, LINKING, POSITIONING };			
 		
-		ImportTracker() { state = IDLE; }
+		ImportTracker()
+		: numberExpected(0),
+		state(IDLE),
+		last(0),
+		groupcounter(0),
+		updated(0)
+		{ }
 		ImportTracker(LLSD &data) { state = IDLE; linkset = data; numberExpected=0;}
 		~ImportTracker() { localids.clear(); linkset.clear(); }
 	
@@ -36,6 +42,7 @@ class ImportTracker
 		void send_shape(LLSD &prim);
 		void send_image(LLSD &prim);
 		void send_extras(LLSD &prim);
+		void send_namedesc(LLSD &prim);
 		void link();
 		void wear(LLSD &prim);
 		void position(LLSD &prim);
@@ -58,6 +65,6 @@ class ImportTracker
 
 extern ImportTracker gImportTracker;
 
-extern LLAgent gAgent;
+//extern LLAgent gAgent;
 
 #endif

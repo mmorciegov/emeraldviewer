@@ -64,7 +64,7 @@ BOOL RlvExtGetSet::processCommand(const LLUUID& idObj, const RlvCommand& rlvCmd)
 		{
 			if ( ("get" == strGetSet) && (RLV_TYPE_REPLY == rlvCmd.getParamType()) )
 			{
-				gRlvHandler.sendCommandReply(rlvCmd.getParam(), onGetDebug(strSetting));
+				rlvSendChatReply(rlvCmd.getParam(), onGetDebug(strSetting));
 				return TRUE;
 			}
 			else if ( ("set" == strGetSet) && (RLV_TYPE_FORCE == rlvCmd.getParamType()) )
@@ -78,7 +78,7 @@ BOOL RlvExtGetSet::processCommand(const LLUUID& idObj, const RlvCommand& rlvCmd)
 		{
 			if ( ("get" == strGetSet) && (RLV_TYPE_REPLY == rlvCmd.getParamType()) )
 			{
-				gRlvHandler.sendCommandReply(rlvCmd.getParam(), onGetEnv(strSetting));
+				rlvSendChatReply(rlvCmd.getParam(), onGetEnv(strSetting));
 				return TRUE;
 			}
 			else if ( ("set" == strGetSet) && (RLV_TYPE_FORCE == rlvCmd.getParamType()) )

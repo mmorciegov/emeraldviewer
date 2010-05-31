@@ -24,6 +24,7 @@ typedef std::map<LLUUID, RlvObject> rlv_object_map_t;
 typedef std::multimap<S32, LLUUID> rlv_detach_map_t;
 typedef std::map<S32, LLUUID> rlv_reattach_map_t;
 typedef std::multimap<LLUUID, ERlvBehaviour> rlv_exception_map_t;
+typedef std::map<S32, RlvRedirInfo> rlv_redir_map_t;
 
 class RlvHandler
 {
@@ -39,17 +40,13 @@ public:
 public:
 	// Returns a pointer to the attachment point for a supplied parameter
 	LLViewerJointAttachment* getAttachPoint(const std::string& strText, bool fExact) const;
-	LLViewerJointAttachment* getAttachPoint(const LLInventoryCategory* pFolder, bool fStrict) const;
 	LLViewerJointAttachment* getAttachPoint(const LLInventoryItem* pItem, bool fStrict) const;
+	LLViewerJointAttachment* getAttachPoint(const LLInventoryCategory* pFolder, bool fStrict) const;
+	LLViewerJointAttachment* getAttachPointLegacy(const LLInventoryCategory* pFolder) const;
 	S32                      getAttachPointIndex(std::string strText, bool fExact) const;
 	S32                      getAttachPointIndex(LLViewerObject* pObj) const;
 	S32                      getAttachPointIndex(const LLViewerJointAttachment* pObj) const;
 	bool                     hasAttachPointName(const LLInventoryItem* pItem, bool fStrict) const;
-
-	// Returns a pointer to the currently executing command (do *not* save this pointer)
-	const RlvCommand* getCurrentCommand() const { return m_pCurCommand; }
-	// Returns the UUID of the object we're currently executing a command for
-	const LLUUID& getCurrentObject() const		{ return m_idCurObject; }
 
 	// Returns TRUE is at least one object contains the specified behaviour (and optional parameter)
 	// NOTE: - to check @detach=n    -> hasLockedAttachment() / hasLockedHUD() / isDetachable()
@@ -73,10 +70,12 @@ public:
 	// Returns TRUE if there is at least 1 undetachable HUD attachment
 	bool hasLockedHUD() const;
 
-	// Returns TRUE if the attachment on the specified attachment point is detachable
+	// Returns TRUE if the specified attachment point is detachable
 	bool isDetachable(S32 idxAttachPt) const { return (idxAttachPt) && (m_Attachments.find(idxAttachPt) == m_Attachments.end()); }
 	bool isDetachable(const LLInventoryItem* pItem) const;
 	bool isDetachable(LLViewerObject* pObj) const;
+	// Returns TRUE if the specified attachment point is set undetachable by anything other than pObj (or one of its children)
+	bool isDetachableExcept(S32 idxAttachPt, LLViewerObject* pObj) const;
 	// Marks the specified attachment point as (un)detachable (return value indicates success ; used by unit tests)
 	bool setDetachable(S32 idxAttachPt, const LLUUID& idRlvObj, bool fDetachable);
 	bool setDetachable(LLViewerObject* pObj, const LLUUID& idRlvObj, bool fDetachable);
@@ -92,6 +91,8 @@ public:
 	bool isRemovable(EWearableType type) const	{ return (type < WT_COUNT) ? (0 == m_LayersRem[type]) : true; }
 	// Returns TRUE if the specified layer is not remoutfit blocked by any object (except the one specified by UUID)
 	bool isRemovableExcept(EWearableType type, const LLUUID& idObj) const;
+	// Returns TRUE if the inventory item is strippable by @detach or @remoutfit
+	bool isStrippable(const LLUUID& idItem) const;
 	// Returns TRUE if the specified layer is wearable (use hasBehaviour(RLV_BHVR_ADDOUTFIT) for the general case)
 	bool isWearable(EWearableType type) const	{ return (type < WT_COUNT) ? (0 == m_LayersAdd[type]) : true; }
 
@@ -108,12 +109,6 @@ public:
 	// Returns TRUE if the inventory item is part of a folded composite folder and should be hidden from @getoufit or @getattach
 	bool isHiddenCompositeItem(const LLUUID& idItem, const std::string& strItemType) const;
 
-	// Returns TRUE if the inventory item is strippable by @detach or @remoutfit
-	bool isStrippable(const LLUUID& idItem) const;
-
-	// Returns TRUE if the specified object can 
-	bool canShowHoverText(LLViewerObject* pObj) const;
-
 	// --------------------------------
 
 	/*
@@ -121,11 +116,11 @@ public:
 	 */
 public:
 	// Accessors
-	bool isReplyInProgress() const		{ return m_fReplyInProgress; }		// send_chat_from_viewer()
-	bool getCanCancelTp() const			{ return m_fCanCancelTp; }			// @accepttp and @tpto
-	void setCanCancelTp(bool fAllow)	{ m_fCanCancelTp = fAllow; }		// @accepttp and @tpto
+	bool getCanCancelTp() const			{ return m_fCanCancelTp; }						// @accepttp and @tpto
+	void setCanCancelTp(bool fAllow)	{ m_fCanCancelTp = fAllow; }					// @accepttp and @tpto
 
 	// Command specific helper functions
+	bool               canShowHoverText(LLViewerObject* pObj) const;					// @showhovertext* command family
 	void               filterChat(std::string& strUTF8Text, bool fFilterEmote) const;	// @sendchat, @recvchat and @redirchat
 	void               filterLocation(std::string& strUTF8Text) const;					// @showloc
 	void               filterNames(std::string& strUTF8Text) const;						// @shownames
@@ -134,17 +129,15 @@ public:
 	BOOL               isAgentNearby(const LLUUID& uuid) const;							// @shownames
 	bool               redirectChatOrEmote(const std::string& strUTF8Test) const;		// @redirchat and @rediremote
 
-	// Externally invoked event handlers
-	void onAttach(LLViewerJointAttachment* pAttachPt);						// LLVOAvatar::attachObject()
-	void onDetach(LLViewerJointAttachment* pAttachPt);						// LLVOAvatar::detachObject()
-	bool onGC();															// RlvGCTimer::tick()
-	void onSavedAssetIntoInventory(const LLViewerInventoryItem* pItem);		// LLInventoryModel::processSaveAssetIntoInventory()
-
 	// Command processing helper functions
-	BOOL processCommand(const LLUUID& uuid, const std::string& strCommand);
-	void retainCommand(const LLUUID& uuid, const std::string& strCmd);
-	static void sendBusyMessage(const LLUUID& idTo, const std::string& strMsg, const LLUUID& idSession = LLUUID::null);
-	BOOL sendCommandReply(const std::string& strChannel, const std::string& strReply) const;
+	BOOL processCommand(const LLUUID& idObj, const std::string& strCommand, bool fFromObj);
+	void processRetainedCommands();
+	void retainCommand(const std::string& strObj, const LLUUID& idObj, const std::string& strCmd);
+
+	// Returns a pointer to the currently executing command (do *not* save this pointer)
+	const RlvCommand* getCurrentCommand() const { return m_pCurCommand; }
+	// Returns the UUID of the object we're currently executing a command for
+	const LLUUID& getCurrentObject() const		{ return m_idCurObject; }
 
 	// Initialization
 	static BOOL canDisable();
@@ -167,6 +160,9 @@ public:
 	std::string getSharedPath(const LLUUID& idFolder) const;
 	// Returns a pointer to the shared root folder (if there is one)
 	static LLViewerInventoryCategory* getSharedRoot();
+	// A "folded folder" is a folder whose items logically belong to the grandparent rather than the parent
+	bool isFoldedFolder(const LLInventoryCategory* pFolder, bool fAttach) const;
+	bool isFoldedFolderLegacy(const LLInventoryCategory* pFolder, bool fAttach) const;
 protected:
 	// Find all folders that match a supplied criteria (clears the supplied array)
 	bool findSharedFolders(const std::string& strCriteria, LLInventoryModel::cat_array_t& folders) const;
@@ -188,16 +184,20 @@ public:
 	BOOL removeObserver(RlvObserver* pObserver)	{ return m_Emitter.remObserver(pObserver); }
 	void addBehaviourObserver(RlvBehaviourObserver* pBhvrObserver);
 	void removeBehaviourObserver(RlvBehaviourObserver* pBhvrObserver);
-	void notifyBehaviourObservers();
+	void notifyBehaviourObservers(const RlvCommand& rlvCmd, bool fInternal);
+
+	// Externally invoked event handlers
+	void onAttach(LLViewerJointAttachment* pAttachPt, bool fFullyLoaded);	// LLVOAvatar::attachObject()
+	void onDetach(LLViewerJointAttachment* pAttachPt);						// LLVOAvatar::detachObject()
+	bool onGC();															// RlvGCTimer::tick()
+	void onSavedAssetIntoInventory(const LLUUID& idItem);					// LLInventoryModel::processSaveAssetIntoInventory()
 protected:
 	BOOL processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd);
 	BOOL processRemoveCommand(const LLUUID& uuid, const RlvCommand& rlvCmd);
 	BOOL processReplyCommand(const LLUUID& uuid, const RlvCommand& rlvCmd) const;
 	BOOL processForceCommand(const LLUUID& uuid, const RlvCommand& rlvCmd) const;
 
-	/*
-	 * Event handlers (exist for no other reason than to keep the length of the processXXX functions down)
-	 */
+	// Command handlers (exist for no other reason than to keep the length of the processXXX functions down)
 	void onForceDetach(const LLUUID& idObj, const std::string& strOption) const;
 	void onForceRemOutfit(const LLUUID& idObj, const std::string& strOption) const;
 	bool onForceSit(const LLUUID& uuid, const std::string& strOption) const;
@@ -212,6 +212,7 @@ protected:
 	 */
 public:
 	static BOOL fNoSetEnv;
+	static BOOL fLegacyNaming;
 
 	static const std::string cstrSharedRoot;		// Name of the shared root folder
 	static const std::string cstrBlockedRecvIM;		// Stand-in text for incoming IM when recvim restricted
@@ -232,6 +233,8 @@ protected:
 
 	rlv_retained_list_t  m_Retained;
 	rlv_reattach_map_t   m_AttachPending;
+	rlv_reattach_map_t   m_DetachPending;
+	rlv_redir_map_t      m_Redirections;
 	RlvGCTimer*          m_pGCTimer;
 	RlvWLSnapshot*       m_pWLSnapshot;
 
@@ -240,12 +243,12 @@ protected:
 
 	mutable RlvEventEmitter<RlvObserver>     m_Emitter;
 	mutable std::list<RlvBehaviourObserver*> m_BhvrObservers;
+	RlvBehaviourNotifyObserver*				 m_pBhvrNotify;
 
-	static  BOOL				 m_fEnabled;		// Use setEnabled() to toggle this
-	mutable BOOL				 m_fReplyInProgress;// See sendCommandReply
-	static	BOOL				 m_fFetchStarted;	// TRUE if we fired off an inventory fetch
-	static  BOOL				 m_fFetchComplete;	// TURE if everything was fetched
-	static  RlvMultiStringSearch m_AttachLookup;	// Lookup table for attachment names (lower case)
+	static BOOL			m_fEnabled;					// Use setEnabled() to toggle this
+	static BOOL			m_fFetchStarted;			// TRUE if we fired off an inventory fetch
+	static BOOL			m_fFetchComplete;			// TRUE if everything was fetched
+	static RlvMultiStringSearch m_AttachLookup;		// Lookup table for attachment names (lower case)
 
 	bool m_fCanCancelTp;
 
@@ -391,6 +394,21 @@ inline bool RlvHandler::isException(const std::string& strBehaviour, const LLUUI
 	return hasBehaviour(strBehaviour, uuid.asString());
 }
 
+// Checked: 2009-07-29 (RLVa-1.0.1b) | Added: RLVa-1.0.1b
+inline bool RlvHandler::isFoldedFolder(const LLInventoryCategory* pFolder, bool fAttach) const
+{
+	return
+	  (
+		// .(<attachpt>) type folder (on detach we don't care about its children, but on attach there can only be 1 attachment)
+		( (gRlvHandler.getAttachPoint(pFolder, true)) &&
+		  ( (!fAttach) || (1 == rlvGetDirectDescendentsCount(pFolder, LLAssetType::AT_OBJECT))) )
+		#ifdef RLV_EXTENSION_FLAG_NOSTRIP
+		// .(nostrip) folder
+		|| ( (pFolder) && (".("RLV_FOLDER_FLAG_NOSTRIP")" == pFolder->getName()) )
+		#endif // RLV_EXTENSION_FLAG_NOSTRIP
+	  );
+}
+
 // Checked: 2009-05-23 (RLVa-0.2.0d) | Added: RLVa-0.2.0d
 inline bool RlvHandler::isRemovableExcept(EWearableType type, const LLUUID& idObj) const
 {
@@ -424,13 +442,13 @@ inline void RlvHandler::removeException(ERlvBehaviour eBehaviour, const LLUUID &
 	}
 }
 
-// Checked:
-inline void RlvHandler::retainCommand(const LLUUID& uuid, const std::string& strCmd)
+// Checked: 2009-08-05 (RLVa-1.0.1e) | Modified: RLVa-1.0.1e
+inline void RlvHandler::retainCommand(const std::string& strObj, const LLUUID& idObj, const std::string& strCmd)
 {
 	#ifdef RLV_DEBUG
-		RLV_INFOS << "[" << uuid << "]: " << strCmd << " (retaining)" << LL_ENDL;
+		RLV_INFOS << "[" << idObj << "]: " << strCmd << " (retaining)" << LL_ENDL;
 	#endif // RLV_DEBUG
-	m_Retained.push_back(RlvRetainedCommand(uuid, strCmd));
+	m_Retained.push_back(RlvRetainedCommand(strObj, idObj, strCmd));
 }
 
 // Checked: 2009-05-23 (RLVa-0.2.0d) | Modified: RLVa-0.2.0d

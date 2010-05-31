@@ -189,8 +189,10 @@
 // viewer.cpp - these are only used in viewer, should be easily moved.
 
 #if COMPILE_OTR          // [$PLOTR$]
+#if USE_OTR          // [$PLOTR$]
 #include "otr_wrapper.h"
 #endif // COMPILE_OTR    // [/$PLOTR$]
+#endif // USE_OTR    // [/$PLOTR$]
 
 #if LL_DARWIN
 extern void init_apple_menu(const char* product);
@@ -543,7 +545,8 @@ LLAppViewer::LLAppViewer() :
 	mLogoutRequestSent(false),
 	mYieldTime(-1),
 	mMainloopTimeout(NULL),
-	mAgentRegionLastAlive(false)
+	mAgentRegionLastAlive(false),
+	mLogoutMarkerFile(NULL)
 {
 	if(NULL != sInstance)
 	{
@@ -1803,6 +1806,16 @@ bool LLAppViewer::initConfiguration()
 	LLFirstUse::addConfigVariable("FirstSculptedPrim");
 	LLFirstUse::addConfigVariable("FirstVoice");
 	LLFirstUse::addConfigVariable("FirstMedia");
+
+	//Zwagoth: Uhg... these have to go here because otherwise the command line parser
+	// does not trigger the callbacks. Putting it above this function causes null ptrs
+	// because gSavedSettings is not set up yet. Also... above this line, we don't have the
+	// possible values loaded yet, so it returns null controls if you move it up more.
+	// Moral: DON'T MOVE THESE!!!
+	//Emerald: Fixes bug #22
+	gSavedSettings.getControl("MainloopTimeoutDefault")->getSignal()->connect(&updateMainLoopTimeOutDefault);
+	gSavedSettings.getControl("FreezeTime")->getSignal()->connect(&updateFreezeTime);
+	gSavedSettings.getControl("CmdLineLoginURI")->getSignal()->connect(&handleCmdLineURIsUpdate);
 		
 	// - read command line settings.
 	LLControlGroupCLP clp;
@@ -2695,6 +2708,9 @@ void LLAppViewer::forceQuit()
 void LLAppViewer::requestQuit()
 {
 	llinfos << "requestQuit" << llendl;
+#if USE_OTR          // [$PLOTR$]
+    OTR_Wrapper::logout();
+#endif // USE_OTR    // [/$PLOTR$]
 
 	LLViewerRegion* region = gAgent.getRegion();
 	
@@ -3318,14 +3334,18 @@ void LLAppViewer::idle()
 	    gAgent.autoPilot(&yaw);
     
 	    static LLFrameTimer agent_update_timer;
+		static LLFrameTimer stream_update_timer;
 	    static U32 				last_control_flags;
     
 	    //	When appropriate, update agent location to the simulator.
 	    F32 agent_update_time = agent_update_timer.getElapsedTimeF32();
+		F32 stream_update_time = stream_update_timer.getElapsedTimeF32();
 	    BOOL flags_changed = gAgent.controlFlagsDirty() || (last_control_flags != gAgent.getControlFlags());
     
 		//Name Short - Added to adjust agent updates.
-	   if (flags_changed || (agent_update_time > (1.0f / gSavedSettings.getF32("EmeraldAgentUpdatesPerSecond"))))
+		//theGenius Indigo - Name, don't try to divide by zero here...seriously, what were you smoking?
+		F32 AgentUpdateFrequency = gSavedSettings.getF32("EmeraldAgentUpdatesPerSecond");
+		if (flags_changed || (agent_update_time > (1.0f / max(AgentUpdateFrequency, 0.0001f))))
 	    {
 		    // Send avatar and camera info
 		    last_control_flags = gAgent.getControlFlags();
@@ -3338,6 +3358,17 @@ void LLAppViewer::idle()
 			}
 		    agent_update_timer.reset();
 	    }
+		//theGenius Indigo - Joystick data is streamed inworld on a specific channel
+		BOOL canSend = gAgent.getTeleportState() == LLAgent::TELEPORT_NONE && !LLAppViewer::instance()->logoutRequestSent() && gAgent.getRegion() != NULL;
+		if(canSend)
+		{
+		   F32 JoystickStreamFrequency = gSavedSettings.getF32("JoystickStreamRefresh");
+		   if(gSavedSettings.getBOOL("JoystickStreamEnabled") && (stream_update_time > (1.0f / max(JoystickStreamFrequency, 0.0001f))))
+		   {
+				LLViewerJoystick::getInstance()->cansend(); //Allow data to be sent on the next joystick scan
+				stream_update_timer.reset();
+		   }
+		}
 	}
 
 	//////////////////////////////////////
@@ -4078,16 +4109,20 @@ void LLAppViewer::handleLoginComplete()
 	}
 	writeDebugInfo();
 
-// [RLVa:KB] - Alternate: Snowglobe-1.0 | Checked: 2009-07-10 (RLVa-1.0.0g) | Modified: RLVa-0.2.1d
+// [RLVa:KB] - Alternate: Snowglobe-1.0 | Checked: 2009-08-05 (RLVa-1.0.1e) | Modified: RLVa-1.0.1e
 	// TODO-RLVa: find some way to initialize the lookup table when we need them *and* support toggling RLVa at runtime
 	gRlvHandler.initLookupTables();
 
 	if (rlv_handler_t::isEnabled())
 	{
+		RlvCurrentlyWorn::fetchWorn();
 		rlv_handler_t::fetchSharedInventory();
+
 		#ifdef RLV_EXTENSION_STARTLOCATION
 			RlvSettings::updateLoginLastLocation();
 		#endif // RLV_EXTENSION_STARTLOCATION
+
+		gRlvHandler.processRetainedCommands();
 	}
 // [/RLVa:KB]
 #if USE_OTR         // [$PLOTR$]

@@ -116,6 +116,10 @@
 
 #include "boost/lexical_cast.hpp"
 
+// [RLVa:KB]
+#include "llstartup.h"
+// [/RLVa:KB]
+ 
 using namespace LLVOAvatarDefines;
 //-----------------------------------------------------------------------------
 // Global constants
@@ -3045,9 +3049,9 @@ bool LLVOAvatar::loadClientTags()
 	return true;
 }
 
-void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client, LLVOAvatar* avatar)
+void LLVOAvatar::resolveClient(LLColor4& avatar_name_colour, std::string& client, LLVOAvatar* avatar)
 {
-	LLColor4 colorBackup = avatar_name_color;
+	LLColor4 colourBackup = avatar_name_colour;
 	LLUUID idx = avatar->getTE(0)->getID();
 	if(LLVOAvatar::sClientResolutionList.has("isComplete") && LLVOAvatar::sClientResolutionList.has(idx.asString()))
 	{
@@ -3055,84 +3059,89 @@ void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client,
 		client = cllsd["name"].asString();
 		LLColor4 colour;
 		colour.setValue(cllsd["color"]);
-		avatar_name_color += colour;
-		avatar_name_color *= 1.0/(cllsd["multiple"].asReal()+1.0f);
+		avatar_name_colour += colour;
+		avatar_name_colour *= 1.0/(cllsd["multiple"].asReal()+1.0f);
 	}else
 	{
 		//legacy code
 		if(idx == LLUUID("ccda2b3b-e72c-a112-e126-fee238b67218"))
 		{
-			avatar_name_color += LLColor4::green;//emerald
-			avatar_name_color += LLColor4::green;
-			avatar_name_color = avatar_name_color * (F32)0.333333333333;
+			avatar_name_colour += LLColor4::green;//emerald
+			avatar_name_colour += LLColor4::green;
+			avatar_name_colour = avatar_name_colour * (F32)0.333333333333;
 			client = "Emerald";
 		}else if(idx == LLUUID("c252d89d-6f7c-7d90-f430-d140d2e3fbbe"))
 		{
-			avatar_name_color += LLColor4::red;//vlife jcool410
-			avatar_name_color = avatar_name_color * 0.5;
+			avatar_name_colour += LLColor4::red;//vlife jcool410
+			avatar_name_colour = avatar_name_colour * 0.5;
 			client = "VLife";
+		}else if(idx == LLUUID("f5feab57-bde5-2074-97af-517290213eaa"))
+		{
+			avatar_name_colour += LLColor4::grey4;//ONYX OMG HAX
+			avatar_name_colour = avatar_name_colour * 0.5;
+			client = "Onyx";
 		}else if(idx == LLUUID("adcbe893-7643-fd12-f61c-0b39717e2e32"))
 		{
-			avatar_name_color += LLColor4::pink;//tyk3n
-			avatar_name_color = avatar_name_color * 0.5;
+			avatar_name_colour += LLColor4::pink;//tyk3n
+			avatar_name_colour = avatar_name_colour * 0.5;
 			client = "tyk3n";
 		}else if(idx == LLUUID("f3fd74a6-fee7-4b2f-93ae-ddcb5991da04") || idx == LLUUID("77662f23-c77a-9b4d-5558-26b757b2144c"))
 		{
-			avatar_name_color += (LLColor4::purple);//psl
-			avatar_name_color = avatar_name_color * 0.5;
+			avatar_name_colour += (LLColor4::purple);//psl
+			avatar_name_colour = avatar_name_colour * 0.5;
 			client = "PSL";
 		}else if(idx == LLUUID("5aa5c70d-d787-571b-0495-4fc1bdef1500"))
 		{
-			avatar_name_color += LLColor4::red;//lordgreg
-			avatar_name_color += LLColor4::red;
-			avatar_name_color = avatar_name_color * (F32)0.333333333333;
+			avatar_name_colour += LLColor4::red;//lordgreg
+			avatar_name_colour += LLColor4::red;
+			avatar_name_colour = avatar_name_colour * (F32)0.333333333333;
 			client = "LGG proxy";
 		}else if(idx == LLUUID("8183e823-c443-2142-6eb6-2ab763d4f81c"))
 		{
-			avatar_name_color += LLColor4::blue;//day oh
-			avatar_name_color = avatar_name_color * 0.5;
+			avatar_name_colour += LLColor4::blue;//day oh
+			avatar_name_colour = avatar_name_colour * 0.5;
 			client = "Day Oh proxy";
 		}else if(idx == LLUUID("e52d21f7-3c8b-819f-a3db-65c432295dac") || idx == LLUUID("0f6723d2-5b23-6b58-08ab-308112b33786"))
-		{
-			avatar_name_color += LLColor4::cyan;//cryolife
-			avatar_name_color += LLColor4::cyan;
-			avatar_name_color = avatar_name_color * 0.5;
+		{				//to detect a tweaked cryolife o.o
+			avatar_name_colour += LLColor4::cyan;//cryolife
+			avatar_name_colour += LLColor4::cyan;
+			avatar_name_colour = avatar_name_colour * 0.5;
 			client = "CryoLife";
 		}else if(idx == LLUUID("0bcd5f5d-a4ce-9ea4-f9e8-15132653b3d8"))
 		{
-			avatar_name_color += LLColor4::pink;//moy
-			avatar_name_color += LLColor4::pink;//moy
-			avatar_name_color = avatar_name_color * (F32)0.333333333333;
+			avatar_name_colour += LLColor4::pink;//moy
+			avatar_name_colour += LLColor4::pink;//moy
+			avatar_name_colour = avatar_name_colour * (F32)0.333333333333;
 			client = "MoyMix";
 		}else if(idx == LLUUID("f5a48821-9a98-d09e-8d6a-50cc08ba9a47"))
 		{
-			avatar_name_color += LLColor4::yellow;//neil
-			avatar_name_color += LLColor4::yellow;//neil
-			avatar_name_color = avatar_name_color * (F32)0.333333333333;
+			avatar_name_colour += LLColor4::yellow;//neil
+			avatar_name_colour += LLColor4::yellow;//neil
+			avatar_name_colour = avatar_name_colour * (F32)0.333333333333;
 			client = "NeilLife";
 		}else if(idx == LLUUID("2c9c1e0b-e5d1-263e-16b1-7fc6d169f3d6"))
 		{
-			avatar_name_color += LLColor4(0.0f,1.0f,1.0f);
-			avatar_name_color = avatar_name_color * 0.5;//phox
+			avatar_name_colour += LLColor4(0.0f,1.0f,1.0f);
+			avatar_name_colour = avatar_name_colour * 0.5;//phox
 			client = "PhoxSL";
 		}else if(idx == LLUUID("c5b570ca-bb7e-3c81-afd1-f62646b20014") || idx == LLUUID("7c4d47a3-0c51-04d1-fa47-e4f3ac12f59b"))
 		{
-			avatar_name_color += LLColor4::white;
-			avatar_name_color += LLColor4::white;
-			avatar_name_color = avatar_name_color * (F32)0.333333333333;
+			avatar_name_colour += LLColor4::white;
+			avatar_name_colour += LLColor4::white;
+			avatar_name_colour = avatar_name_colour * (F32)0.333333333333;
 			client = "Kung Fu";
 		}else if(idx == LLUUID("9422e9d7-7b11-83e4-6262-4a8db4716a3b"))
 		{
-			avatar_name_color += LLColor4::magenta;
-			avatar_name_color += LLColor4::magenta;
-			avatar_name_color = avatar_name_color * (F32)0.333333333333;
+			avatar_name_colour += LLColor4::magenta;
+			avatar_name_colour += LLColor4::magenta;
+			avatar_name_colour = avatar_name_colour * (F32)0.333333333333;
 			client = "BetaLife";
 		}else if(idx == LLUUID("872c0005-3095-0967-866d-11cd71115c22"))
 		{
-			avatar_name_color += LLColor4::green;//SimFed Poland
-			avatar_name_color += LLColor4::blue;//SimFed Poland
-			avatar_name_color += LLColor4::blue;//SimFed Poland
-			avatar_name_color = avatar_name_color * 0.5;
+			avatar_name_colour += LLColor4::green;//SimFed Poland
+			avatar_name_colour += LLColor4::blue;//SimFed Poland
+			avatar_name_colour += LLColor4::blue;//SimFed Poland
+			avatar_name_colour = avatar_name_colour * 0.5;
 			client = "<-- Fag";
 		}else if(idx == LLUUID("3ab7e2fa-9572-ef36-1a30-d855dbea4f92") || //wat
 				 idx == LLUUID("11ad2452-ce54-8d65-7c23-05589b59f516") ||//wat.
@@ -3141,32 +3150,32 @@ void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client,
 				 idx == LLUUID("841ef25b-3b90-caf9-ea3d-5649e755db65")//wat -.-
 				 )
 		{
-			avatar_name_color += LLColor4(0.0f,0.5f,1.0f); //Nexii is fucking dumb
-			avatar_name_color = avatar_name_color * 0.5;
+			avatar_name_colour += LLColor4(0.0f,0.5f,1.0f); //Nexii is fucking dumb
+			avatar_name_colour = avatar_name_colour * 0.5;
 			client = "VerticalLife";
 
 		}else if(idx == LLUUID("4e8dcf80-336b-b1d8-ef3e-08dacf015a0f"))
 		{
-			avatar_name_color += LLColor4::blue; //Sapphire
-			avatar_name_color += LLColor4::blue; //Sapphire
-			avatar_name_color = avatar_name_color * (F32)0.333333333333;
+			avatar_name_colour += LLColor4::blue; //Sapphire
+			avatar_name_colour += LLColor4::blue; //Sapphire
+			avatar_name_colour = avatar_name_colour * (F32)0.333333333333;
 			client = "Sapphire";
 		}else if(idx == LLUUID("ffce04ff-5303-4909-a044-d37af7ab0b0e"))
 		{
-			avatar_name_color += LLColor4::orange; //corgiVision
-			avatar_name_color = avatar_name_color * (F32)0.75;
+			avatar_name_colour += LLColor4::orange; //corgiVision
+			avatar_name_colour = avatar_name_colour * (F32)0.75;
 			client = "Corgi";
 		}else if(idx == LLUUID("ccb509cf-cc69-e569-38f1-5086c687afd1"))
 		{
-			avatar_name_color += LLColor4::red; //Ruby
-			avatar_name_color += LLColor4::purple; //Ruby
-			avatar_name_color = avatar_name_color * (F32)0.333333333333;
+			avatar_name_colour += LLColor4::red; //Ruby
+			avatar_name_colour += LLColor4::purple; //Ruby
+			avatar_name_colour = avatar_name_colour * (F32)0.333333333333;
 			client = "Ruby";
 		}else if(idx == LLUUID("1c29480c-c608-df87-28bb-964fb64c5366"))
 		{
-			avatar_name_color += LLColor4::yellow9;
-			avatar_name_color += LLColor4::yellow9;
-			avatar_name_color *= (F32)0.333333333333;
+			avatar_name_colour += LLColor4::yellow9;
+			avatar_name_colour += LLColor4::yellow9;
+			avatar_name_colour *= (F32)0.333333333333;
 			client = "Gemini";
 		}
 	}
@@ -3175,15 +3184,15 @@ void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client,
 		LLPointer<LLViewerImage> image_point = gImageList.getImage(idx, MIPMAP_YES, IMMEDIATE_NO);
 		if(image_point.notNull() && image_point->isMissingAsset())
 		{
-			avatar_name_color += LLColor4::grey;//anomalous
-			avatar_name_color = avatar_name_color * 0.5;
+			avatar_name_colour += LLColor4::grey;//anomalous
+			avatar_name_colour = avatar_name_colour * 0.5;
 			client = "Invalid";
 		}
 	}
 	if(avatar->getTE(5)->getID() != avatar->getTE(6)->getID() && client != "")
 	{
 		client = "Failure";
-		avatar_name_color = LLColor4::grey;
+		avatar_name_colour = LLColor4::grey;
 	}
 	if(client == "" && LLVOAvatar::sClientResolutionList.has("default"))
 	{
@@ -3191,8 +3200,8 @@ void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client,
 		client = cllsd["name"].asString();
 		LLColor4 colour;
 		colour.setValue(cllsd["color"]);
-		avatar_name_color += colour;
-		avatar_name_color *= 1.0/(cllsd["multiple"].asReal()+1.0f);
+		avatar_name_colour += colour;
+		avatar_name_colour *= 1.0/(cllsd["multiple"].asReal()+1.0f);
 	}
 }
 
@@ -3211,16 +3220,16 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 	const F32 NAME_SHOW_TIME = gSavedSettings.getF32("RenderNameShowTime");	// seconds
 	const F32 FADE_DURATION = gSavedSettings.getF32("RenderNameFadeDuration"); // seconds
 // [RLVa:KB] - Checked: 2009-07-08 (RLVa-1.0.0e) | Added: RLVa-0.2.0b
-	BOOL fRlvShowNames = gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES);
+	bool fRlvShowNames = gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES);
 // [/RLVa:KB]
 	BOOL visible_avatar = isVisible() || mNeedsAnimUpdate;
 	BOOL visible_chat = gSavedSettings.getBOOL("UseChatBubbles") && (mChats.size() || mTyping);
 	BOOL render_name =	visible_chat ||
 						(visible_avatar &&
-						((sRenderName == RENDER_NAME_ALWAYS) ||
-// [RLVa:KB] - Comment out the line above (and uncomment the line below) to hide avie name tags under @shownmames=n
-						//((sRenderName == RENDER_NAME_ALWAYS && !fRlvShowNames) ||
+// [RLVa:KB] - Checked: 2009-08-11 (RLVa-1.0.1h) | Added: RLVa-1.0.0h
+						( (!fRlvShowNames) || (RlvSettings::fShowNameTags) ) &&
 // [/RLVa:KB]
+						((sRenderName == RENDER_NAME_ALWAYS) ||
 						(sRenderName == RENDER_NAME_FADE && time_visible < NAME_SHOW_TIME)));
 	// If it's your own avatar, don't draw in mouselook, and don't
 	// draw if we're specifically hiding our own name.
@@ -6376,7 +6385,34 @@ BOOL LLVOAvatar::attachObject(LLViewerObject *viewer_object)
 // [RLVa:KB] - Checked: 2009-07-10 (RLVa-1.0.0g)
 		if (rlv_handler_t::isEnabled())
 		{
-			gRlvHandler.onAttach(attachment);
+			static bool fRlvFullyLoaded = false;
+			static LLFrameTimer* pRlvFullyLoadedTimer = NULL;
+
+			// There's no way to know when we're done reattaching what was attached at log-off but this ugly evil bad hack tries anyway
+			if (!fRlvFullyLoaded)
+			{
+				if (pRlvFullyLoadedTimer)
+				{
+					if (pRlvFullyLoadedTimer->getElapsedTimeF32() > 30.0f)
+					{
+						fRlvFullyLoaded = true;
+						delete pRlvFullyLoadedTimer;
+						pRlvFullyLoadedTimer = NULL;
+					}
+					else
+					{
+						pRlvFullyLoadedTimer->reset();
+					}
+				}
+				else if ( (!pRlvFullyLoadedTimer) && 
+					      ( (0 == mPendingAttachment.size()) || 
+						    ((1 == mPendingAttachment.size()) && (mPendingAttachment[0] == viewer_object)) ) )
+				{
+					pRlvFullyLoadedTimer = new LLFrameTimer();
+				}
+			}
+
+			gRlvHandler.onAttach(attachment, fRlvFullyLoaded);
 		}
 // [/RLVa:KB]
 
@@ -7784,6 +7820,8 @@ void LLVOAvatar::releaseUnnecessaryTextures()
 		const LLVOAvatarDictionary::BakedDictionaryEntry * bakedDicEntry = LLVOAvatarDictionary::getInstance()->getBakedTexture((EBakedTextureIndex)baked_index);
 		// skip if this is a skirt and av is not wearing one, or if we don't have a baked texture UUID
         if(baked_index == BAKED_HEAD)
+                continue;
+		if(baked_index == BAKED_EYES)
                 continue;
 		if (!isTextureDefined(bakedDicEntry->mTextureIndex)
 			&& ( (baked_index != BAKED_SKIRT) || isWearingWearableType(WT_SKIRT) ))

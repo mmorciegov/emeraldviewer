@@ -696,6 +696,7 @@ class Linux_i686Manifest(LinuxManifest):
             self.path("libopenal.so", "libopenal.so.1")
             self.path("liblua5.1.so")
             self.path("libotr.so.2.2.0")
+            self.path("libotr.so.2")
             self.end_prefix("lib")
 
             # Vivox runtimes

@@ -1,6 +1,5 @@
 #include "llviewerprecompiledheaders.h"
 #include "llagent.h"
-#include "llchatbar.h"
 #include "lldrawpoolalpha.h"
 #include "llfloateravatarlist.h"
 #include "llfloaterbeacons.h"
@@ -16,20 +15,14 @@
 #include "llfloaterwindlight.h"
 #include "llfloaterworldmap.h"
 #include "llgesturemgr.h"
-#include "llinventorymodel.h"
 #include "llinventoryview.h"
-#include "llinventorybridge.h"
-#include "llinstantmessage.h"
-#include "lloverlaybar.h"
 #include "llstartup.h"
 #include "llviewermenu.h"
 #include "llviewermessage.h"
-#include "llviewerobjectlist.h"
 #include "llviewerparcelmgr.h"
 #include "llviewerregion.h"
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
-#include "llwearable.h"
 #include "llworld.h"
 #include "pipeline.h"
 
@@ -51,6 +44,7 @@ extern const char* NEW_CATEGORY_NAME;
 
 BOOL RlvHandler::m_fEnabled = FALSE;
 BOOL RlvHandler::fNoSetEnv = FALSE;
+BOOL RlvHandler::fLegacyNaming = FALSE;
 BOOL RlvHandler::m_fFetchStarted = FALSE;
 BOOL RlvHandler::m_fFetchComplete = FALSE;
 RlvMultiStringSearch RlvHandler::m_AttachLookup;
@@ -80,6 +74,7 @@ rlv_handler_t gRlvHandler;
 
 // ============================================================================
 // Helper functions
+//
 
 // Checked: 2009-07-12 (RLVa-1.0.0h) | Added: RLVa-0.2.0e
 inline bool rlvIsWearingItem(const LLInventoryItem* pItem)
@@ -91,12 +86,37 @@ inline bool rlvIsWearingItem(const LLInventoryItem* pItem)
 }
 
 // ============================================================================
+// Command specific helper functions
+//
+
+// Checked: 2009-08-04 (RLVa-1.0.1d) | Added: RLVa-1.0.1d
+static bool rlvParseNotifyOption(const std::string& strOption, S32& nChannel, std::string& strFilter)
+{
+	boost_tokenizer tokens(strOption, boost::char_separator<char>(";", "", boost::keep_empty_tokens));
+	boost_tokenizer::iterator itTok = tokens.begin();
+
+	// Extract and sanity check the first token (required) which is the channel
+	if ( (itTok == tokens.end()) || (!LLStringUtil::convertToS32(*itTok, nChannel)) || (!rlvIsValidChannel(nChannel)) )
+		return false;
+
+	// Second token (optional) is the filter
+	strFilter.clear();
+	if (++itTok != tokens.end())
+	{
+		strFilter = *itTok;
+		++itTok;
+	}
+
+	return (itTok == tokens.end());
+}
+
+// ============================================================================
 // Constructor/destructor
 //
 
-// Checked: 2009-07-12 (RLVa-1.0.0h) | Modified: RLVa-0.2.0h
-RlvHandler::RlvHandler()
-	: m_fReplyInProgress(FALSE), m_idCurObject(LLUUID::null), m_pCurCommand(NULL), m_pGCTimer(NULL), m_pWLSnapshot(NULL)
+// Checked: 2009-08-04 (RLVa-1.0.1d) | Modified: RLVa-1.0.1d
+RlvHandler::RlvHandler() 
+	: m_fCanCancelTp(false), m_idCurObject(LLUUID::null), m_pCurCommand(NULL), m_pGCTimer(NULL), m_pWLSnapshot(NULL), m_pBhvrNotify(NULL)
 {
 	// Array auto-initialization to 0 is non-standard? (Compiler warning in VC-8.0)
 	memset(m_LayersAdd, 0, sizeof(S16) * WT_COUNT);
@@ -104,11 +124,12 @@ RlvHandler::RlvHandler()
 	memset(m_Behaviours, 0, sizeof(S16) * RLV_BHVR_COUNT);
 }
 
-// Checked: 2009-07-12 (RLVa-1.0.0h) | Modified: RLVa-0.2.0h
+// Checked: 2009-08-04 (RLVa-1.0.1d) | Modified: RLVa-1.0.1d
 RlvHandler::~RlvHandler()
 {
 	//delete m_pGCTimer;	// <- deletes itself
 	delete m_pWLSnapshot;	// <- delete on NULL is harmless
+	delete m_pBhvrNotify;
 }
 
 // ============================================================================
@@ -123,61 +144,50 @@ inline LLViewerJointAttachment* RlvHandler::getAttachPoint(const std::string& st
 	                 : NULL;
 }
 
-// Checked: 2009-07-12 (RLVa-1.0.0h) | Modified: RLVa-0.2.0d
-LLViewerJointAttachment* RlvHandler::getAttachPoint(const LLInventoryCategory* pFolder, bool fStrict) const
+// Checked: 2009-07-29 (RLVa-1.0.1b) | Modified: RLVa-1.0.1b
+LLViewerJointAttachment* RlvHandler::getAttachPoint(const LLInventoryCategory* pFolder, bool /*fStrict*/) const
 {
 	if (!pFolder)
 		return NULL;
 
-	std::string strFolder = pFolder->getName();
-	if ( (fStrict) && (!strFolder.empty()) )
-	{
-		// A strict match for a folder means we look for: ^\.\(\s+attachpt\s+\)
-		int idxStart = strFolder.find('('), idxEnd = strFolder.find(')', idxStart);
-		if ( (RLV_FOLDER_PREFIX_HIDDEN != strFolder[0]) || (1 != idxStart) || (idxEnd < idxStart + 3) )
-			return NULL;
+	// RLVa-1.0.1 added support for legacy matching (See http://rlva.catznip.com/blog/2009/07/attachment-point-naming-convention/)
+	if (fLegacyNaming)
+		return getAttachPointLegacy(pFolder);
 
-		strFolder = strFolder.substr(idxStart + 1, idxEnd - idxStart - 1);
-		LLStringUtil::trim(strFolder);
-	}
-	return getAttachPoint(strFolder, fStrict);
+	// Otherwise the only valid way to specify an attachment point in a folder name is: ^\.\(\s+attachpt\s+\)
+	std::string::size_type idxMatch;
+	std::string strAttachPt = rlvGetFirstParenthesisedText(pFolder->getName(), &idxMatch);
+	LLStringUtil::trim(strAttachPt);
+
+	return ( (1 == idxMatch) && (RLV_FOLDER_PREFIX_HIDDEN == pFolder->getName().at(0)) ) ? getAttachPoint(strAttachPt, true) : NULL;
 }
 
-// Checked: 2009-07-12 (RLVa-1.0.0h) | Modified: RLVa-0.2.0d
+// Checked: 2009-07-29 (RLVa-1.0.1b) | Modified: RLVa-1.0.1b
 LLViewerJointAttachment* RlvHandler::getAttachPoint(const LLInventoryItem* pItem, bool fStrict) const
 {
 	// Sanity check - if it's not an object then it can't have an attachment point
 	if ( (!pItem) || (LLAssetType::AT_OBJECT != pItem->getType()) )
 		return NULL;
 
-	std::string strItem = pItem->getName();
-	if (fStrict)
-	{
-		// A strict match for an item means we look for the last () occurance
-		int idxEnd = strItem.rfind(')'), idxStart = strItem.rfind('(', idxEnd);
-		if ( (-1 == idxStart) || (idxEnd < idxStart + 3) )
-			strItem.clear();
-		else
-		{
-			strItem = strItem.substr(idxStart + 1, idxEnd - idxStart - 1);
-			LLStringUtil::trim(strItem);
-		}
-	}
+	// The attachment point should be placed at the end of the item's name, surrounded by parenthesis
+	// (if there is no such text then strAttachPt will be an empty string which is fine since it means we'll look at the item's parent)
+	std::string strAttachPt = rlvGetLastParenthesisedText(pItem->getName());
+	LLStringUtil::trim(strAttachPt);
 
 	// If the item is modify   : we look at the item's name first and only then at the containing folder
 	// If the item is no modify: we look at the containing folder's name first and only then at the item itself
 	LLViewerJointAttachment* pAttachPt;
 	if (pItem->getPermissions().allowModifyBy(gAgent.getID()))
 	{
-		pAttachPt = (!strItem.empty()) ? getAttachPoint(strItem, fStrict) : NULL;
+		pAttachPt = (!strAttachPt.empty()) ? getAttachPoint(strAttachPt, true) : NULL;
 		if (!pAttachPt)
 			pAttachPt = getAttachPoint(gInventory.getCategory(pItem->getParentUUID()), fStrict);
 	}
 	else
 	{
 		pAttachPt = getAttachPoint(gInventory.getCategory(pItem->getParentUUID()), fStrict);
-		if ( (!pAttachPt) && (!strItem.empty()) )
-			pAttachPt = getAttachPoint(strItem, fStrict);
+		if ( (!pAttachPt) && (!strAttachPt.empty()) )
+			pAttachPt = getAttachPoint(strAttachPt, true);
 	}
 	return pAttachPt;
 }
@@ -196,6 +206,36 @@ S32 RlvHandler::getAttachPointIndex(const LLViewerJointAttachment* pAttachPt) co
 		}
 	}
 	return 0;
+}
+
+// Checked: 2009-07-29 (RLVa-1.0.1b) | Added: RLVa-1.0.1b
+LLViewerJointAttachment* RlvHandler::getAttachPointLegacy(const LLInventoryCategory* pFolder) const
+{
+	// Hopefully some day this can just be deprecated (see http://rlva.catznip.com/blog/2009/07/attachment-point-naming-convention/)
+	if ( (!pFolder) || (pFolder->getName().empty()) )
+		return NULL;
+
+	// Check for a (...) block *somewhere* in the name
+	std::string::size_type idxMatch;
+	std::string strAttachPt = rlvGetFirstParenthesisedText(pFolder->getName(), &idxMatch);
+	if (!strAttachPt.empty())
+	{
+		// Could be "(attachpt)", ".(attachpt)" or "Folder name (attachpt)"
+		if ( (0 != idxMatch) && ((1 != idxMatch) || (RLV_FOLDER_PREFIX_HIDDEN == pFolder->getName().at(0)) ) &&	// No '(' or '.(' start
+			 (idxMatch + strAttachPt.length() + 1 != pFolder->getName().length()) )								// or there's extra text
+		{
+			// It's definitely not one of the first two so assume it's the last form (in which case we need the last paranthesised block)
+			strAttachPt = rlvGetLastParenthesisedText(pFolder->getName());
+		}
+	}
+	else
+	{
+		// There's no paranthesised block, but it could still be "attachpt" or ".attachpt" (just strip away the '.' from the last one)
+		strAttachPt = pFolder->getName();
+		if (RLV_FOLDER_PREFIX_HIDDEN == strAttachPt[0])
+			strAttachPt.erase(0, 1);
+	}
+	return getAttachPoint(strAttachPt, true);
 }
 
 bool RlvHandler::hasLockedHUD() const
@@ -220,6 +260,20 @@ bool RlvHandler::isDetachable(const LLInventoryItem* pItem) const
 	return ( (pItem) && (pAvatar) ) ? isDetachable(pAvatar->getWornAttachment(pItem->getUUID())) : true;
 }
 
+// Checked: 2009-08-11 (RLVa-1.0.1h) | Added: RLVa-1.0.1h
+bool RlvHandler::isDetachableExcept(S32 idxAttachPt, LLViewerObject *pObj) const
+{
+	// Loop over every object that marked the specific attachment point undetachable (but ignore pObj and any of its children)
+	for (rlv_detach_map_t::const_iterator itAttach = m_Attachments.lower_bound(idxAttachPt), 
+		endAttach = m_Attachments.upper_bound(idxAttachPt); itAttach != endAttach; ++itAttach)
+	{
+		LLViewerObject* pTempObj = gObjectList.findObject(itAttach->second);
+		if ( (!pTempObj) || (pTempObj->getRootEdit()->getID() != pObj->getID()) )
+			return false;
+	}
+	return true;
+}
+
 // Checked: 2009-05-31 (RLVa-0.2.0e) | Modified: RLVa-0.2.0e
 bool RlvHandler::setDetachable(S32 idxAttachPt, const LLUUID& idRlvObj, bool fDetachable)
 {
@@ -228,9 +282,6 @@ bool RlvHandler::setDetachable(S32 idxAttachPt, const LLUUID& idRlvObj, bool fDe
 	if ( (itObj == m_Objects.end()) || (!idxAttachPt) )
 		return false;	// If (idxAttachPt) == 0 then: (pObj == NULL) || (pObj->isAttachment() == FALSE)
 
-	// URGENT-RLVa: there is a slight problem if @detach=n is issued by a prim that's rezzed and later attached
-	//              The solution would be to add it with 'idxAttachPt == 0' (isDetachable was already changed to account for that)
-	//              and then try and resolve it from onAttach()
 	if (!fDetachable)
 	{
 		// Sanity check - make sure it's not already marked undetachable by this object (NOTE: m_Attachments is a *multimap*, not a map)
@@ -333,17 +384,17 @@ void RlvHandler::removeBehaviourObserver(RlvBehaviourObserver* pBhvrObserver)
 }
 
 // Checked: 2009-06-03 (RLVa-0.2.0h)
-void RlvHandler::notifyBehaviourObservers()
+void RlvHandler::notifyBehaviourObservers(const RlvCommand& rlvCmd, bool fInternal)
 {
 	for (std::list<RlvBehaviourObserver*>::const_iterator itBhvrObserver = m_BhvrObservers.begin();
 		itBhvrObserver != m_BhvrObservers.end(); ++itBhvrObserver)
 	{
-		(*itBhvrObserver)->changed();
+		(*itBhvrObserver)->changed(rlvCmd, fInternal);
 	}
 }
 
 // Checked:
-BOOL RlvHandler::processCommand(const LLUUID& uuid, const std::string &strCmd)
+BOOL RlvHandler::processCommand(const LLUUID& uuid, const std::string& strCmd, bool fFromObj)
 {
 	#ifdef RLV_DEBUG
 		RLV_INFOS << "[" << uuid << "]: " << strCmd << LL_ENDL;
@@ -395,7 +446,7 @@ BOOL RlvHandler::processCommand(const LLUUID& uuid, const std::string &strCmd)
 					if (!m_pGCTimer)
 						m_pGCTimer = new RlvGCTimer();
 					processAddCommand(uuid, rlvCmd);
-					notifyBehaviourObservers();
+					notifyBehaviourObservers(rlvCmd, !fFromObj);
 				}
 			}
 			break;
@@ -412,7 +463,7 @@ BOOL RlvHandler::processCommand(const LLUUID& uuid, const std::string &strCmd)
 
 				if (fRet) {	// Don't handle non-sensical removes
 					processRemoveCommand(uuid, rlvCmd);
-					notifyBehaviourObservers();
+					notifyBehaviourObservers(rlvCmd, !fFromObj);
 
 					if (0 == itObj->second.m_Commands.size())
 					{
@@ -450,7 +501,7 @@ BOOL RlvHandler::processCommand(const LLUUID& uuid, const std::string &strCmd)
 							{
 								fContinue = (rlvObj.m_Commands.size() > 1); // rlvObj will become invalid once we remove the last command
 								strCmdRem = rlvCmdRem.getBehaviour() + ":" + rlvCmdRem.getOption() + "=y";
-								processCommand(uuid, strCmdRem);
+								processCommand(uuid, strCmdRem, false);
 							}
 						}
 						fRet = TRUE;
@@ -474,7 +525,9 @@ BOOL RlvHandler::processCommand(const LLUUID& uuid, const std::string &strCmd)
 
 BOOL RlvHandler::processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 {
-	// NOTE: at this point the command has already been added to the corresponding object!
+	// NOTE: - at this point the command has already been added to the corresponding RlvObject instance
+	//       - the object's UUID may or may not exist in gObjectList (see handling of @detach=n)
+
 	ERlvBehaviour eBehaviour = rlvCmd.getBehaviourType();
 	const std::string& strOption = rlvCmd.getOption();
 
@@ -483,16 +536,32 @@ BOOL RlvHandler::processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 
 	switch (eBehaviour)
 	{
-		case RLV_BHVR_DETACH:				// @detach=n				- Checked:
+		case RLV_BHVR_DETACH:				// @detach[:<option>]=n		- Checked: 2009-08-04 (RLVa-1.0.1d) | Modified: RLVa-1.0.1d
 			{
-				LLViewerObject* pObj = gObjectList.findObject(uuid);
-				if ( (pObj) && (strOption.empty()) )
+				LLViewerObject* pObj = NULL; S32 idxAttachPt = 0;
+				if (strOption.empty())													// @detach=n
 				{
-					setDetachable(pObj, uuid, false);
+					// If the object rezzed before we received @detach=n from it then we can just do our thing here
+					// If the object hasn't rezzed yet then we need to wait until RlvHandler::onAttach()
+					// If @detach=n were possible for non-attachments another copy/paste would be needed in RlvHandler::onGC()
+					if ((pObj = gObjectList.findObject(uuid)) != NULL)
+						setDetachable(pObj, uuid, false);
+				} 
+				else if ((idxAttachPt = getAttachPointIndex(strOption, true)) != 0)		// @detach:<attachpt>=n
+				{
+					setDetachable(idxAttachPt, uuid, false);
 
-					if (pObj->isHUDAttachment())
-						LLPipeline::sShowHUDAttachments = TRUE;	// Prevents hiding of locked HUD attachments
+					// (See below)
+					LLViewerJointAttachment* pAttachPt = getAttachPoint(strOption, true);
+					if (pAttachPt)
+						pObj = pAttachPt->getObject();
 				}
+
+				// When at least one HUD attachment is locked we want to make sure they're all visible (ie prevent hiding a blindfold HUD)
+				// However, since @detach:<attachpt>=n might lock a HUD attachment point that doesn't currently have an object we
+				// have to do this here *and* in RlvHandler::onAttach()
+				if ( (pObj) && (pObj->isHUDAttachment()) )
+					LLPipeline::sShowHUDAttachments = TRUE;
 			}
 			break;
 		case RLV_BHVR_REDIRCHAT:			// @redirchat:<option>=n	- Checked: 2009-07-07 (RLVa-1.0.0d)
@@ -663,6 +732,17 @@ BOOL RlvHandler::processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 				}
 			}
 			break;
+		case RLV_BHVR_NOTIFY:				// @notify:<option>=add		- Checked: 2009-08-04 (RLVa-1.0.1d) | Modified: RLVa-1.0.1d
+			{
+				S32 nChannel; std::string strFilter;
+				if ( (!strOption.empty()) && (rlvParseNotifyOption(strOption, nChannel, strFilter)) )
+				{
+					if (!m_pBhvrNotify)
+						addBehaviourObserver(m_pBhvrNotify = new RlvBehaviourNotifyObserver());
+					m_pBhvrNotify->addNotify(uuid, nChannel, strFilter);
+				}
+			}
+			break;
 		case RLV_BHVR_RECVCHAT:				// @recvchat:<uuid>=add		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 		case RLV_BHVR_RECVEMOTE:			// @recvemote:<uuid>=add	- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
 		case RLV_BHVR_RECVIM:				// @recvim:<uuid>=add		- Checked: 2009-07-09 (RLVa-1.0.0f) | Modified: RLVa-1.0.0f
@@ -684,9 +764,20 @@ BOOL RlvHandler::processAddCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 	return TRUE; // Add command success/failure is decided by RlvObject::addCommand()
 }
 
+// Checked: 2009-08-05 (RLVa-1.0.1e) | Added: RLVa-1.0.1e
+void RlvHandler::processRetainedCommands()
+{
+	for (rlv_retained_list_t::const_iterator itCmd = m_Retained.begin(); itCmd != m_Retained.end(); ++itCmd)
+	{
+		const RlvRetainedCommand& cmd = *itCmd;
+		processCommand(cmd.idObject, cmd.strCmd, true);
+	}
+	m_Retained.clear();
+}
+
 BOOL RlvHandler::processRemoveCommand(const LLUUID& uuid, const RlvCommand& rlvCmd)
 {
-	// NOTE: the RlvObject still exists at this point, but the viewer might already have removed it from its object list
+	// NOTE: - the RlvObject instance still exists at this point, but the viewer might already have removed it from its object list
 	ERlvBehaviour eBehaviour = rlvCmd.getBehaviourType();
 	const std::string& strOption = rlvCmd.getOption();
 
@@ -695,9 +786,10 @@ BOOL RlvHandler::processRemoveCommand(const LLUUID& uuid, const RlvCommand& rlvC
 
 	switch (eBehaviour)
 	{
-		case RLV_BHVR_DETACH:				// @detach=y				- Checked: 2009-06-03 (RLVa-0.2.0h) | Modified: RLVa-0.2.0h
+		case RLV_BHVR_DETACH:				// @detach[:<option>]=y		- Checked: 2009-08-04 (RLVa-1.0.1d) | Modified: RLVa-1.0.1d
 			{
-				if (strOption.empty())
+				S32 idxAttachPt;
+				if (strOption.empty())												// @detach=y
 				{
 					// The object may or may not (if it got detached) still exist so clean up the hard way
 					if (m_Objects.find(uuid) != m_Objects.end())
@@ -712,6 +804,10 @@ BOOL RlvHandler::processRemoveCommand(const LLUUID& uuid, const RlvCommand& rlvC
 							}
 						}
 					}
+				}
+				else if ((idxAttachPt = getAttachPointIndex(strOption, true)))		// @detach:<attachpt>=y
+				{
+					setDetachable(idxAttachPt, uuid, true);
 				}
 			}
 			break;
@@ -787,6 +883,22 @@ BOOL RlvHandler::processRemoveCommand(const LLUUID& uuid, const RlvCommand& rlvC
 					LLViewerObject* pObj = gObjectList.findObject(idException);
 					if ( (pObj) && (pObj->mText.notNull()) && (!pObj->mText->getObjectText().empty()) )
 						pObj->mText->setStringUTF8(pObj->mText->getObjectText());
+				}
+			}
+			break;
+		case RLV_BHVR_NOTIFY:				// @notify:<option>=rem		- Checked: 2009-08-04 (RLVa-1.0.1d) | Modified: RLVa-1.0.1d
+			{
+				S32 nChannel; std::string strFilter;
+				if ( (m_pBhvrNotify) && (!strOption.empty()) && (rlvParseNotifyOption(strOption, nChannel, strFilter)) )
+				{
+					m_pBhvrNotify->removeNotify(uuid, nChannel, strFilter);
+
+					if (!m_pBhvrNotify->hasNotify())
+					{
+						removeBehaviourObserver(m_pBhvrNotify);
+						delete m_pBhvrNotify;
+						m_pBhvrNotify = NULL;
+					}
 				}
 			}
 			break;
@@ -1032,7 +1144,7 @@ BOOL RlvHandler::processReplyCommand(const LLUUID& uuid, const RlvCommand& rlvCm
 				}
 			}
 			break;
-		case RLV_BHVR_GETINV:			// @getinv[:<path>]=<channel>		  - Checked: 2009-07-12 (RLVa-1.0.0h)
+		case RLV_BHVR_GETINV:			// @getinv[:<path>]=<channel>		  - Checked: 2009-07-28 (RLVa-1.0.1b) | Modified: RLVa-1.0.1b
 			{
 				LLViewerInventoryCategory* pFolder = getSharedFolder(strOption);
 				if (pFolder)
@@ -1046,7 +1158,8 @@ BOOL RlvHandler::processReplyCommand(const LLUUID& uuid, const RlvCommand& rlvCm
 						for (S32 idxFolder = 0, cntFolder = pFolders->count(); idxFolder < cntFolder; idxFolder++)
 						{
 							const std::string& strFolder = pFolders->get(idxFolder)->getName();
-							if ( (!strFolder.empty()) && (RLV_FOLDER_PREFIX_HIDDEN != strFolder[0]) )
+							if ( (!strFolder.empty()) && (RLV_FOLDER_PREFIX_HIDDEN != strFolder[0]) &&
+								 (!isFoldedFolder(pFolders->get(idxFolder).get(), true)) )
 							{
 								if (!strReply.empty())
 									strReply.push_back(',');
@@ -1127,7 +1240,7 @@ BOOL RlvHandler::processReplyCommand(const LLUUID& uuid, const RlvCommand& rlvCm
 	}
 
 	if (fHandled)
-		sendCommandReply(strChannel, strReply);
+		rlvSendChatReply(strChannel, strReply);
 	return fHandled;
 }
 
@@ -1161,8 +1274,8 @@ void RlvHandler::initLookupTables()
 	}
 }
 
-// Checked: 2009-05-31 (RLVa-0.2.0e) | Modified: RLVa-0.2.0e
-void RlvHandler::onAttach(LLViewerJointAttachment* pAttachPt)
+// Checked: 2009-08-11 (RLVa-1.0.1h) | Modified: RLVa-1.0.1h
+void RlvHandler::onAttach(LLViewerJointAttachment* pAttachPt, bool fFullyLoaded)
 {
 	// Sanity check - LLVOAvatar::attachObject() should call us *after* calling LLViewerJointAttachment::addObject()
 	LLViewerObject* pObj = pAttachPt->getObject();
@@ -1173,37 +1286,63 @@ void RlvHandler::onAttach(LLViewerJointAttachment* pAttachPt)
 		return;
 	}
 
-	// If this is a locked object that got detached and that we're reattaching then remove it from the pending attach list
+	// Check if this attachment point has a pending "reattach-on-detach"
 	rlv_reattach_map_t::iterator itReattach = m_AttachPending.find(idxAttachPt);
-	if ( (itReattach != m_AttachPending.end()) && (itReattach->second == pAttachPt->getItemID()) )
+	if (itReattach != m_AttachPending.end())
 	{
-		m_AttachPending.erase(itReattach);
+		if (itReattach->second == pAttachPt->getItemID())
+		{
+			RLV_INFOS << "Reattached " << pAttachPt->getItemID().asString() << " to " << idxAttachPt << LL_ENDL;
+			m_AttachPending.erase(itReattach);
+		}
+	}
+	else if ( (fFullyLoaded) && (!isDetachableExcept(idxAttachPt, pObj)) )
+	{
+		// We're fully loaded with no pending reattach on this attach point but it's "undetachable" -> force detach the new attachment
+
+		// Assertion: the only way the attachment point could be locked at this point is if some object locked it with @detach:attachpt=n
+		//   - previous attachments on this attachment point might have issued @detach=n but those were all cleaned up at detach
+		//   - the new attachment might have issued @detach=n but that won't actually lock down the attachment point until further down
+		// NOTE 1: "some object" may no longer exist if it was not an attachment and the GC hasn't cleaned it up yet (informative)
+		// NOTE 2: "some object" may refer to the new attachment - ie @detach:spine=n from object on spine (problematic, causes reattach)
+		//           -> solved by using isDetachableExcept(idxAttachPt, pObj) instead of isDetachable(idxAttachPt)
+
+		m_DetachPending.insert(std::pair<S32, LLUUID>(idxAttachPt, pObj->getID()));
+		rlvForceDetach(pAttachPt);
 	}
 
-	// Execute any pending commands for this attachment (actually just the root prim; the GC will handle child prims)
-	if (LLStartUp::getStartupState() >= STATE_MISC)
+	// Check if we already have an RlvObject instance for this object (rezzed prim attached from in-world, or an attachment that rezzed in)
+	rlv_object_map_t::iterator itObj = m_Objects.find(pObj->getID());
+	if (itObj != m_Objects.end())
 	{
-		rlv_retained_list_t::iterator itCmd = m_Retained.begin(), curCmd;
-		while ( (itCmd = std::find(itCmd, m_Retained.end(), pObj->getID())) != m_Retained.end() )
-		{
-			curCmd = itCmd++;
-			#ifdef RLV_DEBUG
-				RLV_INFOS << "Executing retained command for " << curCmd->idObject << LL_ENDL;
-			#endif // RLV_DEBUG
+		// If it's an attachment we processed commands for but that only just rezzed in we need to mark it as existing in gObjectList
+		if (!itObj->second.m_fLookup)
+			itObj->second.m_fLookup = true;
 
-			processCommand(curCmd->idObject, curCmd->strCmd);
-			m_Retained.erase(curCmd); // Invalidates curCmd but not itCmd since it already points ahead
+		// In both cases we should check for "@detach=n" and actually lock down the attachment point it got attached to
+		if (itObj->second.hasBehaviour(RLV_BHVR_DETACH))
+		{
+			// (Copy/paste from processAddCommand)
+			setDetachable(pObj, pObj->getID(), false);
+
+			if (pObj->isHUDAttachment())
+				LLPipeline::sShowHUDAttachments = TRUE;	// Prevents hiding of locked HUD attachments
 		}
 	}
 
-	// If what we're wearing is located under the shared root then append the attachment point name (if needed)
+	// Fetch the inventory item if we don't currently have it since we might need it for reattach-on-detach
 	const LLUUID& idItem = pAttachPt->getItemID();
+	LLViewerInventoryItem* pItem = ( (idItem.notNull()) && (gInventory.isInventoryUsable()) ) ? gInventory.getItem(idItem) : NULL;
+	if ( (STATE_STARTED == LLStartUp::getStartupState()) && (pItem != NULL) )
+	{
+		RlvCurrentlyWorn f;
+		f.fetchItem(idItem);
+	}
+
+	// If what we're wearing is located under the shared root then append the attachment point name (if needed)
 	LLViewerInventoryCategory* pRlvRoot = getSharedRoot();
-	LLViewerInventoryItem* pItem;
-	
-	if ( (STATE_STARTED == LLStartUp::getStartupState()) && (pRlvRoot) && (idItem.notNull()) && 
-		 (gInventory.isInventoryUsable()) && (gInventory.isObjectDescendentOf(idItem, pRlvRoot->getUUID())) &&
-		 ((pItem = gInventory.getItem(idItem)) != NULL) && (pItem->isComplete()) )
+	if ( (STATE_STARTED == LLStartUp::getStartupState()) && (pRlvRoot) && (pItem) && (pItem->isComplete()) &&
+		 (gInventory.isObjectDescendentOf(idItem, pRlvRoot->getUUID())) )
 	{
 		std::string strAttachPt = pAttachPt->getName();
 		LLStringUtil::toLower(strAttachPt);
@@ -1290,7 +1429,14 @@ void RlvHandler::onDetach(LLViewerJointAttachment* pAttachPt)
 	#endif // RLV_DEBUG
 
 	// If the attachment was locked then we should reattach it (unless we're already trying to reattach to this attachment point)
-	if ( (!isDetachable(idxAttachPt)) && (m_AttachPending.find(idxAttachPt) == m_AttachPending.end()) )
+	// (unless we forcefully detached it else in which case we do not want to reattach it)
+	rlv_reattach_map_t::iterator itDetach = m_DetachPending.find(idxAttachPt);
+	if (itDetach != m_DetachPending.end())
+	{
+		// RLVa-TODO: we should really be comparing item UUIDs but is it even possible to end up here and not have them match?
+		m_DetachPending.erase(itDetach);
+	}
+	else if ( (!isDetachable(idxAttachPt)) && (m_AttachPending.find(idxAttachPt) == m_AttachPending.end()) )
 	{
 		// In an ideal world we would simply set up an LLInventoryObserver but there's no specific "asset updated" changed flag *sighs*
 		// NOTE: attachments *always* know their "inventory item UUID" so we don't have to worry about fetched vs unfetched inventory
@@ -1306,7 +1452,7 @@ void RlvHandler::onDetach(LLViewerJointAttachment* pAttachPt)
 		{
 			// Iterator points to the object (or to a child prim) so issue a clear on behalf of the object (there's the 
 			// possibility of going into an eternal loop, but that's ok since it indicates a bug in @clear that needs fixing)
-			processCommand(itAttach->second, "clear");
+			processCommand(itAttach->second, "clear", true);
 
 			itAttach = m_Attachments.find(idxAttachPt); // @clear will invalidate all iterators so we have to start anew
 		}
@@ -1319,80 +1465,57 @@ void RlvHandler::onDetach(LLViewerJointAttachment* pAttachPt)
 	// Clean up in case there was never a @detach=n (only works for the root prim - see above)
 	rlv_object_map_t::iterator itObj = m_Objects.find(pObj->getID());
 	if (itObj != m_Objects.end())
-		processCommand(itObj->second.m_UUID, "clear");
+		processCommand(itObj->second.m_UUID, "clear", true);
 }
 
+// Checked: 2009-07-30 (RLVa-1.0.1c) | Modified: RLVa-1.0.1c
 bool RlvHandler::onGC()
 {
-	// Check for any expired objects
-	rlv_object_map_t::iterator itObj = m_Objects.begin();
-	while (itObj != m_Objects.end())
-	{
-		if (NULL == gObjectList.findObject(itObj->second.m_UUID))
-		{
-			#ifdef RLV_DEBUG
-				RLV_INFOS << "Garbage collecting " << itObj->second.m_UUID << LL_ENDL;
-			#endif // RLV_DEBUG
+	// We can't issue @clear on an object while we're in the loop below since that would invalidate our iterator
+	// (and starting over would mean that some objects might get their "lookup misses" counter updated more than once per GC run)
+	std::list<LLUUID> ExpiredObjects;
 
-			processCommand(itObj->second.m_UUID, "clear");
-			itObj = m_Objects.begin();
+	for (rlv_object_map_t::iterator itObj = m_Objects.begin(); itObj != m_Objects.end(); ++itObj)
+	{
+		LLViewerObject* pObj = gObjectList.findObject(itObj->second.m_UUID);
+		if (!pObj)
+		{
+			// If the RlvObject once existed in the gObjectList and now doesn't then expire it right now
+			// If the RlvObject never existed in the gObjectList and still doesn't then increase its "lookup misses" counter
+			// but if that reaches 20 (we run every 30 seconds so that's about 10 minutes) then we'll expire it too
+			if ( (itObj->second.m_fLookup) || (++itObj->second.m_nLookupMisses > 20) )
+				ExpiredObjects.push_back(itObj->first);
 		}
 		else
-			++itObj;
-	}
-
-	// Check the retained command list
-	rlv_retained_list_t::iterator itCmd = m_Retained.begin(), curCmd;
-	while (itCmd != m_Retained.end())
-	{
-		curCmd = itCmd++; // curCmd iterator becomes invalid on deletion; itCmd points ahead so we can keep using that one
-
-		RlvRetainedCommand& rlvCmd = *curCmd; bool fExecute = false;
-		if (rlvCmd.fImmediate)
-			fExecute = true; // We can't retain reply commands indefinitely because we'd time out impatient scripts
-		else if (NULL != gObjectList.findObject(rlvCmd.idObject))
-			fExecute = true; // We know about the object, so we're no longer in danger of GC'ing it prematurely
-		else
 		{
-			if (rlvCmd.nLookupMisses < 20)	// We run every 30 seconds so this is about 10 minutes
-			{
-				rlvCmd.nLookupMisses++;
-				#ifdef RLV_DEBUG
-					RLV_INFOS << "Holding retained command for " << rlvCmd.idObject 
-					          << " (# misses: " << rlvCmd.nLookupMisses << ")" << LL_ENDL;
-				#endif // RLV_DEBUG
-			}
-			else							// While not terribly expensive, we don't want to keep checking indefinitely
-			{
-				#ifdef RLV_DEBUG
-					RLV_WARNS << "Expiring retained command for " << rlvCmd.idObject << LL_ENDL;
-				#endif // RLV_DEBUG
-				m_Retained.erase(curCmd);
-			}
-		}
-
-		if (fExecute)
-		{
-			#ifdef RLV_DEBUG
-				RLV_INFOS << "Executing retained command for " << rlvCmd.idObject 
-				          << " (fImmediate: " << ( (rlvCmd.fImmediate) ? "true)" : "false)" ) << LL_ENDL;
-			#endif // RLV_DEBUG
-			processCommand(rlvCmd.idObject, rlvCmd.strCmd);
-			m_Retained.erase(curCmd);
+			// Check if this is an RlvObject instance who's object never existed in gObjectList before (rezzed prim in-world)
+			// (it could also be an attachment that only just rezzed in but RlvHandler::onAttach() should be handling those)
+			if ( (!itObj->second.m_fLookup) && (!pObj->isAttachment()) )
+				itObj->second.m_fLookup = true;
 		}
 	}
 
-	return ( (0 != m_Objects.size()) || (0 != m_Retained.size()) );	// GC will kill itself if it has nothing to do
+	for (std::list<LLUUID>::const_iterator itExpired = ExpiredObjects.begin(); itExpired != ExpiredObjects.end(); ++itExpired)
+	{
+		#ifdef RLV_DEBUG
+			RLV_INFOS << "Garbage collecting " << *itExpired << LL_ENDL;
+		#endif // RLV_DEBUG
+
+		processCommand(*itExpired, "clear", true);
+	}
+
+	return (0 != m_Objects.size());	// GC will kill itself if it has nothing to do
 }
 
-// Checked: 2009-05-31 (RLVa-0.2.0e) | Added: RLVa-0.2.0e
-void RlvHandler::onSavedAssetIntoInventory(const LLViewerInventoryItem* pItem)
+// Checked: 2009-08-08 (RLVa-1.0.1g) | Modified: RLVa-1.0.1g
+void RlvHandler::onSavedAssetIntoInventory(const LLUUID& idItem)
 {
-	const LLUUID& idItem = pItem->getUUID();
 	for (rlv_reattach_map_t::iterator itAttach = m_AttachPending.begin(); itAttach != m_AttachPending.end(); ++itAttach)
 	{
 		if (idItem == itAttach->second)
 		{
+			RLV_INFOS << "Reattaching " << idItem.asString() << " to " << itAttach->first << LL_ENDL;
+
 			#if RLV_TARGET < RLV_MAKE_TARGET(1, 23, 0)			// Version: 1.22.11
 				LLAttachmentRezAction* rez_action = new LLAttachmentRezAction;
 				rez_action->mItemID = itAttach->second;
@@ -1577,7 +1700,7 @@ bool RlvHandler::redirectChatOrEmote(const std::string& strUTF8Text) const
 				   ((fIsEmote) && (RLV_BHVR_REDIREMOTE == itCmd->getBehaviourType())) ) && 
 				 ( (!fSendChannel) || (hasBehaviour("sendchannel", itCmd->getOption())) ) )
 			{
-				sendCommandReply(itCmd->getOption(), strUTF8Text);
+				rlvSendChatReply(itCmd->getOption(), strUTF8Text);
 			}
 		}
 	}
@@ -1612,31 +1735,6 @@ BOOL RlvHandler::isAgentNearby(const LLUUID& uuid) const
 		}
 	#endif
 	return FALSE;
-}
-
-void RlvHandler::sendBusyMessage(const LLUUID& idTo, const std::string& strMsg, const LLUUID& idSession)
-{
-	// (See process_improved_im)
-	std::string strFullName;
-	gAgent.buildFullname(strFullName);
-
-	pack_instant_message(gMessageSystem, gAgent.getID(), FALSE, gAgent.getSessionID(), idTo, strFullName,
-		strMsg, IM_ONLINE, IM_BUSY_AUTO_RESPONSE, idSession);
-	gAgent.sendReliableMessage();
-}
-
-// Checked:
-BOOL RlvHandler::sendCommandReply(const std::string& strChannel, const std::string& strReply) const
-{
-	// Sanity checking - channel should be positive and non-zero (the debug channel will show as public chat so block that as well)
-	S32 nChannel;
-	if ( (!LLStringUtil::convertToS32(strChannel, nChannel)) || (nChannel <= 0) || (CHAT_CHANNEL_DEBUG == nChannel) )
-		return FALSE;
-
-	m_fReplyInProgress = TRUE;
-	gChatBar->sendChatFromViewer("/" + strChannel + " " + strReply, CHAT_TYPE_SHOUT, FALSE);
-	m_fReplyInProgress = FALSE;
-	return TRUE;
 }
 
 // ============================================================================
@@ -1713,32 +1811,35 @@ bool RlvHandler::findSharedFolders(const std::string& strCriteria, LLInventoryMo
 // Checked: 2009-07-12 (RLVa-1.0.0h) | Modified: RLVa-0.2.0e
 LLViewerInventoryCategory* RlvHandler::getSharedRoot()
 {
-	LLInventoryModel::cat_array_t*  pFolders;
-	LLInventoryModel::item_array_t* pItems;
-	gInventory.getDirectDescendentsOf(gAgent.getInventoryRootID(), pFolders, pItems);
-	if (pFolders)
+	if (gInventory.isInventoryUsable())
 	{
-		// NOTE: we might have multiple #RLV folders so we'll just go with the first one we come across
-		LLViewerInventoryCategory* pFolder;
-		for (S32 idxFolder = 0, cntFolder = pFolders->count(); idxFolder < cntFolder; idxFolder++)
+		LLInventoryModel::cat_array_t*  pFolders;
+		LLInventoryModel::item_array_t* pItems;
+		gInventory.getDirectDescendentsOf(gAgent.getInventoryRootID(), pFolders, pItems);
+		if (pFolders)
 		{
-			if ( ((pFolder = pFolders->get(idxFolder)) != NULL) && (RlvHandler::cstrSharedRoot == pFolder->getName()) )
-				return pFolder;
+			// NOTE: we might have multiple #RLV folders so we'll just go with the first one we come across
+			LLViewerInventoryCategory* pFolder;
+			for (S32 idxFolder = 0, cntFolder = pFolders->count(); idxFolder < cntFolder; idxFolder++)
+			{
+				if ( ((pFolder = pFolders->get(idxFolder)) != NULL) && (RlvHandler::cstrSharedRoot == pFolder->getName()) )
+					return pFolder;
+			}
 		}
 	}
 	return NULL;
 }
 
-// Checked: 2009-07-12 (RLVa-1.0.0h) | Modified: RLVa-0.2.0e
+// Checked: 2009-07-28 (RLVa-1.0.1a) | Modified: RLVa-1.0.1a
 LLViewerInventoryCategory* RlvHandler::getSharedFolder(const LLUUID& idParent, const std::string& strFolderName) const
 {
 	LLInventoryModel::cat_array_t*  pFolders;
 	LLInventoryModel::item_array_t* pItems;
 	gInventory.getDirectDescendentsOf(idParent, pFolders, pItems);
-	if (!pFolders)
+	if ( (!pFolders) || (strFolderName.empty()) )
 		return NULL;
 
-	// If we can't find an exact match then we'll settle for a "starts with" match
+	// If we can't find an exact match then we'll settle for a "contains" match
 	LLViewerInventoryCategory* pPartial = NULL;
 
 	//LLStringUtil::toLower(strFolderName); <- everything was already converted to lower case before
@@ -1749,12 +1850,14 @@ LLViewerInventoryCategory* RlvHandler::getSharedFolder(const LLUUID& idParent, c
 		LLViewerInventoryCategory* pFolder = pFolders->get(idxFolder);
 
 		strName = pFolder->getName();
+		if (strName.empty())
+			continue;
 		LLStringUtil::toLower(strName);
 
 		if (strFolderName == strName)
 			return pFolder;		// Found an exact match, no need to keep on going
-		else if ( (!pPartial) && (strName.find(strFolderName) == 0) )	// (First partial match wins)
-			pPartial = pFolder;	// Found a partial match, but we might still find an exact one
+		else if ( (!pPartial) && (RLV_FOLDER_PREFIX_HIDDEN != strName[0]) && (strName.find(strFolderName) != std::string::npos) )
+			pPartial = pFolder;	// Found a partial (non-hidden) match, but we might still find an exact one (first partial match wins)
 	}
 
 	return pPartial;
@@ -2358,7 +2461,12 @@ BOOL RlvHandler::setEnabled(BOOL fEnable)
 
 	if (fEnable)
 	{
-		fNoSetEnv = gSavedSettings.getBOOL(RLV_SETTING_NOSETENV);
+		if (gSavedSettings.controlExists(RLV_SETTING_NOSETENV))
+			fNoSetEnv = gSavedSettings.getBOOL(RLV_SETTING_NOSETENV);
+		if (gSavedSettings.controlExists(RLV_SETTING_ENABLELEGACYNAMING))
+			fLegacyNaming = gSavedSettings.getBOOL(RLV_SETTING_ENABLELEGACYNAMING);
+		if (gSavedSettings.controlExists(RLV_SETTING_SHOWNAMETAGS))
+			RlvSettings::fShowNameTags = gSavedSettings.getBOOL(RLV_SETTING_SHOWNAMETAGS);
 
 		RlvCommand::initLookupTable();
 		gRlvHandler.addObserver(new RlvExtGetSet());
@@ -2412,9 +2520,9 @@ void RlvHandler::clearState()
 		idObj = m_Objects.begin()->first; // Need a copy since after @clear the data it points to will no longer exist
 		fDetachable = ((pObj = gObjectList.findObject(idObj)) != NULL) ? isDetachable(pObj) : true;
 
-		processCommand(idObj, "clear");
+		processCommand(idObj, "clear", false);
 		if (!fDetachable)
-			processCommand(idObj, "detachme=force");
+			processCommand(idObj, "detachme=force", false);
 	}
 
 	// Sanity check - these should all be empty after we issue @clear on the last object
@@ -2430,7 +2538,6 @@ void RlvHandler::clearState()
 	memset(m_LayersAdd, 0, sizeof(S16) * WT_COUNT);
 	memset(m_LayersRem, 0, sizeof(S16) * WT_COUNT);
 	memset(m_Behaviours, 0, sizeof(S16) * RLV_BHVR_COUNT);
-	m_Retained.clear();
 	m_AttachPending.clear();
 	m_Emitter.clearObservers(); // <- calls delete on all active observers
 

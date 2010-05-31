@@ -453,6 +453,65 @@ void LLChatBar::sendChat( EChatType type )
 			std::string utf8_revised_text;
 			if (0 == channel)
 			{
+				if (gSavedSettings.getBOOL("EmeraldAutoCloseOOC"))
+				{
+					// Chalice - OOC autoclosing patch based on code by Henri Beauchamp
+					int needsClosingType=0;
+					if (utf8text.find("((") == 0 && utf8text.find("))") == -1)
+						needsClosingType=1;
+					else if(utf8text.find("[[") == 0 && utf8text.find("]]") == -1)
+						needsClosingType=2;
+					if(needsClosingType==1)
+					{
+						// Chalice - OOC autoclosing patch based on code by Henri Beauchamp
+						int needsClosingType=0;
+						if (utf8text.find("((") == 0 && utf8text.find("))") == -1)
+							needsClosingType=1;
+						else if(utf8text.find("[[") == 0 && utf8text.find("]]") == -1)
+							needsClosingType=2;
+						if(needsClosingType==1)
+						{
+							if(utf8text.at(utf8text.length() - 1) == ')')
+								utf8text+=" ";
+							utf8text+="))";
+						}
+						else if(needsClosingType==2)
+						{
+							if(utf8text.at(utf8text.length() - 1) == ']')
+								utf8text+=" ";
+							utf8text+="]]";
+						}
+						needsClosingType=0;
+						if (utf8text.find("((") == -1 && utf8text.find("))") == (utf8text.length() - 2))
+							needsClosingType=1;
+						else if (utf8text.find("[[") == -1 && utf8text.find("]]") == (utf8text.length() - 2))
+							needsClosingType=2;
+						if(needsClosingType==1)
+						{
+							if(utf8text.at(0) == '(')
+								utf8text.insert(0," ");
+							utf8text.insert(0,"((");
+						}
+						else if(needsClosingType==2)
+						{
+							if(utf8text.at(0) == '[')
+								utf8text.insert(0," ");
+							utf8text.insert(0,"[[");
+						}
+					}
+				}
+				// Convert MU*s style poses into IRC emotes here.
+				if (gSavedSettings.getBOOL("EmeraldAllowMUpose") && utf8text.find(":") == 0 && utf8text.length() > 3)
+				{
+					if (utf8text.find(":'") == 0)
+					{
+						utf8text.replace(0, 1, "/me");
+	 				}
+					else if (isalpha(utf8text.at(1)))	// Do not prevent smileys and such.
+					{
+						utf8text.replace(0, 1, "/me ");
+					}
+				}
 				// discard returned "found" boolean
 				gGestureManager.triggerAndReviseString(utf8text, &utf8_revised_text);
 			}
@@ -712,10 +771,9 @@ void LLChatBar::sendChatFromViewer(const LLWString &wtext, EChatType type, BOOL 
 void send_chat_from_viewer(std::string utf8_out_text, EChatType type, S32 channel)
 // [/RLVa:KB]
 {
-// [RLVa:KB] - Alternate: Emerald-370 | Checked: 2009-07-07 (RLVa-1.0.0d) | Modified: RLVa-0.2.2a
+// [RLVa:KB] - Alternate: Emerald-370 | Checked: 2009-08-05 (RLVa-1.0.1e) | Modified: RLVa-1.0.1e
 	// Only process chat messages (ie not CHAT_TYPE_START, CHAT_TYPE_STOP, etc)
-	if ( (rlv_handler_t::isEnabled()) && (!gRlvHandler.isReplyInProgress()) &&
-		 ( (CHAT_TYPE_WHISPER == type) || (CHAT_TYPE_NORMAL == type) || (CHAT_TYPE_SHOUT == type) ) )
+	if ( (rlv_handler_t::isEnabled()) && ( (CHAT_TYPE_WHISPER == type) || (CHAT_TYPE_NORMAL == type) || (CHAT_TYPE_SHOUT == type) ) )
 	{
 		if (0 == channel)
 		{
@@ -756,29 +814,6 @@ void send_chat_from_viewer(std::string utf8_out_text, EChatType type, S32 channe
 				}
 			}
 		}
-	}
-// [/RLVa:KB]
-
-// [RLVa:KB] - Alternate: Emerald-370
-	// Emerald specific: the RLV spec defines a "nothing to return" as a zero length chat message which gets inhibited by the code below
-	//
-	// TODO-RLVa: it would be better to just send the message directly from inside RlvHandler, but postpone that until v1.1 so no
-	//            subtle new bug gets introduced at the last minute
-	if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.isReplyInProgress()) && (0 == utf8_out_text.length()) )
-	{
-		LLMessageSystem* msg = gMessageSystem;
-		msg->newMessageFast(_PREHASH_ChatFromViewer);
-		msg->nextBlockFast(_PREHASH_AgentData);
-		msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-		msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-		msg->nextBlockFast(_PREHASH_ChatData);
-		msg->addStringFast(_PREHASH_Message, utf8_out_text);
-		msg->addU8Fast(_PREHASH_Type, type);
-		msg->addS32("Channel", channel);
-
-		gAgent.sendReliableMessage();
-
-		LLViewerStats::getInstance()->incStat(LLViewerStats::ST_CHAT_COUNT);
 	}
 // [/RLVa:KB]
 

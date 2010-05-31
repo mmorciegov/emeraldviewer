@@ -723,7 +723,7 @@
 		<menu_item_separator bottom="-243" enabled="true" height="8" label="-----------" left="0"
 		     mouse_opaque="true" name="separator3" width="250" />
 		<menu_item_check bottom="" enabled="false" height="" label="Edit Linked Parts" left=""
-		     mouse_opaque="true" name="Edit Linked Parts" shortcut="" width="">
+		     mouse_opaque="true" name="Edit Linked Parts" shortcut="control|shift|E" width="">
 			<on_click function="ToggleControl" userdata="EditLinkedParts" />
 			<on_click function="Tools.EditLinkedParts" userdata="" />
 			<on_check control="EditLinkedParts" />
@@ -906,6 +906,7 @@
 		<menu_item_call bottom="-50" enabled="true" height="20" label="Ground Sit" left="0"
 		     mouse_opaque="true" name="Ground Sit" shortcut="control|alt|s" width="155">
 			<on_click function="Emerald.ToggleSit" userdata="" />
+			<on_Check function="Emerald.CheckSit" userdata="" />
 		</menu_item_call>
 		<menu_item_separator bottom="-58" enabled="true" height="8" label="-----------" left="0"
 		     mouse_opaque="true" name="separator1" width="155" />
@@ -977,5 +978,10 @@
 			<on_click function="ShowFloater" userdata="lua console" />
 			<on_check function="FloaterVisible" userdata="lua console" />
 		</menu_item_check>
+    <menu_item_check bottom="-120" enabled="true" height="19" label="Asset Browser" left="0"
+ 		     mouse_opaque="true" name="asset browser" shortcut="alt|shift|a" width="185">
+      <on_click function="Phox.ToggleAssetBrowser" userdata="" />
+      <on_check function="Phox.CheckAssetBrowser" userdata="" />
+    </menu_item_check>
 	</menu>
 </menu_bar>

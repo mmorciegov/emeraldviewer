@@ -89,12 +89,15 @@ include_directories(
 
 set(viewer_SOURCE_FILES
 	importtracker.cpp
+	exporttracker.cpp
 	chatbar_as_cmdline.cpp
 	jcfloater_animation_list.cpp
 	jcfloater_areasearch.cpp
+	jc_asset_comparer.cpp
 	jcobjectpropertylist.cpp
 	lggBeamMapFloater.cpp
 	lggBeamMaps.cpp
+	llfloaterassetbrowser.cpp
     llagent.cpp
     llagentaccess.cpp
     llagentdata.cpp
@@ -487,7 +490,8 @@ set(viewer_SOURCE_FILES
     rlvextensions.cpp
     rlvfloaterbehaviour.cpp
     otr_wrapper.cpp
-    otr_floater_smp.cpp
+    otr_floater_smp_dialog.cpp
+    otr_floater_smp_progress.cpp
     )
 
 set(VIEWER_BINARY_NAME "secondlife-bin" CACHE STRING
@@ -513,10 +517,13 @@ set(viewer_HEADER_FILES
     chatbar_as_cmdline.h
 	jcfloater_animation_list.h
 	jcfloater_areasearch.h
+	jc_asset_comparer.h
 	jcobjectpropertylist.h
 	importtracker.h
+	exporttracker.h
 	lggBeamMaps.h
 	lggBeamMapFloater.h
+	llfloaterassetbrowser.h
     llagent.h
     llagentaccess.h
     llagentdata.h
@@ -920,7 +927,8 @@ set(viewer_HEADER_FILES
     rlvextensions.h
     rlvfloaterbehaviour.h
     otr_wrapper.h
-    otr_floater_smp.h
+    otr_floater_smp_dialog.h
+    otr_floater_smp_progress.h
     )
 
 source_group("CMake Rules" FILES ViewerInstall.cmake)

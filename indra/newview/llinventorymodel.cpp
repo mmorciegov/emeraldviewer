@@ -2871,19 +2871,20 @@ void LLInventoryModel::processSaveAssetIntoInventory(LLMessageSystem* msg,
 		gInventory.accountForUpdate(up);
 		gInventory.addChangedMask( LLInventoryObserver::INTERNAL, item_id);
 		gInventory.notifyObservers();
-
-// [RLVa:KB] - Checked: 2009-07-10 (RLVa-1.0.0g) | Added: RLVa-0.2.0e
-		if (rlv_handler_t::isEnabled())
-		{
-			gRlvHandler.onSavedAssetIntoInventory(item);
-		}
-// [/RLVa:KB]
 	}
 	else
 	{
 		llinfos << "LLInventoryModel::processSaveAssetIntoInventory item"
 			" not found: " << item_id << llendl;
 	}
+
+// [RLVa:KB] - Checked: 2009-07-10 (RLVa-1.0.0g) | Added: RLVa-0.2.0e
+	if (rlv_handler_t::isEnabled())
+	{
+		gRlvHandler.onSavedAssetIntoInventory(item_id);
+	}
+// [/RLVa:KB]
+
 	if(gViewerWindow)
 	{
 		gViewerWindow->getWindow()->decBusyCount();
@@ -2926,6 +2927,23 @@ void LLInventoryModel::processBulkUpdateInventory(LLMessageSystem* msg, void**)
 		//		<< llendl;
 		if(tfolder->getUUID().notNull())
 		{
+// [RLVa:KB] - Checked: 2009-08-07 (RLVa-1.0.1f) | Added: RLVa-1.0.0f
+			// TODO-RLVa: this really shouldn't go here, but if the inventory offer spans multiple BulkUpdateInventory messages
+			//            then the second message will cause the viewer to show the folder under its original name even though
+			//			  it is renamed properly on the inventory server
+			if ( (rlv_handler_t::isEnabled()) && (!RlvSettings::getForbidGiveToRLV()) )
+			{
+				LLViewerInventoryCategory* pRlvRoot = gRlvHandler.getSharedRoot();
+				std::string strName = tfolder->getName();
+				if ((pRlvRoot) && (pRlvRoot->getUUID() == tfolder->getParentUUID() ) && (strName.find(RLV_PUTINV_PREFIX) == 0))
+				{
+					strName.erase(0, strName.find(RLV_FOLDER_PREFIX_PUTINV)); // Strips the prefix while retaining while the '~'
+					tfolder->rename(strName);
+					tfolder->updateServer(FALSE);
+				}
+			}
+// [/RLVa:KB]
+
 			folders.push_back(tfolder);
 			LLViewerInventoryCategory* folderp = gInventory.getCategory(tfolder->getUUID());
 			if(folderp)
@@ -2950,20 +2968,6 @@ void LLInventoryModel::processBulkUpdateInventory(LLMessageSystem* msg, void**)
 				{
 					++update[tfolder->getParentUUID()];
 				}
-
-// [RLVa:KB] - Checked: 2009-07-10 (RLVa-1.0.0g) | Added: RLVa-0.2.2a
-				if ( (rlv_handler_t::isEnabled()) && (!RlvSettings::getForbidGiveToRLV()) )
-				{
-					LLViewerInventoryCategory* pRlvRoot = gRlvHandler.getSharedRoot();
-					std::string strName = tfolder->getName();
-					if ((pRlvRoot) && (pRlvRoot->getUUID() == tfolder->getParentUUID() ) && (strName.find(RLV_PUTINV_PREFIX) == 0))
-					{
-						strName.erase(0, strName.find(RLV_FOLDER_PREFIX_PUTINV)); // Strips the prefix while retaining while the '~'
-						tfolder->rename(strName);
-						tfolder->updateServer(FALSE);
-					}
-				}
-// [/RLVa:KB]
 			}
 		}
 	}

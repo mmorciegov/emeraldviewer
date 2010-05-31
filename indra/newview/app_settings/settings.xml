@@ -1,6 +1,65 @@
 <?xml version="1.0" ?>
 <llsd>
   <map>
+<key>zmm_deffov</key>
+  <map>
+    <key>Comment</key>
+    <string>The delta to spam you the script jump difference</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>1.0</real>
+  </map>
+  <key>zmm_mlfov</key>
+  <map>
+    <key>Comment</key>
+    <string>1=norm, under1 zoom out, over1 zoom in</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>1</real>
+  </map>
+  <key>zmm_isinml</key>
+  <map>
+    <key>Comment</key>
+    <string>fuckyouslandyourshittymethodofseeingifakeyisdownornot...</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>0</integer>
+  </map>
+<key>zmm_rightmousedown</key>
+  <map>
+    <key>Comment</key>
+    <string>fuckyouslandyourshittymethodofseeingifakeyisdownornot...</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>0</integer>
+  </map>
+    <key>ColorllFunction</key>
+    <map>
+      <key>Comment</key>
+      <string>Color for llFunction builtins in the script editor.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Color3</string>
+      <key>Value</key>
+      <array>
+        <real>0.5</real>
+        <real>0.0</real>
+        <real>0.15</real>
+      </array>
+    </map>
     <key>RestrainedLife</key>
     <map>
       <key>Comment</key>
@@ -45,39 +104,61 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
-     <key>RLVaEnableWear</key>
-     <map>
-       <key>Comment</key>
-       <string>When TRUE, enables the "Wear" option on the inventory item context menu for attachments.</string>
-       <key>Persist</key>
-       <integer>1</integer>
-       <key>Type</key>
-       <string>Boolean</string>
-       <key>Value</key>
-       <integer>0</integer>
-     </map>
-     <key>RLVaHideLockedLayers</key>
-     <map>
-       <key>Comment</key>
-       <string>When TRUE, hides worn but "remove outfit" restricted clothing layers from @getoufit</string>
-       <key>Persist</key>
-       <integer>1</integer>
-       <key>Type</key>
-       <string>Boolean</string>
-       <key>Value</key>
-       <integer>0</integer>
-     </map>
-     <key>RLVaHideLockedAttachments</key>
-     <map>
-       <key>Comment</key>
-       <string>When TRUE, hides worn but "no detach" restricted attachments from @getattach</string>
-       <key>Persist</key>
-       <integer>1</integer>
-       <key>Type</key>
-       <string>Boolean</string>
-       <key>Value</key>
-       <integer>0</integer>
-     </map>
+    <key>RLVaEnableLegacyNaming</key>
+    <map>
+      <key>Comment</key>
+      <string>Enables legacy naming convention for folders</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>RLVaEnableWear</key>
+    <map>
+      <key>Comment</key>
+      <string>When TRUE, enables the "Wear" option on the inventory item context menu for attachments.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RLVaHideLockedLayers</key>
+    <map>
+      <key>Comment</key>
+      <string>When TRUE, hides worn but "remove outfit" restricted clothing layers from @getoufit</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RLVaHideLockedAttachments</key>
+    <map>
+      <key>Comment</key>
+      <string>When TRUE, hides worn but "no detach" restricted attachments from @getattach</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>RLVaShowNameTags</key>
+    <map>
+      <key>Comment</key>
+      <string>Display of names above avatars is subject to the general "Show Names" setting when @shownames=n restricted</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>AFKTimeout</key>
     <map>
       <key>Comment</key>
@@ -3240,6 +3321,17 @@
       <key>Value</key>
       <real>10.0</real>
     </map>
+    <key>EmeraldAllowMUpose</key>
+    <map>
+      <key>Comment</key>
+      <string>Allow MU* pose style in chat and IM (with ':' as a synonymous to '/me ')</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>EmeraldAllowPhantomToggle</key>
     <map>
       <key>Comment</key>
@@ -3266,6 +3358,17 @@
     <map>
       <key>Comment</key>
       <string>Do you want to always be able to fly, even in fly restricted zones?</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldAutoCloseOOC</key>
+    <map>
+      <key>Comment</key>
+      <string>Auto-close OOC chat (i.e. add \"))\" if not found and \"((\" was used)</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -4224,17 +4327,6 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
-    <key>EmeraldSendTypingIndicators</key>
-    <map>
-      <key>Comment</key>
-      <string>Let other clients see when you are typing in IMs</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>1</integer>
-    </map>
     <key>EmeraldUseOTR</key>
     <map>
       <key>Comment</key>
@@ -4245,6 +4337,17 @@
       <string>U32</string>
       <key>Value</key>
       <integer>2</integer>
+    </map>
+    <key>EmeraldOTRInTypingStop</key>
+    <map>
+      <key>Comment</key>
+      <string>Setting this to true will make all encrypted OTR messages be sent in an IM_TYPING_STOP packet.  This is non-standard behavior, but prevents OTR encrypted IM from being saved and delivered as offline IM.  Though it currently works LL may decide to disable the feature at any time.  This is incompatible with previous versions of OTR.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>EmeraldVelocityDoubleClickTeleport</key>
     <map>
@@ -4571,9 +4674,26 @@
       </array>
     </map>
     <key>OtrFloaterSmpRect</key>
+    <key>OtrFloaterSmpDialogRect</key>
     <map>
       <key>Comment</key>
       <string>Rectangle for OTR's Authorize Buddy Dialog</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Rect</string>
+      <key>Value</key>
+      <array>
+        <integer>0</integer>
+        <integer>440</integer>
+        <integer>470</integer>
+        <integer>0</integer>
+      </array>
+    </map>
+    <key>OtrFloaterSmpProgRect</key>
+    <map>
+      <key>Comment</key>
+      <string>Rectangle for OTR's Authorize Buddy Progress bar Dialog</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
@@ -5492,6 +5612,182 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+	<key>JoystickStreamAxisDeadZone0</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 0 dead zone.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>0.1</real>
+	</map>
+	<key>JoystickStreamAxisDeadZone1</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 1 dead zone.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>0.1</real>
+	</map>
+	<key>JoystickStreamAxisDeadZone2</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 2 dead zone.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>0.1</real>
+	</map>
+	<key>JoystickStreamAxisDeadZone3</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 3 dead zone.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>0.1</real>
+	</map>
+	<key>JoystickStreamAxisDeadZone4</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 4 dead zone.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>0.1</real>
+	</map>
+	<key>JoystickStreamAxisDeadZone5</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 5 dead zone.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>0.1</real>
+	</map>
+	<key>JoystickStreamAxisScale0</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 0 scaler.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>1.0</real>
+	</map>
+	<key>JoystickStreamAxisScale1</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 1 scaler.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>1.0</real>
+	</map>
+	<key>JoystickStreamAxisScale2</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 2 scaler.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>1.0</real>
+	</map>
+	<key>JoystickStreamAxisScale3</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 3 scaler.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>1.0</real>
+	</map>
+	<key>JoystickStreamAxisScale4</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 4 scaler.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>1.0</real>
+	</map>
+	<key>JoystickStreamAxisScale5</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Joystick stream axis 5 scaler.</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>1.0</real>
+	</map>
+	<key>JoystickStreamFeathering</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Stream feathering (less is softer)</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>16.0</real>
+	</map>
+	<key>JoystickStreamEnabled</key>
+	<map>
+	  <key>Comment</key>
+	  <string>Enable SpaceNavigator datastream</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>Boolean</string>
+	  <key>Value</key>
+	  <real>0</real>
+	</map>
+	<key>JoystickStreamRefresh</key>
+	<map>
+	  <key>Comment</key>
+	  <string>SpaceNavigator datasream update frequency in hertz</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>F32</string>
+	  <key>Value</key>
+	  <real>10.0</real>
+	</map>
+	<key>JoystickStreamChannel</key>
+	<map>
+	  <key>Comment</key>
+	  <string>SpaceNavigator datasream chat channel</string>
+	  <key>Persist</key>
+	  <integer>1</integer>
+	  <key>Type</key>
+	  <string>S32</string>
+	  <key>Value</key>
+	  <real>13900</real>
+	</map>
     <key>FlyingAtExit</key>
     <map>
       <key>Comment</key>
@@ -13264,6 +13560,22 @@
       <array>
         <integer>0</integer>
         <integer>400</integer>
+        <integer>200</integer>
+        <integer>0</integer>
+      </array>
+    </map>
+    <key>FloaterAssetCompareRect</key>
+    <map>
+      <key>Comment</key>
+      <string>Rectangle</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Rect</string>
+      <key>Value</key>
+      <array>
+        <integer>0</integer>
+        <integer>500</integer>
         <integer>200</integer>
         <integer>0</integer>
       </array>
