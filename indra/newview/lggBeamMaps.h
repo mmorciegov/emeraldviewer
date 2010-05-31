@@ -29,11 +29,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//using namespace std;
 
 #include "llhudeffecttrail.h"
 #include "llviewerprecompiledheaders.h"
-#include "lggBeamsColors.h"
+#include "lggbeamscolors.h"
 #include "llframetimer.h"
 class lggBeamData
 {

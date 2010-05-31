@@ -31,7 +31,7 @@ set(debug_files
     xul.dll
     openjpegd.dll
     windbgdlg.exe
-    lua5.1.dll
+	libhunspell.dll
     )
 
 if(OPENAL)
@@ -72,7 +72,7 @@ set(release_files
     xpcom.dll
     xul.dll
     openjpeg.dll
-    lua5.1.dll
+	libhunspell.dll
     )
 
 if(OPENAL)

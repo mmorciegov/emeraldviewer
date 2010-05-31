@@ -1975,6 +1975,14 @@ void LLFloaterCustomize::switchToDefaultSubpart()
 {
 	getCurrentWearablePanel()->switchToDefaultSubpart();
 }
+/* From Z, if the above ever causes crashes
+void LLFloaterCustomize::switchToDefaultSubpart()
+{
+	if(sCurrentWearableType == WT_INVALID)
+		setCurrentWearableType(WT_SHAPE);
+	getCurrentWearablePanel()->switchToDefaultSubpart();
+}
+*/
 
 void LLFloaterCustomize::draw()
 {

@@ -36,8 +36,11 @@ import re
 import tarfile
 viewer_dir = os.path.dirname(__file__)
 # add llmanifest library to our path so we don't have to muck with PYTHONPATH
-sys.path.append(os.path.join(viewer_dir, '../lib/python/indra/util'))
-from llmanifest import LLManifest, main, proper_windows_path, path_ancestors
+sys.path.append(os.path.join(viewer_dir, '../lib/python'))
+from indra.util.llmanifest import LLManifest
+from indra.util.llmanifest import main
+from indra.util.llmanifest import proper_windows_path
+from indra.util.llmanifest import path_ancestors
 
 class ViewerManifest(LLManifest):
     def construct(self):
@@ -60,6 +63,7 @@ class ViewerManifest(LLManifest):
             self.path("beams")
             self.path("beamsColors")
 	    self.path("bridge_assets")
+	    self.path("dictionaries")
             # ... and the entire windlight directory
             self.path("windlight")
             self.end_prefix("app_settings")
@@ -78,7 +82,7 @@ class ViewerManifest(LLManifest):
 
         # skins
         if self.prefix(src="skins"):
-                self.path("paths.xml")
+                self.path("*.xml")
                 # include the entire textures directory recursively
                 if self.prefix(src="*/textures"):
                         self.path("*.tga")
@@ -411,6 +415,7 @@ class DarwinManifest(ViewerManifest):
             #  <bundle>/Contents/MacOS/
             self.contents_of_tar(self.args['source']+'/mozilla-universal-darwin.tgz', 'MacOS')
 
+#            self.path("Info-SecondLife.plist", dst="Info.plist")
             self.path("Info-Emerald.plist", dst="Info.plist")
 
             # copy additional libs in <bundle>/Contents/MacOS/
@@ -420,7 +425,7 @@ class DarwinManifest(ViewerManifest):
             self.path("../../libraries/universal-darwin/lib_release/libalut.dylib", "MacOS/libalut.dylib");
 	    
 	    # Lua lib
-	    self.path("../../libraries/universal-darwin/lib_release/liblua5.1.dylib", "MacOS/liblua5.1.dylib");
+	    #self.path("../../libraries/universal-darwin/lib_release/liblua5.1.dylib", "MacOS/liblua5.1.dylib");
 
 	    # otr lib and deps
 	    self.path("../../libraries/universal-darwin/lib_release/libotr.dylib", "MacOS/libotr.dylib");
@@ -428,6 +433,9 @@ class DarwinManifest(ViewerManifest):
 	    self.path("../../libraries/universal-darwin/lib_release/libgcrypt.11.dylib", "MacOS/libgcrypt.11.dylib");
 	    self.path("../../libraries/universal-darwin/lib_release/libgpg-error.0.dylib", "MacOS/libgpg-error.0.dylib");
 	    self.path("../../libraries/universal-darwin/lib_release/libiconv.2.dylib", "MacOS/libiconv.2.dylib");
+
+	    # hunspell library
+	    self.path("../../libraries/universal-darwin/lib_release/libhunspell-1.2.dylib", "MacOS/libhunspell-1.2.dylib");
 
             # replace the default theme with our custom theme (so scrollbars work).
             if self.prefix(src="mozilla-theme", dst="MacOS/chrome"):
@@ -450,8 +458,10 @@ class DarwinManifest(ViewerManifest):
                 # If we are not using the default channel, use the 'Firstlook
                 # icon' to show that it isn't a stable release.
                 if self.default_channel() and self.default_grid():
+		#   self.path("secondlife.icns")
                     self.path("emerald_icon.icns")
                 else:
+                #   self.path("secondlife_firstlook.icns", "secondlife.icns")
                     self.path("emerald_icon.icns", "emerald_icon.icns")
                 self.path("SecondLife.nib")
                 
@@ -481,10 +491,12 @@ class DarwinManifest(ViewerManifest):
 #                self.path("vivox-runtime/universal-darwin/SLVoice", "SLVoice")
 
                 # llkdu dynamic library
-#                self.path("../../libraries/universal-darwin/lib_release/libllkdu.dylib", "libllkdu.dylib")
+                # This should be downloaded and unpacked for the user, not packaged with the viewer. ~Disc
+#		self.path("../../libraries/universal-darwin/lib_release/libllkdu.dylib", "libllkdu.dylib")
                 
                 #libfmodwrapper.dylib
-#                self.path(self.args['configuration'] + "/libfmodwrapper.dylib", "libfmodwrapper.dylib")
+                # This should be downloaded and unpacked for the user, not packaged with the viewer. ~Disc
+                self.path(self.args['configuration'] + "/libfmodwrapper.dylib", "libfmodwrapper.dylib")
                 
                 # our apps
 #                self.path("../mac_crash_logger/" + self.args['configuration'] + "/mac-crash-logger.app", "mac-crash-logger.app")
@@ -597,7 +609,7 @@ class LinuxManifest(ViewerManifest):
     def construct(self):
         super(LinuxManifest, self).construct()
         self.path("licenses-linux.txt","licenses.txt")
-        self.path("res/ll_icon.png","secondlife_icon.png")
+        self.path("res/emerald_icon.png","secondlife_icon.png")
         if self.prefix("linux_tools", dst=""):
             self.path("client-readme.txt","README-linux.txt")
             self.path("client-readme-voice.txt","README-linux-voice.txt")
@@ -605,6 +617,8 @@ class LinuxManifest(ViewerManifest):
             self.path("wrapper.sh","secondlife")
             self.path("handle_secondlifeprotocol.sh")
             self.path("register_secondlifeprotocol.sh")
+            # Added utility script to grab Vivox and Kakadu components from within a Linden Lab client package ~N
+            self.path("fetch_bins.sh")
             self.end_prefix("linux_tools")
 
         # Create an appropriate gridargs.dat for this package, denoting required grid.
@@ -695,10 +709,11 @@ class Linux_i686Manifest(LinuxManifest):
             self.path("libELFIO.so")
             self.path("libopenjpeg.so.1.3.0", "libopenjpeg.so.1.3")
             self.path("libalut.so")
-            self.path("libopenal.so", "libopenal.so.1")
-            self.path("liblua5.1.so")
-            self.path("libotr.so.2.2.0")
-            self.path("libotr.so.2")
+            self.path("libopenal.so")
+#            self.path("liblua5.1.so")
+            self.path("libz.so.1", "libz.so")
+            self.path("libotr.so.2.2.0", "libotr.so.2")
+            self.path("libhunspell-1.2.so.0.0.0", "libhunspell-1.2.so.0")
             self.end_prefix("lib")
 
             # Vivox runtimes

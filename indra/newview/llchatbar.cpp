@@ -70,7 +70,10 @@
 #include "lluictrlfactory.h"
 #include "chatbar_as_cmdline.h"
 
-
+// [RLVa:KB]
+#include "rlvhandler.h"
+// [/RLVa:KB]
+  
 //
 // Globals
 //

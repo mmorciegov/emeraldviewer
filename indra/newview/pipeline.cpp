@@ -94,7 +94,7 @@
 #include "llvopartgroup.h"
 #include "llworld.h"
 #include "llcubemap.h"
-#include "llfloateravatarlist.h"
+#include "floateravatarlist.h"
 #include "lldebugmessagebox.h"
 #include "llviewershadermgr.h"
 #include "llviewerjoystick.h"
@@ -103,6 +103,10 @@
 #include "llwaterparammanager.h"
 #include "llspatialpartition.h"
 #include "llmutelist.h"
+
+// [RLVa:KB]
+#include "rlvhandler.h"
+// [/RLVa:KB]
 
 #ifdef _DEBUG
 // Debug indices is disabled for now for debug performance - djs 4/24/02

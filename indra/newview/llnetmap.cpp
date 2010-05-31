@@ -41,7 +41,7 @@
 #include "llfocusmgr.h"
 #include "llrender.h"
 
-#include "llfloateravatarlist.h"
+#include "floateravatarlist.h"
 
 #include "llagent.h"
 #include "llcallingcard.h"
@@ -71,6 +71,10 @@
 #include "llglheaders.h"
 
 #include "llmutelist.h"
+
+// [RLVa:KB]
+#include "rlvhandler.h"
+// [/RLVa:KB]
 
 const F32 MAP_SCALE_MIN = 32;
 const F32 MAP_SCALE_MID = 172;
@@ -599,7 +603,7 @@ BOOL LLNetMap::handleToolTip( S32 x, S32 y, std::string& msg, LLRect* sticky_rec
 		{
 //			msg.append(fullname);
 // [RLVa:KB] - Version: 1.23.4 | Alternate: Emerald-370 | Checked: 2009-07-08 (RLVa-1.0.0e) | Modified: RLVa-0.2.0b
-			msg.append( (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) ? fullname : gRlvHandler.getAnonym(fullname) );
+			msg.append( (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) ? fullname : RlvStrings::getAnonym(fullname) );
 // [/RLVa:KB]
 
 			LLVector3d mypos = gAgent.getPositionGlobal();
@@ -624,7 +628,7 @@ BOOL LLNetMap::handleToolTip( S32 x, S32 y, std::string& msg, LLRect* sticky_rec
 			msg.append( llformat("\n(Distance: %.02fm)\n\n",distance) );
 		}
 // [RLVa:KB] - Version: 1.23.4 | Alternate: Emerald-370 | Checked: 2009-07-04 (RLVa-1.0.0a) | Modified: RLVa-0.2.0b
-		msg.append( (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWLOC)) ? region->getName() : rlv_handler_t::cstrHidden );
+		msg.append( (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWLOC)) ? region->getName() : RlvStrings::getString(RLV_STRING_HIDDEN) );
 // [/RLVa:KB]
 //		msg.append( region->getName() );
 

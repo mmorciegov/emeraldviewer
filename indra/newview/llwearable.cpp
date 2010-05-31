@@ -559,7 +559,7 @@ BOOL LLWearable::isDirty()
 						weight = get_if_there(mVisualParamMap, param->getID(), avatar->getActualBoobGrav());
 						weight = llclamp( weight, param->getMinWeight(), param->getMaxWeight() );
 				}
-				//butt
+				/*//butt
 				if(param->getID() == 795)
 				{
 						weight = get_if_there(mVisualParamMap, param->getID(), avatar->getActualButtGrav());
@@ -571,6 +571,7 @@ BOOL LLWearable::isDirty()
 						weight = get_if_there(mVisualParamMap, param->getID(), avatar->getActualFatGrav());
 						weight = llclamp( weight, param->getMinWeight(), param->getMaxWeight() );
 				}
+				*/
 			}
 			else
 			{
@@ -579,7 +580,7 @@ BOOL LLWearable::isDirty()
 				{
 						a = F32_to_U8( avatar->getActualBoobGrav(), param->getMinWeight(), param->getMaxWeight() );
 				}
-				//butt
+				/*//butt
 				if(param->getID() == 795)
 				{
 						a = F32_to_U8( avatar->getActualButtGrav(), param->getMinWeight(), param->getMaxWeight() );
@@ -589,6 +590,7 @@ BOOL LLWearable::isDirty()
 				{
 						a = F32_to_U8( avatar->getActualFatGrav(), param->getMinWeight(), param->getMaxWeight() );
 				}
+				*/
 			}
 
 			
@@ -690,11 +692,11 @@ void LLWearable::writeToAvatar( BOOL set_by_user )
 			//ZOMG: When switching shapes from inventory
 			if(param_id == 507)
 				avatar->setActualBoobGrav(weight);
-			if(param_id == 795)
+			/*if(param_id == 795)
 				avatar->setActualButtGrav(weight);
 			if(param_id == 157)
 				avatar->setActualFatGrav(weight);
-				
+			*/	
 
 			// only animate with user-originated changes
 			if (set_by_user)
@@ -846,11 +848,11 @@ void LLWearable::readFromAvatar()
 			//pretty sure is right
 			if(param->getID() == 507)
 				avatar->setActualBoobGrav(param->getWeight());
-			if(param->getID() == 151)
+			/*if(param->getID() == 151)
 				avatar->setActualButtGrav(param->getWeight());
 			if(param->getID() == 157)
 				avatar->setActualFatGrav(param->getWeight());
-			
+			*/
 			//if(param->getID() == 507)
 			//{
 			//	llwarns << "current = " << avatar->getActualBoobGrav() << llendl;
@@ -923,11 +925,11 @@ void LLWearable::copyDataFrom( LLWearable* src )
 			//pretty sure right
 			if(id == 507)
 				avatar->setActualBoobGrav(weight);
-			if(id == 795)
+			/*if(id == 795)
 				avatar->setActualButtGrav(weight);
 			if(id == 157)
 				avatar->setActualFatGrav(weight);
-			
+			*/
 			
 
 			mVisualParamMap[id] = weight;

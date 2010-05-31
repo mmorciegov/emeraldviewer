@@ -78,7 +78,8 @@ public:
 	LLVector3		mAccel;
 	LLColor4		mColor;
 	LLVector2		mScale;
-
+    
+    bool            mApplyFollowSource;
 	static U32		sNextPartID;
 };
 

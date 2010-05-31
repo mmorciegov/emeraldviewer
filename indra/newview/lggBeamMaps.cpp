@@ -30,8 +30,9 @@
  */
 
 #include "llviewerprecompiledheaders.h"
-#include "lggBeamMaps.h"
-#include "lggBeamsColors.h"
+#include "lggbeammaps.h"
+#include "lggbeamscolors.h"
+#include "llappviewer.h"
 #include "llfile.h"
 #include "llagent.h"
 #include "llsdserialize.h"

@@ -31,7 +31,7 @@
 
 #include "llviewerprecompiledheaders.h"
 
-#include "lggBeamMapFloater.h"
+#include "lggbeammapfloater.h"
 
 #include "llagentdata.h"
 #include "llcommandhandler.h"
@@ -45,7 +45,7 @@
 #include "lliconctrl.h"
 #include "llbutton.h"
 #include "llcolorswatch.h"
-#include "lggBeamMaps.h"
+#include "lggbeammaps.h"
 
 
 #include "llsdserialize.h"
