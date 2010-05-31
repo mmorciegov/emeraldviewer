@@ -3478,7 +3478,7 @@ Does this group contain Mature content?
    label="Confirm restart"
    name="ConfirmRestart"
    type="alert">
-Do you really want to restart this region in 2 minutes?
+Do you really want to restart this region?
     <usetemplate
      name="okcancelbuttons"
      notext="Cancel"
@@ -6546,6 +6546,19 @@ The URL you clicked cannot be opened from this web browser.
   </notification>
   <notification
    icon="notify.tga"
+   name="QueryEmeraldNCreatorExport"
+   type="alertmodal">
+    You are exporting an item that you are not the creator of; You
+    should always make sure you have the rights to export content.
+    <form name="form">
+      <button
+       index="0"
+       name="Ok"
+       text="Ok"/>
+    </form>
+  </notification>
+  <notification
+   icon="notify.tga"
    name="EmeraldStealth"
    type="alertmodal">
     This will go through your settings and disable any features that may be used to determine what client you are running.
@@ -6848,17 +6861,24 @@ Channel Password: You can set up a channel to have a password by (/msg ChanServ)
 Breast Physics
 This enables you and other avatar's breasts to have actual physics applied to them. You can use these settings to fine-tune the physics to match your personal taste.
 
+-Mass
+   A higher value will seemingly increase the total effect
 -Rebound
    Controls how quickly the breasts will come to rest after any movement.
--Friction
-   This controls the internal friction. Brings the breasts to a halt. Higher the number, quicker they stop.
 -Max Vel
    The amount of "momentum" they can recieve. Lower for less bounce
 -Min Vel
    Percentage of the Max Vel that doesn't effect boob physics.
--Mass
-   A higher value will seemingly increase the total effect
+-Friction
+   This controls the internal friction. Brings the breasts to a halt. Higher the number, quicker they stop.
+ 
 
+  </notification>
+  <notification
+	   icon="notifytip.tga"
+	   name="NoShadows"
+	   type="notifytip">
+Shadows can't be enabled due to your graphics settings being set to low. Please make sure that your settings are set to ultra with all shader options enabled.
   </notification>
 
 </notifications>

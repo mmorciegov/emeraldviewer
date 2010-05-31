@@ -79,7 +79,6 @@
 		<button label="" name="mute_btn" tool_tip="Voice stummschalten"/>
 	</panel>
 	<combo_box label="OTR: nicht privat" name="otr_combo"/>
-  <line_editor label="Passwort" name="password"/>
 	<line_editor label="Für Instant Message hier klicken" name="chat_editor"/>
 	<button label="Senden" name="send_btn"/>
 	<string name="live_help_dialog">

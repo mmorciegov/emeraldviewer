@@ -1109,9 +1109,6 @@ scratch and wear it.
 			     mouse_opaque="true" name="Revert" scale_image="true" width="82" />
 		</panel>
 	</tab_container>
-  <button bottom_delta="250" left_delta="5" follows="top|left" font="SansSerif" halign="center"
-	     height="20" label="Layers" mouse_opaque="true"
-	     name="Layers" visible="false" width="80" />
 	<scroll_container bottom="-476" follows="left|top|right|bottom" height="382" left="197"
 	     mouse_opaque="false" name="panel_container" opaque="false" width="292" />
   <text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"

@@ -94,11 +94,11 @@ set(viewer_SOURCE_FILES
 	chatbar_as_cmdline.cpp
 	IRC.cpp
 	jc_lslviewerbridge.cpp
-	jc_layer_editor.cpp
 	jcfloater_animation_list.cpp
 	jcfloater_areasearch.cpp
 	jc_asset_comparer.cpp
 	jcobjectpropertylist.cpp
+	mfdKeywordFloater.cpp
 	lggBeamMapFloater.cpp
 	lggBeamColorMapFloater.cpp
 	lggBeamsColors.cpp
@@ -219,6 +219,7 @@ set(viewer_SOURCE_FILES
     llfloaterlandmark.cpp
     llfloatermap.cpp
     llfloatermemleak.cpp
+    llfloatermotd.cpp
     llfloatermute.cpp
     llfloaternamedesc.cpp
     llfloaternewim.cpp
@@ -533,16 +534,16 @@ set(viewer_HEADER_FILES
     importtracker.h
     IRC.h
 	jc_lslviewerbridge.h
-	jc_layer_editor.h
 	llfloaterao.h
     jcfloater_animation_list.h
     jcfloater_areasearch.h
     jcobjectpropertylist.h
-	exporttracker.h
+    mfdKeywordFloater.h
+    exporttracker.h
     lggBeamMaps.h
     lggBeamMapFloater.h
-	lggBeamColorMapFloater.h
-	lggBeamsColors.h
+    lggBeamColorMapFloater.h
+    lggBeamsColors.h
     lggFloaterIrcEdit.h
     lggFloaterIrc.h
     lggIrcGroupHandler.h
@@ -661,6 +662,7 @@ set(viewer_HEADER_FILES
     llfloaterlandmark.h
     llfloatermap.h
     llfloatermemleak.h
+    llfloatermotd.h
     llfloatermute.h
     llfloaternamedesc.h
     llfloaternewim.h
@@ -1431,7 +1433,7 @@ if (LINUX)
       DEPENDS ${VIEWER_BINARY_NAME}
       )
 
-  set(product GreenLife-${ARCH}-${viewer_VERSION})
+  set(product Emerald-${ARCH}-${viewer_VERSION})
 
   add_custom_command(
       OUTPUT ${product}.tar.bz2

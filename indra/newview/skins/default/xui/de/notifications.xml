@@ -3079,6 +3079,13 @@ Klicken Sie auf „Akzeptieren“, um dem Chat beizutreten, oder auf „Ablehnen
       <button name="No" text="Nein"/>
     </form>
   </notification>
+  <notification name="QueryEmeraldNCreatorExport">
+    Sie exportieren ein Objekt dessen Ersteller sie nicht sind;
+    Sie sollten immer sicher sein das sie die nötigen Rechte dazu haben.
+    <form name="form">
+      <button name="Ok" text="Ok"/>
+    </form>
+  </notification>
   <notification name="EmeraldStealth">
     Deaktiviert alle Funktionen durch die andere erkennen können das sie Emerald benutzen.
     Es gibt keine Warnung wenn sie einzelne Funktionen selber wieder reaktivieren durch die Emerald erkannt werden kann!
@@ -3280,12 +3287,16 @@ Sollte das Problem fortbestehen, finden Sie weitere Hilfestellung unter: http://
       ein höherer Wert erhöht den Gesamt Effekt.
     - Rückprall
       Kontrolliert wie schnell die Brüste wieder zur Ruhe kommen.
+    - max Z
+      Maximum Wert der Richtung wo sich die Brüste bewegen können.
     - max vel
       Maximale Dynamik der Brüste. Weniger für weniger hüpfen.
-    - min Vel
-      Prozentanteil von max Vel der die Brust-Physik nicht beeinflusst.
-      Percentage of the Max Vel that doesn't effect boob physics.
     - Reibung
       Kontrolliert die Reibung und damit wann die Brüste zur Ruhe kommen. Umso höher der Wert umso schneller.
+    - Z Einfluss
+      Kontrolliert den Einfluss der Avatar Bewegung. Höherer Wert erhöht den Effekt.
+  </notification>
+  <notification name="NoShadows">
+  Schatten können nicht aktiviert werden da ihre Grafik Einstellungen zu niedrig sind. Stellen sie sicher das ihre Einstellungen auf Ultra sind und alle Schatten Optionen aktiviert.
   </notification>
 </notifications>

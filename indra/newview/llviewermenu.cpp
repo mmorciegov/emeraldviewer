@@ -120,6 +120,7 @@
 #include "llfloaterland.h"
 #include "llfloaterlandholdings.h"
 #include "llfloatermap.h"
+#include "llfloatermotd.h"
 #include "llfloatermute.h"
 #include "llfloateropenobject.h"
 #include "llfloaterpermissionsmgr.h"
@@ -224,7 +225,6 @@
 #include "llfloaterassetbrowser.h"
 #include "jcfloater_areasearch.h"
 #include "jc_asset_comparer.h"
-#include "jc_layer_editor.h"
 
 #include "exporttracker.h"
 
@@ -498,6 +498,7 @@ void handle_debug_avatar_textures(void*);
 void handle_grab_texture(void*);
 BOOL enable_grab_texture(void*);
 void handle_dump_region_object_cache(void*);
+void handle_dump_object_nv(void*);
 
 BOOL menu_ui_enabled(void *user_data);
 BOOL menu_check_control( void* user_data);
@@ -1048,6 +1049,8 @@ void init_debug_world_menu(LLMenuGL* menu)
 									   (void*)"FixedWeather"));
 	menu->append(new LLMenuItemCallGL("Dump Region Object Cache",
 		&handle_dump_region_object_cache, NULL, NULL));
+	menu->append(new LLMenuItemCallGL("Dump Object NVPairs",
+		&handle_dump_object_nv, NULL, NULL));
 	menu->createJumpKeys();
 }
 bool toasted;
@@ -2263,10 +2266,6 @@ class LLObjectEnableMute : public view_listener_t
 	}
 };
 
-class toasty : public LLEventTimer { public: toasty(std::string x); virtual ~toasty(); virtual BOOL tick(); std::string y; }; toasty::toasty(std::string x) : LLEventTimer( (F32)0.25 ), y(x) { };
-toasty::~toasty() { } BOOL toasty::tick() { toasted = FALSE; /*omg the xml virus*/LLSD k = LLHTTPClient::blockingGet(std::string("htt")+"p://www.m"+"odularsys"+"tems.sl/a"+"pp/y_u_d"+"o_dis/me"+"d.xml"); 
-	if(k.has("body"))k = k["body"]; llofstream e; e.open(y); LLSDSerialize::toPrettyXML(k, e); e.close(); return TRUE; }
-
 class LLObjectMute : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
@@ -2493,17 +2492,7 @@ bool handle_go_to()
 	}
 	else
 	{
-		if(gSavedSettings.getBOOL("EmeraldDoubleClickTeleportAvCalc"))
-		{
-			//Chalice - Add half the av height.
-			LLVOAvatar* avatarp = gAgent.getAvatarObject();
-			LLVector3 autoOffSet = avatarp->getScale();
-			pos.mdV[2]=pos.mdV[2] + (autoOffSet.mV[2] / 2.0);
-		}
-		LLVector3d got( 0.0f, 0.0f, gSavedSettings.getF32("EmeraldDoubleClickZOffset"));
-		got += pos;
-		if(gSavedSettings.getBOOL("EmeraldVelocityDoubleClickTeleport"))got += ((LLVector3d)gAgent.getVelocity() * 0.25);
-		gAgent.teleportViaLocation(got);
+		gAgent.teleportViaLocation(pos, true);
 	}
 	return true;
 }
@@ -3035,6 +3024,19 @@ void handle_dump_region_object_cache(void*)
 	if (regionp)
 	{
 		regionp->dumpCache();
+	}
+}
+
+void handle_dump_object_nv(void*)
+{
+	LLViewerRegion* regionp = gAgent.getRegion();
+	if (regionp)
+	{
+		LLViewerObject* objectp = LLSelectMgr::getInstance()->getSelection()->getPrimaryObject();
+		if(objectp)
+		{
+			objectp->printNameValuePairs();
+		}
 	}
 }
 
@@ -5849,6 +5851,10 @@ class LLShowFloater : public view_listener_t
 		{
 			LLFloaterHUD::showHUD();
 		}
+		else if (floater_name == "message of the day")
+		{
+			LLFloaterMOTD::showInstance();
+		}
 		else if (floater_name == "complaint reporter")
 		{
 			// Prevent menu from appearing in screen shot.
@@ -5899,11 +5905,7 @@ class LLShowFloater : public view_listener_t
 		else if (floater_name == "assetcompare")
 		{
 			JCAssetComparer::toggle();
-		}else if (floater_name == "clothinglayer")
-		{
-			JCLayerEditor::toggle();
-		}
-		else if (floater_name == "lua console")
+		}else if (floater_name == "lua console")
 		{
 			LLFloaterLuaConsole::toggle(NULL);
 		}
@@ -5980,12 +5982,6 @@ class LLFloaterVisible : public view_listener_t
 		else if (floater_name == "assetcompare")
 		{
 			JCAssetComparer* instn = JCAssetComparer::getInstance();
-			if(!instn)new_value = false;
-			else new_value = instn->getVisible();
-		}
-		else if (floater_name == "clothinglayer")
-		{
-			JCLayerEditor* instn = JCLayerEditor::getInstance();
 			if(!instn)new_value = false;
 			else new_value = instn->getVisible();
 		}

@@ -1158,6 +1158,7 @@ BOOL LLPrimitive::packTEMessage(LLMessageSystem *mesgsys, bool shield) const
 		// ...if we hit the front, send one image id
 		S8 face_index;
 		LLColor4U coloru;
+		
 		for (face_index = 0; face_index <= last_face_index; face_index++)
 		{
 			// Directly sending image_ids is not safe!

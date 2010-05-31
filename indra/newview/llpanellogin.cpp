@@ -1197,6 +1197,8 @@ void LLPanelLogin::onLoginComboLostFocus(LLFocusableElement* fe, void*)
 		{
 			if (combo->isTextDirty())
 			{
+				combo->resetDirty();
+				combo->resetTextDirty();
 				clearPassword();
 			}
 			onSelectLoginEntry(combo, NULL);	

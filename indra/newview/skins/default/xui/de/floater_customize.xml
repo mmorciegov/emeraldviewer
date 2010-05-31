@@ -478,8 +478,7 @@ und diesen anziehen.
 			<button font="SansSerifSmall" label="Zurücksetzen" label_selected="Zurücksetzen" name="Revert"/>
 		</panel>
 	</tab_container>
-	<button label="Layers" name="Layers"/>
-  <scroll_container name="panel_container"/>
+	<scroll_container name="panel_container"/>
   <text name="AvatarHeightText">
     Avatar Höhe:
   </text>

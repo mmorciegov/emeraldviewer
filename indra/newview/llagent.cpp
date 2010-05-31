@@ -81,6 +81,7 @@
 #include "llfloatermap.h"
 #include "llfloatermute.h"
 #include "llfloatersnapshot.h"
+#include "llfloaterstats.h"
 #include "llfloatertools.h"
 #include "llfloaterworldmap.h"
 #include "llgroupmgr.h"
@@ -136,6 +137,8 @@
 #include "llviewerjoystick.h"
 #include "llfollowcam.h"
 #include "llfloaterteleporthistory.h"
+#include "greenlife_utility_stream.h"
+#include "jc_lslviewerbridge.h"
 
 using namespace LLVOAvatarDefines;
 
@@ -565,7 +568,7 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 //-----------------------------------------------------------------------------
 void LLAgent::onAppFocusGained()
 {
-	if (CAMERA_MODE_MOUSELOOK == mCameraMode)
+	if (CAMERA_MODE_MOUSELOOK == mCameraMode && gSavedSettings.getBOOL("LeaveMouselookOnFocus"))
 	{
 		changeCameraToDefault();
 		LLToolMgr::getInstance()->clearSavedTool();
@@ -2888,6 +2891,10 @@ static const LLFloaterView::skip_list_t& get_skip_list()
 {
 	static LLFloaterView::skip_list_t skip_list;
 	skip_list.insert(LLFloaterMap::getInstance());
+	if(gSavedSettings.getBOOL("ShowStatusBarInMouselook"))
+	{
+		skip_list.insert(LLFloaterStats::getInstance());
+	}
 	return skip_list;
 }
 
@@ -6159,7 +6166,7 @@ bool LLAgent::teleportCore(bool is_local)
 	if(TELEPORT_NONE != mTeleportState)
 	{
 		llwarns << "Attempt to teleport when already teleporting." << llendl;
-		return false;
+		//return false; //This seems to fix getting stuck in TPs in the first place. --Liny
 	}
 
 #if 0
@@ -6342,7 +6349,7 @@ void LLAgent::teleportCancel()
 }
 
 
-void LLAgent::teleportViaLocation(const LLVector3d& pos_global)
+void LLAgent::teleportViaLocation(const LLVector3d& pos_global, bool go_to)
 {
 // [RLVa:KB] - Alternate: Snowglobe-1.0 | Checked: 2009-07-07 (RLVa-1.0.0d)
 	// If we're getting teleported due to @tpto we should disregard any @tploc=n or @unsit=n restrictions from the same object
@@ -6357,52 +6364,95 @@ void LLAgent::teleportViaLocation(const LLVector3d& pos_global)
 
 	LLViewerRegion* regionp = getRegion();
 	LLSimInfo* info = LLWorldMap::getInstance()->simInfoFromPosGlobal(pos_global);
-	if(regionp && info)
-	{
-		U32 x_pos;
-		U32 y_pos;
-		from_region_handle(info->mHandle, &x_pos, &y_pos);
-		LLVector3 pos_local(
-			(F32)(pos_global.mdV[VX] - x_pos),
-			(F32)(pos_global.mdV[VY] - y_pos),
-			(F32)(pos_global.mdV[VZ]));
-		teleportRequest(info->mHandle, pos_local);
-	}
-	else if(regionp && 
-		teleportCore(regionp->getHandle() == to_region_handle_global((F32)pos_global.mdV[VX], (F32)pos_global.mdV[VY])))
-	{
-		llwarns << "Using deprecated teleportlocationrequest." << llendl; 
-		// send the message
-		LLMessageSystem* msg = gMessageSystem;
-		msg->newMessageFast(_PREHASH_TeleportLocationRequest);
-		msg->nextBlockFast(_PREHASH_AgentData);
-		msg->addUUIDFast(_PREHASH_AgentID, getID());
-		msg->addUUIDFast(_PREHASH_SessionID, getSessionID());
+	bool isLocal = regionp->getHandle() == to_region_handle_global((F32)pos_global.mdV[VX], (F32)pos_global.mdV[VY]);
+	bool ml = gSavedSettings.getBOOL("EmeraldMoveLockDCT");
+	bool tpchat = gSavedSettings.getBOOL("EmeraldDoubleClickTeleportChat");
+	bool calc = gSavedSettings.getBOOL("EmeraldDoubleClickTeleportAvCalc");
+	bool vel = gSavedSettings.getBOOL("EmeraldVelocityDoubleClickTeleport");
 
-		msg->nextBlockFast(_PREHASH_Info);
-		F32 width = regionp->getWidth();
-		LLVector3 pos(fmod((F32)pos_global.mdV[VX], width),
-					  fmod((F32)pos_global.mdV[VY], width),
-					  (F32)pos_global.mdV[VZ]);
-		F32 region_x = (F32)(pos_global.mdV[VX]);
-		F32 region_y = (F32)(pos_global.mdV[VY]);
-		U64 region_handle = to_region_handle_global(region_x, region_y);
-		msg->addU64Fast(_PREHASH_RegionHandle, region_handle);
-		msg->addVector3Fast(_PREHASH_Position, pos);
-		pos.mV[VX] += 1;
-		LLVector3 look_at;
-		//Chalice - 2 dTP modes: 0 - standard, 1 - TP AV with cam Z axis rotation.
-		if (gSavedSettings.getBOOL("EmeraldDoubleClickTeleportMode") == 0)
+	F32 zo = gSavedSettings.getF32("EmeraldDoubleClickZOffset");
+	LLVector3 offset = LLVector3(0.f,0.f,0.f);
+	if(go_to)
+	{
+		offset = LLVector3(0.f,0.f,zo);
+		if(vel)
+			offset += gAgent.getVelocity() * 0.25;
+	}
+	if(calc)
+		offset += LLVector3(0.f,0.f,gAgent.getAvatarObject()->getScale().mV[2] / 2);
+	if(regionp)
+	{
+		if(go_to)
 		{
-			LLVOAvatar* avatarp = gAgent.getAvatarObject();
-			look_at=avatarp->getRotation().packToVector3();
+			U64 handle = to_region_handle(pos_global);
+			F32 width = regionp->getWidth();
+			LLVector3 pos(fmod((F32)pos_global.mdV[VX], width),
+						  fmod((F32)pos_global.mdV[VY], width),
+						  (F32)pos_global.mdV[VZ]);
+			pos +=offset;
+			teleportRequest(handle, pos);
 		}
-		else
+		else if(info)
 		{
-			look_at = LLViewerCamera::getInstance()->getAtAxis();
+			U32 x_pos;
+			U32 y_pos;
+			from_region_handle(info->mHandle, &x_pos, &y_pos);
+			LLVector3 pos_local(
+				(F32)(pos_global.mdV[VX] - x_pos),
+				(F32)(pos_global.mdV[VY] - y_pos),
+				(F32)(pos_global.mdV[VZ]));
+			pos_local += offset;
+			teleportRequest(info->mHandle, pos_local);
 		}
-		msg->addVector3Fast(_PREHASH_LookAt, look_at);
-		sendReliableMessage();
+		else if(teleportCore(isLocal))
+		{
+			llwarns << "Using deprecated teleportlocationrequest." << llendl; 
+			// send the message
+			LLMessageSystem* msg = gMessageSystem;
+			msg->newMessageFast(_PREHASH_TeleportLocationRequest);
+			msg->nextBlockFast(_PREHASH_AgentData);
+			msg->addUUIDFast(_PREHASH_AgentID, getID());
+			msg->addUUIDFast(_PREHASH_SessionID, getSessionID());
+
+			msg->nextBlockFast(_PREHASH_Info);
+			F32 width = regionp->getWidth();
+			LLVector3 pos(fmod((F32)pos_global.mdV[VX], width),
+						  fmod((F32)pos_global.mdV[VY], width),
+						  (F32)pos_global.mdV[VZ]);
+			pos += offset;
+			F32 region_x = (F32)(pos_global.mdV[VX]);
+			F32 region_y = (F32)(pos_global.mdV[VY]);
+			U64 region_handle = to_region_handle_global(region_x, region_y);
+			msg->addU64Fast(_PREHASH_RegionHandle, region_handle);
+			msg->addVector3Fast(_PREHASH_Position, pos);
+			pos.mV[VX] += 1;
+			LLVector3 look_at;
+			//Chalice - 2 dTP modes: 0 - standard, 1 - TP AV with cam Z axis rotation.
+			if (gSavedSettings.getBOOL("EmeraldDoubleClickTeleportMode") == 0)
+			{
+				LLVOAvatar* avatarp = gAgent.getAvatarObject();
+				look_at=avatarp->getRotation().packToVector3();
+			}
+			else
+				look_at = LLViewerCamera::getInstance()->getAtAxis();
+			msg->addVector3Fast(_PREHASH_LookAt, look_at);
+			sendReliableMessage();
+		}
+		if(isLocal)
+		{
+			F32 width = regionp->getWidth();
+			LLVector3 pos_local(fmod((F32)pos_global.mdV[VX], width),
+							fmod((F32)pos_global.mdV[VY], width),
+							(F32)pos_global.mdV[VZ]);
+			pos_local += offset;
+			if(tpchat)
+				GUS::whisper(gSavedSettings.getS32("EmeraldDoubleClickTeleportChannel"),  GUS::sVec3(pos_local)); //keep this to deactivate movelocks.
+			if(ml)
+			{
+				gAgent.setControlFlags(AGENT_CONTROL_STAND_UP); //GIT UP
+				JCLSLBridge::bridgetolsl("move|"+GUS::sVec3(pos_local),NULL);
+			}
+		}
 	}
 }
 
@@ -7556,6 +7606,10 @@ void LLAgent::sendAgentSetAppearance()
 			F32 param_value;
 			if(param->getID() == 507)
 				param_value = mAvatarObject->getActualBoobGrav();
+			else if(param->getID() == 795)
+				param_value = mAvatarObject->getActualButtGrav();
+			else if(param->getID() == 157)
+				param_value = mAvatarObject->getActualFatGrav();
 			else
 				param_value = param->getWeight();
 			const U8 new_weight = F32_to_U8(param_value, param->getMinWeight(), param->getMaxWeight());
