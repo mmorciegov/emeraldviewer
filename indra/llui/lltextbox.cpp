@@ -70,24 +70,23 @@ LLTextBox::LLTextBox(const std::string& name_and_label, const LLRect& rect) :
 
 void LLTextBox::initDefaults()
 {
-	static LLColor4 defaultTextColor = LLUI::sColorsGroup->getColor( "LabelTextColor" );
-	static LLColor4 defaultDisabledColor = LLUI::sColorsGroup->getColor( "LabelDisabledColor" );
-	static LLColor4 defaultBackgroundColor = LLUI::sColorsGroup->getColor("DefaultBackgroundColor");
-	static LLColor4 defaultBorderColor = LLUI::sColorsGroup->getColor("DefaultHighlightLight");
-	static LLColor4 defaultHoverColor = LLUI::sColorsGroup->getColor( "LabelSelectedColor" );
+	static LLColor4 sTextColor = LLUI::sColorsGroup->getColor("LabelTextColor");
+	static LLColor4 sDisabledColor = LLUI::sColorsGroup->getColor("LabelDisabledColor");
+	static LLColor4 sBackgroundColor = LLUI::sColorsGroup->getColor("DefaultBackgroundColor");
+	static LLColor4 sBorderColor = LLUI::sColorsGroup->getColor("DefaultHighlightLight");
+	static LLColor4 sHoverColor = LLUI::sColorsGroup->getColor( "LabelSelectedColor" );
 
 
-	mTextColor = defaultTextColor;//LLUI::sColorsGroup->getColor("LabelTextColor");
-	mDisabledColor = defaultDisabledColor;//LLUI::sColorsGroup->getColor("LabelDisabledColor");
-	mBackgroundColor = defaultBackgroundColor;//LLUI::sColorsGroup->getColor("DefaultBackgroundColor");
-	mBorderColor = defaultBorderColor;//LLUI::sColorsGroup->getColor("DefaultHighlightLight");
-	mHoverColor = defaultHoverColor;//LLUI::sColorsGroup->getColor( "LabelSelectedColor" );
+	mTextColor = sTextColor;
+	mDisabledColor = sDisabledColor;
+	mBackgroundColor = sBackgroundColor;
+	mBorderColor = sBorderColor;
+	mHoverColor = sHoverColor;
 	mHoverActive = FALSE;
 	mHasHover = FALSE;
 	mBackgroundVisible = FALSE;
 	mBorderVisible = FALSE;
 	mFontStyle = LLFontGL::DROP_SHADOW_SOFT;
-	//mFontStyle = LLFontGL::NORMAL;
 	mBorderDropShadowVisible = FALSE;
 	mUseEllipses = FALSE;
 	mLineSpacing = 0;
@@ -295,7 +294,6 @@ void LLTextBox::draw()
 		gl_rect_2d_offset_local(getLocalRect(), 2, FALSE);
 	}
 
-	/*
 	if( mBorderDropShadowVisible )
 	{
 		static LLColor4 color_drop_shadow = LLUI::sColorsGroup->getColor("ColorDropShadow");
@@ -303,7 +301,6 @@ void LLTextBox::draw()
 		gl_drop_shadow(0, getRect().getHeight(), getRect().getWidth(), 0,
 			color_drop_shadow, drop_shadow_tooltip);
 	}
-	*/
 
 	if (mBackgroundVisible)
 	{
@@ -395,6 +392,8 @@ void LLTextBox::reshapeToFitText()
 LLXMLNodePtr LLTextBox::getXML(bool save_children) const
 {
 	LLXMLNodePtr node = LLUICtrl::getXML();
+
+	node->setName(LL_TEXT_BOX_TAG);
 
 	// Attributes
 	node->createChild("font", TRUE)->setStringValue(LLFontGL::nameFromFont(mFontGL));

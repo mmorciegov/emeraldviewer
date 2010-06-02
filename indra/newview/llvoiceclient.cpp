@@ -1215,7 +1215,7 @@ void LLVoiceClient::terminate()
 
 void LLVoiceClient::updateSettings()
 {
-	setVoiceEnabled(gSavedSettings.getBOOL("EnableVoiceChat"));
+	setVoiceEnabled(gSavedSettings.getBOOL("EnableVoiceChat") && !gSavedSettings.getBOOL("CmdLineDisableVoice"));
 	setUsePTT(gSavedSettings.getBOOL("PTTCurrentlyEnabled"));
 	std::string keyString = gSavedSettings.getString("PushToTalkButton");
 	setPTTKey(keyString);
@@ -1407,12 +1407,12 @@ void LLVoiceClient::login(
 		if(sConnectingToAgni)
 		{
 			// Use the release account server
-			mVoiceSIPURIHostName = gSavedSettings.getString("vivoxProductionServerName"); //"bhr.vivox.com";
+			mVoiceSIPURIHostName = "bhr.vivox.com";
 		}
 		else
 		{
 			// Use the development account server
-			mVoiceSIPURIHostName = gSavedSettings.getString("vivoxDebugServerName"); //"bhd.vivox.com";
+			mVoiceSIPURIHostName = "bhd.vivox.com";
 		}
 	}
 	
@@ -1560,6 +1560,7 @@ void LLVoiceClient::stateMachine()
 	}
 	
 	// Check for parcel boundary crossing
+	if(mVoiceEnabled)
 	{
 		LLViewerRegion *region = gAgent.getRegion();
 		LLParcel *parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
@@ -1588,11 +1589,10 @@ void LLVoiceClient::stateMachine()
 						parcelChanged();
 					}
 				}
-// Removed this warning since it spams the log file uselessly on OpenSim grids.
-//				else
-//				{
-//					LL_WARNS("Voice") << "region doesn't have ParcelVoiceInfoRequest capability.  This is normal for a short time after teleporting, but bad if it persists for very long." << LL_ENDL;
-//				}
+				else
+				{
+					LL_DEBUGS("Voice") << "region doesn't have ParcelVoiceInfoRequest capability.  This is normal for a short time after teleporting, but bad if it persists for very long." << LL_ENDL;
+				}
 			}
 		}
 	}
@@ -1624,9 +1624,7 @@ void LLVoiceClient::stateMachine()
 		
 		//MARK: stateStart
 		case stateStart:
-			{
-			static BOOL locked = gSavedSettings.getBOOL("CmdLineDisableVoice");
-			if(locked)
+			if(gSavedSettings.getBOOL("CmdLineDisableVoice"))
 			{
 				// Voice is locked out, we must not launch the vivox daemon.
 				setState(stateJail);
@@ -1771,7 +1769,6 @@ void LLVoiceClient::stateMachine()
 				
 				mMainSessionGroupHandle.clear();
 			}
-			}
 		break;
 
 		//MARK: stateDaemonLaunched
@@ -1863,7 +1860,7 @@ void LLVoiceClient::stateMachine()
 					}
 					else
 					{
-						// LL_WARNS("Voice") << "region doesn't have ProvisionVoiceAccountRequest capability!" << LL_ENDL; // opensim log spam x.x
+						LL_DEBUGS("Voice") << "region doesn't have ProvisionVoiceAccountRequest capability!" << LL_ENDL;
 					}
 				}
 			}
@@ -3562,6 +3559,7 @@ void LLVoiceClient::sendFriendsListUpdates()
 		{
 			// FOR TESTING ONLY -- clear all buddy list, block list, and auto-accept list entries.
 			clearAllLists();
+			mBuddyListMap.clear();
 			return;
 		}
 		
@@ -4969,7 +4967,7 @@ void LLVoiceClient::sessionState::removeAllParticipants()
 	
 	if(!mParticipantsByUUID.empty())
 	{
-		LL_ERRS("Voice") << "Internal error: empty URI map, non-empty UUID map" << LL_ENDL
+		LL_ERRS("Voice") << "Internal error: empty URI map, non-empty UUID map" << LL_ENDL;
 	}
 }
 
@@ -5811,8 +5809,7 @@ void LLVoiceClient::setVoiceEnabled(bool enabled)
 
 bool LLVoiceClient::voiceEnabled()
 {
-	static BOOL cmddisabled = gSavedSettings.getBOOL("CmdLineDisableVoice");
-	return gSavedSettings.getBOOL("EnableVoiceChat") && !cmddisabled;
+	return LLVoiceClient::getInstance()->mVoiceEnabled;//gSavedSettings.getBOOL("EnableVoiceChat") && !gSavedSettings.getBOOL("CmdLineDisableVoice");
 }
 
 void LLVoiceClient::setLipSyncEnabled(BOOL enabled)
@@ -6473,7 +6470,7 @@ void LLVoiceClient::deleteSession(sessionState *session)
 		{
 			if(iter->second != session)
 			{
-				LL_ERRS("Voice") << "Internal error: session mismatch" << LL_ENDL
+				LL_ERRS("Voice") << "Internal error: session mismatch" << LL_ENDL;
 			}
 			mSessionsByHandle.erase(iter);
 		}
@@ -6513,7 +6510,7 @@ void LLVoiceClient::deleteAllSessions()
 	
 	if(!mSessionsByHandle.empty())
 	{
-		LL_ERRS("Voice") << "Internal error: empty session map, non-empty handle map" << LL_ENDL
+		LL_ERRS("Voice") << "Internal error: empty session map, non-empty handle map" << LL_ENDL;
 	}
 }
 

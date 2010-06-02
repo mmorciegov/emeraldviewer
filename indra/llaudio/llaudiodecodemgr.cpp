@@ -33,20 +33,18 @@
 
 #include "llaudiodecodemgr.h"
 
-#include "vorbisencode.h"
-#include "audioengine.h"
+#include "llvorbisdecode.h"
+#include "llaudioengine.h"
 #include "lllfsthread.h"
 #include "llvfile.h"
 #include "llstring.h"
 #include "lldir.h"
 #include "llendianswizzle.h"
-#include "audioengine.h"
 #include "llassetstorage.h"
 
 #include "vorbis/codec.h"
 #include "vorbis/vorbisfile.h"
-
-#include <string>
+#include "llvorbisencode.h"
 
 extern LLAudioEngine *gAudiop;
 
@@ -220,14 +218,13 @@ BOOL LLVorbisDecodeState::initDecode()
 		return(FALSE);
 	}
 	
-	size_t size_guess = (size_t)ov_pcm_total(&mVF, -1);
+	S32 sample_count = ov_pcm_total(&mVF, -1);
+	size_t size_guess = (size_t)sample_count;
 	vorbis_info* vi = ov_info(&mVF, -1);
 	size_guess *= vi->channels;
 	size_guess *= 2;
 	size_guess += 2048;
-
-	// This magic value is equivilent to 150MiB of data.
-	// Prevents griffers from utilizin a huge xbox sound the size of god to instafry the viewer
+	
 	if(size_guess >= 157286400)
 	{
 		llwarns << "Bad sound caught by zmagic" << llendl;
@@ -235,6 +232,7 @@ BOOL LLVorbisDecodeState::initDecode()
 		mInFilep = NULL;
 		return FALSE;
 	}
+	
 	bool abort_decode = false;
 	
 	if( vi->channels < 1 || vi->channels > LLVORBIS_CLIP_MAX_CHANNELS )
@@ -251,7 +249,7 @@ BOOL LLVorbisDecodeState::initDecode()
 		mInFilep = NULL;
 		return FALSE;
 	}
-	
+
 	mWAVBuffer.reserve(size_guess);
 	mWAVBuffer.resize(WAV_HEADER_SIZE);
 
@@ -620,12 +618,7 @@ void LLAudioDecodeMgr::Impl::processQueue(const F32 num_secs)
 				timer.reset();
 
 				uuid.toString(uuid_str);
-				//d_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE,uuid_str) + ".dsf";
-                if(gDirUtilp->mm_usesnd()) //::MODMOD::
-                    d_path = gDirUtilp->getExpandedFilename(MM_SNDLOC,uuid_str) + ".dsf";
-                else
-                    d_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE,uuid_str) + ".dsf";
-				
+				d_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE,uuid_str) + ".dsf";
 
 				mCurrentDecodep = new LLVorbisDecodeState(uuid, d_path);
 				if (!mCurrentDecodep->initDecode())

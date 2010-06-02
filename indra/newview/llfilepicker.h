@@ -91,6 +91,7 @@ public:
 		FFLOAD_XML = 6,
 		FFLOAD_SLOBJECT = 7,
 		FFLOAD_RAW = 8,
+		FFLOAD_APP = 9,
 	};
 
 	enum ESaveFilter

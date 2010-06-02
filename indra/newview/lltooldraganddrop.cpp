@@ -68,14 +68,13 @@
 #include "llworld.h"
 #include "object_flags.h"
 #include "llimview.h"
-
 #include "llparcel.h" // moymod
 #include "llviewerparcelmgr.h" // moymod
 
 // [RLVa:KB]
 #include "rlvhandler.h"
 // [/RLVa:KB]
-
+  
 // MAX ITEMS is based on (sizeof(uuid)+2) * count must be < MTUBYTES
 // or 18 * count < 1200 => count < 1200/18 => 66. I've cut it down a
 // bit from there to give some pad.
@@ -389,8 +388,8 @@ LLToolDragAndDrop::dragOrDrop3dImpl LLToolDragAndDrop::sDragAndDrop3d[DAD_COUNT]
 	{
 		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_NONE
 		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_SELF
-		&LLToolDragAndDrop::dad3dGiveInventory, // Dest: DT_AVATAR
-		&LLToolDragAndDrop::dad3dUpdateInventory, // Dest: DT_OBJECT
+		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_AVATAR
+		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_OBJECT
 		&LLToolDragAndDrop::dad3dNULL, // Dest: DT_LAND
 	},
 	//	Source: DAD_LANDMARK
@@ -857,13 +856,6 @@ void LLToolDragAndDrop::dragOrDrop( S32 x, S32 y, MASK mask, BOOL drop,
 		for (mCurItemIndex = 0; mCurItemIndex < (S32)mCargoIDs.size(); mCurItemIndex++)
 		{
 			LLInventoryObject* cargo = locateInventory(item, cat);
-
-			if (!cargo) 
-			{
-				handled = FALSE;
-				break;
-			}
-
 
 			EAcceptance item_acceptance = ACCEPT_NO;
 			handled = handled && root_view->handleDragAndDrop(x, y, mask, FALSE,
@@ -1362,7 +1354,8 @@ void LLToolDragAndDrop::dropObject(LLViewerObject* raycast_target,
 	msg->nextBlockFast(_PREHASH_AgentData);
 	msg->addUUIDFast(_PREHASH_AgentID,  gAgent.getID());
 	msg->addUUIDFast(_PREHASH_SessionID,  gAgent.getSessionID());
-
+	msg->addUUIDFast(_PREHASH_GroupID, gAgent.getGroupID());
+	
 	//MOYMOD 2009-05, If avatar is in land group/land owner group,
 	//	it rezzes it with it to prevent autoreturn/whatever...
 	if(gSavedSettings.getBOOL("mm_alwaysRezWithLandGroup")){
@@ -1373,6 +1366,7 @@ void LLToolDragAndDrop::dropObject(LLViewerObject* raycast_target,
 			msg->addUUIDFast(_PREHASH_GroupID, parcel->getOwnerID());
 		}else msg->addUUIDFast(_PREHASH_GroupID, gAgent.getGroupID());
 	}else msg->addUUIDFast(_PREHASH_GroupID, gAgent.getGroupID());
+
 	msg->nextBlock("RezData");
 	// if it's being rezzed from task inventory, we need to enable
 	// saving it back into the task inventory.
@@ -1855,7 +1849,6 @@ BOOL LLToolDragAndDrop::isInventoryGiveAcceptable(LLInventoryItem* item)
 	{
 		return FALSE;
 	}
-	if(item->getPermissions().getGroup() == gAgent.getID())return FALSE;
 	BOOL copyable = FALSE;
 	if(item->getPermissions().allowCopyBy(gAgent.getID())) copyable = TRUE;
 
@@ -1869,7 +1862,7 @@ BOOL LLToolDragAndDrop::isInventoryGiveAcceptable(LLInventoryItem* item)
 	switch(item->getType())
 	{
 	case LLAssetType::AT_CALLINGCARD:
-		acceptable = TRUE;
+		acceptable = FALSE;
 		break;
 	case LLAssetType::AT_OBJECT:
 		if(my_avatar->isWearingAttachment(item->getUUID()))
@@ -1919,7 +1912,7 @@ BOOL LLToolDragAndDrop::isInventoryGroupGiveAcceptable(LLInventoryItem* item)
 	switch(item->getType())
 	{
 	case LLAssetType::AT_CALLINGCARD:
-		acceptable = TRUE;
+		acceptable = FALSE;
 		break;
 	case LLAssetType::AT_OBJECT:
 		if(my_avatar->isWearingAttachment(item->getUUID()))
@@ -2030,7 +2023,6 @@ bool LLToolDragAndDrop::handleGiveDragAndDrop(LLUUID dest_agent, LLUUID session_
 	// check the type
 	switch(cargo_type)
 	{
-	case DAD_CALLINGCARD:
 	case DAD_TEXTURE:
 	case DAD_SOUND:
 	case DAD_LANDMARK:
@@ -2085,6 +2077,7 @@ bool LLToolDragAndDrop::handleGiveDragAndDrop(LLUUID dest_agent, LLUUID session_
 		}
 		break;
 	}
+	case DAD_CALLINGCARD:
 	default:
 		*accept = ACCEPT_NO;
 		break;

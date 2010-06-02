@@ -9,15 +9,24 @@ include(Variables)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-D_DEBUG -DLL_DEBUG=1")
 set(CMAKE_CXX_FLAGS_RELEASE
-    "-DLL_RELEASE=1 -DLL_RELEASE_FOR_DOWNLOAD=1 -D_SECURE_SCL=0 -DNDEBUG")
+    "-DLL_RELEASE=1 -DLL_RELEASE_FOR_DOWNLOAD=1 -D_SECURE_SCL=0 -DLL_SEND_CRASH_REPORTS=1 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO 
-    "-DLL_RELEASE=1 -D_SECURE_SCL=0 -DNDEBUG -DLL_RELEASE_WITH_DEBUG_INFO=1")
+    "-DLL_RELEASE=1 -D_SECURE_SCL=0 -DLL_SEND_CRASH_REPORTS=0 -DNDEBUG -DLL_RELEASE_WITH_DEBUG_INFO=1")
 
 
 # Don't bother with a MinSizeRel build.
 
 set(CMAKE_CONFIGURATION_TYPES "RelWithDebInfo;Release;Debug" CACHE STRING
     "Supported build types." FORCE)
+
+
+# Determine the number of bits of this processor
+
+if(CMAKE_SIZEOF_VOID_P MATCHES 4)
+   set( HAVE_64_BIT 0 )
+else(CMAKE_SIZEOF_VOID_P MATCHES 4)
+   set( HAVE_64_BIT 1 )
+endif(CMAKE_SIZEOF_VOID_P MATCHES 4)
 
 
 # Platform-specific compilation flags.
@@ -32,7 +41,7 @@ if (WINDOWS)
       "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Od /Zi /MD"
       CACHE STRING "C++ compiler release-with-debug options" FORCE)
   set(CMAKE_CXX_FLAGS_RELEASE
-      "${CMAKE_CXX_FLAGS_RELEASE} ${LL_CXX_FLAGS} /O2 /Zi /MD"
+      "${CMAKE_CXX_FLAGS_RELEASE} ${LL_CXX_FLAGS} /O2 /Zi /MD /arch:SSE2"
       CACHE STRING "C++ compiler release options" FORCE)
 
   set(CMAKE_CXX_STANDARD_LIBRARIES "")
@@ -42,7 +51,6 @@ if (WINDOWS)
       /DLL_WINDOWS=1
       /DUNICODE
       /D_UNICODE 
-      /D_WIN32_WINNT=0x0500
       /GS
       /TP
       /W3
@@ -51,21 +59,10 @@ if (WINDOWS)
       /nologo
       /Oy-
       )
-
-  if (COMPILE_OTR)
-    add_definitions(
-        /DCOMPILE_OTR=1
-        )
-  endif (COMPILE_OTR)
-  if (USE_OTR)
-    add_definitions(
-        /DUSE_OTR=1
-        )
-  endif (USE_OTR)
      
   if(MSVC80 OR MSVC90)
     set(CMAKE_CXX_FLAGS_RELEASE
-      "${CMAKE_CXX_FLAGS_RELEASE} -D_SECURE_STL=0 -D_HAS_ITERATOR_DEBUGGING=0"
+      "${CMAKE_CXX_FLAGS_RELEASE} -D_SECURE_STL=0 -D_HAS_ITERATOR_DEBUGGING=0 /MP2"
       CACHE STRING "C++ compiler release options" FORCE)
    
     add_definitions(
@@ -120,15 +117,14 @@ if (LINUX)
       add_definitions(-D_FORTIFY_SOURCE=2)
     endif (NOT ${GXX_VERSION} MATCHES " 4.1.*Red Hat")
   endif (${GXX_VERSION} STREQUAL ${CXX_VERSION})
-
-  # GCC 4.3 introduces a pile of obnoxious new warnings, which we
-  # treat as errors due to -Werror.  Quiet the most offensive and
-  # widespread of them.
-
-  if (${CXX_VERSION} MATCHES "4.3")
+ 
+  #Lets actualy get a numerical version of gxx's version
+  STRING(REGEX REPLACE ".* ([0-9])\\.([0-9])\\.([0-9]).*" "\\1\\2\\3" CXX_VERSION ${CXX_VERSION})
+  
+  #gcc 4.3 and above don't like the LL boost
+  if(${CXX_VERSION} GREATER 429)
     add_definitions(-Wno-parentheses)
-    set(CMAKE_CXX_FLAGS "-Wno-deprecated ${CMAKE_CXX_FLAGS}")
-  endif (${CXX_VERSION} MATCHES "4.3")
+  endif (${CXX_VERSION} GREATER 429)
 
   # End of hacks.
 
@@ -142,18 +138,6 @@ if (LINUX)
       -g
       -pthread
       )
-  #if (COMPILE_OTR)
-    add_definitions(
-        -DCOMPILE_OTR=1
-        -DUSE_OTR=1
-        )
-  #endif (COMPILE_OTR)
-  #if (USE_OTR)
-  #  add_definitions(
-  #      -DUSE_OTR=1
-  #      )
-  #endif (USE_OTR)
-     
 
   if (SERVER)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-depth-60")
@@ -180,7 +164,6 @@ if (LINUX)
   if (VIEWER)
     add_definitions(-DAPPID=secondlife)
     add_definitions(-fvisibility=hidden)
-    # add_definitions(-msse2)
     # don't catch SIGCHLD in our base application class for the viewer - some of our 3rd party libs may need their *own* SIGCHLD handler to work.  Sigh!  The viewer doesn't need to catch SIGCHLD anyway.
     add_definitions(-DLL_IGNORE_SIGCHLD)
     if (NOT STANDALONE)
@@ -196,26 +179,6 @@ endif (LINUX)
 
 if (DARWIN)
   add_definitions(-DLL_DARWIN=1)
-
-#  if (COMPILE_OTR)
-  add_definitions(
-    -DCOMPILE_OTR=1
-    -DUSE_OTR=1
-  )
-#  endif (COMPILE_OTR)
-
-#  if (COMPILE_OTR)
-#    add_definitions(
-#        -DCOMPILE_OTR=1
-#        )
-# endif (COMPILE_OTR)
-#  if (USE_OTR)
-#    add_definitions(
-#        -DUSE_OTR=1
-#        )
-#  endif (USE_OTR)
-
-
   set(CMAKE_CXX_LINK_FLAGS "-Wl,-headerpad_max_install_names,-search_paths_first")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_CXX_LINK_FLAGS}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mlong-branch")
@@ -265,6 +228,7 @@ else (STANDALONE)
       gtk-2.0
       llfreetype2
       pango-1.0
+      cairo
       )
 endif (STANDALONE)
 

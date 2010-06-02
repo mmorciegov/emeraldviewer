@@ -214,6 +214,7 @@ LLViewerRegion::LLViewerRegion(const U64 &handle,
 	//MUST MATCH declaration of eObjectPartitions
 	mObjectPartition.push_back(new LLHUDPartition());		//PARTITION_HUD
 	mObjectPartition.push_back(new LLTerrainPartition());	//PARTITION_TERRAIN
+	mObjectPartition.push_back(new LLVoidWaterPartition());		//PARTITION_VOIDWATER
 	mObjectPartition.push_back(new LLWaterPartition());		//PARTITION_WATER
 	mObjectPartition.push_back(new LLTreePartition());		//PARTITION_TREE
 	mObjectPartition.push_back(new LLParticlePartition());	//PARTITION_PARTICLE
@@ -318,7 +319,7 @@ void LLViewerRegion::loadCache()
 
 	LLUUID cache_id;
 	nread = fread(&cache_id.mData, 1, UUID_BYTES, fp);
-	if (nread != UUID_BYTES || mCacheID != cache_id)
+	if (nread != (size_t)UUID_BYTES || mCacheID != cache_id)
 	{
 		llinfos << "Cache ID doesn't match for this region, discarding"
 			<< llendl;
@@ -394,7 +395,7 @@ void LLViewerRegion::saveCache()
 	}
 
 	// write the cache id for this sim
-	if (fwrite(&mCacheID.mData, 1, UUID_BYTES, fp) != UUID_BYTES)
+	if (fwrite(&mCacheID.mData, 1, UUID_BYTES, fp) != (size_t)UUID_BYTES)
 	{
 		llwarns << "Short write" << llendl;
 	}
@@ -1405,16 +1406,17 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	capabilityNames.append("EstateChangeInfo");
 	capabilityNames.append("EventQueueGet");
 	capabilityNames.append("FetchInventory");
-	capabilityNames.append("WebFetchInventoryDescendents");
 	capabilityNames.append("FetchLib");
 	capabilityNames.append("FetchLibDescendents");
+	capabilityNames.append("GetTexture");
 	capabilityNames.append("GroupProposalBallot");
 	capabilityNames.append("HomeLocation");
 	capabilityNames.append("MapLayer");
 	capabilityNames.append("MapLayerGod");
-	capabilityNames.append("NewAgentInventory");
 	capabilityNames.append("NewFileAgentInventory");
 	capabilityNames.append("ParcelPropertiesUpdate");
+	capabilityNames.append("ParcelMediaURLFilterList");
+	capabilityNames.append("ParcelNavigateMedia");
 	capabilityNames.append("ParcelVoiceInfoRequest");
 	capabilityNames.append("ProductInfoRequest");
 	capabilityNames.append("ProvisionVoiceAccountRequest");
@@ -1427,6 +1429,7 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	capabilityNames.append("SendUserReportWithScreenshot");
 	capabilityNames.append("ServerReleaseNotes");
 	capabilityNames.append("StartGroupProposal");
+	capabilityNames.append("TextureStats");
 	capabilityNames.append("UntrustedSimulatorMessage");
 	capabilityNames.append("UpdateAgentInformation");
 	capabilityNames.append("UpdateAgentLanguage");
@@ -1439,6 +1442,10 @@ void LLViewerRegion::setSeedCapability(const std::string& url)
 	capabilityNames.append("UploadBakedTexture");
 	capabilityNames.append("ViewerStartAuction");
 	capabilityNames.append("ViewerStats");
+	capabilityNames.append("WebFetchInventoryDescendents"); // OGPX : since this is asking the region
+															// leave the old naming in place, on agent domain
+															// it is now called agent/inventory. Both
+															// caps have the same LLSD returned.
 	// Please add new capabilities alphabetically to reduce
 	// merge conflicts.
 

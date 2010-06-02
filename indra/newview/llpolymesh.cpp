@@ -801,8 +801,6 @@ LLPolyMesh *LLPolyMesh::getMesh(const std::string &name, LLPolyMesh* reference_m
 
 	return poly_mesh;
 }
-
-
 //-----------------------------------------------------------------------------
 // LLPolyMesh::getMeshData()
 //-----------------------------------------------------------------------------
@@ -1509,6 +1507,9 @@ void LLPolyMesh::getMorphList (const std::string& mesh_name, morph_list_t* morph
 	}
 	return;
 }
+
+//-----------------------------------------------------------------------------
+
 
 //-----------------------------------------------------------------------------
 // LLPolyMesh::freeAllMeshes()

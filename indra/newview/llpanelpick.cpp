@@ -64,11 +64,6 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
-//For pick import and export - RK
-#include "llfilepicker.h"
-#include "llviewernetwork.h"
-#include "llsdserialize.h"
-#include "hippogridmanager.h"
 //static
 std::list<LLPanelPick*> LLPanelPick::sAllPanels;
 
@@ -91,8 +86,7 @@ LLPanelPick::LLPanelPick(BOOL top_pick)
     mSortOrderText(NULL),
     mSortOrderEditor(NULL),
     mEnabledCheck(NULL),
-    mSetBtn(NULL),
-	mImporting(0)
+    mSetBtn(NULL)
 {
     sAllPanels.push_back(this);
 
@@ -197,76 +191,6 @@ void LLPanelPick::initNewPick()
 
 	// Commit to the database, since we've got "new" values.
 	sendPickInfoUpdate();
-}
-
-//Imports a new pick from an xml - RK
-bool LLPanelPick::importNewPick()
-{
-	LLFilePicker& file_picker = LLFilePicker::instance();
-
-	if(!file_picker.getOpenFile(LLFilePicker::FFLOAD_XML)) return false;// User canceled load.
-	else
-	{
-		std::string file = file_picker.getFirstFile();
-
-		llifstream importer(file);
-		LLSD data;
-		LLSDSerialize::fromXMLDocument(data, importer);
-
-		LLSD file_data = data["Data"];
-		data = LLSD();
-
-		mPickID.generate();
-
-		mCreatorID = gAgent.getID();
-
-		mPosGlobal = LLVector3d(file_data["globalPos"]);
-
-		mNameEditor->setText(file_data["name"].asString());
-		mDescEditor->setText(file_data["desc"].asString());
-		mSnapshotCtrl->setImageAssetID(file_data["snapshotID"].asUUID());
-		mParcelID = file_data["parcelID"].asUUID();
-		mLocationText = file_data["locationText"].asString();
-		mImporting = true;
-
-		sendPickInfoUpdate();
-		return true;
-	}
-}
-
-//Exports a pick to an XML - RK
-void LLPanelPick::exportPick()
-{
-	LLFilePicker& file_picker = LLFilePicker::instance();
-		
-	if(!file_picker.getSaveFile(LLFilePicker::FFSAVE_XML))
-		return;// User canceled save.
-
-	std::string destination = file_picker.getFirstFile();
-
-	LLSD datas;
-
-	datas["name"] = mNameEditor->getText();
-	datas["desc"] = mDescEditor->getText();
-	datas["parcelID"] = mParcelID;
-	datas["snapshotID"] = mSnapshotCtrl->getImageAssetID();
-	datas["globalPos"] = mPosGlobal.getValue();
-	datas["locationText"] = mLocationText;
-
-	LLSD file;
-	LLSD header;
-	header["Version"] = 2;
-	file["Header"] = header;
-	std::string grid_uri = gHippoGridManager->getConnectedGrid()->getLoginUri();
-	//LLStringUtil::toLower(uris[0]);
-	file["Grid"] = grid_uri;
-	file["Data"] = datas;
-
-	// Create a file stream and write to it
-	llofstream export_file(destination);
-	LLSDSerialize::toPrettyXML(file, export_file);
-	// Open the file save dialog
-	export_file.close();
 }
 
 
@@ -401,15 +325,6 @@ void LLPanelPick::processPickInfoReply(LLMessageSystem *msg, void **)
 	location_text.append(sim_name);
 	location_text.append(" ");
 
-	//Fix for location text importing - RK
-	for (panel_list_t::iterator iter = sAllPanels.begin(); iter != sAllPanels.end(); ++iter)
-	{
-		LLPanelPick* self = *iter;
-		if(!self->mImporting)	self->mLocationText = location_text;
-		else location_text = self->mLocationText;
-		self->mImporting = false;
-	}
-	
 	LLVector3d pos_global;
 	msg->getVector3d("Data", "PosGlobal", pos_global);
 

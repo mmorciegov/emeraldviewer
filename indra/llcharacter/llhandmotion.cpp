@@ -199,8 +199,6 @@ void LLHandMotion::onDeactivate()
 {
 }
 
-//Zwag: Changed the defaults here so things look right. Otherwise the hand ends up
-// in a pose that nobody is used to when something messes up.
 //-----------------------------------------------------------------------------
 // LLHandMotion::getHandPoseName()
 //-----------------------------------------------------------------------------

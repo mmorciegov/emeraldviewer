@@ -82,12 +82,12 @@ std::string LLLogChat::timestamp(bool withdate)
 	}
 	else
 	{
-	if (withdate)
-		text = llformat("[%d/%02d/%02d %d:%02d]  ", (timep->tm_year-100)+2000, timep->tm_mon+1, timep->tm_mday, timep->tm_hour, timep->tm_min);
-	else
-		text = llformat("[%d:%02d]  ", timep->tm_hour, timep->tm_min);
+		if (withdate)
+			text = llformat("[%d/%02d/%02d %d:%02d]  ", (timep->tm_year-100)+2000, timep->tm_mon+1, timep->tm_mday, timep->tm_hour, timep->tm_min);
+		else
+			text = llformat("[%d:%02d]  ", timep->tm_hour, timep->tm_min);
 	}
-
+	
 	return text;
 }
 
@@ -100,8 +100,6 @@ void LLLogChat::saveHistory(std::string filename, std::string line)
 		llinfos << "Filename is Empty!" << llendl;
 		return;
 	}
-	//dont allow bad files names
-	filename = gDirUtilp->getScrubbedFileName(filename);
 
 	LLFILE* fp = LLFile::fopen(LLLogChat::makeLogFileName(filename), "a"); 		/*Flawfinder: ignore*/
 	if (!fp)
@@ -123,8 +121,6 @@ void LLLogChat::loadHistory(std::string filename , void (*callback)(ELogLineType
 		llwarns << "Filename is Empty!" << llendl;
 		return ;
 	}
-	//dont allow bad files names
-	filename = gDirUtilp->getScrubbedFileName(filename);
 
 	LLFILE* fptr = LLFile::fopen(makeLogFileName(filename), "r");		/*Flawfinder: ignore*/
 	if (!fptr)

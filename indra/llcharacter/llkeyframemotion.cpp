@@ -658,9 +658,8 @@ BOOL LLKeyframeMotion::onActivate()
 	// If the keyframe anim has an associated emote, trigger it. 
 	if( mJointMotionList->mEmoteName.length() > 0 )
 	{
-		if((mJointMotionList->mEmoteName.length() == 36) && (LLUUID(mJointMotionList->mEmoteName) == mID))
-			return TRUE;
-		mCharacter->startMotion( gAnimLibrary.stringToAnimState(mJointMotionList->mEmoteName) );
+		if(mCharacter->findMotion(gAnimLibrary.stringToAnimState(mJointMotionList->mEmoteName)) == NULL)
+			mCharacter->startMotion( gAnimLibrary.stringToAnimState(mJointMotionList->mEmoteName) );
 	}
 
 	mLastLoopedTime = 0.f;
@@ -1245,6 +1244,11 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 		return FALSE;
 	}
 
+	if(mJointMotionList->mEmoteName==mID.asString())
+	{
+		llwarns << "Malformed animation mEmoteName==mID" << llendl;
+		return FALSE;
+	}
 	//-------------------------------------------------------------------------
 	// get loop
 	//-------------------------------------------------------------------------
@@ -1454,7 +1458,7 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 				if(!(rot_key.mRotation.isFinite()))
 				{
 					return FALSE;
-			}
+				}
 			}
 			else
 			{
@@ -1536,7 +1540,7 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 				if(!(pos_key.mPosition.isFinite()))
 				{
 					return FALSE;
-			}
+				}
 			}
 			else
 			{
@@ -1648,7 +1652,7 @@ BOOL LLKeyframeMotion::deserialize(LLDataPacker& dp)
 				/*So where's all the Madd Rappers at?
 				It's like a jungle in this habitat
 				But all you savage cats, know that I was strapped wit gats
-				when you were cuddlin a Cabbage Patch*/
+				when you were cuddlin wit Cabbage Patch*/
 				//also http://www.youtube.com/watch?v=QvgqBDk2kbc
 				llwarns << "can't find a valid source collision volume." << llendl;
 				delete constraintp;

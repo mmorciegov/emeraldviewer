@@ -185,7 +185,7 @@ void LLDrawPoolBump::prerender()
 // static
 S32 LLDrawPoolBump::numBumpPasses()
 {
-	if (LLPipeline::sRenderBump)
+	if (gSavedSettings.getBOOL("RenderObjectBump"))
 	{
 		if (mVertexShaderLevel > 1)
 		{
@@ -1221,7 +1221,7 @@ void LLDrawPoolBump::pushBatch(LLDrawInfo& params, U32 mask, BOOL texture)
 		if (params.mTexture.notNull())
 		{
 			gGL.getTexUnit(diffuse_channel)->bind(params.mTexture.get());
-			params.mTexture->addTextureStats(params.mVSize);
+			//params.mTexture->addTextureStats(params.mVSize);
 		}
 		else
 		{

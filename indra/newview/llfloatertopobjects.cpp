@@ -45,11 +45,11 @@
 #include "lllineeditor.h"
 #include "lltextbox.h"
 #include "lltracker.h"
+#include "llviewercontrol.h"
 #include "llviewermessage.h"
 #include "llviewerparcelmgr.h"
 #include "llviewerregion.h"
 #include "lluictrlfactory.h"
-#include "llviewercontrol.h"
 #include "llviewerwindow.h"
 
 LLFloaterTopObjects* LLFloaterTopObjects::sInstance = NULL;
@@ -201,7 +201,6 @@ void LLFloaterTopObjects::handleReply(LLMessageSystem *msg, void** data)
 		element["columns"][0]["font"] = "SANSSERIF";
 		element["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 		
-		
 		element["columns"][1]["column"] = "name";
 		element["columns"][1]["value"] = name_buf;
 		element["columns"][1]["font"] = "SANSSERIF";
@@ -223,14 +222,14 @@ void LLFloaterTopObjects::handleReply(LLMessageSystem *msg, void** data)
 			&& have_extended_data)
 		{
 			element["columns"][5]["column"] = "mono_time";
-			element["columns"][5]["color"] = gColors.getColor("DefaultListText").getValue();
 			element["columns"][5]["value"] = llformat("%0.3f", mono_score);
 			element["columns"][5]["font"] = "SANSSERIF";
+			element["columns"][5]["color"] = gColors.getColor("DefaultListText").getValue();
 
 			element["columns"][6]["column"] = "URLs";
-			element["columns"][6]["color"] = gColors.getColor("DefaultListText").getValue();
 			element["columns"][6]["value"] = llformat("%d", public_urls);
 			element["columns"][6]["font"] = "SANSSERIF";
+			element["columns"][6]["color"] = gColors.getColor("DefaultListText").getValue();
 		}
 		
 		list->addElement(element);

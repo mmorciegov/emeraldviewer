@@ -28,6 +28,9 @@ $/LicenseInfo$
 
 import random, socket, string, time, re
 import uuid
+
+# *HACK: Necessary for python 2.4. Consider replacing this code wart
+# after python >=2.5 has deployed everywhere. 2009-10-05
 try:
     # Python 2.6
     from hashlib import md5

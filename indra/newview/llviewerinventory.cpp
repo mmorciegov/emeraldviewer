@@ -74,12 +74,6 @@ LLViewerInventoryItem::LLViewerInventoryItem(const LLUUID& uuid,
 					name, desc, sale_info, flags, creation_date_utc),
 	mIsComplete(TRUE)
 {
-	LLUUID creator = mPermissions.getCreator();
-	std::string ignored;
-	if(creator.notNull())
-	{
-		gCacheName->getFullName(creator, ignored);
-	}
 }
 
 LLViewerInventoryItem::LLViewerInventoryItem(const LLUUID& item_id,
@@ -252,12 +246,6 @@ BOOL LLViewerInventoryItem::unpackMessage(
 	LLMessageSystem* msg, const char* block, S32 block_num)
 {
 	BOOL rv = LLInventoryItem::unpackMessage(msg, block, block_num);
-	LLUUID creator = mPermissions.getCreator();
-	std::string ignored;
-	if(creator.notNull())
-	{
-		gCacheName->getFullName(creator, ignored);
-	}
 	mIsComplete = TRUE;
 	return rv;
 }
@@ -269,6 +257,7 @@ void LLViewerInventoryItem::setTransactionID(const LLTransactionID& transaction_
 // virtual
 void LLViewerInventoryItem::packMessage(LLMessageSystem* msg) const
 {
+	LL_INFOS("Inventory") << " UDP Rez/UpdateObject of UUID " << mUUID << " parent = " << mParentUUID << " type= " << mType << " transaction= "<< mTransactionID << LL_ENDL; // OGPX
 	msg->addUUIDFast(_PREHASH_ItemID, mUUID);
 	msg->addUUIDFast(_PREHASH_FolderID, mParentUUID);
 	mPermissions.packMessage(msg);
@@ -289,12 +278,6 @@ void LLViewerInventoryItem::packMessage(LLMessageSystem* msg) const
 BOOL LLViewerInventoryItem::importFile(LLFILE* fp)
 {
 	BOOL rv = LLInventoryItem::importFile(fp);
-	LLUUID creator = mPermissions.getCreator();
-	std::string ignored;
-	if(creator.notNull())
-	{
-		gCacheName->getFullName(creator, ignored);
-	}
 	mIsComplete = TRUE;
 	return rv;
 }
@@ -311,12 +294,6 @@ bool LLViewerInventoryItem::importFileLocal(LLFILE* fp)
 {
 	// TODO: convert all functions that return BOOL to return bool
 	bool rv = (LLInventoryItem::importFile(fp) ? true : false);
-	LLUUID creator = mPermissions.getCreator();
-	std::string ignored;
-	if(creator.notNull())
-	{
-		gCacheName->getFullName(creator, ignored);
-	}
 	mIsComplete = false;
 	return rv;
 }
@@ -485,16 +462,19 @@ bool LLViewerInventoryCategory::fetchDescendents()
 		// This comes from LLInventoryFilter from llfolderview.h
 		U32 sort_order = gSavedSettings.getU32("InventorySortOrder") & 0x1;
 
-		std::string url = gAgent.getRegion()->getCapability("WebFetchInventoryDescendents");
-   
+		std::string url = gAgent.getCapability("agent/inventory"); // OGPX : was WebFetchInventoryDescendents
+		if (url.empty()) //OGPX : agent/inventory Capability not found on agent domain.  See if the region has one.
+		{
+			llinfos << " agent/inventory not on AD, checking fallback to region " << llendl; //OGPX
+			url = gAgent.getRegion()->getCapability("WebFetchInventoryDescendents");
+		}
 		if (!url.empty()) //Capability found.  Build up LLSD and use it.
 		{
 			LLInventoryModel::startBackgroundFetch(mUUID);			
 		}
 		else
 		{	//Deprecated, but if we don't have a capability, use the old system.
-			//Great, but we don't need to know about it, removed this info message.
-			//llinfos << "WebFetchInventoryDescendents capability not found.  Using deprecated UDP message." << llendl;
+			llinfos << "WebFetchInventoryDescendents or agent/inventory capability not found.  Using deprecated UDP message." << llendl;
 			LLMessageSystem* msg = gMessageSystem;
 			msg->newMessage("FetchInventoryDescendents");
 			msg->nextBlock("AgentData");

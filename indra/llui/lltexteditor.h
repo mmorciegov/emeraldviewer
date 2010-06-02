@@ -86,6 +86,8 @@ public:
 	virtual BOOL	handleScrollWheel(S32 x, S32 y, S32 clicks);
 	virtual BOOL	handleDoubleClick(S32 x, S32 y, MASK mask );
 	virtual BOOL	handleRightMouseDown( S32 x, S32 y, MASK mask );
+	virtual BOOL	handleMiddleMouseDown(S32 x,S32 y,MASK mask);
+
 	virtual BOOL	handleKeyHere(KEY key, MASK mask );
 	virtual BOOL	handleUnicodeCharHere(llwchar uni_char);
 
@@ -120,7 +122,7 @@ public:
 		S32 wordPositionEnd;
 		S32 wordY;
 	};
-
+	
 	// LLEditMenuHandler interface
 	virtual void	undo();
 	virtual BOOL	canUndo() const;
@@ -131,16 +133,23 @@ public:
 	virtual void	copy();
 	virtual BOOL	canCopy() const;
 	virtual void	paste();
-	virtual void	spellReplace(SpellMenuBind* spellData);
 	virtual BOOL	canPaste() const;
+ 
+	virtual void	spellReplace(SpellMenuBind* spellData);
+ 
+	virtual void	updatePrimary();
+	virtual void	copyPrimary();
+	virtual void	pastePrimary();
+	virtual BOOL	canPastePrimary() const;
+
 	virtual void	doDelete();
 	virtual BOOL	canDoDelete() const;
 	virtual void	selectAll();
 	virtual BOOL	canSelectAll()	const;
 	virtual void	deselect();
 	virtual BOOL	canDeselect() const;
-
 	static void context_cut(void* data);
+
 	static void context_copy(void* data);
 	static void context_paste(void* data);
 	static void context_delete(void* data);
@@ -151,10 +160,8 @@ public:
 	static void spell_show(void* data);
 	std::vector<S32> getMisspelledWordsPositions();
 
-
-
 	void			selectNext(const std::string& search_text_in, BOOL case_insensitive, BOOL wrap = TRUE);
-	BOOL			replaceText(const std::string& search_text, const std::string& replace_text, BOOL case_insensitive, BOOL wrap = TRUE, BOOL group = FALSE);
+	BOOL			replaceText(const std::string& search_text, const std::string& replace_text, BOOL case_insensitive, BOOL wrap = TRUE);
 	void			replaceTextAll(const std::string& search_text, const std::string& replace_text, BOOL case_insensitive);
 	
 	// Undo/redo stack
@@ -166,7 +173,7 @@ public:
 	BOOL			allowsEmbeddedItems() const { return mAllowEmbeddedItems; }
 
 	// inserts text at cursor
-	void			insertText(const std::string &text, BOOL group = FALSE, BOOL deleteSelection = TRUE);
+	void			insertText(const std::string &text, BOOL deleteSelection = TRUE);
 	// appends text at end
 	void 			appendText(const std::string &wtext, bool allow_undo, bool prepend_newline,
 							   const LLStyleSP stylep = NULL);
@@ -192,7 +199,7 @@ public:
 	void			setCursor(S32 row, S32 column);
 	void			setCursorPos(S32 offset);
 	void			setCursorAndScrollToEnd();
-	void            scrollToPos(S32 pos);
+
 
 	void			getLineAndColumnForPosition( S32 position,  S32* line, S32* col, BOOL include_wordwrap );
 	void			getCurrentLineAndColumn( S32* line, S32* col, BOOL include_wordwrap );
@@ -208,7 +215,6 @@ public:
 					const LLColor3& color,
 					const std::string& tool_tip = LLStringUtil::null,
 					const std::string& delimiter = LLStringUtil::null);
-
 	LLKeywords::keyword_iterator_t keywordsBegin()	{ return mKeywords.begin(); }
 	LLKeywords::keyword_iterator_t keywordsEnd()	{ return mKeywords.end(); }
 
@@ -223,8 +229,7 @@ public:
 	void			setThumbColor( const LLColor4& color );
 	void			setHighlightColor( const LLColor4& color );
 	void			setShadowColor( const LLColor4& color );
-	void setOverRideAndShowMisspellings(BOOL b)		{ mOverRideAndShowMisspellings =b;}
-
+	void			setOverRideAndShowMisspellings(BOOL b){ mOverRideAndShowMisspellings =b;}
 
 	// Hacky methods to make it into a word-wrapping, potentially scrolling,
 	// read-only text box.
@@ -298,8 +303,8 @@ protected:
 	//
 	// Methods
 	//
-	LLHandle<LLView>					mPopupMenuHandle;
 
+	LLHandle<LLView>					mPopupMenuHandle;
 
 	S32				getLength() const { return mWText.length(); }
 	void			getSegmentAndOffset( S32 startpos, S32* segidxp, S32* offsetp ) const;
@@ -361,9 +366,8 @@ protected:
 	virtual void	unbindEmbeddedChars(const LLFontGL* font) const {}
 	
 	S32				findHTMLToken(const std::string &line, S32 pos, BOOL reverse) const;
-	S32				findHTMLToken(const std::string &line, S32 pos, BOOL reverse, const char *end_delims) const;
 	BOOL			findHTML(const std::string &line, S32 *begin, S32 *end) const;
-	
+
 	// Abstract inner base class representing an undoable editor command.
 	// Concrete sub-classes can be defined for operations such as insert, remove, etc.
 	// Used as arguments to the execute() method below.
@@ -471,6 +475,8 @@ private:
 	//
 	// Methods
 	//
+	void	                pasteHelper(bool is_primary);
+
 	void			updateSegments();
 	void			pruneSegments();
 
@@ -503,16 +509,16 @@ private:
 	class LLTextCmdAddChar;
 	class LLTextCmdOverwriteChar;
 	class LLTextCmdRemove;
-		
+
 	LLWString		mWText;
 	mutable std::string mUTF8Text;
 	mutable BOOL	mTextIsUpToDate;
+	
 	LLWString		mPrevSpelledText;		// saved string so we know whether to respell or not
 	S32 spellStart;
 	S32 spellEnd;
 	std::vector<S32> misspellLocations;     // where all the mispelled words are
 	BOOL		mOverRideAndShowMisspellings;
-
 	
 	S32				mMaxTextByteLength;		// Maximum length mText is allowed to be in bytes
 
@@ -635,4 +641,6 @@ private:
 	LLKeywordToken* mToken;
 	BOOL		mIsDefault;
 };
+
+
 #endif  // LL_TEXTEDITOR_

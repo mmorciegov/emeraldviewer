@@ -56,6 +56,7 @@
 #include "lllineeditor.h"
 #include "llnamelistctrl.h"
 #include "llnotify.h"
+#include "llpanellandaudio.h"
 #include "llpanellandmedia.h"
 #include "llradiogroup.h"
 #include "llscrolllistctrl.h"
@@ -104,7 +105,7 @@ public:
 // LLFloaterLand
 //---------------------------------------------------------------------------
 
-void send_parcel_select_objects(S32 parcel_local_id, U32 return_type,
+void send_parcel_select_objects(S32 parcel_local_id, S32 return_type,
 								uuid_list_t* return_ids = NULL)
 {
 	LLMessageSystem *msg = gMessageSystem;
@@ -122,7 +123,7 @@ void send_parcel_select_objects(S32 parcel_local_id, U32 return_type,
 	msg->addUUIDFast(_PREHASH_SessionID,gAgent.getSessionID());
 	msg->nextBlockFast(_PREHASH_ParcelData);
 	msg->addS32Fast(_PREHASH_LocalID, parcel_local_id);
-	msg->addU32Fast(_PREHASH_ReturnType, return_type);
+	msg->addS32Fast(_PREHASH_ReturnType, return_type);
 
 	// Throw all return ids into the packet.
 	// TODO: Check for too many ids.
@@ -207,6 +208,7 @@ LLFloaterLand::LLFloaterLand(const LLSD& seed)
 	factory_map["land_covenant_panel"] = LLCallbackMap(createPanelLandCovenant, this);
 	factory_map["land_objects_panel"] = LLCallbackMap(createPanelLandObjects, this);
 	factory_map["land_options_panel"] = LLCallbackMap(createPanelLandOptions, this);
+	factory_map["land_audio_panel"] =	LLCallbackMap(createPanelLandAudio, this);
 	factory_map["land_media_panel"] =	LLCallbackMap(createPanelLandMedia, this);
 	factory_map["land_access_panel"] =	LLCallbackMap(createPanelLandAccess, this);
 
@@ -242,6 +244,7 @@ void LLFloaterLand::refresh()
 	mPanelGeneral->refresh();
 	mPanelObjects->refresh();
 	mPanelOptions->refresh();
+	mPanelAudio->refresh();
 	mPanelMedia->refresh();
 	mPanelAccess->refresh();
 }
@@ -278,6 +281,15 @@ void* LLFloaterLand::createPanelLandOptions(void* data)
 	LLFloaterLand* self = (LLFloaterLand*)data;
 	self->mPanelOptions = new LLPanelLandOptions(self->mParcel);
 	return self->mPanelOptions;
+}
+
+
+// static
+void* LLFloaterLand::createPanelLandAudio(void* data)
+{
+	LLFloaterLand* self = (LLFloaterLand*)data;
+	self->mPanelAudio = new LLPanelLandAudio(self->mParcel);
+	return self->mPanelAudio;
 }
 
 // static
@@ -339,8 +351,6 @@ BOOL LLPanelLandGeneral::postBuild()
 	
 	mBtnSetGroup = getChild<LLButton>("Set...");
 	mBtnSetGroup->setClickedCallback(onClickSetGroup, this);
-
-	getChild<LLButton>("group_profile")->setClickedCallback(onClickInfoGroup, this);
 
 	
 	mCheckDeedToGroup = getChild<LLCheckBoxCtrl>( "check deed");
@@ -778,16 +788,6 @@ void LLPanelLandGeneral::onClickSetGroup(void* userdata)
 		fg->setOrigin(new_rect.mLeft, new_rect.mBottom);
 		parent_floater->addDependentFloater(fg);
 	}
-}
-
-// static
-void LLPanelLandGeneral::onClickInfoGroup(void* userdata)
-{
-	LLPanelLandGeneral* panelp = (LLPanelLandGeneral*)userdata;
-	LLParcel* parcel = panelp->mParcel->getParcel();
-	if (!parcel) return;
-	LLUUID id = parcel->getGroupID();
-	if(id.notNull())LLFloaterGroupInfo::showFromUUID(parcel->getGroupID());
 }
 
 // static

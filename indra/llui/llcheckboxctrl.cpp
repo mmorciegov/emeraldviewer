@@ -51,6 +51,7 @@ const U32 MAX_STRING_LENGTH = 10;
 
 static LLRegisterWidget<LLCheckBoxCtrl> r("check_box");
 
+
  
 LLCheckBoxCtrl::LLCheckBoxCtrl(const std::string& name, const LLRect& rect, 
 							    const std::string& label, 
@@ -61,16 +62,16 @@ LLCheckBoxCtrl::LLCheckBoxCtrl(const std::string& name, const LLRect& rect,
 								BOOL use_radio_style,
 								const std::string& control_which)
 :	LLUICtrl(name, rect, TRUE, commit_callback, callback_user_data, FOLLOWS_LEFT | FOLLOWS_TOP),
-	//mTextEnabledColor( LLUI::sColorsGroup->getColor( "LabelTextColor" ) ),
-	//mTextDisabledColor( LLUI::sColorsGroup->getColor( "LabelDisabledColor" ) ),
+	//mTextEnabledColor( sLabelTextColor ),
+	//mTextDisabledColor( sLabelDisabledColor ),
 	mRadioStyle( use_radio_style ),
 	mInitialValue( initial_value ),
 	mSetValue( initial_value )
 {
-	static LLColor4 defaultTextEnabledColor = LLUI::sColorsGroup->getColor( "LabelTextColor" );
-	static LLColor4 defaultTextDisabledColor = LLUI::sColorsGroup->getColor( "LabelDisabledColor" );
-	mTextEnabledColor = (defaultTextEnabledColor);
-	mTextDisabledColor = (defaultTextDisabledColor);
+	static LLColor4 sLabelTextColor = LLUI::sColorsGroup->getColor( "LabelTextColor" );
+	static LLColor4 sLabelDisabledColor = LLUI::sColorsGroup->getColor( "LabelDisabledColor" );
+	mTextEnabledColor = sLabelTextColor;
+	mTextDisabledColor = sLabelDisabledColor;
 
 	if (font)
 	{
@@ -303,11 +304,12 @@ void	LLCheckBoxCtrl::resetDirty()
 }
 
 
-
 // virtual
 LLXMLNodePtr LLCheckBoxCtrl::getXML(bool save_children) const
 {
 	LLXMLNodePtr node = LLUICtrl::getXML();
+
+	node->setName(LL_CHECK_BOX_CTRL_TAG);
 
 	node->createChild("label", TRUE)->setStringValue(mLabel->getText());
 
@@ -358,15 +360,16 @@ LLView* LLCheckBoxCtrl::fromXML(LLXMLNodePtr node, LLView *parent, LLUICtrlFacto
 	BOOL initial_value = checkbox->getValue().asBoolean();
 	node->getAttributeBOOL("initial_value", initial_value);
 
-	static LLColor4 defaultTextEnabledColor = LLUI::sColorsGroup->getColor( "LabelTextColor" );
-	static LLColor4 defaultTextDisabledColor = LLUI::sColorsGroup->getColor( "LabelDisabledColor" );
+	static LLColor4 sLabelTextColor = LLUI::sColorsGroup->getColor( "LabelTextColor" );
+	static LLColor4 sLabelDisabledColor = LLUI::sColorsGroup->getColor( "LabelDisabledColor" );
+	
 
 	LLColor4 color;
-	color = defaultTextEnabledColor;//LLUI::sColorsGroup->getColor( "LabelTextColor" );
+	color = sLabelTextColor;
 	LLUICtrlFactory::getAttributeColor(node,"text_enabled_color", color);
 	checkbox->setEnabledColor(color);
 
-	color = defaultTextDisabledColor;//LLUI::sColorsGroup->getColor( "LabelDisabledColor" );
+	color = sLabelDisabledColor;
 	LLUICtrlFactory::getAttributeColor(node,"text_disabled_color", color);
 	checkbox->setDisabledColor(color);
 

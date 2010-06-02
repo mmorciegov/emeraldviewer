@@ -44,8 +44,8 @@ class lggBeamData
 class lggBeamMaps
 {
 	public:
-		lggBeamMaps() { lastFileName = ""; scale=0.0f; duration=0.25f; }
-		~lggBeamMaps() { lastFileName = ""; scale=0.0f; duration=0.25f;}
+		lggBeamMaps():lastFileName(""),scale(0.0f),duration(0.25f),sPartsNow(FALSE),sBeamLastAt(LLVector3d::zero){}
+		~lggBeamMaps() {}
 	public:
 		F32		setUpAndGetDuration();
 		void	fireCurrentBeams(LLPointer<LLHUDEffectSpiral>, LLColor4U rgb);
@@ -54,10 +54,14 @@ class lggBeamMaps
 		LLColor4U getCurrentColor(LLColor4U agentColor);
 		std::vector<std::string> getFileNames();
 		std::vector<std::string> getColorsFileNames();
+		void stopBeamChat();
+		void updateBeamChat(LLVector3d currentPos);
 	private:
 		LLSD	getPic(std::string filename); 
 		std::string lastFileName;
 		std::string lastColorFileName;
+		BOOL		sPartsNow;
+		LLVector3d sBeamLastAt;
 		lggBeamsColors lastColorsData;
 		F32 duration;
 		F32 scale;

@@ -41,11 +41,11 @@
 #include "llvoiceclient.h"
 #include "llstyle.h"
 
-#if USE_OTR          // [$PLOTR$]
-#   include "otr_wrapper.h"
+          // [$PLOTR$]
+#include "otr_wrapper.h"
 class OtrFloaterSmpDialog;
 class OtrFloaterSmpProgress;
-#endif // USE_OTR    // [/$PLOTR$]
+ // USE_OTR    // [/$PLOTR$]
 
 class LLLineEditor;
 class LLViewerTextEditor;
@@ -179,7 +179,7 @@ private:
 	BOOL		mReceivedCall;
 };
 
-#if USE_OTR       // [$PLOTR$]
+       // [$PLOTR$]
 extern void otr_authenticate_key(LLUUID session_id, const char *trust);
 extern void otr_log_message_getstring_name(LLUUID session_id, const char *message_name);
 extern void otr_log_message_getstring(LLUUID session_id, const char *message_name);
@@ -193,7 +193,7 @@ extern void deliver_message(const std::string& utf8_text,
                             const LLUUID& im_session_id,
                             const LLUUID& other_participant_id,
                             EInstantMessage dialog);
-#endif // USE_OTR // [/$PLOTR$]
+ // USE_OTR // [/$PLOTR$]
 
 class LLFloaterIMPanel : public LLFloater
 {
@@ -227,7 +227,7 @@ public:
 	BOOL inviteToSession(const LLDynamicArray<LLUUID>& agent_ids);
 
 	void addHistoryLine(const std::string &utf8msg, 
-						 LLColor4 incolor = LLColor4::white, 
+						LLColor4 incolor = LLColor4::white, 
 						bool log_to_file = true,
 						const LLUUID& source = LLUUID::null,
 						const std::string& name = LLStringUtil::null);
@@ -273,7 +273,6 @@ public:
 	void updateSpeakersList(const LLSD& speaker_updates);
 	void processSessionUpdate(const LLSD& update);
 	void setSpeakers(const LLSD& speaker_list);
-	void setIRCSpeakers(const LLSD& speaker_list);
 	LLVoiceChannel* getVoiceChannel() { return mVoiceChannel; }
 	EInstantMessage getDialogType() const { return mDialog; }
 
@@ -284,7 +283,6 @@ public:
 	// Handle other participant in the session typing.
 	void processIMTyping(const LLIMInfo* im_info, BOOL typing);
 	static void chatFromLogFile(LLLogChat::ELogLineType type, std::string line, void* userdata);
-	void setOffline();
 
 	//show error statuses to the user
 	void showSessionStartError(const std::string& error_string);
@@ -295,15 +293,13 @@ public:
 
 	static bool onConfirmForceCloseError(const LLSD& notification, const LLSD& response);
 
-	bool decryptMsg(const std::string& msg, std::string& decrypted_msg);
 	bool isEncrypted();
-
 private:
 	// called by constructors
 	void init(const std::string& session_label);
 
 	// Called by UI methods.
-	void sendMsg(bool ooc);
+	void sendMsg();
 
 	// for adding agents via the UI. Return TRUE if possible, do it if 
 	BOOL dropCallingCard(LLInventoryItem* item, BOOL drop);
@@ -323,10 +319,8 @@ private:
 	void removeTypingIndicator(const LLIMInfo* im_info);
 
 	void sendTypingState(BOOL typing);
-
-	std::string encrypt(const std::string &msg);
 	
-#if USE_OTR       // [$PLOTR$]
+// [$PLOTR$]
 public:
     static void onClickOtr(LLUICtrl* source, void* userdata);
     void doOtrMenu();
@@ -360,8 +354,7 @@ private:
     OtrlMessageState mOtrLastStatus;
     OtrFloaterSmpDialog *mOtrSmpDialog;
     OtrFloaterSmpProgress *mOtrSmpProgress;
-#endif // USE_OTR // [/$PLOTR$]
-    
+ // USE_OTR // [/$PLOTR$]
 private:
 	LLLineEditor* mInputEditor;
 	LLViewerTextEditor* mHistoryEditor;

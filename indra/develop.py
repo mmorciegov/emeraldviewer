@@ -73,7 +73,7 @@ class PlatformSetup(object):
     for t in ('Debug', 'Release', 'RelWithDebInfo'):
         build_types[t.lower()] = t
 
-    build_type = build_types['relwithdebinfo']
+    build_type = build_types['release']
     standalone = 'OFF'
     unattended = 'OFF'
     project_name = 'SecondLife'
@@ -268,8 +268,7 @@ class LinuxSetup(UnixSetup):
         return 'linux'
 
     def build_dirs(self):
-        # Only build the server code if (a) we have it and (b) we're
-        # on 32-bit x86.
+        # Only build the server code if we have it.
         platform_build = '%s-%s' % (self.platform(), self.build_type.lower())
 
         if self.arch() == 'i686' and self.is_internal_tree():
@@ -371,22 +370,30 @@ class LinuxSetup(UnixSetup):
                 cpus += m and int(m.group(1)) or 1
             return hosts, cpus
 
-        def mk_distcc_hosts():
+        def mk_distcc_hosts(basename, range, num_cpus):
             '''Generate a list of LL-internal machines to build on.'''
             loc_entry, cpus = localhost()
             hosts = [loc_entry]
             dead = []
-            stations = [s for s in xrange(36) if s not in dead]
+            stations = [s for s in xrange(range) if s not in dead]
             random.shuffle(stations)
-            hosts += ['station%d.lindenlab.com/2,lzo' % s for s in stations]
+            hosts += ['%s%d.lindenlab.com/%d,lzo' % (basename, s, num_cpus) for s in stations]
             cpus += 2 * len(stations)
             return ' '.join(hosts), cpus
 
         if job_count is None:
             hosts, job_count = count_distcc_hosts()
-            if hosts == 1 and socket.gethostname().startswith('station'):
-                hosts, job_count = mk_distcc_hosts()
-                os.putenv('DISTCC_HOSTS', hosts)
+            if hosts == 1:
+                hostname = socket.gethostname()
+                if hostname.startswith('station'):
+                    hosts, job_count = mk_distcc_hosts('station', 36, 2)
+                    os.environ['DISTCC_HOSTS'] = hosts
+                if hostname.startswith('eniac'):
+                    hosts, job_count = mk_distcc_hosts('eniac', 71, 2)
+                    os.environ['DISTCC_HOSTS'] = hosts
+            # This is just silly. [Disc]
+			#if job_count > 4:
+                #job_count = 4;
             opts.extend(['-j', str(job_count)])
 
         if targets:
@@ -491,15 +498,8 @@ class WindowsSetup(PlatformSetup):
                     print 'Building with ', self.gens[version]['gen']
                     break
             else:
-                print >> sys.stderr, 'Cannot find a Visual Studio installation, testing for express editions'
-                for version in 'vc80 vc90 vc71'.split():
-                    if self.find_visual_studio_express(version):
-                        self._generator = version
-                        print 'Building with ', self.gens[version]['gen'] , "Express edition"
-                        break
-                else:
-                    print >> sys.stderr, 'Cannot find any Visual Studio installation'
-                    eys.exit(1)
+                print >> sys.stderr, 'Cannot find a Visual Studio installation!'
+                eys.exit(1)
         return self._generator
 
     def _set_generator(self, gen):
@@ -532,49 +532,35 @@ class WindowsSetup(PlatformSetup):
                 '-DROOT_PROJECT_NAME:STRING=%(project_name)s '
                 '%(opts)s "%(dir)s"' % args)
 
+    def get_HKLM_registry_value(self, key_str, value_str):
+        import _winreg
+        reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
+        key = _winreg.OpenKey(reg, key_str)
+        value = _winreg.QueryValueEx(key, value_str)[0]
+        print 'Found: %s' % value
+        return value
+        
     def find_visual_studio(self, gen=None):
         if gen is None:
             gen = self._generator
         gen = gen.lower()
+        value_str = (r'EnvironmentDirectory')
+        key_str = (r'SOFTWARE\Microsoft\VisualStudio\%s\Setup\VS' %
+                   self.gens[gen]['ver'])
+        print ('Reading VS environment from HKEY_LOCAL_MACHINE\%s\%s' %
+               (key_str, value_str))
         try:
-            import _winreg
-            key_str = (r'SOFTWARE\Microsoft\VisualStudio\%s\Setup\VS' %
-                       self.gens[gen]['ver'])
-            value_str = (r'EnvironmentDirectory')
-            print ('Reading VS environment from HKEY_LOCAL_MACHINE\%s\%s' %
-                   (key_str, value_str))
-            print key_str
-
-            reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
-            key = _winreg.OpenKey(reg, key_str)
-            value = _winreg.QueryValueEx(key, value_str)[0]
-            print 'Found: %s' % value
-            return value
+            return self.get_HKLM_registry_value(key_str, value_str)           
         except WindowsError, err:
-            print >> sys.stderr, "Didn't find ", self.gens[gen]['gen']
-            return ''
-        
-    def find_visual_studio_express(self, gen=None):
-        if gen is None:
-            gen = self._generator
-        gen = gen.lower()
+            key_str = (r'SOFTWARE\Wow6432Node\Microsoft\VisualStudio\%s\Setup\VS' %
+                       self.gens[gen]['ver'])
+
         try:
-            import _winreg
-            key_str = (r'SOFTWARE\Microsoft\VCEXpress\%s\Setup\VC' %
-                       self.gens[gen]['ver'])
-            value_str = (r'ProductDir')
-            print ('Reading VS environment from HKEY_LOCAL_MACHINE\%s\%s' %
-                   (key_str, value_str))
-            print key_str
-
-            reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
-            key = _winreg.OpenKey(reg, key_str)
-            value = _winreg.QueryValueEx(key, value_str)[0]+"IDE"
-            print 'Found: %s' % value
-            return value
-        except WindowsError, err:
+            return self.get_HKLM_registry_value(key_str, value_str)
+        except:
             print >> sys.stderr, "Didn't find ", self.gens[gen]['gen']
-            return ''
+            
+        return ''
 
     def get_build_cmd(self):
         if self.incredibuild:
@@ -584,22 +570,9 @@ class WindowsSetup(PlatformSetup):
 
             return "buildconsole %s.sln /build %s" % (self.project_name, config)
 
-        environment = self.find_visual_studio()
-        if environment == '':
-            environment = self.find_visual_studio_express()
-            if environment == '':
-                 print >> sys.stderr, "Something went very wrong during build stage, could not find a Visual Studio?"
-            else:
-                 print >> sys.stderr, "\nSolution generation complete, as you are using an express edition the final\n stages will need to be completed by hand"
-                 build_dirs=self.build_dirs();
-                 print >> sys.stderr, "Solution can now be found in:", build_dirs[0]
-                 print >> sys.stderr, "Set secondlife-bin as startup project"
-                 print >> sys.stderr, "Set build target is Release or RelWithDbgInfo"
-                 exit(0)
-    
         # devenv.com is CLI friendly, devenv.exe... not so much.
         return ('"%sdevenv.com" %s.sln /build %s' % 
-                (environment, self.build_type))
+                (self.find_visual_studio(), self.project_name, self.build_type))
 
     def run(self, command, name=None):
         '''Run a program.  If the program fails, raise an exception.'''
@@ -731,6 +704,15 @@ Examples:
 '''
 
 def main(arguments):
+    if os.getenv('DISTCC_DIR') is None:
+        distcc_dir = os.path.join(getcwd(), '.distcc')
+        if not os.path.exists(distcc_dir):
+            os.mkdir(distcc_dir)
+        print "setting DISTCC_DIR to %s" % distcc_dir
+        os.environ['DISTCC_DIR'] = distcc_dir
+    else:
+        print "DISTCC_DIR is set to %s" % os.getenv('DISTCC_DIR')
+ 
     setup = setup_platform[sys.platform]()
     try:
         opts, args = getopt.getopt(

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" ?><notifications>
+<?xml version="1.0" ?><notifications>
 
   <global name="skipnexttime">
 
@@ -112,9 +112,9 @@
    name="MissingAlert"
    label="Unknown Alert Message"
    type="alertmodal">
-Your version of Second Life does not know how to display the alert message it just received.
+    Your version of the Emerald Viewer does not know how to display the alert message it just received.
 
-Error details: The alert called &apos;[_NAME]&apos; was not found in notifications.xml.
+    Error details: The alert called &apos;[_NAME]&apos; was not found in notifications.xml.
     <usetemplate
      name="okbutton"
      yestext="OK"/>
@@ -164,7 +164,7 @@ No tutorial is currently available.
    icon="alertmodal.tga"
    name="BadInstallation"
    type="alertmodal">
-An error occurred while updating Second Life. Please download the latest version from secondlife.com.
+    An error occurred while updating the Emerald Viewer. Please download the latest version from secondlife.com.
     <usetemplate
      name="okbutton"
      yestext="Ok"/>
@@ -873,6 +873,62 @@ Port settings take effect after you restart [SECOND_LIFE].
 
   <notification
    icon="alertmodal.tga"
+   name="ProxyNeedRestart"
+   type="alertmodal">
+Socks proxy settings will take effect after you restart [SECOND_LIFE].
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="SOCKS_CONNECT_OK"
+   type="alertmodal">
+Connection to Socks5 proxy [PROXY] was successful.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="SOCKS_NOT_PERMITTED"
+   type="alertmodal">
+The Socks5 proxy "[PROXY]" refused the connection, not allowed by rule set
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="SOCKS_CONNECT_ERROR"
+   type="alertmodal">
+The Socks5 proxy "[PROXY]" refused the connection, could not open TCP channel
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="SOCKS_NOT_ACCEPTABLE"
+   type="alertmodal">
+The Socks5 proxy "[PROXY]" refused the selected authentication system
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="SOCKS_AUTH_FAIL"
+   type="alertmodal">
+The Socks5 proxy "[PROXY]" reported your credentials are invalid
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="SOCKS_UDP_FWD_NOT_GRANTED"
+   type="alertmodal">
+The Socks5 proxy "[PROXY]" refused the UDP associate request
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="SOCKS_HOST_CONNECT_FAILED"
+   type="alertmodal">
+Could not connect to Socks5 proxy server "[PROXY]"
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="ChangeSkin"
    type="alertmodal">
 The new skin will appear after you restart [SECOND_LIFE].
@@ -1008,10 +1064,10 @@ Unable to write file [[FILE]]
    icon="alertmodal.tga"
    name="UnsupportedHardware"
    type="alertmodal">
-Warning: Your system does not meet Second Life&apos;s minimum system requirements. If you continue using Second Life, you may experience poor performance. Unfortunately, we cannot provide technical support for unsupported system configurations.
+    Warning: Your system does not meet Emerald Viewer&apos;s minimum system requirements. If you continue using Emerald, you may experience poor performance. Unfortunately, we cannot provide technical support for unsupported system configurations.
 
-MINSPECS
-Do you wish to visit [_URL] for more information?
+    MINSPECS
+    Do you wish to visit [_URL] for more information?
     <url option="0" name="url">
 
 			http://www.secondlife.com/corporate/sysreqs.php
@@ -1028,8 +1084,8 @@ Do you wish to visit [_URL] for more information?
    name="UnknownGPU"
    type="alertmodal">
 Your system contains a graphics card that is unknown to us at this time.
-This is often the case with new hardware we haven&apos;t had a chance to test.  Second Life will most likely run properly, but you may need to adjust your graphics settings to something more appropriate.
-(Edit menu &gt; Preferences &gt; Graphics).
+This is often the case with new hardware we haven&apos;t had a chance to test.  Emerald will most likely run properly, but you may need to adjust your graphics settings to something more appropriate.
+    (Edit menu &gt; Preferences &gt; Graphics).
     <form name="form">
       <ignore name="ignore"
        text="When detecting an unknown graphics card"/>
@@ -2442,7 +2498,7 @@ Replace texture [TEXTURE_NUM] with a 24-bit 1024x1024 or smaller image then clic
    name="InvalidTerrainSize"
    type="alertmodal">
 Couldn&apos;t set region textures:
-    Terrain texture [TEXTURE_NUM] is too large at [TEXTURE_SIZE_X]x[TEXTURE_SIZE_Y].
+Terrain texture [TEXTURE_NUM] is too large at [TEXTURE_SIZE_X]x[TEXTURE_SIZE_Y].
 
     Replace texture [TEXTURE_NUM] with a 24-bit 1024x1024 or smaller image then click &quot;Apply&quot; again.
   </notification>
@@ -3188,24 +3244,6 @@ Kick [EVIL_USER] from this estate?
 
   <notification
    icon="alertmodal.tga"
-   name="EmeraldIRCInfo"
-   type="alert">
-IRC Profile -- [NICK]
-Nick:       [NICK]
-User:       [USER]
-Host:       [HOST]
-Real Name:  [REALNAME]
-Channels:   [CHANNELS]
-Servers:    [SERVERS]
-Idle Time:  [IDLE]
-    <usetemplate
-     name="okcancelbuttons"
-     notext="Close"
-     yestext="Private IM"/>
-  </notification>
-
-  <notification
-   icon="alertmodal.tga"
    name="EstateChangeCovenant"
    type="alertmodal">
 Are you sure you want to change the Estate Covenant?
@@ -3892,7 +3930,7 @@ Default: off
    label="Voice Version Mismatch"
    name="VoiceVersionMismatch"
    type="alertmodal">
-This version of Second Life is not compatible with the Voice Chat feature in this region. In order for Voice Chat to function correctly you will need to update Second Life.
+    This version of Emerald is not compatible with the Voice Chat feature in this region. In order for Voice Chat to function correctly you will need to update the Emerald Viewer.
   </notification>
 
   <notification
@@ -4150,7 +4188,7 @@ Visit the Second Life Support Web site?
    type="alertmodal">
 Are you sure you want to quit?
     <usetemplate
-     ignoretext="When Quitting Second Life."
+     ignoretext="When Quitting Emerald."
      name="okcancelignore"
      notext="Continue"
      yestext="Quit"/>
@@ -5376,7 +5414,25 @@ Deactivated gestures with same trigger:
 Apple&apos;s QuickTime software does not appear to be installed on your system.
 If you want to view streaming media on parcels that support it you should go to the QuickTime site (http://www.apple.com/quicktime) and install the QuickTime Player.
   </notification>
+  <notification
+   icon="notify.tga"
+   name="NoPlugin"
+   type="notify">
+    No Media Plugin was found to handle the "[MIME_TYPE]" mime type.  Media of this type will be unavailable.
+  </notification>
+  <notification
+   icon="alertmodal.tga"
+   name="MediaPluginFailed"
+   type="alertmodal">
+    The following Media Plugin has failed:
+    [PLUGIN]
 
+Please re-install the plugin or contact the vendor if you continue to experience problems.
+    <form name="form">
+      <ignore name="ignore"
+       text="When a Media Plugin fails"/>
+    </form>
+  </notification>
   <notification
    icon="notify.tga"
    name="OwnedObjectsReturned"
@@ -5952,7 +6008,7 @@ Failed to find [TYPE] named [DESC] in database.
    icon="notify.tga"
    name="InvalidWearable"
    type="notify">
-    The item you are trying to wear uses a feature that your viewer can&apos;t read. Please upgrade your version of Second Life to wear this item.
+    The item you are trying to wear uses a feature that your viewer can&apos;t read. Please upgrade your version of Emerald to wear this item.
   </notification>
 
   <notification
@@ -6042,7 +6098,7 @@ Grant this request?
     [FIRST] [LAST]&apos;s &apos;[TITLE]&apos;
     [MESSAGE]
     <form name="form">
-      <input name="message" type="text">
+      <input name="message">
         [DEFAULT]
       </input>
       <button
@@ -6171,9 +6227,9 @@ Flexible objects may not be physical and must be phantom until the flexible chec
    icon="notify.tga"
    name="FirstDebugMenus"
    type="notify">
-You have enabled the Advanced menu.
-This menu contains features useful for developers debugging Second Life.
-To toggle this menu on Windows press Ctrl-Alt-D. On Mac press Cmd-Opt-Shift-D.
+    You have enabled the Advanced menu.
+    This menu contains features useful for developers debugging Emerald.
+    To toggle this menu on Windows press Ctrl-Alt-D. On Mac press Cmd-Opt-Shift-D.
   </notification>
 
   <notification
@@ -6489,8 +6545,7 @@ The region you have entered is running a different simulator version. Click this
    type="notifytip">
 The URL you clicked cannot be opened from this web browser.
   </notification>
-
-  <notification
+<notification
    icon="notify.tga"
    name="QueryClientTags"
    type="notify">
@@ -6507,7 +6562,8 @@ The URL you clicked cannot be opened from this web browser.
        text="No"/>
     </form>
   </notification>
-   <notification
+
+<notification
    icon="notify.tga"
    name="QueryEmeraldBuildBridge"
    type="alertmodal">
@@ -6525,7 +6581,8 @@ The URL you clicked cannot be opened from this web browser.
        text="No"/>
     </form>
   </notification>
-  <notification
+
+ <notification
    icon="notify.tga"
    name="QueryEmeraldOTR"
    type="alertmodal">
@@ -6544,7 +6601,8 @@ The URL you clicked cannot be opened from this web browser.
        text="No"/>
     </form>
   </notification>
-  <notification
+
+<notification
    icon="notify.tga"
    name="QueryEmeraldNCreatorExport"
    type="alertmodal">
@@ -6557,7 +6615,8 @@ The URL you clicked cannot be opened from this web browser.
        text="Ok"/>
     </form>
   </notification>
-  <notification
+
+<notification
    icon="notify.tga"
    name="EmeraldStealth"
    type="alertmodal">
@@ -6586,7 +6645,8 @@ The URL you clicked cannot be opened from this web browser.
        text="No"/>
     </form>
   </notification>
-  <notification
+
+<notification
    icon="notify.tga"
    name="EmeraldNoStealth"
    type="alertmodal">
@@ -6602,7 +6662,8 @@ The URL you clicked cannot be opened from this web browser.
        text="No"/>
     </form>
   </notification>
-  <notification
+
+<notification
    icon="notify.tga"
    name="EmeraldRadarChat"
    type="alertmodal">
@@ -6618,18 +6679,84 @@ The URL you clicked cannot be opened from this web browser.
        text="No"/>
     </form>
   </notification>
-  <notification
+
+<notification
 	   icon="notifytip.tga"
 	   name="BlockedDialogs"
 	   type="notifytip">
 	Blocked dialogs from [FIRST] [LAST]'s object ([KEY])
   </notification>
-  
-  <notification
+
+<notification
 	   icon="notifytip.tga"
 	   name="BlockedCards"
 	   type="notifytip">
 	Blocked calling cards from [FIRST] [LAST]
+  </notification>
+
+  <notification
+   icon="notify.tga"
+   name="QueryBridgeCleanup"
+   type="notify">
+    Emerald has noticed that you have [BRIDGES] in your inventory. Emerald does not need older bridges. If you do not want these for something else, you should click Yes to have them automatically moved to the trash folder for you. If you have do not want this done, you should click No, and you won't be bothered about it again.
+    <form name="form">
+      <button
+       index="0"
+       name="Yes"
+       text="Yes"/>
+      <button
+       index="1"
+       name="No"
+       text="No"/>
+    </form>
+  </notification>
+  
+  <notification
+   icon="notify.tga"
+   name="EmeraldReqInfo"
+   type="notify">
+    [NAME] is requesting that you send them information about your Emerald setup.
+    (This is the same information that can be found by going to Help->About Emerald)    
+    [REASON]
+    Would you like to send them this information?
+    <form name="form">
+      <button
+       index="0"
+       name="Yes"
+       text="Yes"/>
+      <button
+       index="1"
+       name="No"
+       text="No"/>
+    </form>
+  </notification>
+
+  <notification
+   icon="notify.tga"
+   name="NotifyAOMove"
+   type="notify">
+     You used the Client AO in a older version of Emerald. In order to improve performance, Emerald now only searches the #Emerald folder for your AO. Your currently set AO will be moved into that folder.
+    <form name="form">
+      <button
+       index="0"
+       name="OK"
+       text="OK"/>
+    </form>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="BlockLoginInfo"
+   type="alertmodal">
+    This version of the Emerald Viewer is blocked from logging in.
+    This is probably for a good reason; for more information you should check the site at
+    http://modularsystems.sl/
+    <form name="form">
+      <button
+       index="0"
+       name="OK"
+       text="OK"/>
+    </form>
   </notification>
   
   <global name="UnsupportedCPU">
@@ -6637,9 +6764,9 @@ The URL you clicked cannot be opened from this web browser.
   </global>
 
   <global name="UnsupportedGLRequirements">
-You do not appear to have the proper hardware requirements for Second Life. Second Life requires an OpenGL graphics card that has multitexture support. If this is the case, you may want to make sure that you have the latest drivers for your graphics card, and service packs and patches for your operating system.
+    You do not appear to have the proper hardware requirements for the Emerald Viewer. Emerald requires an OpenGL graphics card that has multitexture support. If this is the case, you may want to make sure that you have the latest drivers for your graphics card, and service packs and patches for your operating system.
 
-If you continue to have problems, please visit: http://www.secondlife.com/support
+    If you continue to have problems, please visit: http://www.modularsystems.sl/
   </global>
 
   <global name="UnsupportedCPUAmount">

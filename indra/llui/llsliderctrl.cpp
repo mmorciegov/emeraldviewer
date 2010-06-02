@@ -34,8 +34,6 @@
 
 #include "llsliderctrl.h"
 
-#include "audioengine.h"
-
 #include "llmath.h"
 #include "llfontgl.h"
 #include "llgl.h"
@@ -53,7 +51,8 @@
 const U32 MAX_STRING_LENGTH = 10;
 
 static LLRegisterWidget<LLSliderCtrl> r("slider");
- 
+
+
 LLSliderCtrl::LLSliderCtrl(const std::string& name, const LLRect& rect, 
 						   const std::string& label,
 						   const LLFontGL* font,
@@ -77,15 +76,16 @@ LLSliderCtrl::LLSliderCtrl(const std::string& name, const LLRect& rect,
 	  mValue( initial_value ),
 	  mEditor( NULL ),
 	  mTextBox( NULL ),
-	  //mTextEnabledColor( LLUI::sColorsGroup->getColor( "LabelTextColor" ) ),
-	  //mTextDisabledColor( LLUI::sColorsGroup->getColor( "LabelDisabledColor" ) ),
+	  //mTextEnabledColor( sLabelTextColor ),
+	  //mTextDisabledColor( sLabelDisabledColor ),
 	  mSliderMouseUpCallback( NULL ),
 	  mSliderMouseDownCallback( NULL )
 {
-	static LLColor4 defaultTextEnabledColor = LLUI::sColorsGroup->getColor( "LabelTextColor" );
-	static LLColor4 defaultTextDisabledColor = LLUI::sColorsGroup->getColor( "LabelDisabledColor" );
-	mTextEnabledColor = (defaultTextEnabledColor);
-	mTextDisabledColor = (defaultTextDisabledColor);
+	static LLColor4 sLabelTextColor = LLUI::sColorsGroup->getColor( "LabelTextColor" );
+	static LLColor4 sLabelDisabledColor = LLUI::sColorsGroup->getColor( "LabelDisabledColor" );
+	mTextEnabledColor = sLabelTextColor;
+	mTextDisabledColor = sLabelDisabledColor;
+
 	S32 top = getRect().getHeight();
 	S32 bottom = 0;
 	S32 left = 0;
@@ -422,6 +422,8 @@ void LLSliderCtrl::reportInvalidData()
 LLXMLNodePtr LLSliderCtrl::getXML(bool save_children) const
 {
 	LLXMLNodePtr node = LLUICtrl::getXML();
+
+	node->setName(LL_SLIDER_CTRL_TAG);
 
 	node->createChild("show_text", TRUE)->setBoolValue(mShowText);
 

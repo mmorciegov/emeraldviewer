@@ -103,7 +103,6 @@ public:
 	static BOOL validateEaseIn(LLUICtrl*, void*);
 	static BOOL validateEaseOut(LLUICtrl*, void*);
 	static void	onBtnOK(void*);
-	static void	onBtnCancel(void*);
 	static void onSaveComplete(const LLUUID& asset_uuid,
 									   LLAssetType::EType type,
 									   void* user_data,
@@ -112,7 +111,7 @@ private:
 	void setAnimCallbacks() ;
 	
 protected:
-	//void			draw();
+	void			draw();
 	void			resetMotion();
 
 	LLPreviewAnimation* mAnimPreview;

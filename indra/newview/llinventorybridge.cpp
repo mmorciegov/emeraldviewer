@@ -53,7 +53,6 @@
 #include "llfloaterchat.h"
 #include "llfloatercustomize.h"
 #include "llfloaterproperties.h"
-#include "llfloatertools.h"
 #include "llfloaterworldmap.h"
 #include "llfocusmgr.h"
 #include "llfolderview.h"
@@ -73,14 +72,10 @@
 #include "llresmgr.h"
 #include "llscrollcontainer.h"
 #include "llimview.h"
-#include "lltoolcomp.h"
 #include "lltooldraganddrop.h"
-#include "lltoolmgr.h"
 #include "llviewerimagelist.h"
 #include "llviewerinventory.h"
-#include "llviewerjoystick.h"
 #include "llviewerobjectlist.h"
-#include "llviewerparcelmgr.h"
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
 #include "llwearable.h"
@@ -91,8 +86,6 @@
 #include "lluictrlfactory.h"
 #include "llselectmgr.h"
 #include "llfloateropenobject.h"
-
-#include "exporttracker.h"
 
 // [RLVa:KB]
 #include "rlvhandler.h"
@@ -155,6 +148,8 @@ std::string ICON_NAME[ICON_NAME_COUNT] =
 	"inv_item_undershirt.tga",
 	"inv_item_underpants.tga",
 	"inv_item_skirt.tga",
+	"inv_item_alpha.tga",
+	"inv_item_tattoo.tga",
 
 	"inv_item_animation.tga",
 	"inv_item_gesture.tga",
@@ -456,14 +451,6 @@ void LLInvFVBridge::getClipboardEntries(bool show_asset_id, std::vector<std::str
 			  || (flags & FIRST_SELECTED_ITEM) == 0)
 		{
 			disabled_items.push_back(std::string("Copy Asset UUID"));
-		}
-	}
-	if (show_asset_id)
-	{
-		items.push_back(std::string("Export"));
-		if ( (! ( isItemPermissive() || gAgent.isGodlike() ) ))
-		{
-			disabled_items.push_back(std::string("Export"));
 		}
 	}
 
@@ -768,10 +755,9 @@ LLInvFVBridge* LLInvFVBridge::createBridge(LLAssetType::EType asset_type,
 // +=================================================+
 // |        LLItemBridge                             |
 // +=================================================+
-//void cmdline_printchat(std::string message);
+
 void LLItemBridge::performAction(LLFolderView* folder, LLInventoryModel* model, std::string action)
 {
-	//cmdline_printchat("item="+action);
 	if ("open" == action)
 	{
 		openItem();
@@ -946,10 +932,9 @@ std::string LLItemBridge::getLabelSuffix() const
 	LLInventoryItem* item = getItem();
 	if(item) 
 	{
-		LLPermissions perm = item->getPermissions();
 		// it's a bit confusing to put nocopy/nomod/etc on calling cards.
-		if(/*LLAssetType::AT_CALLINGCARD != item->getType()
-		   && */perm.getOwner() == gAgent.getID())
+		if(LLAssetType::AT_CALLINGCARD != item->getType()
+		   && item->getPermissions().getOwner() == gAgent.getID())
 		{
 			BOOL copy = item->getPermissions().allowCopyBy(gAgent.getID());
 			BOOL mod = item->getPermissions().allowModifyBy(gAgent.getID());
@@ -960,7 +945,6 @@ std::string LLItemBridge::getLabelSuffix() const
 			const char* NO_COPY = " (no copy)";
 			const char* NO_MOD = " (no modify)";
 			const char* NO_XFER = " (no transfer)";
-			const char* TEMPO = " (temporary)";
 			const char* scopy;
 			if(copy) scopy = EMPTY;
 			else scopy = NO_COPY;
@@ -970,10 +954,7 @@ std::string LLItemBridge::getLabelSuffix() const
 			const char* sxfer;
 			if(xfer) sxfer = EMPTY;
 			else sxfer = NO_XFER;
-			const char* stempo;
-			if(perm.getGroup() == gAgent.getID())stempo = TEMPO;
-			else stempo = EMPTY;
-			suffix = llformat("%s%s%s%s",scopy,smod,sxfer,stempo);
+			suffix = llformat("%s%s%s",scopy,smod,sxfer);
 		}
 	}
 	return suffix;
@@ -1055,6 +1036,19 @@ BOOL LLItemBridge::isItemCopyable() const
 	LLViewerInventoryItem* item = getItem();
 	if (item)
 	{
+		// can't copy worn objects. DEV-15183
+		LLVOAvatar *avatarp = gAgent.getAvatarObject();
+		if( !avatarp )
+		{
+			return FALSE;
+		}
+
+		if( avatarp->isWearingAttachment( mUUID ) )
+		{
+			return FALSE;
+		}
+			
+
 		return (item->getPermissions().allowCopyBy(gAgent.getID()));
 	}
 	return FALSE;
@@ -2192,6 +2186,16 @@ void LLFolderBridge::createNewUnderpants(void* user_data)
 	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_UNDERPANTS);
 }
 
+void LLFolderBridge::createNewAlpha(void* user_data)
+{
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_ALPHA);
+}
+
+void LLFolderBridge::createNewTattoo(void* user_data)
+{
+	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_TATTOO);
+}
+
 void LLFolderBridge::createNewShape(void* user_data)
 {
 	LLFolderBridge::createWearable((LLFolderBridge*)user_data, WT_SHAPE);
@@ -2675,7 +2679,7 @@ void LLLandmarkBridge::performAction(LLFolderView* folder, LLInventoryModel* mod
 			// because you'll probably arrive at a telehub instead
 			if( gFloaterWorldMap )
 			{
-				gFloaterWorldMap->trackLandmark(item->getUUID());  // remember this must be the item UUID, not the asset UUID
+				gFloaterWorldMap->trackLandmark( item->getAssetUUID() );
 			}
 		}
 	}
@@ -2723,7 +2727,6 @@ static bool open_landmark_callback(const LLSD& notification, const LLSD& respons
 	S32 option = LLNotification::getSelectedOption(notification, response);
 
 	LLUUID asset_id = notification["payload"]["asset_id"].asUUID();
-	LLUUID item_id = notification["payload"]["item_id"].asUUID();
 	if (option == 0)
 	{
 		// HACK: This is to demonstrate teleport on double click for landmarks
@@ -2733,7 +2736,7 @@ static bool open_landmark_callback(const LLSD& notification, const LLSD& respons
 		// because you'll probably arrive at a telehub instead
 		if( gFloaterWorldMap )
 		{
-			gFloaterWorldMap->trackLandmark( item_id ); // remember this is the item UUID not the asset UUID
+			gFloaterWorldMap->trackLandmark( asset_id );
 		}
 	}
 
@@ -2752,7 +2755,6 @@ void LLLandmarkBridge::openItem()
 		// open_landmark(item, std::string("  ") + getPrefix() + item->getName(), FALSE);
 		LLSD payload;
 		payload["asset_id"] = item->getAssetUUID();
-		payload["item_id"] = item->getUUID();
 		LLNotifications::instance().add("TeleportFromLandmark", LLSD(), payload);
 	}
 }
@@ -3381,55 +3383,6 @@ void LLObjectBridge::performAction(LLFolderView* folder, LLInventoryModel* model
 			llwarns << "object not found - ignoring" << llendl;
 		}
 	}
-	else if ("edit" == action)
-	{
-		if (gRlvHandler.hasBehaviour(RLV_BHVR_EDIT))
-			return;
-		LLVOAvatar* avatarp = gAgent.getAvatarObject();
-		if (!avatarp)
-			return;
-		LLViewerObject* objectp = avatarp->getWornAttachment(mUUID);
-		if (!objectp)
-			return;
-
-		// [Selective copy/paste from LLObjectEdit::handleEvent()]
-		LLViewerParcelMgr::getInstance()->deselectLand();
-		LLSelectMgr::getInstance()->deselectAll();
-
-		if (gAgent.getFocusOnAvatar() && !LLToolMgr::getInstance()->inEdit())
-		{
-			if (objectp->isHUDAttachment() || !gSavedSettings.getBOOL("EditCameraMovement"))
-			{
-				// always freeze camera in space, even if camera doesn't move
-				// so, for example, follow cam scripts can't affect you when in build mode
-				gAgent.setFocusGlobal(gAgent.calcFocusPositionTargetGlobal(), LLUUID::null);
-				gAgent.setFocusOnAvatar(FALSE, ANIMATE);
-			}
-			else
-			{
-				gAgent.setFocusOnAvatar(FALSE, ANIMATE);
-
-				// zoom in on object center instead of where we clicked, as we need to see the manipulator handles
-				gAgent.setFocusGlobal(objectp->getPositionGlobal(), objectp->getID());
-				gAgent.cameraZoomIn(0.666f);
-				gAgent.cameraOrbitOver( 30.f * DEG_TO_RAD );
-				gViewerWindow->moveCursorToCenter();
-			}
-		}
-
-		gFloaterTools->open();
-	
-		LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
-		gFloaterTools->setEditTool( LLToolCompTranslate::getInstance() );
-
-		LLViewerJoystick::getInstance()->moveObjects(true);
-		LLViewerJoystick::getInstance()->setNeedsReset(true);
-
-		LLSelectMgr::getInstance()->selectObjectAndFamily(objectp);
-
-		// Could be first use
-		LLFirstUse::useBuild();
-	}
 	else LLItemBridge::performAction(folder, model, action);
 }
 
@@ -3582,15 +3535,9 @@ void LLObjectBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 				return;
 			}
 			
-			items.push_back(std::string("Attach Separator"));
 			if( avatarp->isWearingAttachment( mUUID ) )
 			{
 				items.push_back(std::string("Detach From Yourself"));
-				items.push_back(std::string("Attachment Edit"));
-				if ( ( (flags & FIRST_SELECTED_ITEM) == 0) || (gRlvHandler.hasBehaviour(RLV_BHVR_EDIT)) )
-				{
-					disabled_items.push_back(std::string("Attachment Edit"));
-				}
 
 // [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
 				if ( (rlv_handler_t::isEnabled()) && 
@@ -3603,11 +3550,12 @@ void LLObjectBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 			else
 			if( !isInTrash() )
 			{
+				items.push_back(std::string("Attach Separator"));
 				items.push_back(std::string("Object Wear"));
 				items.push_back(std::string("Attach To"));
 				items.push_back(std::string("Attach To HUD"));
 				// commented out for DEV-32347
-				items.push_back(std::string("Restore to Last Position"));
+				//items.push_back(std::string("Restore to Last Position"));
 
 // [RLVa:KB] - Version: 1.23.4 | Checked: 2009-10-10 (RLVa-1.0.5a) | Modified: RLVa-1.0.5a
 				if ( (rlv_handler_t::isEnabled()) && (!RlvSettings::getEnableWear()) && (gRlvHandler.hasLockedAttachment(RLV_LOCK_ANY)) )
@@ -3717,19 +3665,6 @@ std::string LLLSLTextBridge::sPrefix("Script: ");
 LLUIImagePtr LLLSLTextBridge::getIcon() const
 {
 	return get_item_icon(LLAssetType::AT_SCRIPT, LLInventoryType::IT_LSL, 0, FALSE);
-}
-
-void LLLSLTextBridge::performAction(LLFolderView* folder, LLInventoryModel* model, std::string action)
-{
-	//cmdline_printchat(action);
-	if ("export" == action)
-	{
-		//cmdline_printchat("export?");
-		//lol
-		LLViewerInventoryItem* item = getItem();
-		JCExportTracker::mirror(item);
-	}
-	else LLItemBridge::performAction(folder, model, action);
 }
 
 void LLLSLTextBridge::openItem()
@@ -3896,7 +3831,7 @@ protected:
 		}
 		else
 		{
-			llwarns << "Dropping unhandled LLWearAttachments" << llendl;
+			llwarns << "Dropping unhandled LLWearAttachmentsCallback" << llendl;
 		}
 	}
 private:
@@ -4289,7 +4224,6 @@ void wear_inventory_category_on_avatar_step2( BOOL proceed, void* userdata )
 		if( obj_count > 0 )
 		{
 			// We've found some attachements.  Add these.
-
 			wear_attachments_on_avatar(obj_item_array, !wear_info->mAppend);
 		}
 	}
@@ -4478,7 +4412,7 @@ void wear_attachments_on_avatar(const LLInventoryModel::item_array_t& items, BOO
 			msg->nextBlockFast(_PREHASH_HeaderData);
 			msg->addUUIDFast(_PREHASH_CompoundMsgID, compound_msg_id );
 			msg->addU8Fast(_PREHASH_TotalObjects, count );
-			//msg->addBOOLFast(_PREHASH_FirstDetachAll, remove );
+//			msg->addBOOLFast(_PREHASH_FirstDetachAll, !wear_info->mAppend );
 // [RLVa:KB] - Checked: 2009-10-10 (RLVa-1.0.5a) | Added: RLVa-1.0.5a
 			// This really should just *always* be FALSE since TRUE can result in loss of the current asset state
 			msg->addBOOLFast(_PREHASH_FirstDetachAll, 
@@ -4673,19 +4607,7 @@ BOOL LLWearableBridge::isItemRemovable()
 	if(gAgent.isWearingItem(mUUID)) return FALSE;
 	return LLInvFVBridge::isItemRemovable();
 }
-//k, all uploadable asset types do not use this characteristic; therefore, we can use it to show temporaryness and not interfere cuz we're awesome like that
-LLFontGL::StyleFlags LLItemBridge::getLabelStyle() const
-{
-	LLPermissions perm = getItem()->getPermissions();
-	if(perm.getGroup() == gAgent.getID())
-	{
-		return LLFontGL::ITALIC;
-	}
-	else
-	{
-		return LLFontGL::NORMAL;
-	}
-}
+
 LLFontGL::StyleFlags LLWearableBridge::getLabelStyle() const
 { 
 	if( gAgent.isWearingItem( mUUID ) )
@@ -4758,8 +4680,6 @@ void LLWearableBridge::openItem()
 		{
 			wearOnAvatar();
 		}
-		else
-			performAction(NULL, NULL, "take_off");
 	}
 	else
 	{
@@ -5023,11 +4943,8 @@ void LLWearableBridge::onRemoveFromAvatarArrived(LLWearable* wearable,
 		{
 			EWearableType type = wearable->getType();
 	
-			//if( !(type==WT_SHAPE || type==WT_SKIN || type==WT_HAIR ) ) //&&
+			if( !(type==WT_SHAPE || type==WT_SKIN || type==WT_HAIR || type==WT_EYES) ) //&&
 				//!((!gAgent.isTeen()) && ( type==WT_UNDERPANTS || type==WT_UNDERSHIRT )) )
-// [RLVa:KB] - Checked: 2009-07-08 (RLVa-1.0.0e) | Added: RLVa-0.2.2a | SL big fix
-			if( !(type==WT_SHAPE || type==WT_SKIN || type==WT_HAIR || type==WT_EYES) )
-// [/RLVa:KB]
 			{
 				gAgent.removeWearable( type );
 			}

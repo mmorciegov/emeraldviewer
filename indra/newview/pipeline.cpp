@@ -35,7 +35,7 @@
 #include "pipeline.h"
 
 // library includes
-#include "audioengine.h" // For MAX_BUFFERS for debugging.
+#include "llaudioengine.h" // For MAX_BUFFERS for debugging.
 #include "imageids.h"
 #include "llerror.h"
 #include "llviewercontrol.h"
@@ -79,7 +79,6 @@
 #include "llviewerimagelist.h"
 #include "llviewerobject.h"
 #include "llviewerobjectlist.h"
-#include "llviewerpartsource.h"
 #include "llviewerparcelmgr.h"
 #include "llviewerregion.h" // for audio debugging.
 #include "llviewerwindow.h" // For getSpinAxis
@@ -94,7 +93,6 @@
 #include "llvopartgroup.h"
 #include "llworld.h"
 #include "llcubemap.h"
-#include "floateravatarlist.h"
 #include "lldebugmessagebox.h"
 #include "llviewershadermgr.h"
 #include "llviewerjoystick.h"
@@ -258,12 +256,6 @@ BOOL	LLPipeline::sRenderAttachedLights = TRUE;
 BOOL	LLPipeline::sRenderAttachedParticles = TRUE;
 BOOL	LLPipeline::sRenderDeferred = FALSE;
 S32		LLPipeline::sVisibleLightCount = 0;
-BOOL	LLPipeline::sRenderDelayCreation = FALSE;
-BOOL	LLPipeline::sRenderAnimateRes = FALSE;
-BOOL	LLPipeline::sRenderUnloadedAvatar = FALSE;
-U32		LLPipeline::sRenderMaxNodeSize = 8192;
-U32		LLPipeline::sRenderMaxVBOSize = 512;
-BOOL	LLPipeline::sShowParcelOwners = FALSE;
 
 static LLCullResult* sCull = NULL;
 
@@ -335,12 +327,6 @@ void LLPipeline::init()
 	sRenderBump = gSavedSettings.getBOOL("RenderObjectBump");
 	sRenderAttachedLights = gSavedSettings.getBOOL("RenderAttachedLights");
 	sRenderAttachedParticles = gSavedSettings.getBOOL("RenderAttachedParticles");
-	sRenderAnimateRes = gSavedSettings.getBOOL("RenderAnimateRes");
-	sRenderDelayCreation = gSavedSettings.getBOOL("RenderDelayCreation");
-	sRenderUnloadedAvatar = gSavedSettings.getBOOL("RenderUnloadedAvatar");
-	sRenderMaxNodeSize = (U32)gSavedSettings.getS32("RenderMaxNodeSize");
-	sRenderMaxVBOSize = (U32)gSavedSettings.getS32("RenderMaxVBOSize");
-	sShowParcelOwners = gSavedSettings.getBOOL("ShowParcelOwners");
 
 	mInitialized = TRUE;
 	
@@ -770,7 +756,6 @@ public:
 
 	LLOctreeDirtyTexture(const std::set<LLViewerImage*>& textures) : mTextures(textures) { }
 
-	using LLTreeTraveler<LLDrawable>::visit;
 	virtual void visit(const LLOctreeNode<LLDrawable>* node)
 	{
 		LLSpatialGroup* group = (LLSpatialGroup*) node->getListener(0);
@@ -1033,7 +1018,7 @@ U32 LLPipeline::addObject(LLViewerObject *vobj)
 	{
 		return 0;
 	}
-
+	static BOOL sRenderDelayCreation = gSavedSettings.getBOOL("RenderDelayCreation");
 	if (sRenderDelayCreation)
 	{
 		mCreateQ.push_back(vobj);
@@ -1097,6 +1082,8 @@ void LLPipeline::createObject(LLViewerObject* vobj)
 
 	markRebuild(drawablep, LLDrawable::REBUILD_ALL, TRUE);
 
+	static BOOL sRenderAnimateRes = gSavedSettings.getBOOL("RenderAnimateRes");
+
 	if (drawablep->getVOVolume() && sRenderAnimateRes)
 	{
 		// fun animated res
@@ -1136,7 +1123,8 @@ void LLPipeline::resetFrameStats()
 //external functions for asynchronous updating
 void LLPipeline::updateMoveDampedAsync(LLDrawable* drawablep)
 {
-	if (LLAppViewer::sFreezeTime)
+	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	if ((*sFreezeTime))
 	{
 		return;
 	}
@@ -1166,7 +1154,8 @@ void LLPipeline::updateMoveDampedAsync(LLDrawable* drawablep)
 
 void LLPipeline::updateMoveNormalAsync(LLDrawable* drawablep)
 {
-	if (LLAppViewer::sFreezeTime)
+	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	if ((*sFreezeTime))
 	{
 		return;
 	}
@@ -1219,7 +1208,8 @@ void LLPipeline::updateMove()
 	LLFastTimer t(LLFastTimer::FTM_UPDATE_MOVE);
 	LLMemType mt(LLMemType::MTYPE_PIPELINE);
 
-	if (LLAppViewer::sFreezeTime)
+	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
+	if ((*sFreezeTime))
 	{
 		return;
 	}
@@ -1291,6 +1281,7 @@ F32 LLPipeline::calcPixelArea(LLVector3 center, LLVector3 size, LLCamera &camera
 	F32 dist = lookAt.length();
 
 	//ramp down distance for nearby objects
+	//shrink dist by dist/16.
 	if (dist < 16.f)
 	{
 		dist /= 16.f;
@@ -1435,20 +1426,15 @@ void LLPipeline::updateCull(LLCamera& camera, LLCullResult& result, S32 water_cl
 
 	camera.disableUserClipPlane();
 
-	if (gSky.mVOSkyp.notNull() && gSky.mVOSkyp->mDrawable.notNull())
+	// Render non-windlight sky.
+	if (hasRenderType(LLPipeline::RENDER_TYPE_SKY) &&
+	    gSky.mVOSkyp.notNull() &&
+	    gSky.mVOSkyp->mDrawable.notNull())
 	{
-		// Hack for sky - always visible.
-		if (hasRenderType(LLPipeline::RENDER_TYPE_SKY)) 
-		{
-			gSky.mVOSkyp->mDrawable->setVisible(camera);
-			sCull->pushDrawable(gSky.mVOSkyp->mDrawable);
-			gSky.updateCull();
-			stop_glerror();
-		}
-	}
-	else
-	{
-		llinfos << "No sky drawable!" << llendl;
+		gSky.mVOSkyp->mDrawable->setVisible(camera);
+		sCull->pushDrawable(gSky.mVOSkyp->mDrawable);
+		gSky.updateCull();
+		stop_glerror();
 	}
 
 	if (hasRenderType(LLPipeline::RENDER_TYPE_GROUND) && 
@@ -1856,11 +1842,12 @@ void LLPipeline::markRebuild(LLDrawable *drawablep, LLDrawable::EDrawableFlags f
 void LLPipeline::stateSort(LLCamera& camera, LLCullResult &result)
 {
 	const U32 face_mask = (1 << LLPipeline::RENDER_TYPE_AVATAR) |
-						  (1 << LLPipeline::RENDER_TYPE_GROUND) |
-						  (1 << LLPipeline::RENDER_TYPE_TERRAIN) |
-						  (1 << LLPipeline::RENDER_TYPE_TREE) |
-						  (1 << LLPipeline::RENDER_TYPE_SKY) |
-						  (1 << LLPipeline::RENDER_TYPE_WATER);
+	                      (1 << LLPipeline::RENDER_TYPE_GROUND) |
+	                      (1 << LLPipeline::RENDER_TYPE_TERRAIN) |
+	                      (1 << LLPipeline::RENDER_TYPE_TREE) |
+	                      (1 << LLPipeline::RENDER_TYPE_SKY) |
+	                      (1 << LLPipeline::RENDER_TYPE_VOIDWATER) |
+	                      (1 << LLPipeline::RENDER_TYPE_WATER);
 
 	if (mRenderTypeMask & face_mask)
 	{
@@ -2203,30 +2190,6 @@ void renderSoundHighlights(LLDrawable* drawablep)
 	}
 }
 
-/**
- * @brief Add particle sources to avatar list
- * This tells the avatar list floater who is emitting particles
- */
-void addParticleSourcesToList(LLDrawable *drawablep)
-{
-	if ( LLFloaterAvatarList::getInstance() )
-	{
-		LLViewerObject *vobj = drawablep->getVObj();
-		if (vobj && vobj->isParticleSource())
-		{
-			LLUUID id = vobj->mPartSourcep->getOwnerUUID();
-
-
-			LLAvatarListEntry *ent = LLFloaterAvatarList::getInstance()->getAvatarEntry(id);
-			if ( NULL != ent )
-			{
-				if ( ent->getActivity() != ACTIVITY_TYPING)
-				ent->setActivity(ACTIVITY_PARTICLES);
-			}
-		}
-	}
-}
-
 void LLPipeline::postSort(LLCamera& camera)
 {
 	LLMemType mt(LLMemType::MTYPE_PIPELINE);
@@ -2341,8 +2304,6 @@ void LLPipeline::postSort(LLCamera& camera)
 		std::sort(sCull->beginAlphaGroups(), sCull->endAlphaGroups(), LLSpatialGroup::CompareDepthGreater());
 	}
 	
-	forAllVisibleDrawables(addParticleSourcesToList);
-
 	// only render if the flag is set. The flag is only set if we are in edit mode or the toggle is set in the menus
 	if (gSavedSettings.getBOOL("BeaconAlwaysOn") && !sShadowRender)
 	{
@@ -2382,54 +2343,12 @@ void LLPipeline::postSort(LLCamera& camera)
 				LLVector3 pos = gAgent.getPosAgentFromGlobal(pos_global);
 				if (gPipeline.sRenderBeacons)
 				{
-					LLAudioChannel* channel = sourcep->getChannel();
-					bool const is_playing = channel && channel->isPlaying();
-					S32 width = 2;
-					LLColor4 color = LLColor4(0.f, 0.f, 1.f, 0.5f);
-					if (is_playing)
-					{
-					  	llassert(!sourcep->isMuted());
-						F32 gain = sourcep->getGain() * channel->getSecondaryGain();
-						if (gain == 0.f)
-						{
-						  color = LLColor4(1.f, 0.f, 0.f, 0.5f);
-						}
-						else if (gain == 1.f)
-						{
-						  color = LLColor4(0.f, 1.f, 0.f, 0.5f);
-						  width = gSavedSettings.getS32("DebugBeaconLineWidth");
-						}
-						else
-						{
-						  color = LLColor4(1.f, 1.f, 0.f, 0.5f);
-						  width = 1 + gain * (gSavedSettings.getS32("DebugBeaconLineWidth") - 1);
-						}
-					}
-					else if (sourcep->isMuted())
-						color = LLColor4(0.f, 1.f, 1.f, 0.5f);
-					gObjectList.addDebugBeacon(pos, "", color, LLColor4(1.f, 1.f, 1.f, 0.5f), width);
+					//pos += LLVector3(0.f, 0.f, 0.2f);
+					gObjectList.addDebugBeacon(pos, "", LLColor4(1.f, 1.f, 0.f, 0.5f), LLColor4(1.f, 1.f, 1.f, 0.5f), gSavedSettings.getS32("DebugBeaconLineWidth"));
 				}
 			}
 			// now deal with highlights for all those seeable sound sources
 			forAllVisibleDrawables(renderSoundHighlights);
-		}
-	}
-
-	// Avatar list support
-	if ( LLFloaterAvatarList::getInstance() && gAudiop )
-	{
-		LLAudioEngine::source_map::iterator iter;
-		for (iter = gAudiop->mAllSources.begin(); iter != gAudiop->mAllSources.end(); ++iter)
-		{
-			LLAudioSource *sourcep = iter->second;
-			LLUUID uuid = sourcep->getOwnerID();
-			LLAvatarListEntry *ent = LLFloaterAvatarList::getInstance()->getAvatarEntry(uuid);
-
-			if ( ent )
-			{
-				if ( ent->getActivity() != ACTIVITY_TYPING)
-				ent->setActivity(ACTIVITY_SOUND);
-			}
 		}
 	}
 
@@ -2627,8 +2546,8 @@ void LLPipeline::renderGeom(LLCamera& camera, BOOL forceVBOUpdate)
 	//to guaranttee at least updating one VBO buffer every frame
 	//to walk around the bug caused by ATI card --> DEV-3855
 	//
-	if(forceVBOUpdate)
-		gSky.mVOSkyp->updateDummyVertexBuffer() ;
+	//if(forceVBOUpdate)
+	//	gSky.mVOSkyp->updateDummyVertexBuffer() ;
 
 	gFrameStats.start(LLFrameStats::RENDER_GEOM);
 
@@ -2811,12 +2730,20 @@ void LLPipeline::renderGeom(LLCamera& camera, BOOL forceVBOUpdate)
 
 	LLVertexBuffer::unbind();
 	
-	if (!LLPipeline::sReflectionRender && !LLPipeline::sRenderDeferred && gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
+	if (!LLPipeline::sReflectionRender && !LLPipeline::sRenderDeferred)
 	{
-		// Render debugging beacons.
-		gObjectList.renderObjectBeacons();
-		LLHUDObject::renderAll();
-		gObjectList.resetObjectBeacons();
+		if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
+		{
+			// Render debugging beacons.
+			gObjectList.renderObjectBeacons();
+			LLHUDObject::renderAll();
+			gObjectList.resetObjectBeacons();
+		}
+		else
+		{
+			// Make sure particle effects disappear
+			LLHUDObject::renderAllForTimer();
+		}
 	}
 
 	LLAppViewer::instance()->pingMainloopTimeout("Pipeline:RenderGeomEnd");
@@ -3040,6 +2967,11 @@ void LLPipeline::renderGeomPostDeferred(LLCamera& camera)
 		gObjectList.renderObjectBeacons();
 		LLHUDObject::renderAll();
 		gObjectList.resetObjectBeacons();
+	}
+	else
+	{
+		// Make sure particle effects disappear
+		LLHUDObject::renderAllForTimer();
 	}
 
 	if (occlude)
@@ -4276,9 +4208,6 @@ void LLPipeline::enableLightsAvatar()
 
 void LLPipeline::enableLightsAvatarEdit(const LLColor4& color)
 {
-	//Danny: Turn off local lights for appearance if they're disabled.
-	if(mLightingDetail < 1)
-		return;
 	U32 mask = 0x2002; // Avatar backlight only, set ambient
 	setupAvatarLights(TRUE);
 	enableLights(mask);
@@ -4511,6 +4440,11 @@ void LLPipeline::toggleRenderType(U32 type)
 {
 	U32 bit = (1<<type);
 	gPipeline.mRenderTypeMask ^= bit;
+	if (type == RENDER_TYPE_WATER)
+	{
+		bit = (1 << RENDER_TYPE_VOIDWATER);
+		gPipeline.mRenderTypeMask ^= bit;
+	}
 }
 
 //static
@@ -4921,9 +4855,6 @@ void LLPipeline::resetVertexBuffers(LLDrawable* drawable)
 void LLPipeline::resetVertexBuffers()
 {
 	sRenderBump = gSavedSettings.getBOOL("RenderObjectBump");
-	//Zwag: Have to typecast these because LL can't figure out that size can't possibly be negative and valid...
-	sRenderMaxNodeSize = (U32)gSavedSettings.getS32("RenderMaxNodeSize");
-	sRenderMaxVBOSize = (U32)gSavedSettings.getS32("RenderMaxVBOSize");
 
 	for (LLWorld::region_list_t::const_iterator iter = LLWorld::getInstance()->getRegionList().begin(); 
 			iter != LLWorld::getInstance()->getRegionList().end(); ++iter)
@@ -5822,17 +5753,18 @@ void LLPipeline::renderDeferredLighting()
 		LLGLDisable stencil(GL_STENCIL_TEST);
 
 		U32 render_mask = mRenderTypeMask;
-		mRenderTypeMask =	mRenderTypeMask & 
-							((1 << LLPipeline::RENDER_TYPE_SKY) |
-							(1 << LLPipeline::RENDER_TYPE_CLOUDS) |
-							(1 << LLPipeline::RENDER_TYPE_WL_SKY) |
-							(1 << LLPipeline::RENDER_TYPE_ALPHA) |
-							(1 << LLPipeline::RENDER_TYPE_AVATAR) |
-							(1 << LLPipeline::RENDER_TYPE_WATER) |
-							(1 << LLPipeline::RENDER_TYPE_FULLBRIGHT) |
-							(1 << LLPipeline::RENDER_TYPE_VOLUME) |
-							(1 << LLPipeline::RENDER_TYPE_GLOW) |
-							(1 << LLPipeline::RENDER_TYPE_BUMP));
+		mRenderTypeMask = mRenderTypeMask &
+		                  ((1 << LLPipeline::RENDER_TYPE_SKY) |
+		                   (1 << LLPipeline::RENDER_TYPE_CLOUDS) |
+		                   (1 << LLPipeline::RENDER_TYPE_WL_SKY) |
+		                   (1 << LLPipeline::RENDER_TYPE_ALPHA) |
+		                   (1 << LLPipeline::RENDER_TYPE_AVATAR) |
+		                   (1 << LLPipeline::RENDER_TYPE_VOIDWATER) |
+		                   (1 << LLPipeline::RENDER_TYPE_WATER) |
+		                   (1 << LLPipeline::RENDER_TYPE_FULLBRIGHT) |
+		                   (1 << LLPipeline::RENDER_TYPE_VOLUME) |
+		                   (1 << LLPipeline::RENDER_TYPE_GLOW) |
+		                   (1 << LLPipeline::RENDER_TYPE_BUMP));
 		
 		renderGeomPostDeferred(*LLViewerCamera::getInstance());
 		mRenderTypeMask = render_mask;
@@ -5988,10 +5920,11 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 
 			if (LLDrawPoolWater::sNeedsDistortionUpdate)
 			{
-				mRenderTypeMask &=	~((1<<LLPipeline::RENDER_TYPE_WATER) |
-									  (1<<LLPipeline::RENDER_TYPE_GROUND) |
-									  (1<<LLPipeline::RENDER_TYPE_SKY) |
-									  (1<<LLPipeline::RENDER_TYPE_CLOUDS));	
+				mRenderTypeMask &= ~((1<<LLPipeline::RENDER_TYPE_WATER) |
+				                     (1<<LLPipeline::RENDER_TYPE_VOIDWATER) |
+				                     (1<<LLPipeline::RENDER_TYPE_GROUND) |
+				                     (1<<LLPipeline::RENDER_TYPE_SKY) |
+				                     (1<<LLPipeline::RENDER_TYPE_CLOUDS));
 
 				if (gSavedSettings.getBOOL("RenderWaterReflections"))
 				{ //mask out selected geometry based on reflection detail
@@ -6033,8 +5966,9 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 		if (last_update)
 		{
 			camera.setFar(camera_in.getFar());
-			mRenderTypeMask = type_mask & (~(1<<LLPipeline::RENDER_TYPE_WATER) |
-											(1<<LLPipeline::RENDER_TYPE_GROUND));	
+			mRenderTypeMask = type_mask & ~((1<<LLPipeline::RENDER_TYPE_WATER) |
+							(1<<LLPipeline::RENDER_TYPE_VOIDWATER) |
+							(1<<LLPipeline::RENDER_TYPE_GROUND));
 			stop_glerror();
 
 			LLPipeline::sUnderWaterRender = LLViewerCamera::getInstance()->cameraUnderWater() ? FALSE : TRUE;

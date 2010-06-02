@@ -89,8 +89,6 @@ public:
 private:
 	void updateCommunicateList();
 
-	static BOOL sShowToolBar;
-
 
 private:
 	BOOL		mInventoryAutoOpen;

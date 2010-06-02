@@ -426,7 +426,7 @@ inline void LLTemplateMessageReader::getIPPort(const char *block, const char *va
 
 inline void LLTemplateMessageReader::getString(const char *block, const char *var, S32 buffer_size, char *s, S32 blocknum )
 {
-	memset(s, 0, buffer_size);
+	s[0] = '\0';
 	getData(block, var, s, 0, blocknum, buffer_size);
 	s[buffer_size - 1] = '\0';
 }
@@ -434,7 +434,7 @@ inline void LLTemplateMessageReader::getString(const char *block, const char *va
 inline void LLTemplateMessageReader::getString(const char *block, const char *var, std::string& outstr, S32 blocknum )
 {
 	char s[MTUBYTES];
-	memset(s, 0, MTUBYTES);
+	s[0] = '\0';
 	getData(block, var, s, 0, blocknum, MTUBYTES);
 	s[MTUBYTES - 1] = '\0';
 	outstr = s;
@@ -676,7 +676,7 @@ BOOL LLTemplateMessageReader::decodeData(const U8* buffer, const LLHost& sender 
 
 						// default to 0s.
 						U32 size = mvci.getSize();
-						std::vector<U8> data(size,0);
+						std::vector<U8> data(size, 0);
 						cur_data_block->addData(mvci.getName(), &(data[0]), 
 												size, mvci.getType());
 					}

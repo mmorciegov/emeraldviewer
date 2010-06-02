@@ -573,7 +573,7 @@ void LLFloaterReporter::showFromMenu(EReportType report_type)
 
 
 // static
-LLFloaterReporter* LLFloaterReporter::showFromObject(const LLUUID& object_id)
+void LLFloaterReporter::showFromObject(const LLUUID& object_id)
 {
 	LLFloaterReporter* f = createNewAbuseReporter();
 	f->center();
@@ -591,8 +591,6 @@ LLFloaterReporter* LLFloaterReporter::showFromObject(const LLUUID& object_id)
 	f->mDeselectOnClose = TRUE;
 
 	f->open();		/* Flawfinder: ignore */
-
-	return f;
 }
 
 
@@ -747,7 +745,7 @@ LLSD LLFloaterReporter::gatherReport()
 		summary << short_platform << " V" << LL_VERSION_MAJOR << "."
 			<< LL_VERSION_MINOR << "."
 			<< LL_VERSION_PATCH << "."
-			<< LL_VERSION_BUILD
+			<< LL_VIEWER_BUILD
 			<< " (" << regionp->getName() << ")"
 			<< "[" << category_name << "] "
 			<< "\"" << childGetValue("summary_edit").asString() << "\"";
@@ -768,7 +766,7 @@ LLSD LLFloaterReporter::gatherReport()
 		details << "V" << LL_VERSION_MAJOR << "."								// client version moved to body of email for abuse reports
 			<< LL_VERSION_MINOR << "."
 			<< LL_VERSION_PATCH << "."
-			<< LL_VERSION_BUILD << std::endl << std::endl;
+			<< LL_VIEWER_BUILD << std::endl << std::endl;
 	}
 	std::string object_name = childGetText("object_name");
 	std::string owner_name = childGetText("owner_name");
@@ -958,8 +956,8 @@ void LLFloaterReporter::takeScreenshot()
 						mResourceDatap->mAssetInfo.mType);
 
 	// store in the image list so it doesn't try to fetch from the server
-	LLPointer<LLViewerImage> image_in_list = new LLViewerImage(mResourceDatap->mAssetInfo.mUuid, TRUE);
-	image_in_list->createGLTexture(0, raw);
+	LLPointer<LLViewerImage> image_in_list = new LLViewerImage(mResourceDatap->mAssetInfo.mUuid);
+	image_in_list->createGLTexture(0, raw, 0, TRUE, LLViewerImageBoostLevel::OTHER);
 	gImageList.addImage(image_in_list); 
 
 	// the texture picker then uses that texture

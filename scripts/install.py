@@ -74,27 +74,15 @@ import tempfile
 import urllib2
 import urlparse
 
-try:
-    # Python 2.6
-    from hashlib import md5
-except ImportError:
-    # Python 2.5 and earlier
-    from md5 import new as md5
-
 from indra.base import llsd
 from indra.util import helpformatter
 
-# *HACK: Necessary for python 2.3. Consider removing this code wart
-# after etch has deployed everywhere. 2008-12-23 Phoenix
+# *HACK: Necessary for python 2.4. Consider replacing this code wart
+# after python >=2.5 has deployed everywhere. 2009-10-05
 try:
-    sorted = sorted
-except NameError:
-    def sorted(in_list):
-        "Return a list which is a sorted copy of in_list."
-        # Copy the source to be more functional and side-effect free.
-        out_list = copy.copy(in_list)
-        out_list.sort()
-        return out_list
+    from hashlib import md5
+except ImportError:
+    from md5 import md5
 
 class InstallFile(object):
     "This is just a handy way to throw around details on a file in memory."
@@ -416,8 +404,7 @@ linux -- specify a package for all arch and compilers on linux
 darwin/universal -- specify a mac os x universal
 windows/i686/vs/2003 -- specify a windows visual studio 2003 package"""
         if name not in self._installables:
-            print "Error: " + name + " not found in install.xml. " \
-                  +" Must add library with --add-installable or " \
+            print "Error: must add library with --add-installable or " \
                   +"--add-installable-metadata before using " \
                   +"--add-installable-package option"
             return False
@@ -648,6 +635,12 @@ windows/i686/vs/2003 -- specify a windows visual studio 2003 package"""
             install_dir,
             cache_dir)
         scp_or_http.cleanup()
+
+        # Verify that requested packages are installed
+        for pkg in installables:
+            if pkg not in self._installed:
+                raise RuntimeError("No '%s' available for '%s'." %
+                                   (pkg, platform))
     
     def do_uninstall(self, installables, install_dir):
         # Do not bother to check license if we're uninstalling.

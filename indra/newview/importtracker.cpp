@@ -402,10 +402,10 @@ public:
 	{
 		S32 file_size;
 		LLAPRFile infile ;
-		infile.open(data->filename, LL_APR_RB, NULL, &file_size);
+		infile.open(data->filename, LL_APR_RB, LLAPRFile::global, &file_size);
 		if (infile.getFileHandle())
 		{
-			cmdline_printchat("got file handle @ postinv");
+			//cmdline_printchat("got file handle @ postinv");
 			LLVFile file(gVFS, data->assetid, data->type, LLVFile::WRITE);
 			file.setMaxSize(file_size);
 			const S32 buf_size = 65536;
@@ -417,7 +417,7 @@ public:
 			switch(data->type)
 			{
 			case LLAssetType::AT_NOTECARD:
-				cmdline_printchat("case notecard @ postinv");
+				//cmdline_printchat("case notecard @ postinv");
 				{
 					/*LLViewerTextEditor* edit = new LLViewerTextEditor("",LLRect(0,0,0,0),S32_MAX,"");
 					S32 size = gVFS->getSize(data->assetid, data->type);
@@ -443,13 +443,13 @@ public:
 					std::string agent_url = gAgent.getRegion()->getCapability("UpdateNotecardAgentInventory");
 					LLSD body;
 					body["item_id"] = inv_item;
-					cmdline_printchat("posting content as " + data->assetid.asString());
+					//cmdline_printchat("posting content as " + data->assetid.asString());
 					LLHTTPClient::post(agent_url, body,
 								new JCPostInvUploadResponder(body, data->assetid, data->type,inv_item,data));
 				}
 				break;
 			case LLAssetType::AT_LSL_TEXT:
-				cmdline_printchat("case lsltext @ postinv");
+				//cmdline_printchat("case lsltext @ postinv");
 				{
 					std::string url = gAgent.getRegion()->getCapability("UpdateScriptAgent");
 					LLSD body;
@@ -458,7 +458,7 @@ public:
 					U8* buffer = new U8[size];
 					gVFS->getData(data->assetid, data->type, buffer, 0, size);
 					std::string script((char*)buffer);
-					BOOL domono = JCLSLPreprocessor::mono_directive(script);
+					BOOL domono = FALSE;//Phox- this needs to be fixed when the preproc is added = JCLSLPreprocessor::mono_directive(script);
 					/*if(script.find("//mono\n") != -1)
 					{
 						domono = TRUE;
@@ -469,7 +469,7 @@ public:
 					delete buffer;
 					buffer = 0;
 					body["target"] = (domono == TRUE) ? "mono" : "lsl2";
-					cmdline_printchat("posting content as " + data->assetid.asString());
+					//cmdline_printchat("posting content as " + data->assetid.asString());
 					LLHTTPClient::post(url, body, new JCPostInvUploadResponder(body, data->assetid, data->type,inv_item,data));
 				}
 				break;
@@ -561,15 +561,15 @@ void ImportTracker::send_inventory(LLSD& prim)
 				{
 				case LLAssetType::AT_TEXTURE:
 				case LLAssetType::AT_TEXTURE_TGA:
-					cmdline_printchat("case textures");
+					//cmdline_printchat("case textures");
 					{
 						std::string url = gAgent.getRegion()->getCapability("NewFileAgentInventory");
 						S32 file_size;
 						LLAPRFile infile ;
-						infile.open(data->filename, LL_APR_RB, NULL, &file_size);
+						infile.open(data->filename, LL_APR_RB, LLAPRFile::global, &file_size);
 						if (infile.getFileHandle())
 						{
-							cmdline_printchat("got file handle");
+							//cmdline_printchat("got file handle");
 							LLVFile file(gVFS, data->assetid, data->type, LLVFile::WRITE);
 							file.setMaxSize(file_size);
 							const S32 buf_size = 65536;
@@ -596,14 +596,14 @@ void ImportTracker::send_inventory(LLSD& prim)
 					break;
 				case LLAssetType::AT_CLOTHING:
 				case LLAssetType::AT_BODYPART:
-					cmdline_printchat("case cloth/bodypart");
+					//cmdline_printchat("case cloth/bodypart");
 					{
 						S32 file_size;
 						LLAPRFile infile ;
-						infile.open(data->filename, LL_APR_RB, NULL, &file_size);
+						infile.open(data->filename, LL_APR_RB, LLAPRFile::global, &file_size);
 						if (infile.getFileHandle())
 						{
-							cmdline_printchat("got file handle @ cloth");
+							//cmdline_printchat("got file handle @ cloth");
 							LLVFile file(gVFS, data->assetid, data->type, LLVFile::WRITE);
 							file.setMaxSize(file_size);
 							const S32 buf_size = 65536;
@@ -829,7 +829,10 @@ void ImportTracker::send_image(LLSD& prim)
 	
 	msg->sendReliable(gAgent.getRegion()->getHost());
 }
+//void send_chat_from_viewer(const std::string& utf8_out_text, EChatType type, S32 channel);
+// [RLVa:KB] - Checked: 2009-07-07 (RLVa-1.0.0d) | Modified: RLVa-0.2.2a
 void send_chat_from_viewer(std::string utf8_out_text, EChatType type, S32 channel);
+// [/RLVa:KB]
 void ImportTracker::send_extras(LLSD& prim)
 {	
 	LLMessageSystem* msg = gMessageSystem;
@@ -884,11 +887,12 @@ void ImportTracker::send_extras(LLSD& prim)
 			msg->addBinaryDataFast(_PREHASH_ParamData, tmp, datasize);
 		}
 	}
-
+	//Phox: Is this really necessary? I think not.
 	if (prim.has("chat"))
 	{
 		send_chat_from_viewer(prim["chat"].asString(), CHAT_TYPE_SHOUT, 0);
 	}
+	
 	
 	if (prim.has("sculpt"))
 	{

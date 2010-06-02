@@ -60,6 +60,7 @@ LLFilePicker LLFilePicker::sInstance;
 #define XML_FILTER L"XML files (*.xml)\0*.xml\0"
 #define SLOBJECT_FILTER L"Objects (*.slobject)\0*.slobject\0"
 #define RAW_FILTER L"RAW files (*.raw)\0*.raw\0"
+#define APP_FILTER L"Executable files (*.exe)\0*.exe\0"
 #endif
 
 //
@@ -190,6 +191,10 @@ BOOL LLFilePicker::setupFilter(ELoadFilter filter)
 		break;
 	case FFLOAD_RAW:
 		mOFN.lpstrFilter = RAW_FILTER \
+			L"\0";
+		break;
+	case FFLOAD_APP:
+		mOFN.lpstrFilter = APP_FILTER \
 			L"\0";
 		break;
 	default:
@@ -392,11 +397,11 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename)
 	case FFSAVE_ANIM:
 		if (filename.empty())
 		{
-			wcsncpy( mFilesW,L"untitled.bvh", FILENAME_BUFFER_SIZE);	/*Flawfinder: ignore*/
+			wcsncpy( mFilesW,L"untitled.xaf", FILENAME_BUFFER_SIZE);	/*Flawfinder: ignore*/
 		}
-		mOFN.lpstrDefExt = L"bvh";
+		mOFN.lpstrDefExt = L"xaf";
 		mOFN.lpstrFilter =
-			L"Anim File (*.bvh)\0*.bvh\0" \
+			L"XAF Anim File (*.xaf)\0*.xaf\0" \
 			L"\0";
 		break;
 #ifdef _CORY_TESTING
@@ -512,7 +517,8 @@ Boolean LLFilePicker::navOpenFilterProc(AEDesc *theItem, void *info, void *callB
 				error = AEGetDescData(&desc, &fileRef, sizeof(fileRef));
 				if (error == noErr)
 				{
-					LSItemInfoRecord	fileInfo;
+					
+					LSItemInfoRecord fileInfo;
 					error = LSCopyItemInfoForRef(&fileRef, kLSRequestExtension | kLSRequestTypeCreator, &fileInfo);
 					if (error == noErr)
 					{
@@ -583,6 +589,17 @@ Boolean LLFilePicker::navOpenFilterProc(AEDesc *theItem, void *info, void *callB
 					}
 				}
 				AEDisposeDesc(&desc);
+			}
+		}
+		else if(filter == FFLOAD_APP)
+		{
+			// App bundles are of type APPL; ???? is a folder, and 0 is something going wrong.
+			if((int)navInfo->fileAndFolder.folderInfo.folderType != FOUR_CHAR_CODE('APPL') &&
+			   (int)navInfo->fileAndFolder.folderInfo.folderType != FOUR_CHAR_CODE('\?\?\?\?') &&
+			   (int)navInfo->fileAndFolder.folderInfo.folderType != 0
+			   )
+			{
+				result = false;
 			}
 		}
 	}
@@ -828,6 +845,9 @@ BOOL LLFilePicker::getOpenFile(ELoadFilter filter)
 	reset();
 	
 	mNavOptions.optionFlags &= ~kNavAllowMultipleFiles;
+	if(filter == FFLOAD_APP)
+		mNavOptions.optionFlags |= kNavSupportPackages;
+	
 	// Modal, so pause agent
 	send_agent_pause();
 	{
@@ -1005,12 +1025,6 @@ GtkWindow* LLFilePicker::buildFilePicker(bool is_save, bool is_folder, std::stri
 			gtk_file_chooser_set_current_folder
 				(GTK_FILE_CHOOSER(win),
 				 this_path->second.c_str());
-		}
-		else if (getenv("HOME"))
-		{
-			gtk_file_chooser_set_current_folder
-				(GTK_FILE_CHOOSER(win),
-				 getenv("HOME"));
 		}
 
 #  if LL_X11

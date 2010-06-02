@@ -138,8 +138,6 @@
 <!-- MAP -->
 <MapAvatar value="0, 255, 0, 255" />
 <MapFriend value="255, 255, 0, 255" />
-<MapLinden value="0, 0, 255, 255" />
-<MapMuted value="83, 83, 83, 255" />
 
 <!-- MINI-MAP -->
 <NetMapBackgroundColor value="0, 0, 0, 77" />
@@ -187,7 +185,7 @@
 <InventoryBackgroundColor value="62, 62, 62, 80"/>
 <DefaultListText value="0, 0, 0, 255"/> <!-- We are replacing all the hardcoded black text with this color so we can make skins with white text on dark background -->
 <DefaultListIcon value="255, 255, 255, 255"/>
-<ComboBoxBg value="255, 255, 255, 255"/>
+<ComboBoxBg value="255, 255, 255, 255" />
 <AvatarListTextDistNormalRange value="0, 0, 0, 255"/>
 <AvatarListTextDistShoutRange value="0, 0, 0, 128"/>
 <AvatarListTextDistOver value="128, 0, 0, 128"/>

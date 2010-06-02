@@ -59,7 +59,6 @@ class LLCheckBoxCtrl;
 class LLSpinCtrl;
 class LLScrollableContainerView;
 class LLTextBox;
-class LLComboBox;
 class LLIconCtrl;
 class LLSaveFolderState;
 class LLSearchEditor;
@@ -70,6 +69,7 @@ class LLInventoryPanel : public LLPanel
 public:
 	static const std::string DEFAULT_SORT_ORDER;
 	static const std::string RECENTITEMS_SORT_ORDER;
+	static const std::string WORNITEMS_SORT_ORDER;
 	static const std::string INHERIT_SORT_ORDER;
 
 	LLInventoryPanel(const std::string& name,
@@ -96,12 +96,6 @@ public:
 								   EAcceptance* accept,
 								   std::string& tooltip_msg);
 
-	//fix to get rid of gSavedSettings use - rkeast
-	void setPartialSearch(bool toggle);
-	bool getPartialSearch();
-	void setSearchType(U32 type);
-	U32 getSearchType();
-
 	// Call this method to set the selection.
 	void openAllFolders();
 	void closeAllFolders();
@@ -118,7 +112,7 @@ public:
 	const std::string getFilterSubString() { return mFolders->getFilterSubString(); }
 	void setFilterWorn(bool worn);
 	bool getFilterWorn() const { return mFolders->getFilterWorn(); }
-
+	
 	void setSortOrder(U32 order);
 	U32 getSortOrder() { return mFolders->getSortOrder(); }
 	void setSinceLogoff(BOOL sl);
@@ -280,10 +274,6 @@ public:
 	static void onFoldersByName(void *user_data);
 	static BOOL checkFoldersByName(void *user_data);
 	static void onSearchEdit(const std::string& search_string, void* user_data );
-
-    static void onQuickFilterCommit(LLUICtrl* ctrl, void* user_data);
-    static void refreshQuickFilter(LLUICtrl* ctrl);
-
 	static void onFilterSelected(void* userdata, bool from_click);
 	static void onSelectionChange(const std::deque<LLFolderViewItem*> &items, BOOL user_action, void* data);
 
@@ -295,6 +285,7 @@ public:
 	static LLUUID sWearNewClothingTransactionID;	// wear all clothing in this transaction
 
 	void toggleFindOptions();
+	void updateSortControls();
 
 	LLInventoryViewFinder* getFinder() { return (LLInventoryViewFinder*)mFinderHandle.get(); }
 
@@ -304,15 +295,12 @@ protected:
 
 protected:
 	LLSearchEditor*				mSearchEditor;
-	LLComboBox*						mQuickFilterCombo;
 	LLTabContainer*				mFilterTabs;
 	LLHandle<LLFloater>				mFinderHandle;
 	LLInventoryPanel*			mActivePanel;
 	LLSaveFolderState*			mSavedFolderState;
 
 	std::string					mFilterText;
-
-	S32							mItemCount;
 
 
 	// This container is used to hold all active inventory views. This

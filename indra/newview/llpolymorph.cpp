@@ -180,7 +180,6 @@ BOOL LLPolyMorphData::loadBinary(LLFILE *fp, LLPolyMeshSharedData *mesh)
 
 	return TRUE;
 }
-
 //-----------------------------------------------------------------------------
 // LLPolyMesh::saveLLM()
 //-----------------------------------------------------------------------------
@@ -472,6 +471,7 @@ BOOL LLPolyMorphData::setMorphFromMesh(LLPolyMesh *morph)
 	return TRUE;
 }
 
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 // LLPolyMorphTargetInfo()
 //-----------------------------------------------------------------------------
@@ -878,7 +878,7 @@ BOOL	LLPolyMorphTarget::undoMask(BOOL delete_mask)
 
 				if (clothing_weights)
 				{
-			LLVector3 clothing_offset = mMorphData->mCoords[vert] * last_mask_weight;
+					LLVector3 clothing_offset = mMorphData->mCoords[vert] * last_mask_weight;
 					LLVector4* clothing_weight = &clothing_weights[out_vert];
 					clothing_weight->mV[VX] -= clothing_offset.mV[VX];
 					clothing_weight->mV[VY] -= clothing_offset.mV[VY];

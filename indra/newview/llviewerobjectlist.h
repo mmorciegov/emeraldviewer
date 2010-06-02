@@ -44,11 +44,8 @@
 // project includes
 #include "llviewerobject.h"
 
-
 class LLNetMap;
 class LLDebugBeacon;
-
-
 
 const U32 CLOSE_BIN_SIZE = 10;
 const U32 NUM_BINS = 16;
@@ -67,6 +64,8 @@ public:
 	~LLViewerObjectList();
 
 	void destroy();
+	
+	friend class LocalBitmap; // tag: vaa emerald local_asset_browser
 
 	// For internal use only.  Does NOT take a local id, takes an index into
 	// an internal dynamic array.

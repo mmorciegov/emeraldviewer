@@ -578,7 +578,7 @@ LLNameValue::~LLNameValue()
 	mNameValueReference.string = NULL;
 }
 
-char *LLNameValue::getString()
+char	*LLNameValue::getString()
 {
 	if (mType == NVT_STRING)
 	{

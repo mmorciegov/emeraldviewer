@@ -45,6 +45,7 @@ class LLTabContainer;
 class LLFloaterChatterBox : public LLMultiFloater, public LLUISingleton<LLFloaterChatterBox, LLFloaterChatterBox>
 {
 public:
+
 	LLFloaterChatterBox(const LLSD& seed);
 	virtual ~LLFloaterChatterBox();
 
@@ -129,7 +130,6 @@ public:
 
 	static void* createFriendsPanel(void* data);
 	static void* createGroupsPanel(void* data);
-	static void* createIRCPanel(void* data);
 
 	// visibility policy for LLUISingleton
 	static bool visible(LLFloater* instance, const LLSD& key)
@@ -151,7 +151,7 @@ public:
 		{
 			if(instance->getHost())
 			{
-			LLFloaterChatterBox::hideInstance();
+				LLFloaterChatterBox::hideInstance();
 			}
 			else
 			{
@@ -162,7 +162,6 @@ public:
 
 protected:
 	LLTabContainer* mTabs;
-
 };
 
 #endif // LL_LLFLOATERCHATTERBOX_H

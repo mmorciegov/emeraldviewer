@@ -37,13 +37,11 @@
 #include "lllineeditor.h"
 
 #include "lltexteditor.h"
-#include "audioengine.h"
 #include "llmath.h"
 #include "llfontgl.h"
 #include "llgl.h"
 #include "lltimer.h"
 
-#include "llcalc.h"
 //#include "llclipboard.h"
 #include "llcontrol.h"
 #include "llbutton.h"
@@ -56,12 +54,11 @@
 #include "llui.h"
 #include "lluictrlfactory.h"
 #include "llclipboard.h"
+
 #include "../newview/lgghunspell_wrapper.h"
 #include "../newview/lltranslate.h"
 #include "../newview/llviewercontrol.h"
 
-
-//#include "llmenugl.h"
 //
 // Imported globals
 //
@@ -101,7 +98,7 @@ public :
 		m_line(line)	
 	{
 	}
-
+ 
 	static boost::intrusive_ptr<LineChatTranslationReceiver> build(const std::string &toLang,LLLineEditor* line)
 	{
 		return boost::intrusive_ptr<LineChatTranslationReceiver>(new LineChatTranslationReceiver(toLang,line));
@@ -166,7 +163,6 @@ LLLineEditor::LLLineEditor(const std::string& name, const LLRect& rect,
 		mDrawAsterixes( FALSE ),
 		mHandleEditKeysDirectly( FALSE ),
 		mSelectAllonFocusReceived( FALSE ),
-		mSelectAllonCommit( TRUE ),
 		mPassDelete(FALSE),
 		mReadOnly(FALSE),
 		mHaveHistory(FALSE),
@@ -210,13 +206,12 @@ LLLineEditor::LLLineEditor(const std::string& name, const LLRect& rect,
 		sImage = LLUI::getUIImage("sm_rounded_corners_simple.tga");
 	}
 	mImage = sImage;
-
 	// make the popup menu available
 	//LLMenuGL* menu = LLUICtrlFactory::getInstance()->buildMenu("menu_texteditor.xml", parent_view);
 	LLMenuGL* menu = new LLMenuGL("wot");
 	/*if (!menu)
 	{
-		menu = new LLMenuGL(LLStringUtil::null);
+	menu = new LLMenuGL(LLStringUtil::null);
 	}*/
 	menu->append(new LLMenuItemCallGL("Cut", context_cut, NULL, this));
 	menu->append(new LLMenuItemCallGL("Copy", context_copy, NULL, this));
@@ -277,7 +272,6 @@ LLLineEditor::~LLLineEditor()
 	{
 		gEditMenuHandler = NULL;
 	}
-
 	LLView::deleteViewByHandle(mPopupMenuHandle);
 }
 
@@ -317,10 +311,7 @@ void LLLineEditor::onCommit()
 	updateHistory();
 
 	LLUICtrl::onCommit();
-
-	// Selection on commit needs to be turned off when evaluating maths
-	// expressions, to allow indication of the error position
-	if (mSelectAllonCommit) selectAll();
+	selectAll();
 }
 
 
@@ -339,8 +330,8 @@ void LLLineEditor::updateHistory()
 			if( mLineHistory.back().empty() )
 			{
 				// discard the empty line
-			mLineHistory.pop_back();
-		}
+				mLineHistory.pop_back();
+			}
 			else
 			{
 				LL_WARNS("") << "Last line of history was not blank." << LL_ENDL;
@@ -431,6 +422,9 @@ void LLLineEditor::setText(const LLStringExplicit &new_text)
 
 	mPrevText = mText;
 }
+
+
+// Picks a new cursor position based on the actual screen size of text being drawn.
 S32 LLLineEditor::calculateCursorFromMouse( S32 local_mouse_x )
 {
 	const llwchar* wtext = mText.getWString().c_str();
@@ -446,11 +440,11 @@ S32 LLLineEditor::calculateCursorFromMouse( S32 local_mouse_x )
 
 	return mScrollHPos + 
 		mGLFont->charFromPixelOffset(
-		wtext, mScrollHPos,
-		(F32)(local_mouse_x - mMinHPixels),
-		(F32)(mMaxHPixels - mMinHPixels + 1)); // min-max range is inclusive
-}
+			wtext, mScrollHPos,
+			(F32)(local_mouse_x - mMinHPixels),
+			(F32)(mMaxHPixels - mMinHPixels + 1)); // min-max range is inclusive
 
+}
 // Picks a new cursor position based on the actual screen size of text being drawn.
 void LLLineEditor::setCursorAtLocalPos( S32 local_mouse_x )
 {
@@ -509,6 +503,7 @@ void LLLineEditor::deselect()
 	mIsSelecting = FALSE;
 }
 
+
 void LLLineEditor::context_cut(void* data)
 {
 	LLLineEditor* line = (LLLineEditor*)data;
@@ -562,14 +557,15 @@ std::vector<S32> LLLineEditor::getMisspelledWordsPositions()
 {
 	std::vector<S32> thePosesOfBadWords;
 	const LLWString& text = mText.getWString();
-	S32 wordStart=0;
-	S32 wordEnd=0;
 
-	while(wordEnd < (S32)text.length())
+	//llinfos << "end of box is at " << cursorloc << " and end of text is at " << text.length() << llendl;
+	S32 wordStart=0;
+	S32 wordEnd=mStartSpellHere;
+	while(wordEnd < mEndSpellHere)
 	{
 		//go through all the chars... XD	
 		if( LLTextEditor::isPartOfWord( text[wordEnd] ) ) 
-			
+
 		{
 			// Select word the cursor is over
 			while ((wordEnd > 0) && LLTextEditor::isPartOfWord(text[wordEnd-1]))
@@ -625,7 +621,6 @@ void LLLineEditor::context_selectall(void* data)
 	LLLineEditor* line = (LLLineEditor*)data;
 	if(line)line->selectAll();
 }
-
 
 void LLLineEditor::startSelection()
 {
@@ -711,8 +706,12 @@ BOOL LLLineEditor::handleDoubleClick(S32 x, S32 y, MASK mask)
 	// delay cursor flashing
 	mKeystrokeTimer.reset();
 
+	// take selection to 'primary' clipboard
+	updatePrimary();
+
 	return TRUE;
 }
+
 
 BOOL LLLineEditor::handleRightMouseDown( S32 x, S32 y, MASK mask )
 {
@@ -721,7 +720,7 @@ BOOL LLLineEditor::handleRightMouseDown( S32 x, S32 y, MASK mask )
 	//setCursorAtLocalPos( x);
 	S32 wordStart = 0;
 	S32 wordEnd = calculateCursorFromMouse(x);
-	
+
 
 	LLMenuGL* menu = (LLMenuGL*)mPopupMenuHandle.get();
 	if (menu)
@@ -898,6 +897,17 @@ BOOL LLLineEditor::handleMouseDown(S32 x, S32 y, MASK mask)
 	return TRUE;
 }
 
+BOOL LLLineEditor::handleMiddleMouseDown(S32 x, S32 y, MASK mask)
+{
+        // llinfos << "MiddleMouseDown" << llendl;
+	setFocus( TRUE );
+	if( canPastePrimary() )
+	{
+		setCursorAtLocalPos(x);
+		pastePrimary();
+	}
+	return TRUE;
+}
 
 BOOL LLLineEditor::handleHover(S32 x, S32 y, MASK mask)
 {
@@ -992,6 +1002,9 @@ BOOL LLLineEditor::handleMouseUp(S32 x, S32 y, MASK mask)
 	{
 		// delay cursor flashing
 		mKeystrokeTimer.reset();
+
+		// take selection to 'primary' clipboard
+		updatePrimary();
 	}
 
 	return handled;
@@ -1195,7 +1208,12 @@ BOOL LLLineEditor::handleSelectionKey(KEY key, MASK mask)
 		}
 	}
 
-
+	if(handled)
+	{
+		// take selection to 'primary' clipboard
+		updatePrimary();
+	}
+ 
 	return handled;
 }
 
@@ -1204,7 +1222,7 @@ void LLLineEditor::deleteSelection()
 	if( !mReadOnly && hasSelection() )
 	{
 		S32 left_pos = llmin( mSelectionStart, mSelectionEnd );
-		S32 selection_length = abs( mSelectionStart - mSelectionEnd );
+		S32 selection_length = llabs( mSelectionStart - mSelectionEnd );
 
 		mText.erase(left_pos, selection_length);
 		deselect();
@@ -1227,7 +1245,7 @@ void LLLineEditor::cut()
 
 
 		S32 left_pos = llmin( mSelectionStart, mSelectionEnd );
-		S32 length = abs( mSelectionStart - mSelectionEnd );
+		S32 length = llabs( mSelectionStart - mSelectionEnd );
 		gClipboard.copyFromSubstring( mText.getWString(), left_pos, length );
 		deleteSelection();
 
@@ -1258,10 +1276,11 @@ void LLLineEditor::copy()
 	if( canCopy() )
 	{
 		S32 left_pos = llmin( mSelectionStart, mSelectionEnd );
-		S32 length = abs( mSelectionStart - mSelectionEnd );
+		S32 length = llabs( mSelectionStart - mSelectionEnd );
 		gClipboard.copyFromSubstring( mText.getWString(), left_pos, length );
 	}
 }
+
 void LLLineEditor::spellReplace(SpellMenuBind* spellData)
 {
 	mText.erase(spellData->wordPositionStart,
@@ -1269,7 +1288,7 @@ void LLLineEditor::spellReplace(SpellMenuBind* spellData)
 	insert(spellData->word,spellData->wordPositionStart);
 	mCursorPos+=spellData->word.length() - (spellData->wordPositionEnd-spellData->wordPositionStart);
 
-	
+
 }
 void LLLineEditor::insert(std::string what, S32 wher)
 {
@@ -1288,26 +1307,56 @@ void LLLineEditor::insert(std::string what, S32 wher)
 	else if( mKeystrokeCallback )
 		mKeystrokeCallback( this, mCallbackUserData );
 }
+
 BOOL LLLineEditor::canPaste() const
 {
 	return !mReadOnly && gClipboard.canPasteString(); 
 }
 
-
-// paste from clipboard
 void LLLineEditor::paste()
 {
-	if (canPaste())
+	bool is_primary = false;
+	pasteHelper(is_primary);
+}
+
+void LLLineEditor::pastePrimary()
+{
+	bool is_primary = true;
+	pasteHelper(is_primary);
+}
+
+// paste from primary (is_primary==true) or clipboard (is_primary==false)
+void LLLineEditor::pasteHelper(bool is_primary)
+{
+	bool can_paste_it;
+	if (is_primary)
 	{
-		LLWString paste = gClipboard.getPasteWString();
-		
+		can_paste_it = canPastePrimary();
+	}
+	else
+	{
+		can_paste_it = canPaste();
+	}
+
+	if (can_paste_it)
+	{
+		LLWString paste;
+		if (is_primary)
+		{
+			paste = gClipboard.getPastePrimaryWString();
+		}
+		else 
+		{
+			paste = gClipboard.getPasteWString();
+		}
+
 		if (!paste.empty())
 		{
 			// Prepare for possible rollback
 			LLLineEditorRollback rollback(this);
 			
 			// Delete any selected characters
-			if (hasSelection())
+			if ((!is_primary) && hasSelection())
 			{
 				deleteSelection();
 			}
@@ -1343,7 +1392,7 @@ void LLLineEditor::paste()
 				clean_string = clean_string.substr(0, wchars_that_fit);
 				reportBadKeystroke();
 			}
-
+ 
 			mText.insert(getCursor(), clean_string);
 			setCursor( getCursor() + (S32)clean_string.length() );
 			deselect();
@@ -1364,7 +1413,30 @@ void LLLineEditor::paste()
 	}
 }
 
-	
+// copy selection to primary
+void LLLineEditor::copyPrimary()
+{
+	if( canCopy() )
+	{
+		S32 left_pos = llmin( mSelectionStart, mSelectionEnd );
+		S32 length = llabs( mSelectionStart - mSelectionEnd );
+		gClipboard.copyFromPrimarySubstring( mText.getWString(), left_pos, length );
+	}
+}
+
+BOOL LLLineEditor::canPastePrimary() const
+{
+	return !mReadOnly && gClipboard.canPastePrimaryString(); 
+}
+
+void LLLineEditor::updatePrimary()
+{
+	if(canCopy() )
+	{
+		copyPrimary();
+	}
+}
+
 BOOL LLLineEditor::handleSpecialKey(KEY key, MASK mask)	
 {
 	BOOL handled = FALSE;
@@ -1684,7 +1756,6 @@ BOOL LLLineEditor::handleUnicodeCharHere(llwchar uni_char)
 		{
 			LLMenuGL::sMenuContainer->hideMenus();
 		}
-
 		handled = TRUE;
 
 		LLLineEditorRollback rollback( this );
@@ -1761,7 +1832,53 @@ void LLLineEditor::doDelete()
 	}
 }
 
+void LLLineEditor::drawMisspelled(LLRect background)
+{
+	if((glggHunSpell->highlightInRed || mOverRideAndShowMisspellings)
+		&&(!mReadOnly))
+	{
+		S32 newStartSpellHere =mScrollHPos;
+		S32 cursorloc =calculateCursorFromMouse(mMaxHPixels);
+		S32 newStopSpellHere = ( ((S32)mText.length())>cursorloc)?cursorloc:(S32)mText.length();
 
+		F32 elapsed = mSpellTimer.getElapsedTimeF32();
+		if(S32(elapsed / 1) & 1) 
+		{
+			if(isSpellDirty()||(newStartSpellHere!=mStartSpellHere)||(newStopSpellHere!=mEndSpellHere))
+			{
+				mStartSpellHere=newStartSpellHere;
+				mEndSpellHere= newStopSpellHere;
+				resetSpellDirty();
+				misspellLocations=getMisspelledWordsPositions();
+			}
+		}
+		for(int i =0;i<(int)misspellLocations.size();i++)
+		{
+			S32 wstart =findPixelNearestPos( misspellLocations[i]-getCursor());
+			S32 wend = findPixelNearestPos(misspellLocations[++i]-getCursor());
+			S32 maxw = getRect().getWidth();
+
+			if(wend > maxw)
+			{
+				wend=maxw;
+			}
+			if(wstart > maxw)
+			{
+				wstart=maxw;
+			}
+			gGL.color4ub(255,0,0,200);
+			//3 line zig zags..
+			while(wstart<wend)
+			{
+				gl_line_2d(wstart,background.mBottom-1,wstart+3,background.mBottom+2);
+				gl_line_2d(wstart+3,background.mBottom+2,wstart+6,background.mBottom-1);
+				wstart+=6;
+			}
+
+		}
+	}
+
+}
 void LLLineEditor::draw()
 {
 	S32 text_len = mText.length();
@@ -1778,6 +1895,7 @@ void LLLineEditor::draw()
 		mText = text;
 	}
 
+	
 	// draw rectangle for the background
 	LLRect background( 0, getRect().getHeight(), getRect().getWidth(), 0 );
 	background.stretch( -mBorderThickness );
@@ -1950,6 +2068,8 @@ void LLLineEditor::draw()
 	mBorder->setVisible(FALSE); // no more programmatic art.
 #endif
 
+	drawMisspelled(background);
+
 	// If we're editing...
 	if( gFocusMgr.getKeyboardFocus() == this)
 	{
@@ -2039,45 +2159,6 @@ void LLLineEditor::draw()
 	if (mDrawAsterixes)
 	{
 		mText = saved_text;
-	}
-	
-	if((glggHunSpell->highlightInRed || mOverRideAndShowMisspellings)
-		&&(!mReadOnly))
-	{
-		
-		F32 elapsed = mSpellTimer.getElapsedTimeF32();
-		if(S32(elapsed / 1) & 1) 
-		{
-			if(isSpellDirty())
-			{
-				resetSpellDirty();
-				misspellLocations=getMisspelledWordsPositions();
-			}
-		}
-		for(int i =0;i<(int)misspellLocations.size();i++)
-		{
-			S32 wstart =findPixelNearestPos( misspellLocations[i]-getCursor());
-			S32 wend = findPixelNearestPos(misspellLocations[++i]-getCursor());
-			S32 maxw = getRect().getWidth();
-
-			if(wend > maxw)
-			{
-				wend=maxw;
-			}
-			if(wstart > maxw)
-			{
-				wstart=maxw;
-			}
-			gGL.color4ub(255,0,0,200);
-			//3 line zig zags..
-			while(wstart<wend)
-			{
-				gl_line_2d(wstart,cursor_bottom-2,wstart+3,cursor_bottom+1);
-				gl_line_2d(wstart+3,cursor_bottom+1,wstart+6,cursor_bottom-2);
-				wstart+=6;
-			}
-				
-		}
 	}
 }
 
@@ -2490,32 +2571,6 @@ BOOL LLLineEditor::prevalidateASCII(const LLWString &str)
 	return rv;
 }
 
-BOOL LLLineEditor::evaluateFloat()
-{
-	bool success;
-	F32 result = 0.f;
-	std::string expr = getText();
-	LLStringUtil::toUpper(expr);
-
-	success = LLCalc::getInstance()->evalString(expr, result);
-
-	if (!success)
-	{
-		// Move the cursor to near the error on failure
-		setCursor(LLCalc::getInstance()->getLastErrorPos());
-		// *TODO: Translated error message indicating the type of error? Select error text?
-	}
-	else
-	{
-		// Replace the expression with the result
-		std::string result_str = llformat("%f",result);
-		setText(result_str);
-		selectAll();
-	}
-
-	return success;
-}
-
 void LLLineEditor::onMouseCaptureLost()
 {
 	endSelection();
@@ -2537,6 +2592,8 @@ void LLLineEditor::setKeystrokeCallback(void (*keystroke_callback)(LLLineEditor*
 LLXMLNodePtr LLLineEditor::getXML(bool save_children) const
 {
 	LLXMLNodePtr node = LLUICtrl::getXML();
+
+	node->setName(LL_LINE_EDITOR_TAG);
 
 	node->createChild("max_length", TRUE)->setIntValue(mMaxLengthBytes);
 
@@ -3125,6 +3182,16 @@ void LLSearchEditor::onClearSearch(void* user_data)
 	{
 		search_editor->mSearchCallback(LLStringUtil::null, search_editor->mCallbackUserData);
 	}
+}
+
+// virtual
+LLXMLNodePtr LLSearchEditor::getXML(bool save_children) const
+{
+	LLXMLNodePtr node = LLUICtrl::getXML();
+
+	node->setName(LL_SEARCH_EDITOR_TAG);
+
+	return node;
 }
 
 // static

@@ -607,20 +607,6 @@ void LLHUDText::clearString()
 	mTextSegments.clear();
 }
 
-std::string LLHUDText::getString()
-{
-	std::vector<LLHUDTextSegment>::iterator itt = mTextSegments.begin();
-	std::vector<LLHUDTextSegment>::iterator end = mTextSegments.end();
-	std::string dump;
-	while(true)
-	{
-		dump += wstring_to_utf8str(itt->getText());
-		if(++itt != end)dump += "\n";
-		else break;
-	}
-	return dump;
-}
-
 
 void LLHUDText::addLine(const std::string &str, const LLColor4& color, const LLFontGL::StyleFlags style)
 {

@@ -175,7 +175,7 @@ void LLCrashLogger::gatherFiles()
 	updateApplication("Gathering logs...");
 
 	// Figure out the filename of the debug log
-	std::string db_file_name = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,"debug_info.log");
+	std::string db_file_name = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,"emerald_debug_info.log");
 	std::ifstream debug_log_file(db_file_name.c_str());
 
 	// Look for it in the debug_info.log file
@@ -203,7 +203,7 @@ void LLCrashLogger::gatherFiles()
 	{
 		// Figure out the filename of the second life log
 		LLCurl::setCAFile(gDirUtilp->getCAFile());
-		mFileMap["SecondLifeLog"] = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,"SecondLife.log");
+		mFileMap["SecondLifeLog"] = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,"EmeraldViewer.log");
 		mFileMap["SettingsXml"] = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS,"settings.xml");
 	}
 
@@ -222,15 +222,34 @@ void LLCrashLogger::gatherFiles()
 
 	gatherPlatformSpecificFiles();
 
-	//Use the debug log to reconstruct the URL to send the crash report to
-	mCrashHost = "http://modularsystems.sl/app/crash/crash.php";
+	/*//Use the debug log to reconstruct the URL to send the crash report to
+	if(mDebugLog.has("CurrentSimHost"))
+	{
+		mCrashHost = "https://";
+		mCrashHost += mDebugLog["CurrentSimHost"].asString();
+		mCrashHost += ":12043/crash/report";
+	}
+	else if(mDebugLog.has("GridName"))
+	{
+		// This is a 'little' hacky, but its the best simple solution.
+		std::string grid_host = mDebugLog["GridName"].asString();
+		LLStringUtil::toLower(grid_host);
+
+		mCrashHost = "https://login.";
+		mCrashHost += grid_host;
+		mCrashHost += ".lindenlab.com:12043/crash/report";
+	}*/
 
 	// Use login servers as the alternate, since they are already load balanced and have a known name
-	mAltCrashHost = "http://modularsystems.sl/app/crash/crash.php";
+	//mAltCrashHost = "https://login.agni.lindenlab.com:12043/crash/report";
+
+	mCrashHost = "http://modularsystems.sl/app/crash/crash.php";
+	mAltCrashHost = "http://ijustfoundtheinter.net/app/crash/crash.php";
 
 	mCrashInfo["DebugLog"] = mDebugLog;
-	mFileMap["StatsLog"] = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,"stats.log");
-	mFileMap["StackTrace"] = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,"stack_trace.log");
+	mFileMap["StatsLog"] = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,"emerald_stats.log");
+	//mFileMap["StackTrace"] = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,"emerald_stack_trace.log");
+	//doesn;t seem to exist
 	
 	updateApplication("Encoding files...");
 
@@ -356,7 +375,7 @@ bool LLCrashLogger::init()
 	// We assume that all the logs we're looking for reside on the current drive
 	gDirUtilp->initAppDirs("SecondLife");
 
-	// Default to the product name "Emerald Viewer" (this is overridden by the -name argument)
+	// Default to the product name "Second Life" (this is overridden by the -name argument)
 	mProductName = "Emerald Viewer";
 	
 	mCrashSettings.declareS32(CRASH_BEHAVIOR_SETTING, CRASH_BEHAVIOR_ASK, "Controls behavior when viewer crashes "

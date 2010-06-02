@@ -102,9 +102,6 @@
 LLToolBar *gToolBar = NULL;
 S32 TOOL_BAR_HEIGHT = 20;
 
-BOOL LLToolBar::sShowToolBar;
-
-
 //
 // Statics
 //
@@ -187,9 +184,6 @@ BOOL LLToolBar::postBuild()
 
 	layoutButtons();
 
-	sShowToolBar = gSavedSettings.getBOOL("ShowToolBar");
-	setVisible(sShowToolBar);
-
 	return TRUE;
 }
 
@@ -237,10 +231,9 @@ BOOL LLToolBar::handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
 // static
 void LLToolBar::toggle(void*)
 {
-	BOOL show = !gToolBar->getVisible();                      
-	gSavedSettings.setBOOL("ShowToolBar", show); 
-	sShowToolBar = show;
-	gToolBar->setVisible(show);
+	BOOL show = gSavedSettings.getBOOL("ShowToolBar");                      
+	gSavedSettings.setBOOL("ShowToolBar", !show);                           
+	gToolBar->setVisible(!show);
 }
 
 
@@ -295,7 +288,7 @@ void LLToolBar::reshape(S32 width, S32 height, BOOL called_from_parent)
 // Per-frame updates of visibility
 void LLToolBar::refresh()
 {
-	BOOL show = sShowToolBar;
+	BOOL show = gSavedSettings.getBOOL("ShowToolBar");
 	BOOL mouselook = gAgent.cameraMouselook();
 	setVisible(show && !mouselook);
 
@@ -316,10 +309,9 @@ void LLToolBar::refresh()
 	{
 		build_mode = FALSE;
 	}
-	//gSavedSettings.setBOOL("BuildBtnState", build_mode);
-	LLAgent::sBuildBtnState = build_mode;
+	gSavedSettings.setBOOL("BuildBtnState", build_mode);
 
-// [RLVa:KB] - Version: 1.23.4 | Alternate: Emerald-370 | Checked: 2009-07-10 (RLVa-1.0.0g)
+// [RLVa:KB] - Version: 1.23.4 | Checked: 2009-07-10 (RLVa-1.0.0g)
 	// Called per-frame so this really can't be slow
 	if (rlv_handler_t::isEnabled())
 	{
@@ -330,9 +322,6 @@ void LLToolBar::refresh()
 		childSetEnabled("map_btn", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWWORLDMAP) );
 		childSetEnabled("radar_btn", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWMINIMAP) );
 		childSetEnabled("inventory_btn", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWINV) );
-
-		// Emerald-specific
-		childSetEnabled("avatar_list_btn", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES));
 	}
 // [/RLVa:KB]
 
@@ -563,5 +552,5 @@ void LLToolBar::onClickInventory(void*)
 // static
 void LLToolBar::onClickAvatarList(void*)
 {
-	LLFloaterAvatarList::toggle(NULL);
+	FloaterAvatarList::toggle();
 }

@@ -66,7 +66,7 @@
 #include "llstring.h"
 #include "lltransactiontypes.h"
 #include "lluuid.h"
-#include "vorbisencode.h"
+#include "llvorbisencode.h"
 
 // system libraries
 #include <boost/tokenizer.hpp>
@@ -846,7 +846,7 @@ void upload_new_resource(const std::string& src_filename, std::string name,
 		// copy this file into the vfs for upload
 		S32 file_size;
 		LLAPRFile infile ;
-		infile.open(filename, LL_APR_RB, NULL, &file_size);
+		infile.open(filename, LL_APR_RB, LLAPRFile::local, &file_size);
 		if (infile.getFileHandle())
 		{
 			LLVFile file(gVFS, uuid, asset_type, LLVFile::WRITE);
@@ -1127,21 +1127,21 @@ void upload_new_resource(const LLTransactionID &tid, LLAssetType::EType asset_ty
 	{
 		if(temporary_up == FALSE)
 		{
-		llinfos << "NewAgentInventory capability not found, new agent inventory via asset system." << llendl;
-		// check for adequate funds
-		// TODO: do this check on the sim
-		if (LLAssetType::AT_SOUND == asset_type ||
-			LLAssetType::AT_TEXTURE == asset_type ||
-			LLAssetType::AT_ANIMATION == asset_type)
-		{
-			S32 balance = gStatusBar->getBalance();
-			if (balance < expected_upload_cost)
+			llinfos << "NewAgentInventory capability not found, new agent inventory via asset system." << llendl;
+			// check for adequate funds
+			// TODO: do this check on the sim
+			if (LLAssetType::AT_SOUND == asset_type ||
+				LLAssetType::AT_TEXTURE == asset_type ||
+				LLAssetType::AT_ANIMATION == asset_type)
 			{
-				// insufficient funds, bail on this upload
-				LLFloaterBuyCurrency::buyCurrency("Uploading costs", expected_upload_cost);
-				return;
+				S32 balance = gStatusBar->getBalance();
+				if (balance < expected_upload_cost)
+				{
+					// insufficient funds, bail on this upload
+					LLFloaterBuyCurrency::buyCurrency("Uploading costs", expected_upload_cost);
+					return;
+				}
 			}
-		}
 		}
 
 		LLResourceData* data = new LLResourceData;

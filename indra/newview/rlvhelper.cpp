@@ -227,7 +227,6 @@ void RlvAttachmentManager::attach(const LLUUID& idItem, S32 idxAttachPt)
 		LLAttachmentRezAction* rez_action = new LLAttachmentRezAction();
 		rez_action->mItemID = idItem;
 		rez_action->mAttachPt = idxAttachPt;
-
 		confirm_replace_attachment_rez(0/*YES*/, (void*)rez_action); // (Will call delete on rez_action)
 	#else												// Version: 1.23.4
 		LLSD payload;

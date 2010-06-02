@@ -48,7 +48,6 @@
 #include "lllineeditor.h"
 #include "llnamebox.h"
 #include "llnamelistctrl.h"
-#include "llnameeditor.h"
 #include "llspinctrl.h"
 #include "llstatusbar.h"	// can_afford_transaction()
 #include "lltextbox.h"
@@ -77,6 +76,7 @@ LLPanelGroupGeneral::LLPanelGroupGeneral(const std::string& name,
 	mChanged(FALSE),
 	mFirstUse(TRUE),
 	mGroupNameEditor(NULL),
+	mGroupName(NULL),
 	mFounderName(NULL),
 	mInsignia(NULL),
 	mEditCharter(NULL),
@@ -107,6 +107,7 @@ BOOL LLPanelGroupGeneral::postBuild()
 
 	// General info
 	mGroupNameEditor = getChild<LLLineEditor>("group_name_editor", recurse);
+	mGroupName = getChild<LLTextBox>("group_name", recurse);
 	
 	mInsignia = getChild<LLTextureCtrl>("insignia", recurse);
 	if (mInsignia)
@@ -252,10 +253,7 @@ BOOL LLPanelGroupGeneral::postBuild()
 
 		mBtnJoinGroup->setVisible(FALSE);
 		mBtnInfo->setVisible(FALSE);
-	}
-	else
-	{
-		mGroupNameEditor->setEnabled(FALSE);
+		mGroupName->setVisible(FALSE);
 	}
 
 	return LLPanelGroupTab::postBuild();
@@ -757,15 +755,9 @@ void LLPanelGroupGeneral::update(LLGroupChange gc)
 	if (mInsignia) mInsignia->setEnabled(mAllowEdit && can_change_ident);
 	if (mEditCharter) mEditCharter->setEnabled(mAllowEdit && can_change_ident);
 	
-	if (mGroupNameEditor) mGroupNameEditor->setVisible(TRUE);
-	if (mGroupNameEditor) mGroupNameEditor->setText(gdatap->mName);
+	if (mGroupName) mGroupName->setText(gdatap->mName);
+	if (mGroupNameEditor) mGroupNameEditor->setVisible(FALSE);
 	if (mFounderName) mFounderName->setNameID(gdatap->mFounderID,FALSE);
-	
-	LLNameEditor* key_edit = getChild<LLNameEditor>("groupkey_");
-	if(key_edit)
-	{
-		key_edit->setText(gdatap->getID().asString());
-	}
 	if (mInsignia)
 	{
 		if (gdatap->mInsigniaID.notNull())
@@ -896,6 +888,7 @@ void LLPanelGroupGeneral::updateChanged()
 	LLUICtrl *check_list[] =
 	{
 		mGroupNameEditor,
+		mGroupName,
 		mFounderName,
 		mInsignia,
 		mEditCharter,

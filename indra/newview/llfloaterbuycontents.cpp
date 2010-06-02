@@ -49,10 +49,10 @@
 #include "llinventoryview.h"	// for get_item_icon
 #include "llselectmgr.h"
 #include "llscrolllistctrl.h"
+#include "llviewercontrol.h"
 #include "llviewerobject.h"
 #include "llviewerregion.h"
 #include "lluictrlfactory.h"
-#include "llviewercontrol.h"
 #include "llviewerwindow.h"
 
 LLFloaterBuyContents* LLFloaterBuyContents::sInstance = NULL;
@@ -231,7 +231,6 @@ void LLFloaterBuyContents::inventoryChanged(LLViewerObject* obj,
 								 item_is_multi);
 		row["columns"][0]["column"] = "icon";
 		row["columns"][0]["type"] = "icon";
-		row["columns"][0]["color"] = gColors.getColor("DefaultListIcon").getValue();
 		row["columns"][0]["value"] = icon_name;
 		
 		// Append the permissions that you will acquire (not the current
@@ -253,9 +252,9 @@ void LLFloaterBuyContents::inventoryChanged(LLViewerObject* obj,
 		}
 		
 		row["columns"][1]["column"] = "text";
-		row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][1]["value"] = text;
 		row["columns"][1]["font"] = "SANSSERIF";
+		row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		item_list->addElement(row);
 	}

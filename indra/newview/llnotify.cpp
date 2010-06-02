@@ -104,11 +104,7 @@ bool LLNotifyBox::onNotification(const LLSD& notify)
 		}
 		else
 		{
-			bool is_script_dialog = (
-				notification->getName() == "ScriptDialog" || 
-				notification->getName() == "ScriptTextBoxDialog" || 
-				notification->getName() == "ScriptDialogGroup" || 
-				notification->getName() == "ScriptTextBoxDialogGroup");
+			bool is_script_dialog = (notification->getName() == "ScriptDialog" || notification->getName() == "ScriptDialogGroup");
 			LLNotifyBox* notify_box = new LLNotifyBox(
 				notification,
 				is_script_dialog); //layout_script_dialog);
@@ -146,7 +142,6 @@ LLNotifyBox::LLNotifyBox(LLNotificationPtr notification,
 	  mLayoutScriptDialog(layout_script_dialog),
 	  mUserInputBox(NULL)
 {
-	// clicking on a button does not steal current focus
 	std::string edit_text_name;
 	std::string edit_text_contents;
 
@@ -180,11 +175,10 @@ LLNotifyBox::LLNotifyBox(LLNotificationPtr notification,
 	LLNotificationFormPtr form(notification->getForm());
 
 	mNumOptions = form->getNumElements();
-
+	
 	bool is_textbox = form->getElement("message").isDefined();
 		  
-	LLRect rect = mIsTip ? getNotifyTipRect(mMessage)
-		: getNotifyRect(is_textbox ? 10 : mNumOptions, layout_script_dialog, mIsCaution);
+	LLRect rect = mIsTip ? getNotifyTipRect(mMessage) : getNotifyRect(is_textbox ? 10 : mNumOptions, layout_script_dialog, mIsCaution);
 	setRect(rect);
 	setFollows(mIsTip ? (FOLLOWS_BOTTOM|FOLLOWS_RIGHT) : (FOLLOWS_TOP|FOLLOWS_RIGHT));
 	setBackgroundVisible(FALSE);
@@ -246,7 +240,7 @@ LLNotifyBox::LLNotifyBox(LLNotificationPtr notification,
 	else
 	{
 
-		const S32 BTN_TOP = BOTTOM_PAD + ((((is_textbox ? 12 : mNumOptions)-1+2)/3)) * (BTN_HEIGHT+VPAD);
+		const S32 BTN_TOP = BOTTOM_PAD + (((mNumOptions-1+2)/3)) * (BTN_HEIGHT+VPAD);
 
 		// Tokenization on \n is handled by LLTextBox
 
@@ -310,40 +304,34 @@ LLNotifyBox::LLNotifyBox(LLNotificationPtr notification,
 		{
 
 			LLSD form_element = form->getElement(i);
-			std::string type = form_element["type"].asString();
-			if (type == "button") 
+			std::string element_t = form_element["type"].asString();
+			if(element_t == "button")
 			{
-				LLButton* added = addButton(form_element["name"].asString(), form_element["text"].asString(), TRUE, form_element["default"].asBoolean());
-				std::string magic_hide = "%C2%A0%20%C2%A0";
-				magic_hide = curl_unescape(magic_hide.c_str(),magic_hide.size());
-				if(added->getLabelSelected() == magic_hide)added->setVisible(FALSE);//magic...
-			}else if(type == "text")
+				addButton(form_element["name"].asString(), form_element["text"].asString(), TRUE, form_element["default"].asBoolean());
+			}
+			else if(element_t == "input")
 			{
 				edit_text_contents = form_element["value"].asString();
 				edit_text_name = form_element["name"].asString();
-				is_textbox = true;
-				continue;
 			}
 		}
-
 		if(is_textbox)
 		{
 			S32 button_rows = (layout_script_dialog) ? 2 : 1;
-
+			
 			LLRect input_rect;
 			input_rect.setOriginAndSize(
-			x,
-			BOTTOM_PAD + button_rows * (BTN_HEIGHT + VPAD),
-			3 * 80 + 4 * HPAD,
-			(button_rows) * (BTN_HEIGHT + VPAD) + BTN_HEIGHT);
-
-			mUserInputBox =
-			new LLTextEditor(edit_text_name,
-			input_rect,
-			254,
-			edit_text_contents,
-			sFont,
-			FALSE);
+										x,
+										BOTTOM_PAD + button_rows * (BTN_HEIGHT + VPAD),
+										3 * 80 + 4 * HPAD,
+										(button_rows) * (BTN_HEIGHT + VPAD) + BTN_HEIGHT);
+			
+			mUserInputBox = new LLTextEditor(edit_text_name, 
+											 input_rect,
+											 254,
+											 edit_text_contents,
+											 sFont,
+											 FALSE);
 			mUserInputBox->setBorderVisible(TRUE);
 			mUserInputBox->setTakesNonScrollClicks(TRUE);
 			mUserInputBox->setHideScrollbarForShortDocs(TRUE);
@@ -352,13 +340,14 @@ LLNotifyBox::LLNotifyBox(LLNotificationPtr notification,
 			mUserInputBox->setCommitOnFocusLost(FALSE);
 			mUserInputBox->setAcceptCallingCardNames(FALSE);
 			mUserInputBox->setHandleEditKeysDirectly(TRUE);
-
+			
 			addChild(mUserInputBox, -1);
-		}else
+		}
+		else
 		{
 			setIsChrome(TRUE);
 		}
-
+			
 		if (mNumButtons == 0)
 		{
 			addButton("OK", "OK", FALSE, TRUE);
@@ -595,6 +584,7 @@ void LLNotifyBox::format(std::string& msg, const LLStringUtil::format_map_t& arg
 	// XUI:translate!
 	LLStringUtil::format_map_t targs = args;
 	targs["[SECOND_LIFE]"] = "Second Life";
+	targs["[VIEWER_NAME]"] = "Emerald Viewer";
 	LLStringUtil::format(msg, targs);
 }
 

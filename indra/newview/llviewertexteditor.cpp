@@ -33,7 +33,7 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "llfocusmgr.h"
-#include "audioengine.h"
+#include "llaudioengine.h"
 #include "llagent.h"
 #include "llinventory.h"
 #include "llinventorymodel.h"
@@ -401,11 +401,51 @@ void LLEmbeddedItems::bindEmbeddedChars( const LLFontGL* font ) const
 		{
 			continue;
 		}
+		const char* img_name;
+		switch( item->getType() )
+		{
+		  case LLAssetType::AT_TEXTURE:
+			if(item->getInventoryType() == LLInventoryType::IT_SNAPSHOT)
+			{
+				img_name = "inv_item_snapshot.tga";
+			}
+			else
+			{
+				img_name = "inv_item_texture.tga";
+			}
 
-		LLUIImagePtr image = get_item_icon(item->getType(),
-							 item->getInventoryType(),
-							 0, 
-							 item->getFlags() & LLInventoryItem::II_FLAGS_OBJECT_HAS_MULTIPLE_ITEMS);//LLUI::getUIImage(img_name);
+			break;
+		  case LLAssetType::AT_SOUND:			img_name = "inv_item_sound.tga";	break;
+		  case LLAssetType::AT_LANDMARK:		
+			if (item->getFlags() & LLInventoryItem::II_FLAGS_LANDMARK_VISITED)
+			{
+				img_name = "inv_item_landmark_visited.tga";	
+			}
+			else
+			{
+				img_name = "inv_item_landmark.tga";	
+			}
+			break;
+		  case LLAssetType::AT_CLOTHING:		img_name = "inv_item_clothing.tga";	break;
+		  case LLAssetType::AT_OBJECT:			
+			if (item->getFlags() & LLInventoryItem::II_FLAGS_OBJECT_HAS_MULTIPLE_ITEMS)
+			{
+				img_name = "inv_item_object_multi.tga";	
+			}
+			else
+			{
+				img_name = "inv_item_object.tga";	
+			}
+			break;
+		  case LLAssetType::AT_NOTECARD:		img_name = "inv_item_notecard.tga";	break;
+		  case LLAssetType::AT_LSL_TEXT:		img_name = "inv_item_script.tga";	break;
+		  case LLAssetType::AT_BODYPART:		img_name = "inv_item_skin.tga";	break;
+		  case LLAssetType::AT_ANIMATION:		img_name = "inv_item_animation.tga";break;
+		  case LLAssetType::AT_GESTURE:			img_name = "inv_item_gesture.tga";	break;
+		  default: llassert(0); continue;
+		}
+
+		LLUIImagePtr image = LLUI::getUIImage(img_name);
 
 		font->addEmbeddedChar( wch, image->getImage(), item->getName() );
 	}
@@ -868,51 +908,9 @@ BOOL LLViewerTextEditor::handleHover(S32 x, S32 y, MASK mask)
 
 BOOL LLViewerTextEditor::handleMouseUp(S32 x, S32 y, MASK mask)
 {
-	BOOL	handled = FALSE;
+	BOOL handled = FALSE;
 
-	// let scrollbar have first dibs
-	handled = LLView::childrenHandleMouseUp(x, y, mask) != NULL;
-
-	// Used to enable I Agree checkbox if the user scrolled through entire text
-	BOOL was_scrolled_to_bottom = (mScrollbar->getDocPos() == mScrollbar->getDocPosMax());
-	if (mOnScrollEndCallback && was_scrolled_to_bottom)
-	{
-		mOnScrollEndCallback(mOnScrollEndData);
-	}
-
-	if( !handled && mTakesNonScrollClicks)
-	{
-		if( mIsSelecting )
-		{
-			// Finish selection
-			if( y > getTextRect().mTop )
-			{
-				mScrollbar->setDocPos( mScrollbar->getDocPos() - 1 );
-			}
-			else
-			if( y < getTextRect().mBottom )
-			{
-				mScrollbar->setDocPos( mScrollbar->getDocPos() + 1 );
-			}
-			
-			setCursorAtLocalPos( x, y, TRUE );
-			endSelection();
-
-			updateScrollFromCursor();
-		}
-		
-		if( !hasSelection() )
-		{
-			handleMouseUpOverSegment( x, y, mask );
-		}
-
-		handled = TRUE;
-	}
-
-	// Delay cursor flashing
-	resetKeystrokeTimer();
-
-	if( hasMouseCapture()  )
+	if( hasMouseCapture() )
 	{
 		if (mDragItem)
 		{
@@ -932,8 +930,15 @@ BOOL LLViewerTextEditor::handleMouseUp(S32 x, S32 y, MASK mask)
 			}
 		}
 		mDragItem = NULL;
-		gFocusMgr.setMouseCapture( NULL );
-		handled = TRUE;
+	}
+
+	handled = LLTextEditor::handleMouseUp(x,y,mask);
+
+	// Used to enable I Agree checkbox if the user scrolled through entire text
+	BOOL was_scrolled_to_bottom = (mScrollbar->getDocPos() == mScrollbar->getDocPosMax());
+	if (mOnScrollEndCallback && was_scrolled_to_bottom)
+	{
+		mOnScrollEndCallback(mOnScrollEndData);
 	}
 
 	return handled;
@@ -942,7 +947,7 @@ BOOL LLViewerTextEditor::handleMouseUp(S32 x, S32 y, MASK mask)
 BOOL LLViewerTextEditor::handleRightMouseDown(S32 x, S32 y, MASK mask)
 {
 	BOOL handled = childrenHandleRightMouseDown(x, y, mask) != NULL;
-	if(!handled)LLTextEditor::handleRightMouseDown(x, y, mask);
+
 	// *TODO: Add right click menus for SLURLs
 // 	if(! handled)
 // 	{
@@ -972,6 +977,24 @@ BOOL LLViewerTextEditor::handleRightMouseDown(S32 x, S32 y, MASK mask)
 // 			menu->setVisible(FALSE);
 // 		}
 // 	}
+	return handled;
+}
+
+BOOL LLViewerTextEditor::handleMiddleMouseDown(S32 x, S32 y, MASK mask)
+{
+	BOOL	handled = FALSE;
+	handled = childrenHandleMiddleMouseDown(x, y, mask) != NULL;
+	if (!handled)
+	{
+		handled = LLTextEditor::handleMiddleMouseDown(x, y, mask);
+	}
+	return handled;
+}
+
+BOOL LLViewerTextEditor::handleMiddleMouseUp(S32 x, S32 y, MASK mask)
+{
+	BOOL handled = childrenHandleMiddleMouseUp(x, y, mask) != NULL;
+
 	return handled;
 }
 
@@ -1034,6 +1057,9 @@ BOOL LLViewerTextEditor::handleDoubleClick(S32 x, S32 y, MASK mask)
 
 		// delay cursor flashing
 		resetKeystrokeTimer();
+
+		// take selection to 'primary' clipboard
+		updatePrimary();
 
 		handled = TRUE;
 	}
@@ -1241,12 +1267,12 @@ std::string LLViewerTextEditor::appendTime(bool prepend_newline)
 	// it's daylight savings time there.
 	timep = utc_to_pacific_time(utc_time, gPacificDaylightTime);
 	std::string text;
-
+	
 	if (gSavedSettings.getBOOL("EmeraldAddSecondsInHistory"))
 		text = llformat("[%d:%02d:%02d]  ", timep->tm_hour, timep->tm_min, timep->tm_sec);
 	else
 		text = llformat("[%d:%02d]  ", timep->tm_hour, timep->tm_min, timep->tm_sec);
-
+	
 	appendColoredText(text, false, prepend_newline, LLColor4::grey);
 
 	return text;
@@ -1539,6 +1565,16 @@ BOOL LLViewerTextEditor::exportBuffer( std::string& buffer )
 	buffer = out_stream.str();
 	
 	return TRUE;
+}
+
+// virtual
+LLXMLNodePtr LLViewerTextEditor::getXML(bool save_children) const
+{
+	LLXMLNodePtr node = LLTextEditor::getXML();
+
+	node->setName(LL_TEXT_EDITOR_TAG);
+
+	return node;
 }
 
 LLView* LLViewerTextEditor::fromXML(LLXMLNodePtr node, LLView *parent, LLUICtrlFactory *factory)

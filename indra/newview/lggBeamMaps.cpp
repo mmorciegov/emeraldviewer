@@ -359,3 +359,67 @@ std::vector<std::string> lggBeamMaps::getColorsFileNames()
 
 
 }
+void lggBeamMaps::stopBeamChat()
+{
+	if(gSavedSettings.getBOOL("EmeraldParticleChat"))
+	{
+		if(sPartsNow != FALSE)
+		{
+			sPartsNow = FALSE;
+			LLMessageSystem* msg = gMessageSystem;
+			msg->newMessageFast(_PREHASH_ChatFromViewer);
+			msg->nextBlockFast(_PREHASH_AgentData);
+			msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+			msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+			msg->nextBlockFast(_PREHASH_ChatData);
+			msg->addStringFast(_PREHASH_Message, "stop");
+			msg->addU8Fast(_PREHASH_Type, 0);
+			msg->addS32("Channel", 9000);
+
+			gAgent.sendReliableMessage();
+			sBeamLastAt  =  LLVector3d::zero;
+		}
+	}
+}
+void lggBeamMaps::updateBeamChat(LLVector3d currentPos)
+{
+	if(gSavedSettings.getBOOL("EmeraldParticleChat"))
+	{
+		if(sPartsNow != TRUE)
+		{
+			sPartsNow = TRUE;
+			LLMessageSystem* msg = gMessageSystem;
+			msg->newMessageFast(_PREHASH_ChatFromViewer);
+			msg->nextBlockFast(_PREHASH_AgentData);
+			msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+			msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+			msg->nextBlockFast(_PREHASH_ChatData);
+			msg->addStringFast(_PREHASH_Message, "start");
+			msg->addU8Fast(_PREHASH_Type, 0);
+			msg->addS32("Channel", 9000);
+
+			gAgent.sendReliableMessage();
+		}
+		//LLVector3d a = sBeamLastAt-gAgent.mPointAt->getPointAtPosGlobal();
+		//if(a.length > 2)
+		if( (sBeamLastAt-currentPos).length() > .2)
+			//if(sBeamLastAt!=gAgent.mPointAt->getPointAtPosGlobal())
+		{
+			sBeamLastAt = currentPos;
+
+			LLMessageSystem* msg = gMessageSystem;
+			msg->newMessageFast(_PREHASH_ChatFromViewer);
+			msg->nextBlockFast(_PREHASH_AgentData);
+			msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+			msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+			msg->nextBlockFast(_PREHASH_ChatData);
+			msg->addStringFast(_PREHASH_Message, llformat("<%.6f, %.6f, %.6f>",(F32)(sBeamLastAt.mdV[VX]),(F32)(sBeamLastAt.mdV[VY]),(F32)(sBeamLastAt.mdV[VZ])));
+			msg->addU8Fast(_PREHASH_Type, 0);
+			msg->addS32("Channel", 9000); // *TODO: make configurable
+
+			gAgent.sendReliableMessage();
+		}
+
+	}
+}
+

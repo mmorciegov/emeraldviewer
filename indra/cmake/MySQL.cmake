@@ -1,7 +1,6 @@
 # -*- cmake -*-
 include(Linking)
 include(Prebuilt)
-# We don't prebuild our own MySQL client library.
 
 use_prebuilt_binary(mysql)
 

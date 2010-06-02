@@ -34,7 +34,7 @@
 
 #include "llviewergesture.h"
 
-#include "audioengine.h"
+#include "llaudioengine.h"
 #include "lldir.h"
 #include "llviewerinventory.h"
 #include "sound_ids.h"		// for testing
@@ -47,6 +47,7 @@
 #include "llviewermessage.h" // send_guid_sound_trigger
 #include "llviewernetwork.h"
 #include "llagent.h"
+
 #include "chatbar_as_cmdline.h"
 
 // Globals
@@ -132,7 +133,6 @@ void LLViewerGesture::doTrigger( BOOL send_chat )
 			gAgent.sendAnimationRequest(anim_id, ANIM_REQUEST_START);
 		}
 	}
-
 	cmd_line_chat(mOutputString, CHAT_TYPE_NORMAL);
 	if ( send_chat && !mOutputString.empty())
 	{

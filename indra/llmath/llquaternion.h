@@ -165,8 +165,6 @@ public:
 	//static U32 mMultCount;
 };
 
-std::ostream& operator<<(std::ostream &s, const LLQuaternion &a);
-
 // checker
 inline BOOL	LLQuaternion::isFinite() const
 {

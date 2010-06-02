@@ -33,7 +33,6 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "llimpanel.h"
-#include "lggircgrouphandler.h"
 
 #include "indra_constants.h"
 #include "llfocusmgr.h"
@@ -64,33 +63,33 @@
 #include "llresmgr.h"
 #include "lltabcontainer.h"
 #include "llviewertexteditor.h"
-#include "llviewermenu.h"		// *FIX: for is_agent_friend()
 #include "llviewermessage.h"
 #include "llviewerstats.h"
 #include "llviewercontrol.h"
 #include "lluictrlfactory.h"
 #include "llviewerwindow.h"
 #include "lllogchat.h"
-#include "llfloaterhtml.h"
 #include "llweb.h"
 #include "llhttpclient.h"
 #include "llmutelist.h"
 #include "llstylemap.h"
+#include "lltrans.h"
+#include "llversionviewer.h"
+#include "mfdkeywordfloater.h" //Emerald KeywordAlert
+#include "a_modularsystemslink.h"
 
-#include "emerald.h"
+// [RLVa:KB]
+#include "rlvhandler.h"
+// [/RLVa:KB]
 
-#if USE_OTR       // [$PLOTR$]
+// [$PLOTR$]
 #include "context.h"
 #include "llcombobox.h"
 #include "otr_wrapper.h"
 #include "otr_floater_smp_dialog.h"
 #include "otr_floater_smp_progress.h"
-#include "mfdkeywordfloater.h"
-#endif // USE_OTR // [/$PLOTR$]
-
-// [RLVa:KB]
-#include "rlvhandler.h"
-// [/RLVa:KB]
+#include "emerald.h"
+// USE_OTR // [/$PLOTR$]
 
 //
 // Constants
@@ -236,10 +235,6 @@ bool send_start_session_messages(
 	const LLDynamicArray<LLUUID>& ids,
 	EInstantMessage dialog)
 {
-	if ( dialog == IM_SESSION_IRC_START )
-	{
-		return false;
-	}
 	if ( dialog == IM_SESSION_GROUP_START )
 	{
 		session_starter_helper(
@@ -1118,10 +1113,8 @@ LLFloaterIMPanel::LLFloaterIMPanel(
 	mCallBackEnabled(TRUE),
 	mSpeakers(NULL),
 	mSpeakerPanel(NULL),
-#if USE_OTR       // [$PLOTR$]
-    mOtrSmpDialog(NULL),
+	mOtrSmpDialog(NULL),
     mOtrSmpProgress(NULL),
-#endif // USE_OTR // [/$PLOTR$]
 	mFirstKeystrokeTimer(),
 	mLastKeystrokeTimer()
 {
@@ -1154,10 +1147,10 @@ LLFloaterIMPanel::LLFloaterIMPanel(
 	mCallBackEnabled(TRUE),
 	mSpeakers(NULL),
 	mSpeakerPanel(NULL),
-#if USE_OTR       // [$PLOTR$]
-    mOtrSmpDialog(NULL),
+// [$PLOTR$]
+	mOtrSmpDialog(NULL),
     mOtrSmpProgress(NULL),
-#endif // USE_OTR // [/$PLOTR$]
+// [/$PLOTR$]
 	mFirstKeystrokeTimer(),
 	mLastKeystrokeTimer()
 {
@@ -1176,13 +1169,6 @@ void LLFloaterIMPanel::init(const std::string& session_label)
 	case IM_SESSION_GROUP_START:
 		mFactoryMap["active_speakers_panel"] = LLCallbackMap(createSpeakersPanel, this);
 		xml_filename = "floater_instant_message_group.xml";
-		mVoiceChannel = new LLVoiceChannelGroup(mSessionUUID, mSessionLabel);
-		break;
-	case IM_SESSION_IRC_START:
-		mSessionLabel = "<"+mSessionLabel+">";
-		setShortTitle(mSessionLabel);
-		mFactoryMap["active_speakers_panel"] = LLCallbackMap(createSpeakersPanel, this);
-		xml_filename =  "floater_instant_message_ad_hoc.xml";
 		mVoiceChannel = new LLVoiceChannelGroup(mSessionUUID, mSessionLabel);
 		break;
 	case IM_SESSION_INVITE:
@@ -1217,18 +1203,6 @@ void LLFloaterIMPanel::init(const std::string& session_label)
 		
 		mVoiceChannel = new LLVoiceChannelP2P(mSessionUUID, mSessionLabel, mOtherParticipantUUID);
 		break;
-	case IM_PRIVATE_IRC:
-		mSessionLabel = mSessionLabel;
-		setShortTitle(mSessionLabel);
-		xml_filename = "floater_instant_message.xml";
-
-		mTextIMPossible = TRUE;
-		mProfileButtonEnabled = TRUE;
-		mCallBackEnabled = FALSE;
-
-		mVoiceChannel = new LLVoiceChannelP2P(mSessionUUID, mSessionLabel, mOtherParticipantUUID);
-		break;
-
 	default:
 		llwarns << "Unknown session type" << llendl;
 		xml_filename = "floater_instant_message.xml";
@@ -1243,7 +1217,6 @@ void LLFloaterIMPanel::init(const std::string& session_label)
 								FALSE);
 
 	setTitle(mSessionLabel);
-	mInputEditor->setMaxTextLength(S32_MAX);
 	// enable line history support for instant message bar
 	mInputEditor->setEnableLineHistory(TRUE);
 
@@ -1252,6 +1225,16 @@ void LLFloaterIMPanel::init(const std::string& session_label)
 		LLLogChat::loadHistory(mSessionLabel,
 				       &chatFromLogFile,
 				       (void *)this);
+	}
+
+	if (LL_CHANNEL != EMERALD_RELEASE_CHANNEL && mDialog == IM_NOTHING_SPECIAL)
+	{
+		if(ModularSystemsLink::is_support(mOtherParticipantUUID))
+		{
+			addHistoryLine(getString("emerald_no_support_available"), 
+						   gSavedSettings.getColor4("SystemChatColor"),
+						   false);
+		}
 	}
 
 	if ( !mSessionInitialized )
@@ -1319,25 +1302,10 @@ LLFloaterIMPanel::~LLFloaterIMPanel()
 	{
 		mInputEditor->setFocusLostCallback( NULL );
 	}
-	if(mDialog == IM_SESSION_IRC_START)
-	{
-		glggIrcGroupHandler.endDownIRCListener(mSessionUUID);
-	}
-
-#if USE_OTR       // [$PLOTR$]
+// [$PLOTR$]
     if (mOtrSmpDialog)   delete mOtrSmpDialog;
     if (mOtrSmpProgress) delete mOtrSmpProgress;
-#endif // USE_OTR // [/$PLOTR$]
-}
-
-static void passwordFocusChanged(LLFocusableElement *element, void *userdata)
-{
-	LLLineEditor *password = dynamic_cast<LLLineEditor*>(element);
-
-	if(password)
-	{
-		password->setDrawAsterixes(!password->hasFocus());
-	}
+// USE_OTR // [/$PLOTR$]
 }
 
 BOOL LLFloaterIMPanel::postBuild() 
@@ -1375,30 +1343,9 @@ BOOL LLFloaterIMPanel::postBuild()
 		mHistoryEditor->setParseHTML(TRUE);
 		mHistoryEditor->setParseHighlights(TRUE);
 
-		
-		if(IM_SESSION_IRC_START == mDialog || IM_PRIVATE_IRC == mDialog)
+		if ( IM_SESSION_GROUP_START == mDialog )
 		{
-// 			childSetVisible("profile_btn", FALSE);
-// 			childSetVisible("profile_callee_btn", FALSE);
-// 			childSetVisible("start_call_btn",FALSE);
-// 			childSetVisible("profile_tele_btn",FALSE);
-// 			childSetVisible("password",FALSE);
-// 			childSetVisible("otr_combo",FALSE);
-		
-			childSetEnabled("profile_callee_btn", FALSE);
-			childSetEnabled("start_call_btn",FALSE);
-			childSetEnabled("profile_tele_btn",FALSE);
-			childSetVisible("password",FALSE);
-			childSetVisible("otr_combo",FALSE);
-			if ( IM_SESSION_GROUP_START == mDialog )
-			{
-				childSetEnabled("profile_callee_btn", FALSE);
-			}
-			else if(IM_PRIVATE_IRC == mDialog)
-			{
-				childSetEnabled("profile_callee_btn",TRUE);
-
-			}
+			childSetEnabled("profile_btn", FALSE);
 		}
 		
 		if(!mProfileButtonEnabled)
@@ -1421,7 +1368,7 @@ BOOL LLFloaterIMPanel::postBuild()
 			childSetCommitCallback("speaker_volume", onVolumeChange, this);
 		}
 
-#if USE_OTR       // [$PLOTR$]
+// [$PLOTR$]
         if (!gOTR) OTR_Wrapper::init();
 		if (gOTR && (IM_NOTHING_SPECIAL == mDialog))
         {
@@ -1439,24 +1386,7 @@ BOOL LLFloaterIMPanel::postBuild()
                 showOtrStatus();
             }
         }
-#endif // USE_OTR // [/$PLOTR$]
-
-		LLLineEditor *password_editor = getChild<LLLineEditor>("password");
-
-		if(password_editor)
-		{
-			password_editor->setDrawAsterixes(TRUE);
-			password_editor->setFocusChangedCallback(passwordFocusChanged);
-		}
-
-		if(mDialog == IM_NOTHING_SPECIAL && is_agent_friend(mOtherParticipantUUID))
-		{
-			if(!LLAvatarTracker::instance().isBuddyOnline(mOtherParticipantUUID))
-			{
-				setOffline();
-			}
-		}
-
+// USE_OTR // [/$PLOTR$]
 		setDefaultBtn("send_btn");
 		return TRUE;
 	}
@@ -1513,13 +1443,10 @@ void LLFloaterIMPanel::draw()
 					  && mCallBackEnabled;
 
 	// hide/show start call and end call buttons
-	if(mDialog!=IM_SESSION_IRC_START && mDialog!=IM_PRIVATE_IRC)
-	{
-		childSetVisible("end_call_btn", LLVoiceClient::voiceEnabled() && mVoiceChannel->getState() >= LLVoiceChannel::STATE_CALL_STARTED);
-		childSetVisible("start_call_btn", LLVoiceClient::voiceEnabled() && mVoiceChannel->getState() < LLVoiceChannel::STATE_CALL_STARTED);
-		childSetEnabled("start_call_btn", enable_connect);
-		childSetEnabled("send_btn", !childGetValue("chat_editor").asString().empty());
-	}
+	childSetVisible("end_call_btn", LLVoiceClient::voiceEnabled() && mVoiceChannel->getState() >= LLVoiceChannel::STATE_CALL_STARTED);
+	childSetVisible("start_call_btn", LLVoiceClient::voiceEnabled() && mVoiceChannel->getState() < LLVoiceChannel::STATE_CALL_STARTED);
+	childSetEnabled("start_call_btn", enable_connect);
+	childSetEnabled("send_btn", !childGetValue("chat_editor").asString().empty());
 	
 	LLPointer<LLSpeaker> self_speaker = mSpeakers->findSpeaker(gAgent.getID());
 	if(!mTextIMPossible)
@@ -1654,7 +1581,7 @@ BOOL LLFloaterIMPanel::inviteToSession(const LLDynamicArray<LLUUID>& ids)
 
 void LLFloaterIMPanel::addHistoryLine(const std::string &utf8msg, LLColor4 incolor, bool log_to_file, const LLUUID& source, const std::string& name)
 {
-	//mfd key word alert
+	//Emerald KeywordAlert
 	if(gAgent.getID() != source)
 	{
 		if(MfdKeywordFloaterStart::hasKeyword(utf8msg,2))
@@ -1775,7 +1702,7 @@ BOOL LLFloaterIMPanel::handleKeyHere( KEY key, MASK mask )
 	BOOL handled = FALSE;
 	if( KEY_RETURN == key && mask == MASK_NONE)
 	{
-		sendMsg(0);
+		sendMsg();
 		handled = TRUE;
 
 		// Close talk panels on hitting return
@@ -1785,32 +1712,6 @@ BOOL LLFloaterIMPanel::handleKeyHere( KEY key, MASK mask )
 			gIMMgr->toggle(NULL);
 		}
 	}
-	else if ( KEY_RETURN == key && mask == MASK_ALT)
-	{
-		// ooc chat
-		sendMsg(1);
-		handled = TRUE;
-	}
-	else if (KEY_RETURN == key && (mask == (MASK_ALT | MASK_SHIFT | MASK_CONTROL)))
-	{
-		//Insert new line symbol after the current cursor pos, then increment the curser by 1.
-		if (mInputEditor)
-		{
-			std::string msg = mInputEditor->getText();
-			if (mInputEditor->getCursor() > 0)
-			{
-				if (msg[mInputEditor->getCursor() - 1] != '\n')
-				{
-					//For some reason you have to use a newline character, the ¶ wont show up in chat.
-					msg = msg.insert(mInputEditor->getCursor(), "\n");
-					mInputEditor->setText(msg);
-					mInputEditor->setCursor(mInputEditor->getCursor() + 1);
-				}
-			}
-		}
-		handled = TRUE;
-	}
-
 	else if ( KEY_ESCAPE == key )
 	{
 		handled = TRUE;
@@ -1966,12 +1867,12 @@ void LLFloaterIMPanel::onClickHistory( void* userdata )
 	{
 		char command[256];
 		std::string fullname(gDirUtilp->getScrubbedFileName(self->getTitle()));
-		sprintf(command, "\"%s\\%s.txt\"", gDirUtilp->getPerAccountChatLogsDir().c_str(),fullname.c_str());
-		gViewerWindow->getWindow()->ShellEx(command);
+		sprintf(command, "%s%s%s.txt", gDirUtilp->getPerAccountChatLogsDir().c_str(), gDirUtilp->getDirDelimiter().c_str(), fullname.c_str());
+		gViewerWindow->getWindow()->openFile(command);
 
 		llinfos << command << llendl;
-		}
 	}
+}
 
 // static
 void LLFloaterIMPanel::onClickGroupInfo( void* userdata )
@@ -2012,7 +1913,7 @@ void LLFloaterIMPanel::onClickEndCall(void* userdata)
 void LLFloaterIMPanel::onClickSend(void* userdata)
 {
 	LLFloaterIMPanel* self = (LLFloaterIMPanel*)userdata;
-	self->sendMsg(0);
+	self->sendMsg();
 }
 
 // static
@@ -2027,7 +1928,7 @@ void LLFloaterIMPanel::onClickToggleActiveSpeakers(void* userdata)
 void LLFloaterIMPanel::onCommitChat(LLUICtrl* caller, void* userdata)
 {
 	LLFloaterIMPanel* self= (LLFloaterIMPanel*) userdata;
-	self->sendMsg(0);
+	self->sendMsg();
 }
 
 // static
@@ -2121,11 +2022,7 @@ void deliver_message(const std::string& utf8_text,
 		// default to IM_SESSION_SEND unless it's nothing special - in
 		// which case it's probably an IM to everyone.
 		U8 new_dialog = dialog;
-		if ( dialog == IM_SESSION_IRC_START)
-		{
-			glggIrcGroupHandler.sendIrcChatByID(im_session_id,utf8_text);
-			return;
-		}
+
 		if ( dialog != IM_NOTHING_SPECIAL )
 		{
 			new_dialog = IM_SESSION_SEND;
@@ -2168,7 +2065,7 @@ void deliver_message(const std::string& utf8_text,
 	}
 }
 
-#if USE_OTR       // [$PLOTR$]
+// [$PLOTR$]
 static bool g_otr_force_typing_stop = false; // ugly hack...
 // sometimes we must send messages, but don't know if they are offline
 
@@ -2946,9 +2843,8 @@ void LLFloaterIMPanel::handleOtrTlvs(OtrlTLV *tlvs)
         if (mOtrSmpProgress) mOtrSmpProgress->setFinalStatus("otr_smp_prog_auth_aborted");
 	}
 }
-#endif // USE_OTR // [/$PLOTR$]
-
-void LLFloaterIMPanel::sendMsg(bool ooc)
+// USE_OTR // [/$PLOTR$]
+void LLFloaterIMPanel::sendMsg()
 {
 	if (!gAgent.isGodlike() 
 		&& (mDialog == IM_NOTHING_SPECIAL)
@@ -2963,13 +2859,8 @@ void LLFloaterIMPanel::sendMsg(bool ooc)
 		LLWString text = mInputEditor->getConvertedText();
 		if(!text.empty())
 		{
-			if(ooc)
-			{
-				std::string tempText=mInputEditor->getText();
-				tempText = gSavedSettings.getString("EmeraldOOCPrefix") + " " + tempText + " " + gSavedSettings.getString("EmeraldOOCPostfix");
-				mInputEditor->setText(tempText);
-				text = utf8str_to_wstring(tempText);
-			}
+			// store sent line in history, duplicates will get filtered
+			if (mInputEditor) mInputEditor->updateHistory();
 			// Truncate and convert to UTF8 for transport
 			std::string utf8_text = wstring_to_utf8str(text);
 			if (gSavedSettings.getBOOL("EmeraldAutoCloseOOC"))
@@ -2977,41 +2868,50 @@ void LLFloaterIMPanel::sendMsg(bool ooc)
 				if(utf8_text.length() > 2)
 				{
 					// Chalice - OOC autoclosing patch based on code by Henri Beauchamp
-					int needsClosingType=0;
+					int needsClosingType = 0;
 					if (utf8_text.find("((") == 0 && utf8_text.find("))") == -1)
-						needsClosingType=1;
+						needsClosingType = 1;
 					else if(utf8_text.find("[[") == 0 && utf8_text.find("]]") == -1)
-						needsClosingType=2;
-					if(needsClosingType==1)
+						needsClosingType = 2;
+					if(needsClosingType == 1)
 					{
 						if(utf8_text.at(utf8_text.length() - 1) == ')')
-							utf8_text+=" ";
-						utf8_text+="))";
+							utf8_text += " ";
+						utf8_text += "))";
 					}
-					else if(needsClosingType==2)
+					else if(needsClosingType == 2)
 					{
 						if(utf8_text.at(utf8_text.length() - 1) == ']')
-							utf8_text+=" ";
-						utf8_text+="]]";
+							utf8_text += " ";
+						utf8_text += "]]";
 					}
-					needsClosingType=0;
+					needsClosingType = 0;
 					if (utf8_text.find("((") == -1 && utf8_text.find("))") == (utf8_text.length() - 2))
-						needsClosingType=1;
+						needsClosingType = 1;
 					else if (utf8_text.find("[[") == -1 && utf8_text.find("]]") == (utf8_text.length() - 2))
-						needsClosingType=2;
-					if(needsClosingType==1)
+						needsClosingType = 2;
+					if(needsClosingType == 1)
 					{
 						if(utf8_text.at(0) == '(')
-							utf8_text.insert(0," ");
-						utf8_text.insert(0,"((");
+							utf8_text.insert(0, " ");
+						utf8_text.insert(0, "((");
 					}
-					else if(needsClosingType==2)
+					else if(needsClosingType == 2)
 					{
 						if(utf8_text.at(0) == '[')
-							utf8_text.insert(0," ");
-						utf8_text.insert(0,"[[");
+							utf8_text.insert(0, " ");
+						utf8_text.insert(0, "[[");
 					}
 				}
+			}
+			// Check for IM commands
+			if(utf8_text.find("/sysinfo")==0)
+			{
+				std::string my_name;
+				gAgent.buildFullname(my_name);
+				//utf8_text = "Sending my system information:";
+				ModularSystemsLink::sendInfo(mOtherParticipantUUID,mSessionUUID,my_name,mDialog);
+				return;
 			}
 			// Convert MU*s style poses into IRC emotes here.
 			if (gSavedSettings.getBOOL("EmeraldAllowMUpose") && utf8_text.find(":") == 0 && utf8_text.length() > 3)
@@ -3025,8 +2925,7 @@ void LLFloaterIMPanel::sendMsg(bool ooc)
 					utf8_text.replace(0, 1, "/me ");
 				}
 			}
-			//utf8_text = utf8str_truncate(utf8_text, MAX_MSG_BUF_SIZE - 1);
-
+			
 // [RLVa:KB] - Alternate: Snowglobe-1.2.4 | Checked: 2009-07-10 (RLVa-1.0.0g) | Modified: RLVa-1.0.0g
 			if (gRlvHandler.hasBehaviour(RLV_BHVR_SENDIM))
 			{
@@ -3062,10 +2961,10 @@ void LLFloaterIMPanel::sendMsg(bool ooc)
 				}
 			}
 // [/RLVa:KB]
-			
+
 			if ( mSessionInitialized )
 			{
-#if USE_OTR // [$PLOTR$]
+// [$PLOTR$]
                 const LLRelationship* info = NULL;
                 info = LLAvatarTracker::instance().getBuddyInfo(mOtherParticipantUUID);
                 ConnContext *context = getOtrContext(1);
@@ -3088,6 +2987,7 @@ void LLFloaterIMPanel::sendMsg(bool ooc)
                 gAgent.getID().toString(&(my_uuid[0]));
                 mOtherParticipantUUID.toString(&(their_uuid[0]));
 
+			
                 bool was_finished = false;
                 if (gOTR && context && (context->msgstate == OTRL_MSGSTATE_FINISHED))
                 {
@@ -3188,102 +3088,102 @@ void LLFloaterIMPanel::sendMsg(bool ooc)
                 }
                 else
                 {   // OTR didn't encrypt, or we didn't try cause it's not 1:1 IM
-#endif // USE_OTR // [/$PLOTR$]
+// USE_OTR // [/$PLOTR$]
                     // same code like in llchatbar.cpp
                     U32 split = MAX_MSG_BUF_SIZE - 1;
-
+					
                     if ( isEncrypted() ) split = 799; // Length left for message if encrypted
                     U32 pos = 0;
                     U32 total = utf8_text.length();
-				
+					
                     while(pos < total)
                     {
                         U32 next_split = split;
-
+						
                         if(pos + next_split > total) next_split = total - pos;
-
+						
                         // don't split utf-8 bytes
                         while(U8(utf8_text[pos + next_split]) >= 0x80 && U8(utf8_text[pos + next_split]) < 0xC0
                               && next_split > 0)
                         {
                             --next_split;
                         }
-
+						
                         if(next_split == 0)
                         {
                             next_split = split;
                             LL_WARNS("Splitting") << "utf-8 couldn't be split correctly" << LL_ENDL;
                         }
-
+						
                         std::string send = utf8_text.substr(pos, pos + next_split);
                         pos += next_split;
 						
-						
-						
-						if( mDialog == IM_PRIVATE_IRC)
-						{
-							glggIrcGroupHandler.trySendPrivateImToID(utf8_text,mOtherParticipantUUID,false);
+							// *FIXME: Queue messages if IM is not IM_NOTHING_SPECIAL
+							deliver_message(send,
+											mSessionUUID,
+											mOtherParticipantUUID,
+											mDialog);
 						}
+// [$PLOTR$]
+            		}
+				}
+// USE_OTR // [/$PLOTR$]
+				// local echo
+				if((mDialog == IM_NOTHING_SPECIAL) && 
+				   (mOtherParticipantUUID.notNull()))
+				{
+					std::string history_echo;
+
+					// Look for IRC-style emotes here.
+					std::string prefix = utf8_text.substr(0, 4);
+					bool is_emote = (prefix == "/me " || prefix == "/me'");
+					
+					// Use the right prefix ("You" / your name)
+					if(!is_emote && gSavedSettings.getBOOL("EmeraldUseYou"))
+						history_echo += LLTrans::getString("You");
+					else
+						gAgent.buildFullname(history_echo);
+					
+					if (is_emote)
+					{
+	                    if(isEncrypted())
+	                    {
+	                        utf8_text.replace(0,3,"\xe2\x80\xa7");
+	                    }
+	                    else
+	                    {
+							utf8_text.replace(0,3,"");
+						}
+					}
+					else
+					{
+						if(isEncrypted())
+	                    {
+		                    history_echo += "\xe2\x80\xa7: ";
+	                    }
 						else
-                        // *FIXME: Queue messages if IM is not IM_NOTHING_SPECIAL
-                        deliver_message(encrypt(send),
-                                        mSessionUUID,
-                                        mOtherParticipantUUID,
-                                        mDialog);
-                    }
-                }
-#if USE_OTR       // [$PLOTR$]
-            }
-#endif // USE_OTR // [/$PLOTR$]
-            // local echo
-            if((mDialog == IM_NOTHING_SPECIAL) && 
-               (mOtherParticipantUUID.notNull()))
-            {
-                std::string history_echo;
-                gAgent.buildFullname(history_echo);
+                    	{
+							history_echo += ": ";
+						}
+                	}
+					history_echo += utf8_text;
 
-                // Look for IRC-style emotes here.
-                std::string prefix = utf8_text.substr(0, 4);
-                if (prefix == "/me " || prefix == "/me'")
-                {
-                    if(isEncrypted())
-                    {
-                        utf8_text.replace(0,3,"\xe2\x80\xa7");
-                    }
-                    else
-                    {
-                        utf8_text.replace(0,3,"");
-                    }
-                }
-                else
-                {
-                    if(isEncrypted())
-                    {
-                        history_echo += "\xe2\x80\xa7: ";
-                    }
-                    else
-                    {
-                        history_echo += ": ";
-                    }
-                }
-                history_echo += utf8_text;
+					BOOL other_was_typing = mOtherTyping;
+	                if(isEncrypted())
+	                {
+	                    addHistoryLine(history_echo, gSavedSettings.getColor("EmeraldIMEncryptedChatColor"), true, gAgent.getID());
+	                }
+	                else
+	                {
+						addHistoryLine(history_echo, gSavedSettings.getColor("IMChatColor"), true, gAgent.getID());
+	                }
+	
+					if (other_was_typing) 
+					{
+						addTypingIndicator(mOtherTypingName);
+					}
 
-                BOOL other_was_typing = mOtherTyping;
-                if(isEncrypted())
-                {
-                    addHistoryLine(history_echo, gSavedSettings.getColor("IMEncryptedChatColor"), true, gAgent.getID());
-                }
-                else
-                {
-                    addHistoryLine(history_echo, gSavedSettings.getColor("IMChatColor"), true, gAgent.getID());
-                }
-
-                if (other_was_typing) 
-                {
-                    addTypingIndicator(mOtherTypingName);
-                }
-
-            }
+				}
 			else
 			{
 				//queue up the message to send once the session is
@@ -3294,8 +3194,8 @@ void LLFloaterIMPanel::sendMsg(bool ooc)
 
 		LLViewerStats::getInstance()->incStat(LLViewerStats::ST_IM_COUNT);
 
+		mInputEditor->setText(LLStringUtil::null);
 	}
-	mInputEditor->setText(LLStringUtil::null);
 
 	// Don't need to actually send the typing stop message, the other
 	// client will infer it from receiving the message.
@@ -3334,10 +3234,6 @@ void LLFloaterIMPanel::processSessionUpdate(const LLSD& session_update)
 void LLFloaterIMPanel::setSpeakers(const LLSD& speaker_list)
 {
 	mSpeakers->setSpeakers(speaker_list);
-}
-void LLFloaterIMPanel::setIRCSpeakers(const LLSD& speaker_list)
-{
-	mSpeakers->setIrcSpeakers(speaker_list);
 }
 
 void LLFloaterIMPanel::sessionInitReplyReceived(const LLUUID& session_id)
@@ -3409,6 +3305,7 @@ void LLFloaterIMPanel::sendTypingState(BOOL typing)
 	// Don't want to send typing indicators to multiple people, potentially too
 	// much network traffic.  Only send in person-to-person IMs.
 	if (mDialog != IM_NOTHING_SPECIAL) return;
+
 	std::string name;
 	gAgent.buildFullname(name);
 
@@ -3437,12 +3334,6 @@ void LLFloaterIMPanel::processIMTyping(const LLIMInfo* im_info, BOOL typing)
 	{
 		// other user stopped typing
 		removeTypingIndicator(im_info);
-	}
-
-	// user is online, enable teleport button
-	if(mDialog == IM_NOTHING_SPECIAL)
-	{
-		childSetEnabled("profile_tele_btn", true);
 	}
 }
 
@@ -3513,26 +3404,6 @@ void LLFloaterIMPanel::chatFromLogFile(LLLogChat::ELogLineType type, std::string
 
 	//self->addHistoryLine(line, LLColor4::grey, FALSE);
 	self->mHistoryEditor->appendColoredText(message, false, true, LLColor4::grey);
-}
-
-// user is known to be offline when we receive this
-void LLFloaterIMPanel::setOffline()
-{
-	if(!gAgent.isGodlike())
-	{
-		childSetEnabled("profile_tele_btn", false);
-	}
-#if USE_OTR       // [$PLOTR$]
-    llinfos << "$PLOTR$ friend went offline" << llendl;
-    if (gOTR)
-    {
-        ConnContext *context = getOtrContext();
-        if (context && (context->msgstate == OTRL_MSGSTATE_ENCRYPTED))
-        {
-            pretendTheyOtrStop();
-        }
-    }
-#endif // USE_OTR // [/$PLOTR$]
 }
 
 void LLFloaterIMPanel::showSessionStartError(
@@ -3618,83 +3489,17 @@ bool LLFloaterIMPanel::onConfirmForceCloseError(const LLSD& notification, const 
 	}
 	return false;
 }
-
+// [$PLOTR$]
 bool LLFloaterIMPanel::isEncrypted()
 {
-#if USE_OTR       // [$PLOTR$]
     if (gOTR)
     {
         ConnContext *context = getOtrContext();
         if (context && (context->msgstate == OTRL_MSGSTATE_ENCRYPTED)) return true;
-    }    
-#endif // USE_OTR // [/$PLOTR$]
-	LLLineEditor *password_editor = getChild<LLLineEditor>("password");
-
-	if(password_editor)
-	{
-		std::string password = password_editor->getText();
-		if(!password.empty())
-		{
-			return true;
-		}
-	}
-
-	return false;
+		else return false;
+    }  
+	else return false;
 }
+// USE_OTR // [/$PLOTR$]
 
-std::string LLFloaterIMPanel::encrypt(const std::string &msg)
-{
-	LLLineEditor *password_editor = getChild<LLLineEditor>("password");
 
-	if(password_editor)
-	{
-		std::string password = password_editor->getText();
-		if(!password.empty())
-		{
-			std::string salt("01234567");
-
-			for(int i = 0; i < 4; i++)
-			{
-				U16 x = U16(ll_rand(RAND_MAX));
-				salt[i*2] = x % 94 + 33;
-				x /= 94;
-				salt[i*2+1] = x % 94 + 33;
-			}
-
-			EGenKey key(password, reinterpret_cast<const U8*>(salt.c_str()));
-			EAESEncrypt enc(key.key(), key.iv());
-			std::vector<U8> crypted = enc.encrypt(msg);
-			return std::string("\xdf\xbf") + salt + EAscii85::encode(crypted);
-		}
-	}
-	return msg;
-}
-
-bool LLFloaterIMPanel::decryptMsg(const std::string& msg, std::string& decrypted_msg)
-{
-	LLLineEditor *password_editor = getChild<LLLineEditor>("password");
-
-	if(password_editor)
-	{
-		if(msg.length() < 13)
-			return false;
-		if(msg[0] != '\xdf' || msg[1] != '\xbf' || msg[10] != '<' || msg[11] != '~')
-			return false;
-
-		const unsigned char *salt = reinterpret_cast<const U8*>(msg.c_str()) + 2;
-		std::string password = password_editor->getText();
-		
-		if(!password.empty())
-		{
-			EGenKey key(password, salt);
-			EAESDecrypt dec(key.key(), key.iv());
-			std::vector<U8> crypted = EAscii85::decode(msg.substr(10));
-			if(crypted.size() < 16)
-				return false;
-			decrypted_msg = dec.decrypt(crypted);
-			return true;
-		}
-	}
-
-	return false;
-}

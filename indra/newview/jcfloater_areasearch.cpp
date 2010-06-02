@@ -39,11 +39,14 @@
 #include "llscrolllistctrl.h"
 
 #include "llviewerobjectlist.h"
+#include "llviewercontrol.h"
 
 #include "jcfloater_areasearch.h"
 
 #include "llviewercontrol.h"
 #include "llviewerobjectlist.h"
+#include "llfloatertools.h"
+#include "llselectmgr.h"
 
 #include "llcategory.h"
 
@@ -131,7 +134,11 @@ void JCFloaterAreaSearch::onDoubleClick(void *userdata)
 	//gAgent.setFocusOnAvatar(FALSE, TRUE);
 		//LLVector3 pos_agent = objectp->getPositionGlobal()
 		//LLVector3d pos_global = gAgent.getPosGlobalFromAgent(pos_agent);
-		LLTracker::trackLocation(objectp->getPositionGlobal(), mObjectDetails[object_id].name, "", LLTracker::LOCATION_ITEM);
+		//LLTracker::trackLocation(objectp->getPositionGlobal(), mObjectDetails[object_id].name, "", LLTracker::LOCATION_ITEM);
+		gFloaterTools->open();
+		LLSelectMgr::getInstance()->deselectAll();
+		LLSelectMgr::getInstance()->selectObjectAndFamily(objectp);
+
 	}
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2009
+/* Copyright (c) 2010
  *
  * Modular Systems All rights reserved.
  *
@@ -33,7 +33,7 @@
 
 #include "chatbar_as_cmdline.h"
 
-#include "llcalc.h"
+//#include "llcalc.h"
 
 #include "llchatbar.h"
 #include "llagent.h"
@@ -199,19 +199,50 @@ void invrepair()
 	gInventory.collectDescendents(gAgent.getInventoryRootID(),cats,items,FALSE);//,objectnamematches);
 }
 
-
-
-
+/*static BOOL *sEmeraldCmdLine;
+static std::string *sEmeraldCmdLinePos;
+static std::string *sEmeraldCmdLineDrawDistance;
+static std::string *sEmeraldCmdTeleportToCam;
+static std::string *sEmeraldCmdLineAO;
+static std::string *sEmeraldCmdLineKeyToName;
+static std::string *sEmeraldCmdLineOfferTp;
+static std::string *sEmeraldCmdLineGround;
+static std::string *sEmeraldCmdLineHeight;
+static std::string *sEmeraldCmdLineTeleportHome;
+static std::string *sEmeraldCmdLineRezPlatform;
+static std::string *sEmeraldCmdLineMapTo;
+static BOOL *sEmeraldCmdLineMapToKeepPos;
+static std::string *sEmeraldCmdLineCalc;
+static std::string *sEmeraldCmdLineTP2;
+static std::string *sEmeraldCmdLineClearChat;
+static F32 *sEmeraldCmdLinePlatformSize;*/
 bool cmd_line_chat(std::string revised_text, EChatType type)
 {
-	if(gSavedSettings.getBOOL("EmeraldCmdLine"))
+	static BOOL *sEmeraldCmdLine = rebind_llcontrol<BOOL>("EmeraldCmdLine", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLinePos = rebind_llcontrol<std::string>("EmeraldCmdLinePos", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineDrawDistance = rebind_llcontrol<std::string>("EmeraldCmdLineDrawDistance", &gSavedSettings, true);
+	static std::string *sEmeraldCmdTeleportToCam = rebind_llcontrol<std::string>("EmeraldCmdTeleportToCam", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineAO = rebind_llcontrol<std::string>("EmeraldCmdLineAO", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineKeyToName = rebind_llcontrol<std::string>("EmeraldCmdLineKeyToName", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineOfferTp = rebind_llcontrol<std::string>("EmeraldCmdLineOfferTp", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineGround = rebind_llcontrol<std::string>("EmeraldCmdLineGround", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineHeight = rebind_llcontrol<std::string>("EmeraldCmdLineHeight", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineTeleportHome = rebind_llcontrol<std::string>("EmeraldCmdLineTeleportHome", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineRezPlatform = rebind_llcontrol<std::string>("EmeraldCmdLineRezPlatform", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineMapTo = rebind_llcontrol<std::string>("EmeraldCmdLineMapTo", &gSavedSettings, true);
+	static BOOL *sEmeraldCmdLineMapToKeepPos = rebind_llcontrol<BOOL>("EmeraldCmdLineMapToKeepPos", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineCalc = rebind_llcontrol<std::string>("EmeraldCmdLineCalc", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineTP2 = rebind_llcontrol<std::string>("EmeraldCmdLineTP2", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineClearChat = rebind_llcontrol<std::string>("EmeraldCmdLineClearChat", &gSavedSettings, true);
+	
+	if(*sEmeraldCmdLine)
 	{
 		std::istringstream i(revised_text);
 		std::string command;
 		i >> command;
 		if(command != "")
 		{
-			if(command == gSavedSettings.getString("EmeraldCmdLinePos"))
+			if(command == *sEmeraldCmdLinePos)
 			{
 				F32 x,y,z;
 				if (i >> x)
@@ -234,25 +265,25 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					}
 				}
 			}
-			else if(command == gSavedSettings.getString("EmeraldCmdLineDrawDistance"))
+			else if(command == *sEmeraldCmdLineDrawDistance)
 			{
                 int drawDist;
                 if(i >> drawDist)
                 {
                     gSavedSettings.setF32("RenderFarClip", drawDist);
                     gAgent.mDrawDistance=drawDist;
-                    char buffer[DB_IM_MSG_BUF_SIZE * 2];  /* Flawfinder: ignore */
+                    char buffer[DB_IM_MSG_BUF_SIZE * 2]; 
                     snprintf(buffer,sizeof(buffer),"Draw distance set to: %dm",drawDist);
 					cmdline_printchat(std::string(buffer));
 					return false;
                 }
 			}
-			else if(command == gSavedSettings.getString("EmeraldCmdTeleportToCam"))
+			else if(command == *sEmeraldCmdTeleportToCam)
             {
 				gAgent.teleportViaLocation(gAgent.getCameraPositionGlobal());
 				return false;
             }
-			else if(command == gSavedSettings.getString("EmeraldCmdLineAO"))
+			else if(command == *sEmeraldCmdLineAO)
             {
 				std::string status;
                 if(i >> status)
@@ -271,20 +302,20 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 				}
 				return false;
             }
-			else if(command == gSavedSettings.getString("EmeraldCmdLineKeyToName"))
+			else if(command == *sEmeraldCmdLineKeyToName)
             {
                 LLUUID targetKey;
                 if(i >> targetKey)
                 {
                     std::string object_name;
                     gCacheName->getFullName(targetKey, object_name);
-                    char buffer[DB_IM_MSG_BUF_SIZE * 2];  /* Flawfinder: ignore */
+                    char buffer[DB_IM_MSG_BUF_SIZE * 2]; 
                     snprintf(buffer,sizeof(buffer),"%s: (%s)",targetKey.asString().c_str(), object_name.c_str());
 					cmdline_printchat(std::string(buffer));
                 }
 				return false;
             }
-			else if(command == gSavedSettings.getString("EmeraldCmdLineOfferTp"))
+			else if(command == *sEmeraldCmdLineOfferTp)
             {
                 std::string avatarKey;
 //				llinfos << "CMD DEBUG 0 " << command << " " << avatarName << llendl;
@@ -294,7 +325,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
                     LLUUID tempUUID;
                     if(LLUUID::parseUUID(avatarKey, &tempUUID))
                     {
-                        char buffer[DB_IM_MSG_BUF_SIZE * 2];  /* Flawfinder: ignore */
+                        char buffer[DB_IM_MSG_BUF_SIZE * 2];
                         LLDynamicArray<LLUUID> ids;
                         ids.push_back(tempUUID);
                         std::string tpMsg="Join me!";
@@ -320,16 +351,16 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
                 }
             }
 			
-			else if(command == gSavedSettings.getString("EmeraldCmdLineGround"))
+			else if(command == *sEmeraldCmdLineGround)
 			{
 				LLVector3 agentPos = gAgent.getPositionAgent();
 				U64 agentRegion = gAgent.getRegion()->getHandle();
 				LLVector3 targetPos(agentPos.mV[0],agentPos.mV[1],LLWorld::getInstance()->resolveLandHeightAgent(agentPos));
 				LLVector3d pos_global = from_region_handle(agentRegion);
 				pos_global += LLVector3d((F64)targetPos.mV[0],(F64)targetPos.mV[1],(F64)targetPos.mV[2]);
-				gAgent.teleportViaLocation(pos_global, true);
+				gAgent.teleportViaLocation(pos_global);
 				return false;
-			}else if(command == gSavedSettings.getString("EmeraldCmdLineHeight"))
+			}else if(command == *sEmeraldCmdLineHeight)
 			{
 				F32 z;
 				if(i >> z)
@@ -342,17 +373,17 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					gAgent.teleportViaLocation(pos_global);
 					return false;
 				}
-			}else if(command == gSavedSettings.getString("EmeraldCmdLineTeleportHome"))
+			}else if(command == *sEmeraldCmdLineTeleportHome)
 			{
 				gAgent.teleportHome();
 				return false;
-            }else if(command == gSavedSettings.getString("EmeraldCmdLineRezPlatform"))
+            }else if(command == *sEmeraldCmdLineRezPlatform)
             {
 				F32 width;
 				if (i >> width) cmdline_rezplat(false, width);
 				else cmdline_rezplat();
 				return false;
-			}else if(command == gSavedSettings.getString("EmeraldCmdLineMapTo"))
+			}else if(command == *sEmeraldCmdLineMapTo)
 			{
 				if (revised_text.length() > command.length() + 1) //Typing this command with no argument was causing a crash. -Madgeek
 				{
@@ -363,7 +394,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					std::string region_name = LLWeb::escapeURL(revised_text.substr(command.length()+1));
 					std::string url;
 
-					if(!gSavedSettings.getBOOL("EmeraldMapToKeepPos"))
+					if(!*sEmeraldCmdLineMapToKeepPos)
 					{
 						agent_x = 128;
 						agent_y = 128;
@@ -374,9 +405,9 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					LLURLDispatcher::dispatch(url, NULL, true);
 				}
 				return false;
-			}else if(command == gSavedSettings.getString("EmeraldCmdLineCalc"))//Cryogenic Blitz
+			}else if(command == *sEmeraldCmdLineCalc)//Cryogenic Blitz
 			{
-				bool success;
+				/*bool success;
 				F32 result = 0.f;
 				if(revised_text.length() > command.length() + 1)
 				{
@@ -402,8 +433,8 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					}
 					cmdline_printchat(out);
 					return false;
-				}
-			}else if(command == gSavedSettings.getString("EmeraldCmdLineTP2"))
+				}*/
+			}else if(command == *sEmeraldCmdLineTP2)
 			{
 				if (revised_text.length() > command.length() + 1) //Typing this command with no argument was causing a crash. -Madgeek
 				{
@@ -416,15 +447,12 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 				//Zwag: I wonder how many people will actually get this?
 				cmdline_printchat("Nothing happens.");
 				return false;
-			}else if(command == "typingstop")
+			}else if (revised_text == "/pimps")
 			{
-				std::string text;
-				if(i >> text)
-				{
-					gChatBar->sendChatFromViewer(text, CHAT_TYPE_STOP, FALSE);
-				}
-			}
-			else if(command == gSavedSettings.getString("EmeraldCmdLineClearChat"))
+				//Thanks to the pimp's horrible code for shutting down the site...
+				cmdline_printchat("Pimps can't code.");
+				return true;//dont block chat
+			}else if(command == *sEmeraldCmdLineClearChat)
 			{
 				LLFloaterChat* chat = LLFloaterChat::getInstance(LLSD());
 				if(chat)
@@ -437,7 +465,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 				}
 			}else if(command == "zdrop")
 			{
-				cmdline_printchat("lolZ");
+				cmdline_printchat("lol");
 				std::string lolfolder;
 				if(i >> lolfolder)
 				{
@@ -476,19 +504,19 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 // even if they are out of draw distance.
 LLUUID cmdline_partial_name2key(std::string partial_name)
 {
-	std::vector<LLUUID> avatars;
+/*	std::vector<LLUUID> avatars;
 	std::string av_name;
 	LLStringUtil::toLower(partial_name);
 	LLWorld::getInstance()->getAvatars(&avatars);
 	typedef std::vector<LLUUID>::const_iterator av_iter;
-	bool has_avatarlist = (LLFloaterAvatarList::getInstance() ? true : false);
+	bool has_avatarlist = (FloaterAvatarList::getInstance() ? true : false);
 	if(has_avatarlist)
-		LLFloaterAvatarList::getInstance()->updateAvatarList();
+		FloaterAvatarList::getInstance()->updateAvatarList();
 	for(av_iter i = avatars.begin(); i != avatars.end(); ++i)
 	{
 		if(has_avatarlist)
 		{
-			LLAvatarListEntry* entry = LLFloaterAvatarList::getInstance()->getAvatarEntry(*i);
+			LLAvatarListEntry* entry = FloaterAvatarList::getInstance()->getAvatarEntry(*i);
 			if(entry)
 			{
 				av_name = entry->getName();
@@ -508,7 +536,7 @@ LLUUID cmdline_partial_name2key(std::string partial_name)
 		{
 			return *i;
 		}
-	}
+	}*/
 	return LLUUID::null;
 }
 					
@@ -516,13 +544,13 @@ LLUUID cmdline_partial_name2key(std::string partial_name)
 
 void cmdline_tp2name(std::string target)
 {
-	LLUUID avkey = cmdline_partial_name2key(target);
+	/*LLUUID avkey = cmdline_partial_name2key(target);
 	if(avkey.isNull())
 	{
 		cmdline_printchat("Avatar not found.");
 		return;
 	}
-	LLFloaterAvatarList* avlist = LLFloaterAvatarList::getInstance();
+	FloaterAvatarList* avlist = FloaterAvatarList::getInstance();
 	LLViewerObject* obj = gObjectList.findObject(avkey);
 	if(obj)
 	{
@@ -539,7 +567,7 @@ void cmdline_tp2name(std::string target)
 			pos.mdV[VZ] += 2.0;
 			gAgent.teleportViaLocation(pos);
 		}
-	}
+	}*/
 }
 
 void cmdline_rezplat(bool use_saved_value, F32 visual_radius) //cmdline_rezplat() will still work... just will use the saved value
@@ -572,7 +600,9 @@ void cmdline_rezplat(bool use_saved_value, F32 visual_radius) //cmdline_rezplat(
     LLQuaternion rotation;
     rotation.setQuat(90.f * DEG_TO_RAD, LLVector3::y_axis);
 
-	if (use_saved_value) visual_radius = gSavedSettings.getF32("EmeraldPlatformSize");
+	static F32 *sEmeraldCmdLinePlatformSize = rebind_llcontrol<F32>("EmeraldCmdLinePlatformSize", &gSavedSettings, true);
+
+	if (use_saved_value) visual_radius = *sEmeraldCmdLinePlatformSize;
 	F32 realsize = visual_radius / 3.0f;
 	if (realsize < 0.01f) realsize = 0.01f;
 	else if (realsize > 10.0f) realsize = 10.0f;

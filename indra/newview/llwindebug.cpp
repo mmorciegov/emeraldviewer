@@ -127,7 +127,7 @@ typedef struct STACK
 {
 	STACK *	Ebp;
 	PBYTE	Ret_Addr;
-	DWORD	Param[1];
+	DWORD	Param[0];
 } STACK, * PSTACK;
 
 BOOL WINAPI Get_Module_By_Ret_Addr(PBYTE Ret_Addr, LPWSTR Module_Name, PBYTE & Module_Addr);
@@ -155,7 +155,7 @@ void printError( CHAR* msg )
                           ( ( *p == '.' ) || ( *p < 33 ) ) );
 
   // Display the message
-  printf( "\n  WARNING: %s failed with error %d (%s)", msg, eNum, (char*)&sysMsg );
+  printf( "\n  WARNING: %s failed with error %d (%s)", msg, eNum, sysMsg );
 }
 
 BOOL GetProcessThreadIDs(DWORD process_id, std::vector<DWORD>& thread_ids) 
@@ -854,7 +854,7 @@ void LLWinDebug::generateCrashStacks(struct _EXCEPTION_POINTERS *exception_infop
 	//
 	LLSD info;
 	std::string dump_path = gDirUtilp->getExpandedFilename(LL_PATH_LOGS,
-												"SecondLifeException");
+												"EmeraldViewerException");
 	std::string log_path = dump_path + ".log";
 
 	if (exception_infop)
@@ -870,8 +870,8 @@ void LLWinDebug::generateCrashStacks(struct _EXCEPTION_POINTERS *exception_infop
 			ExInfo.ExceptionPointers = exception_infop;
 			ExInfo.ClientPointers = NULL;
 
-			writeDumpToFile(MiniDumpNormal, &ExInfo, "SecondLife.dmp");
-			writeDumpToFile((MINIDUMP_TYPE)(MiniDumpWithDataSegs | MiniDumpWithIndirectlyReferencedMemory), &ExInfo, "SecondLifePlus.dmp");
+			writeDumpToFile(MiniDumpNormal, &ExInfo, "EmeraldViewer.dmp");
+			writeDumpToFile((MINIDUMP_TYPE)(MiniDumpWithDataSegs | MiniDumpWithIndirectlyReferencedMemory), &ExInfo, "EmeraldViewerPlus.dmp");
 		}
 
 		info = Get_Exception_Info(exception_infop);
@@ -907,6 +907,6 @@ void LLWinDebug::generateCrashStacks(struct _EXCEPTION_POINTERS *exception_infop
 void LLWinDebug::clearCrashStacks()
 {
 	LLSD info;
-	std::string dump_path = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "SecondLifeException.log");
+	std::string dump_path = gDirUtilp->getExpandedFilename(LL_PATH_LOGS, "EmeraldViewerException.log");
 	LLFile::remove(dump_path);
 }

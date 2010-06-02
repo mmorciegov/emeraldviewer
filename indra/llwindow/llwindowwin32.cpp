@@ -2918,11 +2918,11 @@ S32 OSMessageBoxWin32(const std::string& text, const std::string& caption, U32 t
 	return retval;
 }
 
-void LLWindowWin32::ShellEx(const std::string& command )
+void LLWindowWin32::openFile(const std::string& file_name )
 {
-	LLWString url_wstring = utf8str_to_wstring( command );
+	LLWString url_wstring = utf8str_to_wstring( file_name );
 	llutf16string url_utf16 = wstring_to_utf16str( url_wstring );
-
+	
 	SHELLEXECUTEINFO sei = { sizeof( sei ) };
 	sei.fMask = SEE_MASK_FLAG_DDEWAIT;
 	sei.nShow = SW_SHOWNORMAL;

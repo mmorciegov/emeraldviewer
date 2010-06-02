@@ -38,7 +38,7 @@
 #include "indra_constants.h"
 
 // For Listeners
-#include "audioengine.h"
+#include "llaudioengine.h"
 #include "llagent.h"
 #include "llconsole.h"
 #include "lldrawpoolterrain.h"
@@ -65,13 +65,12 @@
 #include "llnotify.h"
 #include "llkeyboard.h"
 #include "llerrorcontrol.h"
-//#include "llversionviewer.h"
+#include "llversionviewer.h"
 #include "llappviewer.h"
 #include "llvosurfacepatch.h"
 #include "llvowlsky.h"
 #include "llrender.h"
-#include "llviewerparceloverlay.h"
-#include "llfloaterchat.h" 
+#include "llfloaterchat.h"
 
 #ifdef TOGGLE_HACKED_GODLIKE_VIEWER
 BOOL 				gHackGodmode = FALSE;
@@ -89,7 +88,7 @@ std::string gCurrentVersion;
 
 extern BOOL gResizeScreenTexture;
 extern BOOL gDebugGL;
-
+extern BOOL gAuditTexture;
 ////////////////////////////////////////////////////////////////////////////
 // Listeners
 
@@ -110,18 +109,6 @@ static bool handleRenderFarClipChanged(const LLSD& newvalue)
 static bool handleTerrainDetailChanged(const LLSD& newvalue)
 {
 	LLDrawPoolTerrain::sDetailMode = newvalue.asInteger();
-	return true;
-}
-
-static bool handleShowParcelOwnersChanged(const LLSD& newvalue)
-{
-	LLPipeline::sShowParcelOwners = newvalue.asBoolean();
-	return true;
-}
-
-static bool handleShowPropertyLinesChanged(const LLSD& newvalue)
-{
-	LLViewerParcelOverlay::sShowPropertyLines = newvalue.asBoolean();
 	return true;
 }
 
@@ -164,56 +151,6 @@ static bool handleAvatarLODChanged(const LLSD& newvalue)
 static bool handleAvatarMaxVisibleChanged(const LLSD& newvalue)
 {
 	LLVOAvatar::sMaxVisible = (U32) newvalue.asInteger();
-	return true;
-}
-
-static bool handleAvMorphTimeChanged(const LLSD& newvalue)
-{
-	LLVOAvatar::sAvMorphTime = (F32) newvalue.asReal();
-	return true;
-}
-
-
-static bool handleAvatarBoobMassChanged(const LLSD& newvalue)
-{
-	LLVOAvatar::sBoobConfig.mass = EmeraldBoobUtils::convertMass((F32) newvalue.asReal());
-	return true;
-}
-
-static bool handleAvatarBoobHardnessChanged(const LLSD& newvalue)
-{
-	LLVOAvatar::sBoobConfig.hardness = EmeraldBoobUtils::convertHardness((F32) newvalue.asReal());
-	return true;
-}
-
-static bool handleAvatarBoobVelMaxChanged(const LLSD& newvalue)
-{
-	LLVOAvatar::sBoobConfig.velMax = EmeraldBoobUtils::convertVelMax((F32) newvalue.asReal());
-	LLVOAvatar::sBoobConfig.velMin = LLVOAvatar::sBoobConfig.velMin*LLVOAvatar::sBoobConfig.velMax;
-	return true;
-}
-
-static bool handleAvatarBoobFrictionChanged(const LLSD& newvalue)
-{
-	LLVOAvatar::sBoobConfig.friction = EmeraldBoobUtils::convertFriction((F32) newvalue.asReal());
-	return true;
-}
-
-static bool handleAvatarBoobVelMinChanged(const LLSD& newvalue)
-{
-	LLVOAvatar::sBoobConfig.velMin = EmeraldBoobUtils::convertVelMin((F32) newvalue.asReal())*LLVOAvatar::sBoobConfig.velMax;
-	return true;
-}
-
-static bool handleAvatarBoobToggleChanged(const LLSD& newvalue)
-{
-	LLVOAvatar::sBoobConfig.enabled = (BOOL) newvalue.asReal();
-	return true;
-}
-
-static bool handleAvatarBoobXYInfluence(const LLSD& newvalue)
-{
-	LLVOAvatar::sBoobConfig.XYInfluence = (F32) newvalue.asReal();
 	return true;
 }
 
@@ -300,15 +237,6 @@ static bool handleChatPersistTimeChanged(const LLSD& newvalue)
 	if(gConsole)
 	{
 		gConsole->setLinePersistTime((F32) newvalue.asReal());
-	}
-	return true;
-}
-
-static bool handleConsoleMaxLinesChanged(const LLSD& newvalue)
-{
-	if(gConsole)
-	{
-		gConsole->setMaxLines(newvalue.asInteger());
 	}
 	return true;
 }
@@ -429,38 +357,15 @@ static bool handleRenderUseFBOChanged(const LLSD& newvalue)
 	return true;
 }
 
-bool handleTranslateChatPrefsChanged(const LLSD& newvalue) 
-{ 
-	LLFloaterChat* floaterp = LLFloaterChat::getInstance();	
-	if(floaterp) 
-	{
-		// update "translate chat" pref in "Local Chat" floater 
-		floaterp->updateSettings();
-	}
-	return true;
-}
-
 static bool handleRenderUseImpostorsChanged(const LLSD& newvalue)
 {
 	LLVOAvatar::sUseImpostors = newvalue.asBoolean();
 	return true;
 }
 
-static bool handleRenderAnimateResChanged(const LLSD& newvalue)
+static bool handleAuditTextureChanged(const LLSD& newvalue)
 {
-	LLPipeline::sRenderAnimateRes = newvalue.asBoolean();
-	return true;
-}
-
-static bool handleRenderDelayCreationChanged(const LLSD& newvalue)
-{
-	LLPipeline::sRenderDelayCreation = newvalue.asBoolean();
-	return true;
-}
-
-static bool handleRenderUnloadedAvatarChanged(const LLSD& newvalue)
-{
-	LLPipeline::sRenderUnloadedAvatar = newvalue.asBoolean();
+	gAuditTexture = newvalue.asBoolean();
 	return true;
 }
 
@@ -524,9 +429,25 @@ bool handleVoiceClientPrefsChanged(const LLSD& newvalue)
 	return true;
 }
 
-////////////////////////////////////////////////////////////////////////////
+bool handleTranslateChatPrefsChanged(const LLSD& newvalue)
+{
+	LLFloaterChat* floaterp = LLFloaterChat::getInstance();
 
-LLColor4 DefaultListText;
+	if(floaterp)
+	{
+		// update "translate chat" pref in "Local Chat" floater
+		floaterp->updateSettings();
+	}
+	return true;
+}
+
+static bool handleEmeraldBlockSpam(const LLSD& newvalue)
+{
+        gAgent.mBlockSpam = newvalue.asBoolean();
+        return true;
+}
+
+////////////////////////////////////////////////////////////////////////////
 
 void settings_setup_listeners()
 {
@@ -551,19 +472,7 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("RenderTreeLODFactor")->getSignal()->connect(boost::bind(&handleTreeLODChanged, _1));
 	gSavedSettings.getControl("RenderFlexTimeFactor")->getSignal()->connect(boost::bind(&handleFlexLODChanged, _1));
 	gSavedSettings.getControl("ThrottleBandwidthKBPS")->getSignal()->connect(boost::bind(&handleBandwidthChanged, _1));
-	gSavedSettings.getControl("RenderAnimateRes")->getSignal()->connect(boost::bind(&handleRenderAnimateResChanged, _1));
-	gSavedSettings.getControl("RenderDelayCreation")->getSignal()->connect(boost::bind(&handleRenderDelayCreationChanged, _1));
-	gSavedSettings.getControl("RenderUnloadedAvatar")->getSignal()->connect(boost::bind(&handleRenderUnloadedAvatarChanged, _1));
 	gSavedSettings.getControl("RenderGamma")->getSignal()->connect(boost::bind(&handleGammaChanged, _1));
-	gSavedSettings.getControl("AvatarMorphTime")->getSignal()->connect(boost::bind(&handleAvMorphTimeChanged, _1));
-	gSavedSettings.getControl("EmeraldNewShiny")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _1));
-	gSavedSettings.getControl("EmeraldBoobMass")->getSignal()->connect(boost::bind(&handleAvatarBoobMassChanged, _1));
-	gSavedSettings.getControl("EmeraldBoobHardness")->getSignal()->connect(boost::bind(&handleAvatarBoobHardnessChanged, _1));
-	gSavedSettings.getControl("EmeraldBoobVelMax")->getSignal()->connect(boost::bind(&handleAvatarBoobVelMaxChanged, _1));
-	gSavedSettings.getControl("EmeraldBoobFriction")->getSignal()->connect(boost::bind(&handleAvatarBoobFrictionChanged, _1));
-	gSavedSettings.getControl("EmeraldBoobVelMin")->getSignal()->connect(boost::bind(&handleAvatarBoobVelMinChanged, _1));
-	gSavedSettings.getControl("EmeraldBreastPhysicsToggle")->getSignal()->connect(boost::bind(&handleAvatarBoobToggleChanged, _1));
-	gSavedSettings.getControl("EmeraldBoobXYInfluence")->getSignal()->connect(boost::bind(&handleAvatarBoobXYInfluence, _1));
 	gSavedSettings.getControl("RenderFogRatio")->getSignal()->connect(boost::bind(&handleFogRatioChanged, _1));
 	gSavedSettings.getControl("RenderMaxPartCount")->getSignal()->connect(boost::bind(&handleMaxPartCountChanged, _1));
 	gSavedSettings.getControl("RenderDynamicLOD")->getSignal()->connect(boost::bind(&handleRenderDynamicLODChanged, _1));
@@ -581,7 +490,6 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("TextureMemory")->getSignal()->connect(boost::bind(&handleVideoMemoryChanged, _1));
 	gSavedSettings.getControl("ChatFontSize")->getSignal()->connect(boost::bind(&handleChatFontSizeChanged, _1));
 	gSavedSettings.getControl("ChatPersistTime")->getSignal()->connect(boost::bind(&handleChatPersistTimeChanged, _1));
-	gSavedSettings.getControl("ConsoleMaxLines")->getSignal()->connect(boost::bind(&handleConsoleMaxLinesChanged, _1));
 	gSavedSettings.getControl("UploadBakedTexOld")->getSignal()->connect(boost::bind(&handleUploadBakedTexOldChanged, _1));
 	gSavedSettings.getControl("UseOcclusion")->getSignal()->connect(boost::bind(&handleUseOcclusionChanged, _1));
 	gSavedSettings.getControl("AudioLevelMaster")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
@@ -591,17 +499,15 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("AudioLevelMusic")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("AudioLevelMedia")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("AudioLevelVoice")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
-	gSavedSettings.getControl("AudioLevelDistance")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("AudioLevelDoppler")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("AudioLevelRolloff")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("AudioStreamingMusic")->getSignal()->connect(boost::bind(&handleAudioStreamMusicChanged, _1));
+	gSavedSettings.getControl("AuditTexture")->getSignal()->connect(boost::bind(&handleAuditTextureChanged, _1));
 	gSavedSettings.getControl("MuteAudio")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("MuteMusic")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("MuteMedia")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("MuteVoice")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("MuteAmbient")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
-	gSavedSettings.getControl("ShowPropertyLines")->getSignal()->connect(boost::bind(&handleShowPropertyLinesChanged, _1));
-	gSavedSettings.getControl("ShowParcelOwners")->getSignal()->connect(boost::bind(&handleShowParcelOwnersChanged, _1));
 	gSavedSettings.getControl("MuteUI")->getSignal()->connect(boost::bind(&handleAudioVolumeChanged, _1));
 	gSavedSettings.getControl("RenderVBOEnable")->getSignal()->connect(boost::bind(&handleRenderUseVBOChanged, _1));
 	gSavedSettings.getControl("WLSkyDetail")->getSignal()->connect(boost::bind(&handleWLSkyDetailChanged, _1));
@@ -628,18 +534,6 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("FlycamAxisDeadZone4")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
 	gSavedSettings.getControl("FlycamAxisDeadZone5")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
 	gSavedSettings.getControl("FlycamAxisDeadZone6")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisScale0")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisScale1")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisScale2")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisScale3")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisScale4")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisScale5")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisDeadZone0")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisDeadZone1")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisDeadZone2")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisDeadZone3")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisDeadZone4")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
-	gSavedSettings.getControl("JoystickStreamAxisDeadZone5")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
 	gSavedSettings.getControl("AvatarAxisScale0")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
 	gSavedSettings.getControl("AvatarAxisScale1")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
 	gSavedSettings.getControl("AvatarAxisScale2")->getSignal()->connect(boost::bind(&handleJoystickChanged, _1));
@@ -680,10 +574,9 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("VoiceInputAudioDevice")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
 	gSavedSettings.getControl("VoiceOutputAudioDevice")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
 	gSavedSettings.getControl("AudioLevelMic")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
-	gSavedSettings.getControl("LipSyncEnabled")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));
-	gSavedSettings.getControl("TranslateChat")->getSignal()->connect(boost::bind(&handleTranslateChatPrefsChanged, _1));
-
-	DefaultListText = gColors.getColor("DefaultListText").getValue();
+	gSavedSettings.getControl("LipSyncEnabled")->getSignal()->connect(boost::bind(&handleVoiceClientPrefsChanged, _1));	
+	gSavedSettings.getControl("TranslateChat")->getSignal()->connect(boost::bind(&handleTranslateChatPrefsChanged, _1));	
+	gSavedSettings.getControl("EmeraldBlockSpam")->getSignal()->connect(boost::bind(&handleEmeraldBlockSpam, _1));
 }
 
 template <> eControlType get_control_type<U32>(const U32& in, LLSD& out) 
@@ -764,7 +657,10 @@ template <> eControlType get_control_type<LLSD>(const LLSD& in, LLSD& out)
 	out = in;
 	return TYPE_LLSD; 
 }
-
+template <>					void jc_rebind::rebind_callback<S32>(const LLSD &data, S32 *reciever){ *reciever = data.asInteger(); }
+template <>					void jc_rebind::rebind_callback<F32>(const LLSD &data, F32 *reciever){ *reciever = data.asReal(); }
+template <>					void jc_rebind::rebind_callback<U32>(const LLSD &data, U32 *reciever){ *reciever = data.asInteger(); }
+template <>					void jc_rebind::rebind_callback<std::string>(const LLSD &data, std::string *reciever){ *reciever = data.asString(); }
 
 #if TEST_CACHED_CONTROL
 
@@ -807,3 +703,4 @@ void test_cached_control()
 	if((std::string)test_BrowserHomePage != "http://www.secondlife.com") llerrs << "Fail BrowserHomePage" << llendl;
 }
 #endif // TEST_CACHED_CONTROL
+

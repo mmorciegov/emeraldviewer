@@ -885,7 +885,6 @@ BOOL LLTaskCategoryBridge::dragOrDrop(MASK mask, BOOL drop,
 		case DAD_CATEGORY:
 			accept = LLToolDragAndDrop::getInstance()->dadUpdateInventoryCategory(object,drop);
 			break;
-		case DAD_CALLINGCARD:
 		case DAD_TEXTURE:
 		case DAD_SOUND:
 		case DAD_LANDMARK:
@@ -939,6 +938,7 @@ BOOL LLTaskCategoryBridge::dragOrDrop(MASK mask, BOOL drop,
 											  LLToolDragAndDrop::getInstance()->getSourceID());
 			}
 			break;
+		case DAD_CALLINGCARD:
 		default:
 			break;
 		}

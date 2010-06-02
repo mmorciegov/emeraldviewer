@@ -38,7 +38,7 @@
 #include <deque>
 #include <string>
 #include <vector>
-
+#include "imageids.h"			// IMG_INVISIBLE
 #include "llchat.h"
 #include "lldrawpoolalpha.h"
 #include "llviewerobject.h"
@@ -71,8 +71,6 @@ class LLTexGlobalColor;
 class LLVOAvatarBoneInfo;
 class LLVOAvatarSkeletonInfo;
 class LLVOAvatarXmlInfo;
-
-//class LLFloaterAvatarList;
 
 //------------------------------------------------------------------------
 // LLVOAvatar
@@ -138,7 +136,7 @@ public:
 										  LLVector3* bi_normal = NULL             // return the surface bi-normal at the intersection point
 		);
 
-	/*virtual*/ void updateTextures(LLAgent &agent);
+	/*virtual*/ void updateTextures();
 	// If setting a baked texture, need to request it from a non-local sim.
 	/*virtual*/ S32 setTETexture(const U8 te, const LLUUID& uuid);
 	/*virtual*/ void onShift(const LLVector3& shift_vector);
@@ -211,8 +209,6 @@ public:
 public:
 	static void		onCustomizeStart();
 	static void		onCustomizeEnd();
-	U8              mCheckingCryolife;
-    BOOL            mIsCryolife;
 
 public:
 	static void		dumpTotalLocalTextureByteCount();
@@ -350,8 +346,7 @@ public:
 	BOOL			teToColorParams( LLVOAvatarDefines::ETextureIndex te, const char* param_name[3] );
 
 	BOOL			isWearingWearableType( EWearableType type );
-	void			wearableUpdated( EWearableType type );
-
+	void			wearableUpdated(EWearableType type, BOOL upload_result = TRUE);
 	//--------------------------------------------------------------------
 	// texture compositing
 	//--------------------------------------------------------------------
@@ -516,13 +511,10 @@ private:
 
 private:
 	bool			mFirstSetActualBoobGravRan;
-	//bool			mFirstSetActualButtGravRan;
-	//bool			mFirstSetActualFatGravRan;
 	LLFrameTimer	mBoobBounceTimer;
 	EmeraldAvatarLocalBoobConfig mLocalBoobConfig;
 	EmeraldBoobState mBoobState;
-	//EmeraldBoobState mButtState;
-	//EmeraldBoobState mFatState;
+	static EmeraldGlobalBoobConfig sBoobConfig;
 
 public:
 	//boob
@@ -536,31 +528,6 @@ public:
 			mFirstSetActualBoobGravRan = true;
 		}
 	}
-
-	//butt
-	/*F32				getActualButtGrav() { return mLocalBoobConfig.actualButtGrav; }
-	void			setActualButtGrav(F32 grav)
-	{
-		mLocalBoobConfig.actualButtGrav = grav;
-		if(!mFirstSetActualButtGravRan)
-		{
-			mButtState.boobGrav = grav;
-			mFirstSetActualButtGravRan = true;
-		}
-	}
-	//fat
-	F32				getActualFatGrav() { return mLocalBoobConfig.actualFatGrav; }
-	void			setActualFatGrav(F32 grav)
-	{
-		mLocalBoobConfig.actualFatGrav = grav;
-		if(!mFirstSetActualFatGravRan)
-		{
-			mFatState.boobGrav = grav;
-			mFirstSetActualFatGravRan = true;
-		}
-	}
-	*/
-	static EmeraldGlobalBoobConfig sBoobConfig;
 
 	//--------------------------------------------------------------------
 	// Attachments
@@ -590,7 +557,6 @@ public:
 	static F32		sLODFactor; // user-settable LOD factor
 	static BOOL		sJointDebug; // output total number of joints being touched for each avatar
 	static BOOL     sDebugAvatarRotation;
-	static F32		sAvMorphTime;
 
 	static S32 sNumVisibleAvatars; // Number of instances of this class
 	
@@ -616,6 +582,7 @@ private:
 	BOOL mIsBuilt; // state of deferred character building
 	F32 mSpeedAccum; // measures speed (for diagnostics mostly).
 
+	BOOL mSupportsAlphaLayers; // For backwards compatibility, TRUE for 1.23+ clients
 	
 	// LLFrameTimer mUpdateLODTimer; // controls frequency of LOD change calculations
 	BOOL mDirtyMesh;
@@ -660,10 +627,6 @@ private:
 	LLVoiceVisualizer*  mVoiceVisualizer;
 	int					mCurrentGesticulationLevel;
 	
-	//lgg i dont know what im doign here
-	static BOOL		sPartsNow;
-	static LLVector3d sBeamLastAt;
-	
 	// Animation timer
 	LLTimer		mAnimTimer;
 	F32			mTimeLast;	
@@ -671,10 +634,10 @@ private:
 	static LLSD sClientResolutionList;
 
 	static void resolveClient(LLColor4& avatar_name_color, std::string& client, LLVOAvatar* avatar);
-	friend class LLFloaterAvatarList;
+	friend class FloaterAvatarList;
 
 protected:
-	LLPointer<LLHUDEffectSpiral> mBeam;   
+	LLPointer<LLHUDEffectSpiral> mBeam;
 	LLFrameTimer mBeamTimer;
 
 	F32		mAdjustedPixelArea;
@@ -826,7 +789,6 @@ public:
 	static F32 		sUnbakedUpdateTime; // Last time stats were updated (to prevent multiple updates per frame) 
 	static F32 		sGreyTime; // Total seconds with >=1 grey avatars
 	static F32 		sGreyUpdateTime; // Last time stats were updated (to prevent multiple updates per frame) 
-	static bool		sDoProperArc;
 
 	const std::string getBakedStatusForPrintout() const;
 };
@@ -841,7 +803,7 @@ inline BOOL LLVOAvatar::isTextureDefined(U8 te) const
 
 inline BOOL LLVOAvatar::isTextureVisible(U8 te) const
 {
-	return ((isTextureDefined(te) || isSelf())
+	return ((isTextureDefined(te) || mIsSelf)
 			&& (getTEImage(te)->getID() != IMG_INVISIBLE 
 				|| LLDrawPoolAlpha::sShowDebugAlpha));
 }

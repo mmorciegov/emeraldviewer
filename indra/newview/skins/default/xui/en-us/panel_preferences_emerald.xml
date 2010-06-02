@@ -12,61 +12,89 @@
 					 right="490" width="18"/>
 				<check_box bottom="-30" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Double-click Teleport" left="10" mouse_opaque="true"
-					 name="double_click_tp_toggle" radio_style="false" width="270" control_name="EmeraldDoubleClickTeleport"/>
-				<check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="double_click_tp_toggle" radio_style="false" width="270" control_name="EmeraldDoubleClickTeleport" 
+           tool_tip="Allows you to double click any surface, and your avatar will teleport to that position."/>
+				
+        <check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Double-click Autopilot" left_delta="200" mouse_opaque="true"
-					 name="double_click_ap_toggle" radio_style="false" width="270" control_name="DoubleClickAutoPilot"/>
-				<check_box bottom_delta="-40" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="double_click_ap_toggle" radio_style="false" width="270" control_name="DoubleClickAutoPilot"
+           tool_tip="Allows you to double click any surface, and your avatar will walk to that position."/>
+				
+        <check_box bottom_delta="-40" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Send teleport destination coordinates to channel" left_delta="-200"
 					 mouse_opaque="true" name="mldct_toggle" radio_style="false" width="270" control_name="EmeraldDoubleClickTeleportChat"
 					 tool_tip="Whisper teleport destination on a private channel (Disabled by default)"/>
 				<spinner decimal_digits="0" follows="left|top" height="18" increment="1" initial_val="0"
 					 label="" label_width="50" left_delta="285" bottom_delta="0" max_val="2147483647"
-					 min_val="1" name="mldct_channel" tool_tip="Channel to announce teleport destination vector"
+					 min_val="1" name="mldct_channel" tool_tip="Used with movelocks, it whisper teleport destination on a private channel. Format it sends is: 128,128,128"
 					 width="80" control_name="EmeraldDoubleClickTeleportChannel"/>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Velocity Interpolate Double-click Teleports" left="10"
-					 mouse_opaque="true" name="login_screen_toggle1" radio_style="false" width="270" control_name="EmeraldVelocityDoubleClickTeleport"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 mouse_opaque="true" name="login_screen_toggle1" radio_style="false" width="270" control_name="EmeraldVelocityDoubleClickTeleport"
+           tool_tip="Offsets your teleport destination by half your current speed. Eg. click in front of wall while running and end up behind it."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Rotate Camera behind avatar after Double-click Teleports"
 					 left_delta="0" mouse_opaque="true" name="move_camaftertp_toggle" radio_style="false"
-					 width="270" control_name="EmeraldRotateCamAfterLocalTP"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 width="270" control_name="EmeraldRotateCamAfterLocalTP" 
+           tool_tip="Rotates the camera behind the avatar after a teleport."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Always fly after teleports" left_delta="0" mouse_opaque="true"
-					 name="flyaftertp_toggle" radio_style="false" width="270" control_name="EmeraldFlyAfterTeleport"/>
-				<spinner decimal_digits="1" follows="left|top" height="18" increment="0.1" initial_val="0"
+					 name="flyaftertp_toggle" radio_style="false" width="270" control_name="EmeraldFlyAfterTeleport"
+           tool_tip="After teleporting, avatar is automatically set to hovering."/>
+				
+        <spinner decimal_digits="1" follows="left|top" height="18" increment="0.1" initial_val="0"
 					 label="Double-click Teleport Z Offset" label_width="160" left_delta="0" bottom_delta="-20"
 					 max_val="9001" min_val="0" name="Double-click Teleport Z Offset" tool_tip="Controls the Z Offset for Double-click Teleports"
 					 width="210" control_name="EmeraldDoubleClickZOffset"/>
         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Additionally offset up by half the avatar height" left_delta="0"
-					 mouse_opaque="true" name="avcalc_toggle" radio_style="false" width="270" control_name="EmeraldDoubleClickTeleportAvCalc"/>
+					 mouse_opaque="true" name="avcalc_toggle" radio_style="false" width="270" control_name="EmeraldDoubleClickTeleportAvCalc"
+           tool_tip="The viewer will try to move the center of the avatar to the exact tp coordinate destination. This uses half the avatar height, thus putting your avatars feet on the tp destination instead."/>
+        
         <check_box bottom_delta="-25" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Rotate avatar according to camera left/right rotation on doubleclick teleport" left_delta="0"
-					 mouse_opaque="true" name="avrot_toggle" radio_style="false" width="270" control_name="EmeraldDoubleClickTeleportMode"/>
+					 mouse_opaque="true" name="avrot_toggle" radio_style="false" width="270" control_name="EmeraldDoubleClickTeleportMode"
+           tool_tip="If your camera is facing south when you tp, your avatar will face south when you land."/>
         
-				<check_box bottom_delta="-25" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+				
+        <check_box bottom_delta="-25" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Play Teleport sound effect" left_delta="0" mouse_opaque="true"
-					 name="TPSound-toggle" radio_style="false" width="270" control_name="EmeraldPlayTpSound"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="TPSound-toggle" radio_style="false" width="270" control_name="EmeraldPlayTpSound"
+           tool_tip="Enables/disables the default tp sound effect."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Download new Client Tags definitions" left_delta="-0"
-					 mouse_opaque="true" name="DownloadTags_toggle" radio_style="false" width="270" control_name="EmeraldDownloadClientTags"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 mouse_opaque="true" name="DownloadTags_toggle" radio_style="false" width="270" control_name="EmeraldDownloadClientTags"
+           tool_tip="Updates client tags with new viewers, (if available)."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Display Client Tags" left_delta="-0" mouse_opaque="true"
-					 name="DisplayTags_toggle" radio_style="false" width="270" control_name="EmeraldClientTagDisplay"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="DisplayTags_toggle" radio_style="false" width="270" control_name="EmeraldClientTagDisplay"
+           tool_tip="Shows you what client people are using beside their names. (If their client is identifiable) "/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Color name Tags based on client" left_delta="-0" mouse_opaque="true"
-					 name="ColorTags_toggle" radio_style="false" width="270" control_name="EmeraldChangeColorOnClient"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="ColorTags_toggle" radio_style="false" width="270" control_name="EmeraldChangeColorOnClient"
+           tool_tip="Displays their tag in colors depending on client they are using."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Disable Teleport Screens" left_delta="-0" mouse_opaque="true"
-					 name="tp_screen_toggle" radio_style="false" width="270" control_name="EmeraldDisableTeleportScreens"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="tp_screen_toggle" radio_style="false" width="270" control_name="EmeraldDisableTeleportScreens"
+           tool_tip="Disables the black teleport screen during all teleports."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Disable Login Progress Screen" left_delta="0" mouse_opaque="true"
-					 name="login_screen_toggle" radio_style="false" width="270" control_name="EmeraldDisableLoginScreens"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="login_screen_toggle" radio_style="false" width="270" control_name="EmeraldDisableLoginScreens"
+           tool_tip="Disables the black login progress Screen"/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Disable Logout Progress Screen" left_delta="0" mouse_opaque="true"
-					 name="logout_screen_toggle" radio_style="false" width="270" control_name="EmeraldDisableLogoutScreens"/>
-				<spinner decimal_digits="1" follows="left|top" height="18" increment="1" initial_val="0.1"
+					 name="logout_screen_toggle" radio_style="false" width="270" control_name="EmeraldDisableLogoutScreens"
+                   tool_tip="Disables the black Logout progress screen."/>
+				
+        <spinner decimal_digits="1" follows="left|top" height="18" increment="1" initial_val="0.1"
 					 label="Login Precaching Delay" label_width="125" right="-35" bottom_delta="0" max_val="9001"
 					 min_val="0.1" name="Login Precaching Delay" tool_tip="Controls the time on login it waits to let you in"
 					 width="175" control_name="PrecachingDelay"/>
@@ -107,40 +135,35 @@
 				<button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?"
 					 name="EmeraldHelp_Shields" tool_tip="Click here for help regarding the settings in this page."
 					 right="490" width="18"/>
-				<button bottom="-30" follows="left|top" font="SansSerifSmall" height="18" label="Stealth Mode"
-					 name="EmeraldPrefs_Stealth" tool_tip="Click here to load the Stealth preset." right="300"
-					 width="100"/>
-				<button bottom_delta="0" follows="left|top" font="SansSerifSmall" height="18" label="Full Features Mode"
-					 name="EmeraldPrefs_FullFeatures" tool_tip="Click here to load the Full Features preset."
-					 left_delta="100" width="130"/>
-				<check_box bottom="-30" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Clothing Layer Protection" left="10" mouse_opaque="true"
-					 name="clothing_protect_toggle" radio_style="false" width="270" control_name="EmeraldClothingLayerProtection"/>
-				<panel name="antispam_options" left_delta="0" width="480" height="100" bottom_delta="-115"
-					 border="true" mouse_opaque="true" bevel_style="in" background_visible="true" background_opaque="true"
-					 follows="top|left" bg_opaque_color="0,0,0,0.1" bg_alpha_color="blue" can_resize="false">
-					<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-						 initial_value="false" label="Dialog Anti-Spam" left_delta="5" mouse_opaque="true"
-						 name="dialog_spam_prevention" radio_style="false" width="270" control_name="EmeraldDialogSpamEnabled"/>
-					<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-						 initial_value="false" label="CallingCard Anti-Spam" left_delta="0" mouse_opaque="true"
-						 name="card_spam_prevention" radio_style="false" width="270" control_name="EmeraldCardSpamEnabled"/>
-					<spinner decimal_digits="1" follows="left|top" height="18" increment="1" initial_val="0"
-						 label="Count" label_width="50" left_delta="0" bottom_delta="-25" max_val="7"
-						 min_val="0" name="Count" tool_tip="Controls the number of spam items per time to set off the trigger"
-						 width="110" control_name="EmeraldSpamCount"/>
-					<spinner decimal_digits="1" follows="left|top" height="18" increment="1" initial_val="0"
-						 label="Time" label_width="50" left_delta="0" bottom_delta="-25" max_val="2"
-						 min_val="0" name="Time" tool_tip="Controls the amount of time you want between count refreshing."
-						 width="110" control_name="EmeraldSpamTime"/>
-					<view_border bevel_style="none" border_thickness="1" bottom_delta="0" follows="top|left" height="80"
-						 left="175" name="EmDivisor" width="0"/>
-					<text bottom_delta="65" follows="left|top" font="SansSerifSmall" height="16" left_delta="5"
-						 name="loltxt" width="512">To clear the blacklist, turn the protection off and back on.
+				
+                                <panel name="antispam_options" left="10" width="480" height="116" bottom_delta="-131"
+                                         border="true" mouse_opaque="true" bevel_style="in" background_visible="true" background_opaque="true"
+                                         follows="top|left" bg_opaque_color="0,0,0,0.1" bg_alpha_color="blue" can_resize="false">
+                                        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+                                                 initial_value="false" label="Dialog Anti-Spam" left_delta="5" mouse_opaque="true"
+                                                 name="dialog_spam_prevention" radio_style="false" width="270" control_name="EmeraldDialogSpamEnabled"/>
+                                        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+                                                 initial_value="false" label="CallingCard Anti-Spam" left_delta="0" mouse_opaque="true"
+                                                 name="card_spam_prevention" radio_style="false" width="270" control_name="EmeraldCardSpamEnabled"/>
+                                        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+                                                 initial_value="false" label="General Anti-Spam" left_delta="0" mouse_opaque="true"
+                                                 name="general_spam_prevention" radio_style="false" width="270" control_name="EmeraldGeneralSpamEnabled"/>
+                                        <spinner decimal_digits="1" follows="left|top" height="18" increment="1" initial_val="0"
+                                                 label="Count" label_width="50" left_delta="0" bottom_delta="-25" max_val="7"
+                                                 min_val="0" name="Count" tool_tip="Controls the number of spam items per time to set off the trigger"
+                                                 width="110" control_name="EmeraldSpamCount"/>
+                                        <spinner decimal_digits="1" follows="left|top" height="18" increment="1" initial_val="0"
+                                                 label="Time" label_width="50" left_delta="0" bottom_delta="-25" max_val="2"
+                                                 min_val="0" name="Time" tool_tip="Controls the amount of time you want between count refreshing."
+                                                 width="110" control_name="EmeraldSpamTime"/>
+                                        <view_border bevel_style="none" border_thickness="1" bottom_delta="0" follows="top|left" height="106"
+                                                 left="175" name="EmDivisor" width="0"/>
+                                        <text bottom_delta="65" follows="left|top" font="SansSerifSmall" height="16" left_delta="5"
+                                                 name="loltxt" width="512">To clear the blacklist, turn the protection off and back on.
 Count and Time are ADVANCED settings.
 Please use them ONLY if you know what you are doing.
 Recommended Settings are:          Time: 1          Count: 4</text>
-				</panel>
+                                </panel>
 				<panel name="revokeperm_panel" left_delta="0" width="175" height="100" bottom_delta="-115"
 					 border="true" mouse_opaque="true" bevel_style="in" background_visible="true" background_opaque="true"
 					 follows="top|left" bg_opaque_color="0,0,0,0.1" bg_alpha_color="blue" can_resize="false">
@@ -161,26 +184,32 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 				</panel>
 				<check_box bottom_delta="80" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Show Load URL dialogs" left_delta="180" mouse_opaque="true"
-					 name="EmLoadURL-toggle" control_name="EmeraldLoadURL" radio_style="false" width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="EmLoadURL-toggle" control_name="EmeraldLoadURL" radio_style="false" width="270"
+                 tool_tip="When unchecked, this prevents scripted objects from sending you dialogs using llLoadURL. This can be used to spam you."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Disallow LLMapDestination" left_delta="0" mouse_opaque="true"
 					 name="EmBlockMapTps-toggle" control_name="EmeraldBlockMapTps" radio_style="false"
-					 width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 width="270" tool_tip="Prevents scripts using llMapDestination from opening your map window. Also known as map spam."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Broadcast viewer effects" left_delta="0" mouse_opaque="true"
 					 name="EmBroadcastEffects-toggle" control_name="EmeraldBroadcastEffects" radio_style="false"
-					 width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 width="270" tool_tip="Viewer effects are things like your avatar pointing at something when you edit it. Your eyes and head turning towards things you cam focus on, etc."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Broadcast camera focus point" left_delta="0" mouse_opaque="true"
 					 name="EmBroadcastPointers-toggle" control_name="EmeraldBroadcastPointers" radio_style="false"
-					 width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 width="270" tool_tip="Prevents other users from seeing where your camera is and what it is focused on."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Broadcast pointer target" left_delta="0" mouse_opaque="true"
 					 name="EmBroadcastPointers-toggle2" control_name="EmeraldBroadcastPointers2" radio_style="false"
-					 width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 width="270" tool_tip="Similar to camera focus point, this prevents users from seeing what you are editing."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 label="Enable the active CryoLife detection code" left_delta="0" mouse_opaque="true"
-					 name="EmCryo-toggle" control_name="EmeraldCryoDetection" width="270"/>
+					 name="EmCryo-toggle" control_name="EmeraldCryoDetection" width="270" tool_tip="Helps detect CryoLife Viewers"/>
 			</panel>
 			<panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="IM"
 				 left="1" mouse_opaque="true" name="Misc" width="418">
@@ -207,27 +236,36 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 					 label="Use typing_stop for OTR"/>
 				<check_box bottom_delta="-40" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Vertical IM tabs (requires restart)" left="270" mouse_opaque="true"
-					 name="vertical-imtabs-toggle" radio_style="false" width="270" control_name="EmeraldVerticalIMTabs"/>
+					 name="vertical-imtabs-toggle" radio_style="false" width="270" control_name="EmeraldVerticalIMTabs"
+                  tool_tip="Changes the UI to display IM tabs Vertically instead of horizontally"/>
 				<!--[/$PLOTR$]-->
 				<view_border bevel_style="none" border_thickness="1" bottom_delta="40" follows="top|left" height="100"
 					 left="260" name="OTRBorder" width="0"/>
 				<check_box bottom="-25" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Announce incoming instant messages" left="10" mouse_opaque="true"
-					 name="EmeraldInstantMessageAnnounceIncoming" radio_style="false" width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="EmeraldInstantMessageAnnounceIncoming" radio_style="false" width="270" 
+           tool_tip="Opens an IM window when someone starts typing an IM to you, and says “You sense a disturbance in the force... (User Name is typing). This gives you a heads up that someone is IM’ing you before they hit enter. "/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Steal focus" left_delta="10" mouse_opaque="true" name="EmeraldInstantMessageAnnounceStealFocus"
-					 radio_style="false" width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 radio_style="false" width="270" tool_tip="Forces the IM window to steal focus over all other communication windows when someone starts typing an IM to you. "/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Autorespond to non-friends" left_delta="-10" mouse_opaque="true"
-					 name="EmeraldInstantMessageResponseFriends" radio_style="false" width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="EmeraldInstantMessageResponseFriends" radio_style="false" width="270" 
+                   tool_tip="Sends a pre made message of your choosing, when people start IM’ing you. (Enter your message in the Response Text. Text area), located below."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Autorespond to people you have muted" left_delta="0"
 					 mouse_opaque="true" name="EmeraldInstantMessageResponseMuted" radio_style="false"
-					 width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 width="270" tool_tip="Sends a pre made message of your choosing, when people start IM’ing you. (Enter your message in the Response Text. Text area), located below."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Autorespond to anyone" left_delta="0" mouse_opaque="true"
-					 name="EmeraldInstantMessageResponseAnyone" radio_style="false" width="270"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 name="EmeraldInstantMessageResponseAnyone" radio_style="false" width="270"
+                   tool_tip="Sends a pre made message of your choosing, when people start IM’ing you. (Enter your message in the Response Text. Text area), located below."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Send as soon as they start typing" left_delta="10" mouse_opaque="true"
 					 name="EmeraldInstantMessageShowOnTyping" radio_style="false" width="270"/>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="26"
@@ -247,13 +285,13 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 				<check_box bottom_delta="-30" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Send an item along with the response" left_delta="0"
 					 mouse_opaque="true" name="EmeraldInstantMessageResponseItem" radio_style="false"
-					 width="270"/>
+					 width="270" tool_tip="You can include an inventory item to send along with your auto response by dragging it from your inventory to the location below"/>
 				<view_border blevel_style="in" bottom_delta="-20" follows="left|top" height="16" left_delta="0"
 					 mouse_opaque="false" name="im_give_drop_target_rect" width="230"/>
 				<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false" bottom_delta="0"
 					 drop_shadow_visible="true" follows="left|top" font="SansSerifSmall" h_pad="0" halign="center"
 					 height="16" left_delta="0" mouse_opaque="true" name="Give inventory" tool_tip="Drop an inventory item here to have it given along with the auto-response."
-					 v_pad="2" width="230">        Drop an inventory item here</text>
+					 v_pad="2" width="230">        Drag an inventory item here</text>
 				<view_border blevel_style="in" bottom_delta="-18" follows="left|top" height="16" left_delta="0"
 					 mouse_opaque="false" name="im_give_disp_rect" width="230"/>
 				<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false" bottom_delta="0"
@@ -266,40 +304,23 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 				<button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?"
 					 name="EmeraldHelp_Chat" tool_tip="Click here for help regarding the settings in this page."
 					 right="490" width="18"/>
-				<check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Display radar info to chat" left="10" mouse_opaque="true"
-					 name="radar_chat_toggle" radio_style="false" width="270" control_name="EmeraldRadarChatAlerts"/>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="true" label="Also display while radar is closed" left="20" mouse_opaque="true"
-					 name="keep_open" radio_style="false" width="270" control_name="EmeraldAvatarListKeepOpen"
-                          tool_tip="Hides floater instead of closing to still announce in chat"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Display on avatars entering / leaving simulator" left_delta="25"
-					 mouse_opaque="true" name="radar_chat_sim_toggle" radio_style="false" width="270"
-					 control_name="EmeraldRadarAlertSim"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Display on avatars entering / leaving draw distance"
-					 left_delta="0" mouse_opaque="true" name="radar_chat_draw_toggle" radio_style="false"
-					 width="270" control_name="EmeraldRadarAlertDraw"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Display on avatars entering / leaving chat range" left_delta="0"
-					 mouse_opaque="true" name="radar_chat_chatrange_toggle" radio_style="false" width="270"
-					 control_name="EmeraldRadarAlertChatRange"/>
-				<check_box bottom_delta="-40" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Display Total Script Count changes:" left_delta="-25"
-					 mouse_opaque="true" name="totalscriptjumps" radio_style="false" width="270" control_name="EmeraldDisplayTotalScriptJumps"/>
-				<spinner bottom_delta="0" decimal_digits="0" follows="left|top" height="16" increment="1"
+					 initial_value="false" label="Display Total Script Count changes:" left_delta="-460"
+					 mouse_opaque="true" name="totalscriptjumps" radio_style="false" width="270" control_name="EmeraldDisplayTotalScriptJumps" tool_tip="Displays script count changes in your region, dependant on the threshold you choose to the right."/>
+				
+        <spinner bottom_delta="0" decimal_digits="0" follows="left|top" height="16" increment="1"
 					 label="" label_width="0" digits="4" left_delta="205" max_val="9999"
-					 min_val="1" mouse_opaque="true" name="ScriptJumpCount" width="50" control_name="Emeraldnumscriptdiff"
-					 tool_tip="Treshold for the script jump message [Default: 100]"/>
+					 min_val="1" mouse_opaque="true" name="ScriptJumpCount" width="50" control_name="EmeraldNumScriptDiff"
+					 tool_tip="Threshold for the script jump message [Default: 100]"/>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Hear typing sound when people type" left_delta="-205"
 					 mouse_opaque="true" name="typing-sound-toggle" radio_style="false" width="270" control_name="PlayTypingSound"/>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Auto complete OOC comments." left_delta="0" mouse_opaque="true"
 					 name="AutoCloseOOC-toggle" radio_style="false" width="270" control_name="EmeraldAutoCloseOOC"
-					 tool_tip="Auto-close OOC chat"/>
-				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 tool_tip="For use with Role playing. Auto completes “Out of Character Comments.” Example. ((This is OOC. - results in ((This is OOC)). The closing brackets are generated automatically."/>
+				
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Allow MU* poses" left_delta="0" mouse_opaque="true"
 					 name="AllowMUpose-toggle" radio_style="false" width="270" control_name="EmeraldAllowMUpose"
 					 tool_tip="Allow MU* pose style in chat and IM (with ':' as a synonymous to '/me ')"/>
@@ -321,10 +342,13 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Disable ALL group chats" left_delta="0" mouse_opaque="true"
 					 name="EmeraldMuteAllGroups-toggle" radio_style="false" width="270" control_name="EmeraldMuteAllGroups"/>
-				<check_box bottom_delta="-25" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 label="Right click translate also replaces selected text" left_delta="0" mouse_opaque="true"
 					 name="EmeraldTranslateReplace" radio_style="false" width="270" control_name="EmeraldTranslateReplace"/>
-        <button name="keyword_allert" label="Edit Key Word Alerts" halign="center" tool_tip="Edit what messages stand out" left_delta="0"
+				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 label="Use 'You' instead of your name in your own chat" left_delta="0" mouse_opaque="true"
+					 name="EmeraldUseYou" radio_style="false" width="270" control_name="EmeraldUseYou"/>
+        		<button name="keyword_allert" label="Edit Key Word Alerts" halign="center" tool_tip="Edit what messages stand out" left_delta="0"
 					 bottom_delta="-24" width="270" height="20" font="SansSerifSmall" follows="left|top"/>
 			</panel>
 			<panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="Misc"
@@ -375,8 +399,11 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 label="Allows the camera to move without constraints through prims (requires restart)" left_delta="0" mouse_opaque="true"
 					 name="EmIgnoreCamConstraints-toggle" radio_style="false" width="270" control_name="EmeraldIgnoreSimulatorCameraConstraints"/>
+				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 label="Enable Growl notifications" left_delta="0" mouse_opaque="true"
+					 name="EmeraldEnableGrowl" radio_style="false" width="270" control_name="EmeraldEnableGrowl"/>
 				<check_box bottom_delta="-40" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Enable Restrained Life [RLVa] features" left_delta="0"
+					 initial_value="false" label="Enable Restrained Love [RLVa] features" left_delta="0"
 					 mouse_opaque="true" name="rlv-toggle" radio_style="false" width="270" control_name="RestrainedLife"/>
 				<view_border bevel_style="none" border_thickness="1" bottom="-120" follows="top|left" height="80"
 					 left="280" name="EmDivisorBridge" width="200"/>
@@ -391,7 +418,7 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 					 name="EmeraldUseBridgeOnline" radio_style="false" width="270" control_name="EmeraldUseBridgeOnline"/>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Use llMoveToTarget TP" left_delta="0" mouse_opaque="true"
-					 name="EmeraldMoveLockDCT" radio_style="false" width="270" control_name="EmeraldMoveLockDCT"/>
+					 name="EmeraldUseBridgeMoveToTarget" radio_style="false" width="270" control_name="EmeraldUseBridgeMoveToTarget"/>
 			</panel>
 			<panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="CmdLine"
 				 left="1" mouse_opaque="true" name="CmdLine" width="418">
@@ -428,7 +455,7 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 					 font="SansSerifSmall" height="20" left_delta="0" max_length="256" mouse_opaque="true"
 					 tool_tip="" name="EmeraldCmdLineRezPlatform" control_name="EmeraldCmdLineRezPlatform"
 					 width="200"/>
-				<slider bottom_delta="-20" left="15" name="EmeraldPlatformSize" control_name="EmeraldPlatformSize"
+				<slider bottom_delta="-20" left="15" name="EmeraldCmdLinePlatformSize" control_name="EmeraldCmdLinePlatformSize"
 					 decimal_digits="1" enabled="true" follows="left|top" height="18" increment="0.5"
 					 initial_val="5" label="Width" label_width="30" max_val="30" min_val="5"
 					 mouse_opaque="true" show_text="true" width="200" auto_resize="false" tool_tip="How big do you want the platform to appear to be?"/>
@@ -439,7 +466,7 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 					 tool_tip="" name="EmeraldCmdLineMapTo" control_name="EmeraldCmdLineMapTo" width="200"/>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Use same position between sims" left_delta="0" mouse_opaque="true"
-					 name="toggle" radio_style="false" width="270" control_name="EmeraldMapToKeepPos"/>
+					 name="toggle" radio_style="false" width="270" control_name="EmeraldCmdLineMapToKeepPos"/>
 				<text bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="16" left_delta="0"
 					 name="loltxt8" width="512">        Calc. expressions (usage: cmd SIN(2+2))</text>
 				<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-20" follows="left|top"
@@ -514,12 +541,15 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 label="Render Avatar Invisible" left_delta="0" mouse_opaque="true" name="RenderAvInvisible"
 					 radio_style="false" width="270" control_name="RenderAvatarInvisible"/>
-     		    <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 label="Show appearance tag and animation in appearance mode" left_delta="0" mouse_opaque="true" name="EmeraldAppearanceAnimate"
 					 radio_style="false" width="270" control_name="EmeraldAppearanceAnimate"/>
-        		<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 label="Unsit avatar when entering appearance mode" left_delta="0" mouse_opaque="true" name="EmeraldAppearanceForceStand"
 					 radio_style="false" width="270" control_name="EmeraldAppearanceForceStand"/>
+				<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 label="Use crouch key in toggle mode" left_delta="0" mouse_opaque="true" name="EmeraldCrouchToggle"
+					 radio_style="false" width="270" control_name="EmeraldCrouchToggle" tool_tip="If selected, a single press of the crouch key will toggle the state between crouching and normal, instead of hold to crouch."/>
 				<text font="SansSerifSmall" name="BeamPrefs" follows="left|top" left="150" bottom="-150">        Selection beam particle effects</text>
 				<view_border bevel_style="none" border_thickness="1" bottom_delta="-5" follows="top|left" height="0"
 					 left="5" name="EmDivisor" width="480"/>
@@ -780,67 +810,6 @@ Recommended Settings are:          Time: 1          Count: 4</text>
 					 height="16" label="Auto Connect at login" mouse_opaque="true" control_name="EmeraldIRC_AutoConnect" tool_tip="Automaticly connect to any IRC networks that you have set to auto connect to upon startup."
 					 name="EmeraldIRC_AutoConnect"/>
 			</panel>
-			<panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="Utility Stream"
-				 left="1" mouse_opaque="true" name="Utility Stream" width="418">
-				<button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?"
-					 name="EmeraldHelp_UtilityStream" tool_tip="Click here for help regarding the settings in this page."
-					 right="490" width="18"/>
-				<panel name="gus_panel" left="5" width="280" height="55" bottom="-60"
-					 border="true" mouse_opaque="true" bevel_style="in" background_visible="true" background_opaque="true"
-					 follows="top|left" bg_opaque_color="0,0,0,0.1" bg_alpha_color="blue" can_resize="false">
-					<check_box bottom="-25" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Enable GUS" left="5" mouse_opaque="true"
-					 tool_tip="Enable Greenlife Utility Stream (GUS)" name="GUS Enable" radio_style="false"
-					 width="128" control_name="EmeraldGUSEnabled"/>
-					<check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-						 initial_value="false" label="Enable FastEvents" left_delta="138" mouse_opaque="true"
-						 tool_tip="Enable Greenlife Utility Stream FastEvents (GUS-FE)" name="GUS-FE Enable"
-						 radio_style="false" width="128" control_name="EmeraldGUSFastEventsEnabled"/>
-					<spinner bottom_delta="-20" decimal_digits="5" follows="left|top" height="16" increment="0.5"
-						 label="GUS Rate" label_width="65" left_delta="-138" max_val="1.00" min_val="0.50"
-						 mouse_opaque="true" name="Refresh Rate" width="128" control_name="EmeraldGUSRefresh"/>
-					<spinner bottom_delta="0" decimal_digits="5" follows="left|top" height="16" increment="0.5"
-						 label="GUS-FE Rate" label_width="65" left_delta="138" max_val="2.00" min_val="1.00"
-						 mouse_opaque="true" name="Fast Event Refresh Rate" width="128" control_name="EmeraldGUSFastEventsRefresh"/>
-				</panel>
-				<!-- 
-					GUS FEATURES:
-					THESE ARE AS COLUMNS; ADDITIONAL ROWS PER GUS / GUS-FE COLUMNS!
-			-->
-				<!-- GUS COLUMN -->
-				<panel name="gus_feature_column" left_delta="0" width="134" height="65" bottom_delta="-80"
-					 border="true" mouse_opaque="true" bevel_style="in" background_visible="true" background_opaque="true"
-					 follows="top|left" bg_opaque_color="0,0,0,0.1" bg_alpha_color="blue" can_resize="false">
-					<text bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="16" left_delta="5"
-						 name="rofltxt1" width="512">			GUS Variables:</text>
-					<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-						 initial_value="false" label="Eyeball Rotation" left_delta="5" mouse_opaque="true"
-						 tool_tip="Enable streaming of the avatar mesh eyeball rotation; useful for prim-eyes for certain avatars..."
-						 name="Eyeball Rotation" radio_style="false" width="128" control_name="EmeraldGUSEyeRot"/>
-					<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-						 initial_value="false" label="LookAt Position" left_delta="0" mouse_opaque="true"
-						 tool_tip="Enable streaming of LookAt."
-						 name="LookAt Position" radio_style="false" width="128" control_name="EmeraldGUSLookAt"/>
-				</panel>
-				<!-- GUS-FE COLUMN -->
-				<panel name="gus-fe_feature_column" left_delta="146" width="134" height="45" bottom_delta="20"
-					 border="true" mouse_opaque="true" bevel_style="in" background_visible="true" background_opaque="true"
-					 follows="top|left" bg_opaque_color="0,0,0,0.1" bg_alpha_color="blue" can_resize="false">
-					<text bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="16" left_delta="5"
-						 name="rofltxt2" width="512">			GUS-FE Variables:</text>
-					<check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-						 initial_value="false" label="Eyelid State" left_delta="5" mouse_opaque="true" tool_tip="Enable streaming of the avatar mesh eyelid state; useful for prim-eyes for certain avatars..."
-						 name="Eyelid State" radio_style="false" width="128" control_name="EmeraldGUSEyelidState"/>
-				</panel>
-				<text bottom_delta="-40" follows="left|top" font="SansSerifSmall" height="16" left_delta="-146"
-					 name="rofltxt3" width="512">        EXPERIMENTAL: The Greenlife Utility Stream is used for
-streaming information from the Emerald viewer into
-the simulator for scripts to access.</text>
-				<check_box bottom_delta="-60" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Enable transmission of selection beam end position"
-					 left="15" mouse_opaque="true" name="lol-toggle!" radio_style="false" width="270"
-					 control_name="EmeraldParticleChat"/>
-			</panel>
 			<panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="Inventory"
 				 left="1" mouse_opaque="true" name="Inventory" width="418">
 				<button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?"
@@ -909,6 +878,18 @@ the simulator for scripts to access.</text>
 					 follows="left|top" font="SansSerif" handle_edit_keys_directly="true" height="20"
 					 left_delta="57" max_length="4096" mouse_opaque="true" name="include_location" control_name="EmeraldHDDIncludeLocation"
 					 select_all_on_focus_received="false" width="425" word_wrap="false"/>
+
+        <text type="string" bottom_delta="-10" follows="left|top" font="SansSerifSmall" halign="left"
+					 height="10" left_delta="-60" mouse_opaque="false" name="lolyou" v_pad="0"
+					 width="200">        External Editor Binary:</text>
+        <button bottom_delta="-28" enabled="true" follows="left|top" font="SansSerif" halign="center"
+					 height="22" label="Set" label_selected="Set" left_delta="1" mouse_opaque="true"
+					 name="set_xed" scale_image="true" width="50"/>
+        <line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="0" enabled="true"
+					 follows="left|top" font="SansSerif" handle_edit_keys_directly="true" height="20"
+					 left_delta="57" max_length="4096" mouse_opaque="true" name="xed_location" control_name="EmeraldLSLExternalEditor"
+					 select_all_on_focus_received="false" width="425" word_wrap="false"/>
+        
 			</panel>
 			<panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="Effects"
 				 left="1" mouse_opaque="true" name="Effects" width="418">

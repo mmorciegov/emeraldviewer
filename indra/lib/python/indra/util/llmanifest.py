@@ -77,8 +77,31 @@ def get_default_platform(dummy):
             'darwin':'darwin'
             }[sys.platform]
 
+#def get_default_version(srctree):
+#    # look up llversion.h and parse out the version info
+#    paths = [os.path.join(srctree, x, 'llversionviewer.h') for x in ['llcommon', '../llcommon', '../../indra/llcommon.h']]
+#    for p in paths:
+#        if os.path.exists(p):
+#            contents = open(p, 'r').read()
+#            major = re.search("LL_VERSION_MAJOR\s=\s([0-9]+)", contents).group(1)
+#            minor = re.search("LL_VERSION_MINOR\s=\s([0-9]+)", contents).group(1)
+#            patch = re.search("LL_VERSION_PATCH\s=\s([0-9]+)", contents).group(1)
+#            build = re.search("LL_VERSION_BUILD\s=\s([0-9]+)", contents).group(1)
+#            return major, minor, patch, build
+
+#def get_channel(srctree):
+#    # look up llversionserver.h and parse out the version info
+#    paths = [os.path.join(srctree, x, 'llversionviewer.h') for x in ['llcommon', '../llcommon', '../../indra/llcommon.h']]
+#    for p in paths:
+#        if os.path.exists(p):
+#            contents = open(p, 'r').read()
+#            channel = re.search("LL_CHANNEL\s=\s\"(.+)\";\s*$", contents, flags = re.M).group(1)
+#            return channel
+    
+
 DEFAULT_SRCTREE = os.path.dirname(sys.argv[0])
 DEFAULT_CHANNEL = 'Second Life Release'
+DEFAULT_CHANNEL_SNOWGLOBE = 'Snowglobe Release'
 
 ARGUMENTS=[
     dict(name='actions',
@@ -99,6 +122,12 @@ ARGUMENTS=[
         On Linux this would try to use Linux_i686Manifest.""",
          default=""),
     dict(name='build', description='Build directory.', default=DEFAULT_SRCTREE),
+    dict(name='buildtype', description="""The build type used. ('Debug', 'Release', or 'RelWithDebInfo')
+        Default is Release """,
+         default="Release"),
+    dict(name='branding_id', description="""Identifier for the branding set to 
+        use.  Currently, 'secondlife' or 'snowglobe')""", 
+         default='secondlife'),
     dict(name='configuration',
          description="""The build configuration used. Only used on OS X for
         now, but it could be used for other platforms as well.""",
@@ -257,6 +286,13 @@ class LLManifest(object):
         return self.args.get('grid', None) == ''
     def default_channel(self):
         return self.args.get('channel', None) == DEFAULT_CHANNEL
+    
+    def default_channel_for_brand(self):
+        if self.viewer_branding_id()=='secondlife':
+            return self.args.get('channel', None) == DEFAULT_CHANNEL
+        elif self.viewer_branding_id()=="snowglobe":
+            return self.args.get('channel', None) == DEFAULT_CHANNEL_SNOWGLOBE
+        raise ValueError, "Invalid branding id: " + self.viewer_branding_id()
 
     def construct(self):
         """ Meant to be overriden by LLManifest implementors with code that

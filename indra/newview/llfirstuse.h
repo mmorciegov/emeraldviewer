@@ -110,17 +110,10 @@ public:
 	static void useDebugMenus();
 	static void useSculptedPrim();
 	static void useMedia();
-	static void callbackClientTags(const LLSD& notification, const LLSD& response);
-	static void callbackEmeraldOTR(const LLSD& notification, const LLSD& response);
-	static void callbackEmeraldBridge(const LLSD& notification, const LLSD& response);
-	static void ClientTags();
-	static void EmeraldOTR();
-	static void EmeraldBridge();
-	static void EmeraldNCreatorExport();
 	
 protected:
 	static std::set<std::string> sConfigVariables;
-
+	
 // [RLVa:KB] - Checked: RLVa-1.0.3a (2009-09-10) | Added: RLVa-1.0.3a
 public:
 	static void showRlvFirstUseNotification(const std::string& strName);

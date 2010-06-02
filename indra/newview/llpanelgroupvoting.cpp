@@ -139,7 +139,6 @@ public:
 
 	std::vector<LLSD> mActiveReceived;
 	std::vector<LLSD> mHistoryReceived;
-	U32 mOtherGroupHistoryItems;
 
 	int mProposalColumnWidths[10];
 	int mHistoryColumnWidths[10];
@@ -216,8 +215,6 @@ LLPanelGroupVoting::impl::impl(LLPanelGroupVoting& panel, const LLUUID& group_id
 	mVoteHistoryTextLbl = NULL;
 	mBtnViewHistoryList = NULL;
 	mBtnViewHistoryItem = NULL;
-
-	mOtherGroupHistoryItems = 0;
 }
 
 LLPanelGroupVoting::impl::~impl()
@@ -591,13 +588,11 @@ void LLPanelGroupVoting::impl::sendGroupProposalsRequest(const LLUUID& group_id)
 	mProposalTransID.generate();
 	mProposals->deleteAllItems(); //this should delete all the objects
 	mActiveReceived.clear();
-	mOtherGroupHistoryItems = 0;
 
 	//fill in some text so the user will at least know that
 	//we're pining the server in high latency situations
 	addPendingActiveScrollListItem(0, 0, ADD_BOTTOM);
 	mProposals->setCanSelect(FALSE);
-	mBtnViewProposalItem->setEnabled(FALSE);
 
 	LLMessageSystem *msg = gMessageSystem;
 	msg->newMessageFast(_PREHASH_GroupActiveProposalsRequest);
@@ -876,7 +871,6 @@ void LLPanelGroupVoting::impl::sendGroupVoteHistoryRequest(const LLUUID& group_i
 	//add some text so the user knows we're doing something
 	addPendingHistoryScrollListItem(0, 0, ADD_BOTTOM);
 	mVotesHistory->setCanSelect(FALSE);
-	mBtnViewHistoryItem->setEnabled(FALSE);
 
 	LLMessageSystem *msg = gMessageSystem;
 	msg->newMessageFast(_PREHASH_GroupVoteHistoryRequest);
@@ -1016,62 +1010,62 @@ void LLPanelGroupVoting::impl::processGroupActiveProposalItemReply(LLMessageSyst
 		row["columns"][0]["column"] = "item_num";
 		row["columns"][0]["value"] = item_num_string;
 		row["columns"][0]["font"] = "SANSSERIF_SMALL";
-		row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][0]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		row["columns"][1]["column"] = "proposal_text";
 		row["columns"][1]["value"] = proposal_text;
 		row["columns"][1]["font"] = "SANSSERIF_SMALL";
-		row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][1]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		row["columns"][2]["column"] = "end_datetime";
 		row["columns"][2]["value"] = end_datetime;
 		row["columns"][2]["font"] = "SANSSERIF_SMALL";
-		row["columns"][2]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][2]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][2]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		row["columns"][3]["column"] = "vote_type";
 		row["columns"][3]["value"] = vote_type;
 		row["columns"][3]["font"] = "SANSSERIF_SMALL";
-		row["columns"][3]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][3]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][3]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		row["columns"][4]["column"] = "already_voted";
 		row["columns"][4]["value"] = already_voted ? "Yes" : "No";
 		row["columns"][4]["font"] = "SANSSERIF_SMALL";
-		row["columns"][4]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][4]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][4]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		row["columns"][5]["column"] = "start_datetime";
 		row["columns"][5]["value"] = start_datetime;
 		row["columns"][5]["font"] = "SANSSERIF_SMALL";
-		row["columns"][5]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][5]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][5]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		row["columns"][6]["column"] = "vote_cast";
 		row["columns"][6]["value"] = vote_cast;
 		row["columns"][6]["font"] = "SANSSERIF_SMALL";
-		row["columns"][6]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][6]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][6]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		row["columns"][7]["column"] = "vote_initator_string";
 		row["columns"][7]["value"] = vote_initiator_string;
 		row["columns"][7]["font"] = "SANSSERIF_SMALL";
-		row["columns"][7]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][7]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][7]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		row["columns"][8]["column"] = "quorum_text";
 		row["columns"][8]["value"] = quorum_text;
 		row["columns"][8]["font"] = "SANSSERIF_SMALL";
-		row["columns"][8]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][8]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][8]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		row["columns"][9]["column"] = "majority_text";
 		row["columns"][9]["value"] = majority_text;
 		row["columns"][9]["font"] = "SANSSERIF_SMALL";
-		row["columns"][9]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][9]["width"] = self->mProposalColumnWidths[index++];
+		row["columns"][9]["color"] = gColors.getColor("DefaultListText").getValue();
 		
 		self->mActiveReceived.push_back(row);
 	}
@@ -1083,7 +1077,6 @@ void LLPanelGroupVoting::impl::processGroupActiveProposalItemReply(LLMessageSyst
 		//no active proposals and make the scroll list unselectable
 		self->addNoActiveScrollListItem(ADD_BOTTOM);
 		self->mProposals->setCanSelect(FALSE);
-		self->mBtnViewProposalItem->setEnabled(FALSE);
 	}
 	else if ( (U32)received != num_expected )
 	{
@@ -1091,7 +1084,6 @@ void LLPanelGroupVoting::impl::processGroupActiveProposalItemReply(LLMessageSyst
 											 num_expected,
 											 ADD_BOTTOM);
 		self->mProposals->setCanSelect(FALSE);
-		self->mBtnViewProposalItem->setEnabled(FALSE);
 	}
 	else
 	{
@@ -1105,7 +1097,6 @@ void LLPanelGroupVoting::impl::processGroupActiveProposalItemReply(LLMessageSyst
 		}
 
 		self->mProposals->setCanSelect(TRUE);
-		self->mBtnViewProposalItem->setEnabled(TRUE);
 	}
 }
 
@@ -1154,7 +1145,7 @@ void LLPanelGroupVoting::impl::processGroupVoteHistoryItemReply(LLMessageSystem 
 		//no active proposals and make the scroll list unselectable
 		self->addNoHistoryScrollListItem(ADD_BOTTOM);
 		self->mVotesHistory->setCanSelect(FALSE);
-		self->mBtnViewHistoryItem->setEnabled(FALSE);
+
 		return;
 	}
 
@@ -1197,8 +1188,8 @@ void LLPanelGroupVoting::impl::processGroupVoteHistoryItemReply(LLMessageSystem 
 			row["columns"][0]["column"] = "item_num";
 			row["columns"][0]["value"] = item_num_string;
 			row["columns"][0]["font"] = "SANSSERIF_SMALL";
-			row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 			row["columns"][0]["width"] = self->mHistoryColumnWidths[index++];
+			row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 			
 			vote_text.assign(proposal_text);
 			vote_text.append("\n\n--\n");
@@ -1230,32 +1221,32 @@ void LLPanelGroupVoting::impl::processGroupVoteHistoryItemReply(LLMessageSystem 
 			row["columns"][1]["column"] = "vote_text_stripped";
 			row["columns"][1]["value"] = vote_text_stripped;
 			row["columns"][1]["font"] = "SANSSERIF_SMALL";
-			row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
 			row["columns"][1]["width"] = self->mHistoryColumnWidths[index++];
+			row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
 
 			row["columns"][2]["column"] = "end_datetime";
 			row["columns"][2]["value"] = end_datetime;
 			row["columns"][2]["font"] = "SANSSERIF_SMALL";
-			row["columns"][2]["color"] = gColors.getColor("DefaultListText").getValue();
 			row["columns"][2]["width"] = self->mHistoryColumnWidths[index++];
+			row["columns"][2]["color"] = gColors.getColor("DefaultListText").getValue();
 
 			row["columns"][3]["column"] = "vote_type";
 			row["columns"][3]["value"] = vote_type;
 			row["columns"][3]["font"] = "SANSSERIF_SMALL";
-			row["columns"][3]["color"] = gColors.getColor("DefaultListText").getValue();
 			row["columns"][3]["width"] = self->mHistoryColumnWidths[index++];
+			row["columns"][3]["color"] = gColors.getColor("DefaultListText").getValue();
 
 			row["columns"][4]["column"] = "vote_result";
 			row["columns"][4]["value"] = vote_result;
 			row["columns"][4]["font"] = "SANSSERIF_SMALL";
-			row["columns"][4]["color"] = gColors.getColor("DefaultListText").getValue();
 			row["columns"][4]["width"] = self->mHistoryColumnWidths[index++];
+			row["columns"][4]["color"] = gColors.getColor("DefaultListText").getValue();
 
 			row["columns"][5]["column"] = "vote_text";
 			row["columns"][5]["value"] = vote_text;
 			row["columns"][5]["font"] = "SANSSERIF_SMALL";
-			row["columns"][5]["color"] = gColors.getColor("DefaultListText").getValue();
 			row["columns"][5]["width"] = self->mHistoryColumnWidths[index++];
+			row["columns"][5]["color"] = gColors.getColor("DefaultListText").getValue();
 
 			//row->addColumn(vote_text_stripped, font, self->mHistoryColumnWidths[1]);
 			//row->addColumn(end_datetime, font, self->mHistoryColumnWidths[2]);
@@ -1265,21 +1256,15 @@ void LLPanelGroupVoting::impl::processGroupVoteHistoryItemReply(LLMessageSystem 
 
 			self->mHistoryReceived.push_back(row);
 		} //end if proposal
-		else
-		{
-			llinfos << "Vote is not a proposal, but a " << vote_type << llendl;
-			self->mOtherGroupHistoryItems++;
-		}
 	} //end if vote_items > 0
 
 	int received = self->mHistoryReceived.size();
-	if ( (U32)received + self->mOtherGroupHistoryItems != num_expected )
+	if ( (U32)received != num_expected )
 	{
 		self->addPendingHistoryScrollListItem(received,
 											  num_expected,
 											  ADD_BOTTOM);
 		self->mVotesHistory->setCanSelect(FALSE);
-		self->mBtnViewHistoryItem->setEnabled(FALSE);
 	}
 	else
 	{
@@ -1293,7 +1278,6 @@ void LLPanelGroupVoting::impl::processGroupVoteHistoryItemReply(LLMessageSystem 
 		}
 
 		self->mVotesHistory->setCanSelect(TRUE);
-		self->mBtnViewHistoryItem->setEnabled(TRUE);
 	}
 }
 

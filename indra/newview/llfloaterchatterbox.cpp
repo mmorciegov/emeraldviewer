@@ -40,8 +40,6 @@
 #include "llfloaterchat.h"
 #include "llfloaterfriends.h"
 #include "llfloatergroups.h"
-
-#include "lggfloaterirc.h"
 #include "llviewercontrol.h"
 #include "llimview.h"
 #include "llimpanel.h"
@@ -54,7 +52,6 @@ LLFloaterMyFriends::LLFloaterMyFriends(const LLSD& seed)
 {
 	mFactoryMap["friends_panel"] = LLCallbackMap(LLFloaterMyFriends::createFriendsPanel, NULL);
 	mFactoryMap["groups_panel"] = LLCallbackMap(LLFloaterMyFriends::createGroupsPanel, NULL);
-	mFactoryMap["irc_panel"] = LLCallbackMap(LLFloaterMyFriends::createIRCPanel,NULL);
 	// do not automatically open singleton floaters (as result of getInstance())
 	BOOL no_open = FALSE;
 	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_my_friends.xml", &getFactoryMap(), no_open);
@@ -89,21 +86,16 @@ void* LLFloaterMyFriends::createGroupsPanel(void* data)
 	return new LLPanelGroups();
 }
 
-void* LLFloaterMyFriends::createIRCPanel(void* data)
-{
-	return new lggPanelIRC();
-}
-
 //
 // LLFloaterChatterBox
 //
+
 LLFloaterChatterBox::LLFloaterChatterBox(const LLSD& seed) :
 	mActiveVoiceFloater(NULL)
 {
 	mAutoResize = FALSE;
 
-// check if vertical tabs is selected (WoLf)
-	std::string chatterbox_layout;
+std::string chatterbox_layout;
 	if(gSavedSettings.getBOOL("EmeraldVerticalIMTabs"))
 	{ chatterbox_layout = "floater_chatterbox_emerald.xml"; }
 	else chatterbox_layout = "floater_chatterbox.xml";
@@ -213,11 +205,10 @@ void LLFloaterChatterBox::draw()
 
 	LLMultiFloater::draw();
 }
+
 void LLFloaterChatterBox::onOpen()
 {
 	gSavedSettings.setBOOL("ShowCommunicate", TRUE);
-	
-
 }
 
 void LLFloaterChatterBox::onClose(bool app_quitting)

@@ -40,6 +40,7 @@
 #include "llcombobox.h"
 #include "lliconctrl.h"
 #include "llframetimer.h"
+#include "lltimer.h"
 
 
 class LLMessageSystem;
@@ -50,15 +51,17 @@ class LLScrollListCtrl;
 class LLViewerObject;
 struct 	LLEntryAndEdCore;
 class LLMenuBarGL;
+class LLFloaterScriptSearch;
 class LLKeywordToken;
 class JCLSLPreprocessor;
 
 // Inner, implementation class.  LLPreviewScript and LLLiveLSLEditor each own one of these.
-class LLScriptEdCore : public LLPanel
+class LLScriptEdCore : public LLPanel, public LLEventTimer
 {
 	friend class LLPreviewScript;
 	friend class LLPreviewLSL;
 	friend class LLLiveLSLEditor;
+	friend class LLFloaterScriptSearch;
 	friend class JCLSLPreprocessor;
 
 public:
@@ -93,7 +96,6 @@ public:
 	static bool		onHelpWebDialog(const LLSD& notification, const LLSD& response);
 	static void		onBtnHelp(void* userdata);
 	static void		onToggleProc(void* userdata);
-	static void		onSyntaxCheck(void* userdata);
 	static void		onBtnDynamicHelp(void* userdata);
 	static void		onCheckLock(LLUICtrl*, void*);
 	static void		onHelpComboCommit(LLUICtrl* ctrl, void* userdata);
@@ -106,7 +108,7 @@ public:
 	static void		onBtnSave(void*);
 	static void		onBtnUndoChanges(void*);
 	static void		onSearchMenu(void* userdata);
-
+	
 	static void		onUndoMenu(void* userdata);
 	static void		onRedoMenu(void* userdata);
 	static void		onCutMenu(void* userdata);
@@ -126,8 +128,15 @@ public:
 	static BOOL		hasChanged(void* userdata);
 
 	void selectFirstError();
+	
+	void autoSave();
+	//dim external ed
+	void XedUpd();
+	void xedLaunch();
 
 	virtual BOOL handleKeyHere(KEY key, MASK mask);
+	
+	virtual BOOL tick();
 	
 	void enableSave(BOOL b) {mEnableSave = b;}
 
@@ -142,6 +151,9 @@ protected:
 
 private:
 	std::string		mSampleText;
+	std::string		mAutosaveFilename;
+	std::string     mXfname;
+	struct stat     mXstbuf;
 	std::string		mHelpURL;
 	LLTextEditor*	mEditor;
 	LLTextEditor*	mPostEditor;
@@ -165,6 +177,7 @@ private:
 	BOOL			mEnableSave;
 	BOOL			mHasScriptData;
 	JCLSLPreprocessor* mLSLProc;
+	
 };
 
 
@@ -204,7 +217,6 @@ protected:
 	static void onSaveBytecodeComplete(const LLUUID& asset_uuid, void* user_data, S32 status, LLExtStat ext_status);
 public:
 	static LLPreviewLSL* getInstance(const LLUUID& uuid);
-	LLTextEditor* getEditor() { return mScriptEd->mEditor; }
 protected:
 	static void* createScriptEdPanel(void* userdata);
 

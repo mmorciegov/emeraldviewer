@@ -52,9 +52,6 @@
 
 #include "llxmltree.h"
 
-// [RLVa:KB] - Emerald specific
-#include "rlvhandler.h"
-// [/RLVa:KB]
 
 BOOL LLHUDEffectLookAt::sDebugLookAt = FALSE;
 
@@ -505,69 +502,61 @@ void LLHUDEffectLookAt::setSourceObject(LLViewerObject* objectp)
 //-----------------------------------------------------------------------------
 void LLHUDEffectLookAt::render()
 {
-    if (gSavedSettings.getBOOL("EmeraldDontShowMyLookAt") &&
+	if (gSavedSettings.getBOOL("EmeraldDontShowMyLookAt") &&
         (gAgent.getAvatarObject() == ((LLVOAvatar*)(LLViewerObject*)mSourceObject))) return;
-	if (sDebugLookAt && mSourceObject.notNull())
-	{
-		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-
-		LLVector3 target = mTargetPos + ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->mHeadp->getWorldPosition();
-		glMatrixMode(GL_MODELVIEW);
-		gGL.pushMatrix();
-		gGL.translatef(target.mV[VX], target.mV[VY], target.mV[VZ]);
-		glScalef(0.3f, 0.3f, 0.3f);
-		gGL.begin(LLRender::LINES);
+		if (sDebugLookAt && mSourceObject.notNull())
 		{
-			LLColor3 color = (*mAttentions)[mTargetType].mColor;
-			gGL.color3f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE]);
-			gGL.vertex3f(-1.f, 0.f, 0.f);
-			gGL.vertex3f(1.f, 0.f, 0.f);
+			gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 
-			gGL.vertex3f(0.f, -1.f, 0.f);
-			gGL.vertex3f(0.f, 1.f, 0.f);
-
-			gGL.vertex3f(0.f, 0.f, -1.f);
-			gGL.vertex3f(0.f, 0.f, 1.f);
-		} gGL.end();
-		gGL.popMatrix();
-		if( gSavedSettings.getBOOL("EmeraldShowLookAtNames") )
-		{
-			//const LLFontGL* fontp = LLFontGL::sSansSerifSmall;
-			const LLFontGL* fontp = LLResMgr::getInstance()->getRes( LLFONT_SANSSERIF_SMALL );
-			LLGLEnable color_mat(GL_COLOR_MATERIAL);
-			LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
-			LLGLState gls_blend(GL_BLEND, TRUE);
-			LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_MULT);
-			gGL.getTexUnit(0)->enable(LLTexUnit::TT_TEXTURE);
-
-			// Well.. after that nasty complex try at somehow getting it to work initialising all sorts of stuff
-			// It seems to work and fix the previous bug of merely displaying untextured cubes, 
-			// probably due to the helpful getTexUnit->enable. - Nexii
+			LLVector3 target = mTargetPos + ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->mHeadp->getWorldPosition();
 			glMatrixMode(GL_MODELVIEW);
-			glPushMatrix();
-			LLVector3 render_pos = target + LLVector3( 0.f, 0.f, 0.25f );
-			LLColor4 Color = LLColor4( (*mAttentions)[mTargetType].mColor, 1.0f ); 
-			std::string text = ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->getFullname();
-			
-// [RLVa:KB] - Alternate: Emerald-370
-			// Show anonyms in place of actual names when @shownames=n restricted
-			if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
+			gGL.pushMatrix();
+			gGL.translatef(target.mV[VX], target.mV[VY], target.mV[VZ]);
+			glScalef(0.3f, 0.3f, 0.3f);
+			gGL.begin(LLRender::LINES);
 			{
-				text = RlvStrings::getAnonym(text);
-			}
-// [/RLVa:KB]
+				LLColor3 color = (*mAttentions)[mTargetType].mColor;
+				gGL.color3f(color.mV[VRED], color.mV[VGREEN], color.mV[VBLUE]);
+				gGL.vertex3f(-1.f, 0.f, 0.f);
+				gGL.vertex3f(1.f, 0.f, 0.f);
 
-			// render shadow first
-//			gViewerWindow->setupViewport(1, -1);
-//			hud_render_utf8text(text, render_pos, *fontp, LLFontGL::NORMAL, -0.5f * fontp->getWidthF32(text), 3.f, LLColor4( 0.f, 0.f, 0.f, 0.5f ), FALSE );
-			gViewerWindow->setupViewport();
-			hud_render_utf8text(text, render_pos, *fontp, LLFontGL::NORMAL, -0.5f * fontp->getWidthF32(text), 3.f, Color, FALSE );
-			
-			glPopMatrix();
+				gGL.vertex3f(0.f, -1.f, 0.f);
+				gGL.vertex3f(0.f, 1.f, 0.f);
+
+				gGL.vertex3f(0.f, 0.f, -1.f);
+				gGL.vertex3f(0.f, 0.f, 1.f);
+			} gGL.end();
+			gGL.popMatrix();
+			if( gSavedSettings.getBOOL("EmeraldShowLookAtNames") )
+				{
+					//const LLFontGL* fontp = LLFontGL::sSansSerifSmall;
+					const LLFontGL* fontp = LLResMgr::getInstance()->getRes( LLFONT_SANSSERIF_SMALL );
+					LLGLEnable color_mat(GL_COLOR_MATERIAL);
+					LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+					LLGLState gls_blend(GL_BLEND, TRUE);
+					LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
+					glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+					gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_MULT);
+					gGL.getTexUnit(0)->enable(LLTexUnit::TT_TEXTURE);
+
+					// Well.. after that nasty complex try at somehow getting it to work initialising all sorts of stuff
+					// It seems to work and fix the previous bug of merely displaying untextured cubes, 
+					// probably due to the helpful getTexUnit->enable. - Nexii
+					glMatrixMode(GL_MODELVIEW);
+					glPushMatrix();
+					LLVector3 render_pos = target + LLVector3( 0.f, 0.f, 0.25f );
+					LLColor4 Color = LLColor4( (*mAttentions)[mTargetType].mColor, 1.0f ); 
+					std::string text = ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->getFullname();
+					
+					// render shadow first
+		//			gViewerWindow->setupViewport(1, -1);
+		//			hud_render_utf8text(text, render_pos, *fontp, LLFontGL::NORMAL, -0.5f * fontp->getWidthF32(text), 3.f, LLColor4( 0.f, 0.f, 0.f, 0.5f ), FALSE );
+					gViewerWindow->setupViewport();
+					hud_render_utf8text(text, render_pos, *fontp, LLFontGL::NORMAL, -0.5f * fontp->getWidthF32(text), 3.f, Color, FALSE );
+					
+					glPopMatrix();
+				}
 		}
-	}
 }
 
 //-----------------------------------------------------------------------------
@@ -576,7 +565,6 @@ void LLHUDEffectLookAt::render()
 void LLHUDEffectLookAt::update()
 {
 	LLHUDEffectLookAt::sDebugLookAt = gSavedSettings.getBOOL("PersistShowLookAt");
-
 	// If the target object is dead, set the target object to NULL
 	if (!mTargetObject.isNull() && mTargetObject->isDead())
 	{

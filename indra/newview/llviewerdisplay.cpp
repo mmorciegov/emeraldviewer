@@ -94,6 +94,7 @@ LLPointer<LLImageGL> gDisconnectedImagep = NULL;
 // used to toggle renderer back on after teleport
 const F32 TELEPORT_RENDER_DELAY = 20.f; // Max time a teleport is allowed to take before we raise the curtain
 const F32 TELEPORT_ARRIVAL_DELAY = 2.f; // Time to preload the world before raising the curtain after we've actually already arrived.
+const F32 TELEPORT_LOCAL_DELAY = 0.0f; // Delay to prevent teleports after starting an in-sim teleport.
 BOOL		 gTeleportDisplay = FALSE;
 LLFrameTimer gTeleportDisplayTimer;
 LLFrameTimer gTeleportArrivalTimer;
@@ -398,11 +399,26 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			}
 			break;
 
+		case LLAgent::TELEPORT_LOCAL:
+			// Short delay when teleporting in the same sim (progress screen active but not shown - did not
+			// fall-through from TELEPORT_START)
+			{
+				if( gTeleportDisplayTimer.getElapsedTimeF32() > TELEPORT_LOCAL_DELAY )
+				{
+					LLFirstUse::useTeleport();
+					gAgent.setTeleportState( LLAgent::TELEPORT_NONE );
+				}
+			}
+			break;
+
 		case LLAgent::TELEPORT_NONE:
 			// No teleport in progress
 			gViewerWindow->setShowProgress(FALSE);
 			gTeleportDisplay = FALSE;
 			break;
+
+		default: 
+			 break;
 		}
 	}
     else if(LLAppViewer::instance()->logoutRequestSent())
@@ -545,7 +561,8 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		gFrameStats.start(LLFrameStats::UPDATE_CULL);
 		S32 water_clip = 0;
 		if ((LLViewerShaderMgr::instance()->getVertexShaderLevel(LLViewerShaderMgr::SHADER_ENVIRONMENT) > 1) &&
-			 gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_WATER))
+			 (gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_WATER) ||
+			  gPipeline.hasRenderType(LLPipeline::RENDER_TYPE_VOIDWATER)))
 		{
 			if (LLViewerCamera::getInstance()->cameraUnderWater())
 			{
@@ -683,7 +700,8 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 			gBumpImageList.updateImages();  // must be called before gImageList version so that it's textures are thrown out first.
 
-			const F32 max_image_decode_time = llmin(0.005f, 0.005f*10.f*gFrameIntervalSeconds); // 50 ms/second decode time (no more than 5ms/frame)
+			F32 max_image_decode_time = 0.050f*gFrameIntervalSeconds; // 50 ms/second decode time
+			max_image_decode_time = llclamp(max_image_decode_time, 0.001f, 0.005f ); // min 1ms/frame, max 5ms/frame)
 			gImageList.updateImages(max_image_decode_time);
 			stop_glerror();
 		}
@@ -1300,7 +1318,7 @@ void render_disconnected_background()
 
 		
 		raw->expandToPowerOfTwo();
-		gDisconnectedImagep->createGLTexture(0, raw);
+		gDisconnectedImagep->createGLTexture(0, raw, 0, TRUE, LLViewerImageBoostLevel::OTHER);
 		gStartImageGL = gDisconnectedImagep;
 		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 	}

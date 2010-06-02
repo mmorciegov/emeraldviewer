@@ -11,8 +11,6 @@ include_directories(
 
 set(llmath_SOURCE_FILES
     llbboxlocal.cpp
-	llcalc.cpp
-	llcalcparser.cpp
     llcamera.cpp
     llcoordframe.cpp
     llline.cpp
@@ -42,8 +40,6 @@ set(llmath_HEADER_FILES
     camera.h
     coordframe.h
     llbboxlocal.h
-	llcalc.h
-	llcalcparser.h
     llcamera.h
     llcoord.h
     llcoordframe.h
@@ -80,19 +76,7 @@ set(llmath_HEADER_FILES
 set_source_files_properties(${llmath_HEADER_FILES}
                             PROPERTIES HEADER_FILE_ONLY TRUE)
 
-# This somehow prevents random crashes due to new allocations from spirit::grammar. ~Disc
-if (NOT WINDOWS)
-	set_source_files_properties(
-		    llcalc.cpp
-		    llcalcparser.cpp
-		    PROPERTIES COMPILE_FLAGS "-O0"
-		    )
-endif (NOT WINDOWS)
-
 list(APPEND llmath_SOURCE_FILES ${llmath_HEADER_FILES})
 
 add_library (llmath ${llmath_SOURCE_FILES})
-
-target_link_libraries(
-    llmath
-    llcommon)
+add_dependencies(llmath prepare)

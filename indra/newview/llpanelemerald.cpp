@@ -33,7 +33,6 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "llpanelemerald.h"
-#include "lggbeammapfloater.h"
 // linden library includes
 #include "llradiogroup.h"
 #include "llbutton.h"
@@ -42,8 +41,6 @@
 #include "llcombobox.h"
 #include "llslider.h"
 #include "lltexturectrl.h"
-
-#include "lggbeammaps.h"
 
 // project includes
 #include "llviewercontrol.h"
@@ -62,8 +59,12 @@
 
 #include "lldirpicker.h"
 
+
 #include "llweb.h" // [$PLOTR$/]
 #include "lggbeamcolormapfloater.h"
+#include "lggbeammapfloater.h"
+#include "lggbeammaps.h"
+//#include "lggbeamscolors.h"
 #include "llsliderctrl.h"
 #include "mfdkeywordfloater.h"
 #include "lgghunspell_wrapper.h"
@@ -214,8 +215,6 @@ BOOL LLPanelEmerald::postBuild()
 		
 	//childSetCommitCallback("material",onComboBoxCommit);
 	//childSetCommitCallback("combobox shininess",onComboBoxCommit);
-	getChild<LLButton>("EmeraldPrefs_Stealth")->setClickedCallback(onStealth, this);
-	getChild<LLButton>("EmeraldPrefs_FullFeatures")->setClickedCallback(onNoStealth, this);
 
 
 	getChild<LLButton>("keyword_allert")->setClickedCallback(onKeywordAllertButton,this);
@@ -262,7 +261,6 @@ BOOL LLPanelEmerald::postBuild()
 	childSetCommitCallback("X Modifier", onCommitSendAppearance);
 	childSetCommitCallback("Y Modifier", onCommitSendAppearance);
 	childSetCommitCallback("Z Modifier", onCommitSendAppearance);
-	childSetValue("EmeraldDoubleClickTeleportMode", gSavedSettings.getBOOL("EmeraldDoubleClickTeleportMode"));
 	childSetValue("EmeraldUseOTR", LLSD((S32)gSavedSettings.getU32("EmeraldUseOTR"))); // [$PLOTR$]
 	getChild<LLButton>("otr_help_btn")->setClickedCallback(onClickOtrHelp, this);      // [/$PLOTR$]
 
@@ -352,6 +350,11 @@ BOOL LLPanelEmerald::postBuild()
 	childSetAction("set_includeHDD", onClickSetHDDInclude, this);
 	childSetCommitCallback("include_location", onCommitApplyControl);
 
+	//EmeraldLSLExternalEditor
+	childSetAction("set_xed", onClickSetXed, this);
+	childSetCommitCallback("xed_location", onCommitApplyControl);
+	childSetValue("xed_location", gSavedSettings.getString("EmeraldLSLExternalEditor"));
+
 	getChild<LLCheckBoxCtrl>("telerequest_toggle")->setCommitCallback(onConditionalPreferencesChanged);
 	getChild<LLCheckBoxCtrl>("mldct_toggle")->setCommitCallback(onConditionalPreferencesChanged);
 
@@ -427,7 +430,7 @@ void LLPanelEmerald::refresh()
 	}
 
 	//epic hax (TODO: make this less hax)
-	onConditionalPreferencesChanged(getChild<LLCheckBoxCtrl>("telerequest_toggle"), NULL);
+	/*onConditionalPreferencesChanged(getChild<LLCheckBoxCtrl>("telerequest_toggle"), NULL);*/
 
 	//mSkin = gSavedSettings.getString("SkinCurrent");
 	//getChild<LLRadioGroup>("skin_selection")->setValue(mSkin);
@@ -466,8 +469,6 @@ void LLPanelEmerald::apply()
 	gSavedPerAccountSettings.setBOOL("EmeraldInstantMessageResponseItem", childGetValue("EmeraldInstantMessageResponseItem").asBoolean());
 	gSavedPerAccountSettings.setBOOL("EmeraldInstantMessageAnnounceIncoming", childGetValue("EmeraldInstantMessageAnnounceIncoming").asBoolean());
 	gSavedPerAccountSettings.setBOOL("EmeraldInstantMessageAnnounceStealFocus", childGetValue("EmeraldInstantMessageAnnounceStealFocus").asBoolean());
-	gSavedSettings.setBOOL("EmeraldDoubleClickTeleportMode",
-		childGetValue("EmeraldDoubleClickTeleportMode").asBoolean());
 	if(((gSavedSettings.getU32("RenderQualityPerformance")>=3) && gSavedSettings.getBOOL("WindLightUseAtmosShaders") && gSavedSettings.getBOOL("VertexShaderEnable")) && childGetValue("EmeraldShadowsON").asBoolean())
 	{
 		gSavedSettings.setBOOL("RenderUseFBO", childGetValue("EmeraldShadowsON").asBoolean());
@@ -568,60 +569,7 @@ void LLPanelEmerald::onSpellEditCustom(void* data)
 {
 	glggHunSpell->editCustomButton();
 }
-void LLPanelEmerald::onStealth(void* data)
-{
-	//LLPanelEmerald* self =(LLPanelEmerald*)data;
-	LLNotifications::instance().add("EmeraldStealth", LLSD(),LLSD(), callbackEmeraldStealth);
-	
 
-}
-void LLPanelEmerald::callbackEmeraldStealth(const LLSD &notification, const LLSD &response)
-{
-	//gSavedSettings.setWarning("EmeraldOTR", FALSE);
-	S32 option = LLNotification::getSelectedOption(notification, response);
-	if ( option == 0 )
-	{
-		gSavedSettings.setU32("EmeraldUseOTR",(U32)0);
-		gSavedSettings.setBOOL("EmeraldRainbowBeam",false);
-		gSavedSettings.setString("EmeraldBeamShape","===OFF===");
-		gSavedSettings.setBOOL("EmeraldCryoDetection",false);
-		gSavedSettings.setBOOL("EmeraldGUSEnabled",false);
-		gSavedSettings.setBOOL("EmeraldClothingLayerProtection",false);
-		gSavedSettings.setBOOL("EmeraldParticleChat",false);
-		gSavedSettings.setBOOL("EmeraldRadarChatKeys",false);
-		gSavedSettings.setBOOL("EmeraldUseBridgeOnline",false);
-		gSavedSettings.setBOOL("EmeraldUseBridgeRadar",false);
-		gSavedSettings.setBOOL("EmeraldMoveLockDCT",false);
-	}
-}
-void LLPanelEmerald::onNoStealth(void* data)
-{
-	//LLPanelEmerald* self =(LLPanelEmerald*)data;
-	
-	LLNotifications::instance().add("EmeraldNoStealth", LLSD(),LLSD(), callbackEmeraldNoStealth);
-	
-
-}
-
-void LLPanelEmerald::callbackEmeraldNoStealth(const LLSD &notification, const LLSD &response)
-{
-	//gSavedSettings.setWarning("EmeraldOTR", FALSE);
-	S32 option = LLNotification::getSelectedOption(notification, response);
-	if ( option == 0 )
-	{
-		gSavedSettings.setU32("EmeraldUseOTR",(U32)2);
-		gSavedSettings.setBOOL("EmeraldRainbowBeam",true);
-		gSavedSettings.setString("EmeraldBeamShape","Emerald");
-		//gSavedSettings.setBOOL("EmeraldCryoDetect",true);
-		//gSavedSettings.setBOOL("EmeraldGUSEnabled",true);
-		gSavedSettings.setBOOL("EmeraldClothingLayerProtection",true);
-		gSavedSettings.setBOOL("EmeraldBuildBridge",true);
-		gSavedSettings.setBOOL("EmeraldUseBridgeOnline",true);
-		gSavedSettings.setBOOL("EmeraldUseBridgeRadar",true);		
-		gSavedSettings.setBOOL("EmeraldMoveLockDCT",true);
-
-	}
-}
 void LLPanelEmerald::beamUpdateCall(LLUICtrl* crtl, void* userdata)
 {
 	gLggBeamMaps.forceUpdate();
@@ -790,10 +738,32 @@ void LLPanelEmerald::onClickSetHDDInclude(void* user_data)
 		gSavedSettings.setString("EmeraldHDDIncludeLocation", dir_name);
 	}
 }
+void LLPanelEmerald::onClickSetXed(void* user_data)
+{
+	LLPanelEmerald* self = (LLPanelEmerald*)user_data;
+
+	std::string cur_name(gSavedSettings.getString("EmeraldLSLExternalEditor"));
+	
+	LLFilePicker& picker = LLFilePicker::instance();
+	if (! picker.getOpenFile(LLFilePicker::FFLOAD_APP) )
+	{
+		return; //Canceled!
+	}
+	std::string file_name = picker.getFirstFile();
+	if (!file_name.empty() && file_name != cur_name)
+	{
+		self->childSetText("xed_location", file_name);
+		gSavedSettings.setString("EmeraldLSLExternalEditor", file_name);
+		
+	} else {
+		//self->childSetText("xed_location", " ");
+	  gSavedSettings.setString("EmeraldLSLExternalEditor", " ");
+	}
+}
 
 void LLPanelEmerald::onConditionalPreferencesChanged(LLUICtrl* ctrl, void* userdata)
 {
-	LLPanelEmerald* self = (LLPanelEmerald*)ctrl->getParent();
+	/*LLPanelEmerald* self = (LLPanelEmerald*)ctrl->getParent();
 	if(!self)return;
 	LLCheckBoxCtrl* teleport = self->getChild<LLCheckBoxCtrl>("telerequest_toggle");
 	LLCheckBoxCtrl* movelock = self->getChild<LLCheckBoxCtrl>("mldct_toggle");
@@ -809,7 +779,7 @@ void LLPanelEmerald::onConditionalPreferencesChanged(LLUICtrl* ctrl, void* userd
 		teleport->setValue(LLSD(true));
 		gSavedSettings.setBOOL("EmeraldRequestLocalTeleports", true);
 		teleport->setEnabled(false);
-	}
+	}*/
 }
 
 /*

@@ -1378,11 +1378,11 @@ void LLWindowMacOSX::setMouseClipping( BOOL b )
 
 	if(b)
 	{
-		//		llinfos << "setMouseClipping(TRUE)" << llendl
+		//		llinfos << "setMouseClipping(TRUE)" << llendl;
 	}
 	else
 	{
-		//		llinfos << "setMouseClipping(FALSE)" << llendl
+		//		llinfos << "setMouseClipping(FALSE)" << llendl;
 	}
 
 	adjustCursorDecouple();
@@ -1400,7 +1400,7 @@ BOOL LLWindowMacOSX::setCursorPosition(const LLCoordWindow position)
 
 	CGPoint newPosition;
 
-	//	llinfos << "setCursorPosition(" << screen_pos.mX << ", " << screen_pos.mY << ")" << llendl
+	//	llinfos << "setCursorPosition(" << screen_pos.mX << ", " << screen_pos.mY << ")" << llendl;
 
 	newPosition.x = screen_pos.mX;
 	newPosition.y = screen_pos.mY;
@@ -3131,6 +3131,18 @@ S32 OSMessageBoxMacOSX(const std::string& text, const std::string& caption, U32 
 	}
 
 	return result;
+}
+
+void LLWindowMacOSX::openFile(const std::string& file_name)
+{
+	// Open with whatever the system feels like opening with.
+	llinfos << "Opening " << file_name << " in external editor." << llendl;
+	CFStringRef strPath = CFStringCreateWithCString(kCFAllocatorDefault, file_name.c_str(), kCFStringEncodingUTF8);
+	FSRef ref;
+	FSPathMakeRef((UInt8*)file_name.c_str(), &ref, NULL);
+	FSRef pathArray[1] = { ref };
+	LSOpenItemsWithRole(pathArray, 1, kLSRolesEditor, NULL, NULL, NULL, 0);
+	CFRelease(strPath);
 }
 
 // Open a URL with the user's default web browser.

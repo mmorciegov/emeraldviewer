@@ -80,7 +80,6 @@
 #include "llviewercontrol.h"
 #include "llviewerjoystick.h"
 #include "lluictrlfactory.h"
-#include "pipeline.h"
 
 // Globals
 LLFloaterTools *gFloaterTools = NULL;
@@ -791,20 +790,21 @@ void LLFloaterTools::onClose(bool app_quitting)
 	mParcelSelection = NULL;
 	mObjectSelection = NULL;
 
-	if (gAgent.cameraMouselook())
+	if (!gAgent.cameraMouselook())
+	{
+		// Switch back to basic toolset
+		LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+		// we were already in basic toolset, using build tools
+		// so manually reset tool to default (pie menu tool)
+		LLToolMgr::getInstance()->getCurrentToolset()->selectFirstTool();
+	}
+	else 
 	{
 		// Switch back to mouselook toolset
 		LLToolMgr::getInstance()->setCurrentToolset(gMouselookToolset);
+
 		gViewerWindow->hideCursor();
 		gViewerWindow->moveCursorToCenter();
-	}
-	else
-	{
-	// Switch back to basic toolset
-	LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
-	// we were already in basic toolset, using build tools
-	// so manually reset tool to default (pie menu tool)
-	LLToolMgr::getInstance()->getCurrentToolset()->selectFirstTool();
 	}
 
 	// gMenuBarView->setItemVisible(std::string("Tools"), FALSE);
@@ -922,7 +922,7 @@ void click_apply_to_selection(void* user)
 
 void commit_select_tool(LLUICtrl *ctrl, void *data)
 {
-	S32 show_owners = LLPipeline::sShowParcelOwners;
+	S32 show_owners = gSavedSettings.getBOOL("ShowParcelOwners");
 	gFloaterTools->setEditTool(data);
 	gSavedSettings.setBOOL("ShowParcelOwners", show_owners);
 }

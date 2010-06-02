@@ -344,22 +344,7 @@ void LLTracker::trackLocation(const LLVector3d& pos_global, const std::string& f
 	instance()->mToolTip = tooltip;
 }
 
-void LLTracker::trackLocationUpdate(const LLVector3d& pos_global, const std::string& full_name, const std::string& tooltip, ETrackingLocationType location_type)
-{
- if(instance()->getTrackingStatus() != TRACKING_LOCATION)
- {
- instance()->stopTrackingAvatar();
- instance()->stopTrackingLandmark();
- }
 
- instance()->mTrackedPositionGlobal = pos_global;
- instance()->mTrackedLocationName = full_name;
- instance()->mIsTrackingLocation = TRUE;
- instance()->mTrackingStatus = TRACKING_LOCATION;
- instance()->mTrackingLocationType = location_type;
- instance()->mLabel = full_name;
- instance()->mToolTip = tooltip;
-}
 // static 
 BOOL LLTracker::handleMouseDown(S32 x, S32 y)
 {

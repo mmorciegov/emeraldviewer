@@ -1,7 +1,6 @@
 # -*- cmake -*-
-
 include(Prebuilt)
-	
+
 set(Boost_FIND_QUIETLY ON)
 set(Boost_FIND_REQUIRED ON)
 
@@ -16,18 +15,8 @@ else (STANDALONE)
   set(Boost_INCLUDE_DIRS ${LIBS_PREBUILT_DIR}/include)
 
   if (WINDOWS)
-    set(BOOST_VERSION 1_36)
-    if (MSVC71)
-      set(BOOST_PROGRAM_OPTIONS_LIBRARY 
-          optimized libboost_program_options-vc71-mt-${BOOST_VERSION}
-          debug libboost_program_options-vc71-mt-gd-${BOOST_VERSION})
-      set(BOOST_REGEX_LIBRARY
-          optimized libboost_regex-vc71-mt-${BOOST_VERSION}
-          debug libboost_regex-vc71-mt-gd-${BOOST_VERSION})
-      set(BOOST_SIGNALS_LIBRARY 
-          optimized libboost_signals-vc71-mt-${BOOST_VERSION}
-          debug libboost_signals-vc71-mt-gd-${BOOST_VERSION})
-    elseif (MSVC80)
+    set(BOOST_VERSION 1_39)
+    if (MSVC80)
       set(BOOST_PROGRAM_OPTIONS_LIBRARY 
           optimized libboost_program_options-vc80-mt-${BOOST_VERSION}
           debug libboost_program_options-vc80-mt-gd-${BOOST_VERSION})
@@ -37,7 +26,7 @@ else (STANDALONE)
       set(BOOST_SIGNALS_LIBRARY 
           optimized libboost_signals-vc80-mt-${BOOST_VERSION}
           debug libboost_signals-vc80-mt-gd-${BOOST_VERSION})
-    elseif (MSVC90)
+    else (MSVC90)
       set(BOOST_PROGRAM_OPTIONS_LIBRARY 
           optimized libboost_program_options-vc90-mt-${BOOST_VERSION}
           debug libboost_program_options-vc90-mt-gd-${BOOST_VERSION})
@@ -47,7 +36,18 @@ else (STANDALONE)
       set(BOOST_SIGNALS_LIBRARY 
           optimized libboost_signals-vc90-mt-${BOOST_VERSION}
           debug libboost_signals-vc90-mt-gd-${BOOST_VERSION})
-    endif (MSVC71)
+    endif (MSVC80)
+  elseif (LINUX)
+    set(BOOST_PROGRAM_OPTIONS_LIBRARY boost_program_options-mt)  	
+  	set(BOOST_REGEX_LIBRARY boost_regex-mt)
+  	set(BOOST_PYTHON_LIBRARY boost_python-mt)
+  	set(BOOST_SIGNALS_LIBRARY boost_signals-mt)
+  	set(BOOST_WAVE_LIBRARY boost_wave-mt)
+  	set(BOOST_SYSTEM_LIBRARY boost_system-mt)
+  	set(BOOST_FILESYSTEM_LIBRARY boost_filesystem-mt)
+  	set(BOOST_IOSTREAMS_LIBRARY boost_iostreams-mt)
+  	set(BOOST_DATE_TIME_LIBRARY boost_date_time-mt)
+  	set(BOOST_THREAD_LIBRARY boost_thread-mt)
   else (WINDOWS)
   	find_library(PROGRAM_LIB NAMES boost_program_options-mt boost_program_options PATHS ${ARCH_PREBUILT_DIRS_RELEASE} NO_DEFAULT_PATH)
   	find_library(REGEX_LIB NAMES boost_regex-mt boost_regex PATHS ${ARCH_PREBUILT_DIRS_RELEASE} NO_DEFAULT_PATH)

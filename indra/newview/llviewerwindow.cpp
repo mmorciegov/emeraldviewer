@@ -54,7 +54,7 @@
 //
 
 // linden library includes
-#include "audioengine.h"		// mute on minimize
+#include "llaudioengine.h"		// mute on minimize
 #include "indra_constants.h"
 #include "llassetstorage.h"
 #include "llfontgl.h"
@@ -104,7 +104,6 @@
 #include "llfloaternamedesc.h"
 #include "llfloaterpreference.h"
 #include "llfloatersnapshot.h"
-#include "llfloaterteleporthistory.h"
 #include "llfloatertools.h"
 #include "llfloaterworldmap.h"
 #include "llfocusmgr.h"
@@ -116,6 +115,7 @@
 #include "llhudview.h"
 #include "llimagebmp.h"
 #include "llimagej2c.h"
+#include "llimageworker.h"
 #include "llinventoryview.h"
 #include "llkeyboard.h"
 #include "lllineeditor.h"
@@ -156,7 +156,6 @@
 #include "lltoolselectland.h"
 #include "lltoolview.h"
 #include "lluictrlfactory.h"
-#include "lluploaddialog.h"
 #include "llurldispatcher.h"		// SLURL from other app instance
 #include "llvieweraudio.h"
 #include "llviewercamera.h"
@@ -164,6 +163,8 @@
 #include "llviewerimagelist.h"
 #include "llviewerinventory.h"
 #include "llviewerkeyboard.h"
+#include "llviewermedia.h"
+#include "llviewermediafocus.h"
 #include "llviewermenu.h"
 #include "llviewermessage.h"
 #include "llviewerobjectlist.h"
@@ -252,15 +253,6 @@ std::string	LLViewerWindow::sSnapshotDir;
 
 std::string	LLViewerWindow::sMovieBaseName;
 
-BOOL LLViewerWindow::sMouseSmooth;
-F32 LLViewerWindow::sToolTipDelay;
-F32 LLViewerWindow::sDragAndDropToolTipDelay;
-BOOL LLViewerWindow::sChatBarStealsFocus;
-F32 LLViewerWindow::sPicksPerSecondMouseMoving;
-F32 LLViewerWindow::sPicksPerSecondMouseStationary;
-BOOL LLViewerWindow::sChatFullWidth;
-BOOL LLViewerWindow::sDisplayTimecode;
-
 extern void toggle_debug_menus(void*);
 
 
@@ -323,7 +315,9 @@ public:
 				S32 hours = (S32)(time / (60*60));
 				S32 mins = (S32)((time - hours*(60*60)) / 60);
 				S32 secs = (S32)((time - hours*(60*60) - mins*60));
-				addText(xpos, ypos, llformat(" Debug %d: %d:%02d:%02d", idx, hours,mins,secs)); ypos += y_inc2;
+				std::string label = gDebugTimerLabel[idx];
+				if (label.empty()) label = llformat("Debug: %d", idx);
+				addText(xpos, ypos, llformat(" %s: %d:%02d:%02d", label.c_str(), hours,mins,secs)); ypos += y_inc2;
 			}
 			
 			F32 time = gFrameTimeSeconds;
@@ -880,15 +874,6 @@ BOOL LLViewerWindow::handleMouseUp(LLWindow *window,  LLCoordGL pos, MASK mask)
 
 BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK mask)
 {
-	gSavedSettings.setBOOL("zmm_rightmousedown",1);
-    if(gAgent.cameraMouselook()&&gSavedSettings.getBOOL("zmm_isinml")==0)
-	{
-        llinfos << "zmmisinml set to true" << llendl;
-        gSavedSettings.setBOOL("zmm_isinml",1);
-        F32 deffov=LLViewerCamera::getInstance()->getDefaultFOV();
-        gSavedSettings.setF32("zmm_deffov",deffov);
-        LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("zmm_deffov")/gSavedSettings.getF32("zmm_mlfov"));
-    }
 	S32 x = pos.mX;
 	S32 y = pos.mY;
 	x = llround((F32)x / mDisplayScale.mV[VX]);
@@ -996,13 +981,6 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 
 BOOL LLViewerWindow::handleRightMouseUp(LLWindow *window,  LLCoordGL pos, MASK mask)
 {
-	gSavedSettings.setBOOL("zmm_rightmousedown",0);
-    if(gSavedSettings.getBOOL("zmm_isinml")==1)
-	{
-        llinfos << "zmmisinml set to false" << llendl;
-        gSavedSettings.setBOOL("zmm_isinml",0);
-        LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("zmm_deffov"));
-    }
 	S32 x = pos.mX;
 	S32 y = pos.mY;
 	x = llround((F32)x / mDisplayScale.mV[VX]);
@@ -1413,7 +1391,7 @@ void LLViewerWindow::handleDataCopy(LLWindow *window, S32 data_type, void *data)
 	case SLURL_MESSAGE_TYPE:
 		// received URL
 		std::string url = (const char*)data;
-		LLWebBrowserCtrl* web = NULL;
+		LLMediaCtrl* web = NULL;
 		const bool trusted_browser = false;
 		if (LLURLDispatcher::dispatch(url, web, trusted_browser))
 		{
@@ -1574,6 +1552,11 @@ LLViewerWindow::LLViewerWindow(
 		gSavedSettings.setBOOL("ProbeHardwareOnStartup", FALSE);
 	}
 
+	if (!gGLManager.mHasDepthClamp)
+	{
+        LL_INFOS("RenderInit") << "Missing feature GL_ARB_depth_clamp. Void water might disappear in rare cases." << LL_ENDL;
+	}
+
 	// If we crashed while initializng GL stuff last time, disable certain features
 	if (gSavedSettings.getBOOL("RenderInitError"))
 	{
@@ -1588,6 +1571,7 @@ LLViewerWindow::LLViewerWindow(
 
 	// Init the image list.  Must happen after GL is initialized and before the images that
 	// LLViewerWindow needs are requested.
+	LLImageGL::initClass(LLViewerImageBoostLevel::MAX_GL_IMAGE_CATEGORY) ;
 	gImageList.init();
 	LLViewerImage::initClass();
 	gBumpImageList.init();
@@ -1700,7 +1684,6 @@ void LLViewerWindow::initBase()
 	llassert( !gConsole );
 	gConsole = new LLConsole(
 		"console",
-		gSavedSettings.getS32("ConsoleBufferSize"),
 		getChatConsoleRect(),
 		gSavedSettings.getS32("ChatFontSize"),
 		gSavedSettings.getF32("ChatPersistTime") );
@@ -1728,13 +1711,10 @@ void LLViewerWindow::initBase()
 	mToolTip = new LLTextBox( std::string("tool tip"), LLRect(0, 1, 1, 0 ) );
 	mToolTip->setHPad( 4 );
 	mToolTip->setVPad( 2 );
-	static LLColor4 defaultToolTipTextColor = gColors.getColor( "ToolTipTextColor" );
-	mToolTip->setColor( defaultToolTipTextColor );
-	static LLColor4 defaultToolTipBorderColor = gColors.getColor( "ToolTipBorderColor" );
-	mToolTip->setBorderColor( defaultToolTipBorderColor );
+	mToolTip->setColor( gColors.getColor( "ToolTipTextColor" ) );
+	mToolTip->setBorderColor( gColors.getColor( "ToolTipBorderColor" ) );
 	mToolTip->setBorderVisible( FALSE );
-	static LLColor4 defaultToolTipBgColor = gColors.getColor( "ToolTipBgColor" );
-	mToolTip->setBackgroundColor( defaultToolTipBgColor );
+	mToolTip->setBackgroundColor( gColors.getColor( "ToolTipBgColor" ) );
 	mToolTip->setBackgroundVisible( TRUE );
 	mToolTip->setFontStyle(LLFontGL::NORMAL);
 	mToolTip->setBorderDropshadowVisible( TRUE );
@@ -1745,60 +1725,7 @@ void LLViewerWindow::initBase()
 	mRootView->addChild(mProgressView);
 	setShowProgress(FALSE);
 	setProgressCancelButtonVisible(FALSE);
-
-
-	sMouseSmooth = gSavedSettings.getBOOL("MouseSmooth");
-	sToolTipDelay = gSavedSettings.getF32( "ToolTipDelay" );
-	sDragAndDropToolTipDelay = gSavedSettings.getF32( "DragAndDropToolTipDelay" );
-	sChatBarStealsFocus = gSavedSettings.getBOOL("ChatBarStealsFocus");
-	sPicksPerSecondMouseMoving = gSavedSettings.getF32("PicksPerSecondMouseMoving");
-	sPicksPerSecondMouseStationary = gSavedSettings.getF32("PicksPerSecondMouseStationary");
-	sChatFullWidth = gSavedSettings.getBOOL("ChatFullWidth");
-	sDisplayTimecode = gSavedSettings.getBOOL("DisplayTimecode");
-
-	gSavedSettings.getControl("MouseSmooth")->getSignal()->connect(&updateMouseSmooth);
-	gSavedSettings.getControl("ToolTipDelay")->getSignal()->connect(&updateToolTipDelay);
-	gSavedSettings.getControl("DragAndDropToolTipDelay")->getSignal()->connect(&updateDragAndDropToolTipDelay);
-	gSavedSettings.getControl("ChatBarStealsFocus")->getSignal()->connect(&updateChatBarStealsFocus);
-	gSavedSettings.getControl("PicksPerSecondMouseMoving")->getSignal()->connect(&updatePicksPerSecondMouseMoving);
-	gSavedSettings.getControl("PicksPerSecondMouseStationary")->getSignal()->connect(&updatePicksPerSecondMouseStationary);
-	gSavedSettings.getControl("ChatFullWidth")->getSignal()->connect(&updateChatFullWidth);
-	gSavedSettings.getControl("DisplayTimecode")->getSignal()->connect(&updateDisplayTimecode);
 }
-
-void LLViewerWindow::updateMouseSmooth(const LLSD &data)
-{
-	sMouseSmooth = data.asBoolean();
-}
-void LLViewerWindow::updateToolTipDelay(const LLSD &data)
-{
-	sToolTipDelay = F32(data.asReal());
-}
-void LLViewerWindow::updateDragAndDropToolTipDelay(const LLSD &data)
-{
-	sDragAndDropToolTipDelay = F32(data.asReal());
-}
-void LLViewerWindow::updateChatBarStealsFocus(const LLSD &data)
-{
-	sChatBarStealsFocus = data.asBoolean();
-}
-void LLViewerWindow::updatePicksPerSecondMouseMoving(const LLSD &data)
-{
-	sPicksPerSecondMouseMoving = F32(data.asReal());
-}
-void LLViewerWindow::updatePicksPerSecondMouseStationary(const LLSD &data)
-{
-	sPicksPerSecondMouseStationary = F32(data.asReal());
-}
-void LLViewerWindow::updateChatFullWidth(const LLSD &data)
-{
-	sChatFullWidth = data.asBoolean();
-}
-void LLViewerWindow::updateDisplayTimecode(const LLSD &data)
-{
-	sDisplayTimecode = data.asBoolean();
-}
-
 
 
 void adjust_rect_top_left(const std::string& control, const LLRect& window)
@@ -2007,10 +1934,6 @@ void LLViewerWindow::initWorldUI()
 		gFloaterWorldMap = new LLFloaterWorldMap();
 		gFloaterWorldMap->setVisible(FALSE);
 
-		// open teleport history floater and hide it initially
-		gFloaterTeleportHistory = new LLFloaterTeleportHistory();
-		gFloaterTeleportHistory->setVisible(FALSE);
-
 		//
 		// Tools for building
 		//
@@ -2039,6 +1962,19 @@ void LLViewerWindow::initWorldUI()
 
 		// menu holder appears on top to get first pass at all mouse events
 		getRootView()->sendChildToFront(gMenuHolder);
+	}
+	
+	if ( gHUDView == NULL )
+	{
+		LLRect hud_rect = full_window;
+		hud_rect.mBottom += 50;
+		if (gMenuBarView)
+		{
+			hud_rect.mTop -= gMenuBarView->getRect().getHeight();
+		}
+		gHUDView = new LLHUDView(hud_rect);
+		// put behind everything else in the UI
+		mRootView->addChildAtEnd(gHUDView);
 	}
 }
 
@@ -2347,7 +2283,7 @@ void LLViewerWindow::draw()
 	//S32 screen_x, screen_y;
 
 	// HACK for timecode debugging
-	if (sDisplayTimecode)
+	if (gSavedSettings.getBOOL("DisplayTimecode"))
 	{
 		// draw timecode block
 		std::string text;
@@ -2474,7 +2410,7 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 		if (key < 0x80)
 		{
 			// Not a special key, so likely (we hope) to generate a character.  Let it fall through to character handler first.
-			return gFocusMgr.childHasKeyboardFocus(mRootView);
+			return (gFocusMgr.getKeyboardFocus() != NULL);
 		}
 	}
 
@@ -2556,7 +2492,7 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 	}
 
 	// Traverses up the hierarchy
-	LLUICtrl* keyboard_focus = gFocusMgr.getKeyboardFocus();
+	LLFocusableElement* keyboard_focus = gFocusMgr.getKeyboardFocus();
 	if( keyboard_focus )
 	{
 		// arrow keys move avatar while chatting hack
@@ -2690,7 +2626,7 @@ BOOL LLViewerWindow::handleUnicodeChar(llwchar uni_char, MASK mask)
 	}
 
 	// Traverses up the hierarchy
-	LLView* keyboard_focus = gFocusMgr.getKeyboardFocus();
+	LLFocusableElement* keyboard_focus = gFocusMgr.getKeyboardFocus();
 	if( keyboard_focus )
 	{
 		if (keyboard_focus->handleUnicodeChar(uni_char, FALSE))
@@ -2817,7 +2753,7 @@ BOOL LLViewerWindow::handlePerFrameHover()
 
 	LLVector2 mouse_vel; 
 
-	if (sMouseSmooth)//gSavedSettings.getBOOL("MouseSmooth"))
+	if (gSavedSettings.getBOOL("MouseSmooth"))
 	{
 		static F32 fdx = 0.f;
 		static F32 fdy = 0.f;
@@ -2843,7 +2779,7 @@ BOOL LLViewerWindow::handlePerFrameHover()
 	}
 
 	// clean up current focus
-	LLUICtrl* cur_focus = gFocusMgr.getKeyboardFocus();
+	LLUICtrl* cur_focus = dynamic_cast<LLUICtrl*>(gFocusMgr.getKeyboardFocus());
 	if (cur_focus)
 	{
 		if (!cur_focus->isInVisibleChain() || !cur_focus->isInEnabledChain())
@@ -2972,12 +2908,12 @@ BOOL LLViewerWindow::handlePerFrameHover()
 	// Show a new tool tip (or update one that is alrady shown)
 	BOOL tool_tip_handled = FALSE;
 	std::string tool_tip_msg;
-	F32 tooltip_delay = sToolTipDelay;//gSavedSettings.getF32( "ToolTipDelay" );
+	F32 tooltip_delay = gSavedSettings.getF32( "ToolTipDelay" );
 	//HACK: hack for tool-based tooltips which need to pop up more quickly
 	//Also for show xui names as tooltips debug mode
 	if ((mouse_captor && !mouse_captor->isView()) || LLUI::sShowXUINames)
 	{
-		tooltip_delay = sDragAndDropToolTipDelay;//gSavedSettings.getF32( "DragAndDropToolTipDelay" );
+		tooltip_delay = gSavedSettings.getF32( "DragAndDropToolTipDelay" );
 	}
 	if( handled && 
 	    gMouseIdleTimer.getElapsedTimeF32() > tooltip_delay &&
@@ -3023,9 +2959,10 @@ BOOL LLViewerWindow::handlePerFrameHover()
 		{
 			mToolTip->setVisible( tooltip_vis );
 		}
-	}		
+	}	
+	static BOOL* sFreezeTime = rebind_llcontrol<BOOL>("FreezeTime", &gSavedSettings, true);
 	
-	if (tool && tool != gToolNull  && tool != LLToolCompInspect::getInstance() && tool != LLToolDragAndDrop::getInstance() && !LLAppViewer::sFreezeTime)
+	if (tool && tool != gToolNull  && tool != LLToolCompInspect::getInstance() && tool != LLToolDragAndDrop::getInstance() && !(*sFreezeTime))
 	{ 
 		LLMouseHandler *captor = gFocusMgr.getMouseCapture();
 		// With the null, inspect, or drag and drop tool, don't muck
@@ -3166,7 +3103,7 @@ BOOL LLViewerWindow::handlePerFrameHover()
 		gFloaterView->syncFloaterTabOrder();
 	}
 
-	if (sChatBarStealsFocus//gSavedSettings.getBOOL("ChatBarStealsFocus") 
+	if (gSavedSettings.getBOOL("ChatBarStealsFocus") 
 		&& gChatBar 
 		&& gFocusMgr.getKeyboardFocus() == NULL 
 		&& gChatBar->isInVisibleChain())
@@ -3207,13 +3144,13 @@ BOOL LLViewerWindow::handlePerFrameHover()
 
 	BOOL do_pick = FALSE;
 
-	F32 picks_moving = sPicksPerSecondMouseMoving;//gSavedSettings.getF32("PicksPerSecondMouseMoving");
+	F32 picks_moving = gSavedSettings.getF32("PicksPerSecondMouseMoving");
 	if ((mouse_moved_since_pick) && (picks_moving > 0.0) && (mPickTimer.getElapsedTimeF32() > 1.0f / picks_moving))
 	{
 		do_pick = TRUE;
 	}
 
-	F32 picks_stationary = sPicksPerSecondMouseStationary;//gSavedSettings.getF32("PicksPerSecondMouseStationary");
+	F32 picks_stationary = gSavedSettings.getF32("PicksPerSecondMouseStationary");
 	if ((!mouse_moved_since_pick) && (picks_stationary > 0.0) && (mPickTimer.getElapsedTimeF32() > 1.0f / picks_stationary))
 	{
 		do_pick = TRUE;
@@ -3223,12 +3160,18 @@ BOOL LLViewerWindow::handlePerFrameHover()
 	{
 		do_pick = FALSE;
 	}
+	
+	if(LLViewerMediaFocus::getInstance()->getFocus())
+	{
+		// When in-world media is in focus, pick every frame so that browser mouse-overs, dragging scrollbars, etc. work properly.
+		do_pick = TRUE;
+	}
 
 	if (do_pick)
 	{
 		mouse_moved_since_pick = FALSE;
 		mPickTimer.reset();
-		pickAsync(getCurrentMouseX(), getCurrentMouseY(), mask, hoverPickCallback, TRUE);
+		pickAsync(getCurrentMouseX(), getCurrentMouseY(), mask, hoverPickCallback, TRUE, TRUE);
 	}
 
 	previous_x = x;
@@ -5008,7 +4951,7 @@ BOOL LLViewerWindow::changeDisplaySettings(BOOL fullscreen, LLCoordScreen size, 
 	BOOL result_first_try = FALSE;
 	BOOL result_second_try = FALSE;
 
-	LLUICtrl* keyboard_focus = gFocusMgr.getKeyboardFocus();
+	LLFocusableElement* keyboard_focus = gFocusMgr.getKeyboardFocus();
 	send_agent_pause();
 	llinfos << "Stopping GL during changeDisplaySettings" << llendl;
 	stopGL();
@@ -5186,7 +5129,7 @@ LLRect LLViewerWindow::getChatConsoleRect()
 
 	console_rect.mLeft   += CONSOLE_PADDING_LEFT; 
 
-	if (sChatFullWidth)
+	if (gSavedSettings.getBOOL("ChatFullWidth"))
 	{
 		console_rect.mRight -= CONSOLE_PADDING_RIGHT;
 	}
@@ -5237,7 +5180,6 @@ LLBottomPanel::LLBottomPanel(const LLRect &rect) :
 
 	mFactoryMap["toolbar"] = LLCallbackMap(createToolBar, NULL);
 	mFactoryMap["overlay"] = LLCallbackMap(createOverlayBar, NULL);
-	mFactoryMap["hud"] = LLCallbackMap(createHUD, NULL);
 	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_bars.xml", &getFactoryMap());
 	
 	setOrigin(rect.mLeft, rect.mBottom);
@@ -5259,14 +5201,6 @@ void LLBottomPanel::draw()
 	}
 	LLPanel::draw();
 }
-
-void* LLBottomPanel::createHUD(void* data)
-{
-	delete gHUDView;
-	gHUDView = new LLHUDView();
-	return gHUDView;
-}
-
 
 void* LLBottomPanel::createOverlayBar(void* data)
 {
@@ -5343,8 +5277,7 @@ void LLPickInfo::fetchResults()
 	{
 		icon_dist = (LLViewerCamera::getInstance()->getOrigin()-intersection).magVec();
 	}
-	//Emerald: ~Zwag
-	LLViewerObject* hit_object = gViewerWindow->cursorIntersect(mMousePt.mX, mMousePt.mY, 1024.f, 
+	LLViewerObject* hit_object = gViewerWindow->cursorIntersect(mMousePt.mX, mMousePt.mY, 512.f,
 									NULL, -1, mPickTransparent, &face_hit,
 									&intersection, &uv, &normal, &binormal);
 	
@@ -5482,12 +5415,8 @@ void LLPickInfo::updateXYCoords()
 		LLPointer<LLViewerImage> imagep = gImageList.getImage(tep->getID());
 		if(mUVCoords.mV[VX] >= 0.f && mUVCoords.mV[VY] >= 0.f && imagep.notNull())
 		{
-			LLCoordGL coords;
-			
-			coords.mX = llround(mUVCoords.mV[VX] * (F32)imagep->getWidth());
-			coords.mY = llround(mUVCoords.mV[VY] * (F32)imagep->getHeight());
-
-			gViewerWindow->getWindow()->convertCoords(coords, &mXYCoords);
+			mXYCoords.mX = llround(mUVCoords.mV[VX] * (F32)imagep->getWidth());
+			mXYCoords.mY = llround((1.f - mUVCoords.mV[VY]) * (F32)imagep->getHeight());
 		}
 	}
 }

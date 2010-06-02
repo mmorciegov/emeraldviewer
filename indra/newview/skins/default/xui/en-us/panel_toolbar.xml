@@ -70,4 +70,5 @@
              image_disabled="toolbar_btn_disabled.tga" scale_image="true"
 	       name="inventory_btn" tool_tip="Your items. (Ctrl-I)" width="50" follows="left|right" user_resize="false"/>
   </layout_stack>
+
 </panel>

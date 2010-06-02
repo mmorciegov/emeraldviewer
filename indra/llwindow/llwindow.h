@@ -147,6 +147,11 @@ public:
 	virtual BOOL isClipboardTextAvailable() = 0;
 	virtual BOOL pasteTextFromClipboard(LLWString &dst) = 0;
 	virtual BOOL copyTextToClipboard(const LLWString &src) = 0;
+
+	virtual BOOL isPrimaryTextAvailable();
+	virtual BOOL pasteTextFromPrimary(LLWString &dst);
+	virtual BOOL copyTextToPrimary(const LLWString &src);
+ 
 	virtual void flashIcon(F32 seconds) = 0;
 	virtual F32 getGamma() = 0;
 	virtual BOOL setGamma(const F32 gamma) = 0; // Set the gamma
@@ -197,7 +202,7 @@ public:
 	virtual void updateLanguageTextInputArea() {}
 	virtual void interruptLanguageTextInput() {}
 	virtual void spawnWebBrowser(const std::string& escaped_url) {};
-	virtual void ShellEx(const std::string& command) {};
+	virtual void openFile(const std::string& file_name) {};
 
 	static std::vector<std::string> getDynamicFallbackFontList();
 

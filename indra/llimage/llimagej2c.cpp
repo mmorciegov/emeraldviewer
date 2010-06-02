@@ -154,40 +154,40 @@ void LLImageJ2C::openDSO()
 		//now, check for success
 		if ( rv == APR_SUCCESS )
 		{
-			//found the dynamic library
-			//now we want to load the functions we're interested in
-			CreateLLImageJ2CFunction  create_func = NULL;
-			DestroyLLImageJ2CFunction dest_func = NULL;
-			EngineInfoLLImageJ2CFunction engineinfo_func = NULL;
+		//found the dynamic library
+		//now we want to load the functions we're interested in
+		CreateLLImageJ2CFunction  create_func = NULL;
+		DestroyLLImageJ2CFunction dest_func = NULL;
+		EngineInfoLLImageJ2CFunction engineinfo_func = NULL;
 
-			rv = apr_dso_sym((apr_dso_handle_sym_t*)&create_func,
+		rv = apr_dso_sym((apr_dso_handle_sym_t*)&create_func,
+						 j2cimpl_dso_handle,
+						 "createLLImageJ2CKDU");
+		if ( rv == APR_SUCCESS )
+		{
+			//we've loaded the create function ok
+			//we need to delete via the DSO too
+			//so lets check for a destruction function
+			rv = apr_dso_sym((apr_dso_handle_sym_t*)&dest_func,
 							 j2cimpl_dso_handle,
-							 "createLLImageJ2CKDU");
+						       "destroyLLImageJ2CKDU");
 			if ( rv == APR_SUCCESS )
 			{
-				//we've loaded the create function ok
-				//we need to delete via the DSO too
-				//so lets check for a destruction function
-				rv = apr_dso_sym((apr_dso_handle_sym_t*)&dest_func,
-								 j2cimpl_dso_handle,
-								   "destroyLLImageJ2CKDU");
+				//we've loaded the destroy function ok
+				rv = apr_dso_sym((apr_dso_handle_sym_t*)&engineinfo_func,
+						 j2cimpl_dso_handle,
+						 "engineInfoLLImageJ2CKDU");
 				if ( rv == APR_SUCCESS )
 				{
-					//we've loaded the destroy function ok
-					rv = apr_dso_sym((apr_dso_handle_sym_t*)&engineinfo_func,
-							 j2cimpl_dso_handle,
-							 "engineInfoLLImageJ2CKDU");
-					if ( rv == APR_SUCCESS )
-					{
-						//ok, everything is loaded alright
-						j2cimpl_create_func  = create_func;
-						j2cimpl_destroy_func = dest_func;
-						j2cimpl_engineinfo_func = engineinfo_func;
-						all_functions_loaded = true;
-					}
+					//ok, everything is loaded alright
+					j2cimpl_create_func  = create_func;
+					j2cimpl_destroy_func = dest_func;
+					j2cimpl_engineinfo_func = engineinfo_func;
+					all_functions_loaded = true;
 				}
 			}
 		}
+	}
 	}
 	if ( !all_functions_loaded )
 	{
@@ -351,8 +351,8 @@ BOOL LLImageJ2C::updateData()
 		}
 		else
 		{
-			res = mImpl->getMetadata(*this);
-		}
+		res = mImpl->getMetadata(*this);
+	}
 	}
 
 	if (res)
@@ -377,6 +377,7 @@ BOOL LLImageJ2C::decode(LLImageRaw *raw_imagep, F32 decode_time)
 }
 
 
+// Returns TRUE to mean done, whether successful or not.
 BOOL LLImageJ2C::decodeChannels(LLImageRaw *raw_imagep, F32 decode_time, S32 first_channel, S32 max_channel_count )
 {
 	LLMemType mt1((LLMemType::EMemType)mMemType);
@@ -389,7 +390,7 @@ BOOL LLImageJ2C::decodeChannels(LLImageRaw *raw_imagep, F32 decode_time, S32 fir
 	if (!getData() || (getDataSize() < 16))
 	{
 		setLastError("LLImageJ2C uninitialized");
-		res = FALSE;
+		res = TRUE; // done
 	}
 	else
 	{
@@ -422,8 +423,8 @@ BOOL LLImageJ2C::decodeChannels(LLImageRaw *raw_imagep, F32 decode_time, S32 fir
 		}
 		else
 		{
-			res = mImpl->decodeImpl(*this, *raw_imagep, decode_time, first_channel, max_channel_count);
-		}
+		res = mImpl->decodeImpl(*this, *raw_imagep, decode_time, first_channel, max_channel_count);
+	}
 	}
 	
 	if (res)
@@ -499,7 +500,7 @@ S32 LLImageJ2C::calcHeaderSizeJ2C()
 {
 	//Zwag: This change appears to fix a lot of problems with llkdu and emkdu for image decoding.
 	//Zwag: rolled back for now. Caused problems with some smaller textures :S
-	return 600; //2048; // ??? hack... just needs to be >= actual header size...
+	return FIRST_PACKET_SIZE; //Zwag:600 Hack. just needs to be >= actual header size...
 }
 
 //static
@@ -577,7 +578,7 @@ BOOL LLImageJ2C::loadAndValidate(const std::string &filename)
 
 	S32 file_size = 0;
 	LLAPRFile infile ;
-	infile.open(filename, LL_APR_RB, NULL, &file_size);
+	infile.open(filename, LL_APR_RB, LLAPRFile::global, &file_size);
 	apr_file_t* apr_file = infile.getFileHandle() ;
 	if (!apr_file)
 	{
@@ -653,7 +654,7 @@ BOOL LLImageJ2C::validate(U8 *data, U32 file_size)
 			}
 			else
 			{
-				res = mImpl->getMetadata(*this);
+			res = mImpl->getMetadata(*this);
 			}
 		}
 	}

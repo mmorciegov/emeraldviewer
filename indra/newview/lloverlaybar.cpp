@@ -37,7 +37,7 @@
 
 #include "lloverlaybar.h"
 
-#include "audioengine.h"
+#include "llaudioengine.h"
 #include "llrender.h"
 #include "llagent.h"
 #include "llbutton.h"
@@ -62,13 +62,15 @@
 #include "llvoiceclient.h"
 #include "llvoavatar.h"
 #include "llvoiceremotectrl.h"
-#include "llwebbrowserctrl.h"
+#include "llmediactrl.h"
 #include "llselectmgr.h"
 #include "wlfPanel_AdvSettings.h"
 
 // [RLVa:KB]
 #include "rlvhandler.h"
 // [/RLVa:KB]
+
+#include "llcontrol.h"
 
 //
 // Globals
@@ -79,7 +81,6 @@ LLOverlayBar *gOverlayBar = NULL;
 extern S32 MENU_BAR_HEIGHT;
 
 BOOL LLOverlayBar::sAdvSettingsPopup;
-BOOL LLOverlayBar::sChatVisible;
 
 //
 // Functions
@@ -118,9 +119,7 @@ LLOverlayBar::LLOverlayBar()
 	:	LLPanel(),
 		mMediaRemote(NULL),
 		mVoiceRemote(NULL),
-		mAdvSettings(NULL),
-		mMusicState(STOPPED),
-		mOriginalIMLabel("")
+		mMusicState(STOPPED)
 {
 	setMouseOpaque(FALSE);
 	setIsChrome(TRUE);
@@ -142,11 +141,10 @@ BOOL LLOverlayBar::postBuild()
 	childSetAction("Set Not Busy",onClickSetNotBusy,this);
 	childSetAction("Mouselook",onClickMouselook,this);
 	childSetAction("Stand Up",onClickStandUp,this);
-	childSetAction("Cancel TP",onClickCancelTP,this);
  	childSetAction("Flycam",onClickFlycam,this);
 	childSetVisible("chat_bar", gSavedSettings.getBOOL("ChatVisible"));
 
-	mCancelBtn = getChild<LLButton>("Cancel TP");
+
 	setFocusRoot(TRUE);
 	mBuilt = true;
 
@@ -155,10 +153,12 @@ BOOL LLOverlayBar::postBuild()
 	layoutButtons();
 
 	sAdvSettingsPopup = gSavedSettings.getBOOL("wlfAdvSettingsPopup");
-	sChatVisible = gSavedSettings.getBOOL("ChatVisible");
-
+	
 	gSavedSettings.getControl("wlfAdvSettingsPopup")->getSignal()->connect(&updateAdvSettingsPopup);
-	gSavedSettings.getControl("ChatVisible")->getSignal()->connect(&updateChatVisible);
+	
+	
+	
+
 	childSetVisible("AdvSettings_container", !sAdvSettingsPopup);
 	childSetVisible("AdvSettings_container_exp", sAdvSettingsPopup);
 
@@ -170,11 +170,6 @@ void LLOverlayBar::updateAdvSettingsPopup(const LLSD &data)
 	sAdvSettingsPopup = data.asBoolean();
 	gOverlayBar->childSetVisible("AdvSettings_container", !sAdvSettingsPopup);
 	gOverlayBar->childSetVisible("AdvSettings_container_exp", sAdvSettingsPopup);
-}
-
-void LLOverlayBar::updateChatVisible(const LLSD &data)
-{
-	sChatVisible = data.asBoolean();
 }
 
 LLOverlayBar::~LLOverlayBar()
@@ -312,42 +307,15 @@ void LLOverlayBar::refresh()
 		buttons_changed = TRUE;
 	}
 
-	BOOL teleporting = FALSE;
-	if ((gAgent.getTeleportState() == LLAgent::TELEPORT_START) ||
-		(gAgent.getTeleportState() == LLAgent::TELEPORT_REQUESTED) ||
-		(gAgent.getTeleportState() == LLAgent::TELEPORT_MOVING) ||
-		(gAgent.getTeleportState() == LLAgent::TELEPORT_START))
-	{
-		//teleporting = TRUE;
-// [RLVa:KB] - Checked: 2009-10-15 (RLVa-1.0.5e)
-		teleporting = (!rlv_handler_t::isEnabled()) || (gRlvHandler.getCanCancelTp());
-// [/RLVa:KB]
-	}
-	else
-	{
-		teleporting = FALSE;
-	}
-
-
-	button = getChild<LLButton>("Cancel TP");
-
-	if (button && button->getVisible() != teleporting)
-	{
-		button->setVisible(teleporting);
-		sendChildToFront(button);
-		moveChildToBackOfTabGroup(button);
-		buttons_changed = TRUE;
-	}
 
 	moveChildToBackOfTabGroup(mMediaRemote);
 	moveChildToBackOfTabGroup(mVoiceRemote);
-	moveChildToBackOfTabGroup(mAdvSettings);
 
-	// turn off the whole bar in mouselook
+
 	static BOOL last_mouselook = FALSE;
-
 	BOOL in_mouselook = gAgent.cameraMouselook();
 
+	// turn off the whole bar in mouselook
 	if(last_mouselook != in_mouselook)
 	{
 		last_mouselook = in_mouselook;
@@ -363,16 +331,19 @@ void LLOverlayBar::refresh()
 		{
 			// update "remotes"
 			childSetVisible("media_remote_container", TRUE);
-			//childSetVisible("voice_remote_container", LLVoiceClient::voiceEnabled());
+			childSetVisible("voice_remote_container", LLVoiceClient::voiceEnabled());
 			childSetVisible("AdvSettings_container", !sAdvSettingsPopup);//!gSavedSettings.getBOOL("wlfAdvSettingsPopup")); 
 			childSetVisible("AdvSettings_container_exp", sAdvSettingsPopup);//gSavedSettings.getBOOL("wlfAdvSettingsPopup")); 
+			
 			childSetVisible("state_buttons", TRUE);
 		}
 	}
 	if(!in_mouselook)childSetVisible("voice_remote_container", LLVoiceClient::voiceEnabled());
 
+	static BOOL *sChatVisible = rebind_llcontrol<BOOL>("ChatVisible", &gSavedSettings, true);
 	// always let user toggle into and out of chatbar
-	childSetVisible("chat_bar", sChatVisible);//gSavedSettings.getBOOL("ChatVisible"));
+	childSetVisible("chat_bar", *sChatVisible);//gSavedSettings.getBOOL("ChatVisible"));
+
 
 	if (buttons_changed)
 	{
@@ -430,24 +401,6 @@ void LLOverlayBar::onClickStandUp(void*)
 	gAgent.setControlFlags(AGENT_CONTROL_STAND_UP);
 }
 
-//static
-void LLOverlayBar::onClickCancelTP(void* data)
-{
-	LLOverlayBar* self = (LLOverlayBar*)data;
-	self->setCancelTPButtonVisible(FALSE,std::string("Cancel"));
-	gAgent.teleportCancel();
-	llinfos << "trying to cancel teleport" << llendl;
-}
-
-void LLOverlayBar::setCancelTPButtonVisible(BOOL b, const std::string& label)
-{
-	mCancelBtn->setVisible( b );
-//	mCancelBtn->setEnabled( b );
-	mCancelBtn->setLabelSelected(label);
-	mCancelBtn->setLabelUnselected(label);
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // static media helpers
 // *TODO: Move this into an audio manager abstraction
@@ -469,11 +422,11 @@ void LLOverlayBar::toggleMediaPlay(void*)
 	}
 
 	
-	if (LLViewerMedia::isMediaPaused())
+	if (LLViewerParcelMedia::getStatus() == LLViewerMediaImpl::MEDIA_PAUSED)
 	{
 		LLViewerParcelMedia::start();
 	}
-	else if(LLViewerMedia::isMediaPlaying())
+	else if(LLViewerParcelMedia::getStatus() == LLViewerMediaImpl::MEDIA_PLAYING)
 	{
 		LLViewerParcelMedia::pause();
 	}

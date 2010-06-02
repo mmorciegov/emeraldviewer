@@ -138,12 +138,6 @@
 <MapAvatar value="0, 255, 0, 255" />
 <MapFriend value="255, 255, 0, 255" />
 
-<!-- MAP -->
-<MapAvatar value="0, 255, 0, 255" />
-<MapFriend value="255, 255, 0, 255" />
-<MapLinden value="0, 0, 255, 255" />
-<MapMuted value="110, 110, 110, 255" />
-
 <!-- MINI-MAP -->
 <NetMapBackgroundColor value="0, 0, 0, 77" />
 <NetMapYouOwnAboveWater value="0, 255, 255, 255" />
@@ -188,13 +182,6 @@
 <ConsoleBackground value="0, 0, 0, 255" />
 <FolderViewLoadingMessageTextColor value="240, 165, 90, 255"/>
 <InventoryBackgroundColor value="255, 255, 255, 80"/>
-<DefaultListText value="0, 0, 0, 255"/> <!-- We are replacing all the hardcoded black text with this color so we can make skins with white text on dark background -->
-<ComboBoxBg value="255, 255, 255, 255"/>
-<AvatarListTextDistNormalRange value="0, 0, 0, 255"/>
-<AvatarListTextDistShoutRange value="0, 0, 0, 128"/>
-<AvatarListTextDistOver value="128, 0, 0, 128"/>
-<AvatarListTextAgeYoung value="255, 0, 0, 255"/>
-<AvatarListTextAgeNormal value="0, 0, 0, 255"/>
 
  <!-- Alert box colors -->
 <AlertBoxColor value="165, 180, 200, 245"/>

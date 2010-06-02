@@ -72,7 +72,7 @@ def get_channel(version_type):
         data = llsd.parse(settings_file.read())
         settings_file.close()
         return data['VersionChannelName']['Value']
-
+    
     config.load()
     return config.get('channel', 'Second Life Server')
 

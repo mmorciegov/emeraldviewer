@@ -215,7 +215,10 @@ void LLPrimitive::init_primitive(LLPCode p_code)
 	LLMemType m1(LLMemType::MTYPE_PRIMITIVE);
 	if (mNumTEs)
 	{
-		delete [] mTextureList;
+		if (mTextureList)
+		{
+			delete [] mTextureList;
+		}
 		mTextureList = new LLTextureEntry[mNumTEs];
 	}
 
@@ -308,7 +311,7 @@ S32  LLPrimitive::setTETexture(const U8 te, const LLUUID &tex_id)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -320,7 +323,7 @@ S32  LLPrimitive::setTEColor(const U8 te, const LLColor4 &color)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -332,7 +335,7 @@ S32  LLPrimitive::setTEColor(const U8 te, const LLColor3 &color)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -344,7 +347,7 @@ S32  LLPrimitive::setTEAlpha(const U8 te, const F32 alpha)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -463,7 +466,7 @@ S32  LLPrimitive::setTEBumpShinyFullbright(const U8 te, const U8 bump)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -475,7 +478,7 @@ S32  LLPrimitive::setTEMediaTexGen(const U8 te, const U8 media)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -487,7 +490,7 @@ S32  LLPrimitive::setTEBumpmap(const U8 te, const U8 bump)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -499,7 +502,7 @@ S32  LLPrimitive::setTEBumpShiny(const U8 te, const U8 bump_shiny)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -511,7 +514,7 @@ S32  LLPrimitive::setTETexGen(const U8 te, const U8 texgen)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -523,7 +526,7 @@ S32  LLPrimitive::setTEShiny(const U8 te, const U8 shiny)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -535,7 +538,7 @@ S32  LLPrimitive::setTEFullbright(const U8 te, const U8 fullbright)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -547,7 +550,7 @@ S32  LLPrimitive::setTEMediaFlags(const U8 te, const U8 media_flags)
     // if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 		return 0;
 	}
 
@@ -559,7 +562,7 @@ S32 LLPrimitive::setTEGlow(const U8 te, const F32 glow)
 	// if we're asking for a non-existent face, return null
 	if (te >= mNumTEs)
 	{
-		llwarns << "setting non-existent te " << te << llendl
+		llwarns << "setting non-existent te " << te << llendl;
 			return 0;
 	}
 
@@ -1158,7 +1161,6 @@ BOOL LLPrimitive::packTEMessage(LLMessageSystem *mesgsys, bool shield) const
 		// ...if we hit the front, send one image id
 		S8 face_index;
 		LLColor4U coloru;
-		
 		for (face_index = 0; face_index <= last_face_index; face_index++)
 		{
 			// Directly sending image_ids is not safe!

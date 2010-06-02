@@ -79,7 +79,9 @@ void LLHUDManager::updateEffects()
 
 void LLHUDManager::sendEffects()
 {
-	if(!gSavedSettings.getBOOL("EmeraldBroadcastEffects"))return;
+	static BOOL* sEmeraldBroadcastEffects = rebind_llcontrol<BOOL>("EmeraldBroadcastEffects", &gSavedSettings, true);
+
+	if(!(*sEmeraldBroadcastEffects))return;
 	S32 i;
 	for (i = 0; i < mHUDEffects.count(); i++)
 	{

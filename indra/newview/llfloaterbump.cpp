@@ -89,8 +89,8 @@ void LLFloaterBump::show(void *contents)
 		std::string none_detected = sInstance->getString("none_detected");
 		LLSD row;
 		row["columns"][0]["value"] = none_detected;
-		row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 		row["columns"][0]["font"] = "SansSerifBold";
+		row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 		list->addElement(row);
 	}
 	else
@@ -160,7 +160,7 @@ void LLFloaterBump::add(LLScrollListCtrl* list, LLMeanCollisionData* mcd)
 	LLSD row;
 	row["id"] = mcd->mPerp;
 	row["columns"][0]["value"] = text;
-	row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 	row["columns"][0]["font"] = "SansSerifBold";
+	row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 	list->addElement(row);
 }

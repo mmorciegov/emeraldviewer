@@ -36,7 +36,6 @@
 #include "llimage.h"
 #include "llassettype.h"
 
-
 class LLImageJ2CImpl;
 class EMKDUImpl;
 class LLImageJ2C : public LLImageFormatted
