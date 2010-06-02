@@ -417,6 +417,8 @@ void handle_claim_public_land(void*);
 void handle_god_request_havok(void *);
 void handle_god_request_avatar_geometry(void *);	// Hack for easy testing of new avatar geometry
 void reload_personal_settings_overrides(void *);
+void handle_reset_all_settings(void *);
+void callback_reset_all_settings(const LLSD& notification, const LLSD& response);
 void reload_vertex_shader(void *);
 void slow_mo_animations(void *);
 void handle_disconnect_viewer(void *);
@@ -1033,6 +1035,8 @@ void init_client_menu(LLMenuGL* menu)
 		menu->appendMenu(sub);
 	}
 
+	menu->append(new LLMenuItemCallGL("Reset All Settings...", &handle_reset_all_settings));
+	
 	menu->append(new LLMenuItemCheckGL( "Output Debug Minidump", 
 										&menu_toggle_control,
 										NULL, 
@@ -5404,6 +5408,32 @@ void handle_reload_settings(void*)
 	std::string color_file = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,"colors.xml");
 	gColors.resetToDefaults();
 	gColors.loadFromFileLegacy(color_file, FALSE, TYPE_COL4U);
+}
+
+void callback_reset_all_settings(const LLSD& notification, const LLSD& response)
+{
+	S32 option = LLNotification::getSelectedOption(notification, response);
+	if(option == 0) // OK
+	{
+		// We probably want to avoid altering this setting, so keep it across the reset.
+		std::string client_settings_file = gSavedSettings.getString("ClientSettingsFile");
+		gSavedSettings.resetToDefaults();
+		gSavedSettings.setString("ClientSettingsFile", client_settings_file);
+		gSavedSettings.saveToFile(client_settings_file, TRUE);
+		
+		// Wipe user-specific settings for good measure and consistency.
+		gSavedPerAccountSettings.resetToDefaults();
+		gSavedPerAccountSettings.saveToFile(gSavedSettings.getString("PerAccountSettingsFile"), TRUE);
+		LLNotifications::instance().add("EmeraldResetAllSettingsComplete");
+	}
+}
+
+void handle_reset_all_settings(void*)
+{
+	LLNotifications::instance().add("EmeraldResetAllSettingsPrompt",
+									LLSD(),
+									LLSD(),
+									callback_reset_all_settings);
 }
 
 class LLWorldSetHomeLocation : public view_listener_t

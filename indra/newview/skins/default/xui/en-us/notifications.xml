@@ -6067,7 +6067,7 @@ Grant this request?
    icon="notify.tga"
    name="ScriptDialog"
    type="notify">
-[FIRST] [LAST]&apos;s &apos;[TITLE]&apos; ([CHANNEL])
+[FIRST] [LAST]&apos;s &apos;[TITLE]&apos;
 [MESSAGE]
     <form name="form">
       <button
@@ -7043,5 +7043,26 @@ Spell check is Hunspell based, please google for more info.
 Shadows can't be enabled due to your graphics settings being set to low. Please make sure that your settings are set to ultra with all shader options enabled.
   </notification>
 
+  <notification
+    icon="alertmodal.tga"
+    label="All settings reset"
+    name="EmeraldResetAllSettingsComplete"
+    type="alertmodal">
+All client settings, as well as all user-specific settings for this user, have been reset. You should relog to ensure this takes full effect.
+  </notification>
+  
+  <notification
+    icon="alertmodal.tga"
+    label="Reset all settings"
+    name="EmeraldResetAllSettingsPrompt"
+    type="alertmodal">
+Resetting all settings may be helpful if you are experiencing problems; however, you will need to redo any changes you have made to the default configuration.
+
+Are you sure you want to reset all settings?
+    <usetemplate
+      name="okcancelbuttons"
+      notext="Cancel"
+      yestext="OK"/>
+  </notification>
 </notifications>
 

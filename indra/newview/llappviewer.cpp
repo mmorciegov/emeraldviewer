@@ -219,6 +219,9 @@ BOOL gUseQuickTime = TRUE;
 BOOL gAcceptTOS = FALSE;
 BOOL gAcceptCriticalMessage = FALSE;
 
+std::string gSecondLife;
+std::string gWindowTitle;
+
 eLastExecEvent gLastExecEvent = LAST_EXEC_NORMAL;
 
 LLSD gDebugInfo;
@@ -298,9 +301,6 @@ const char* const VIEWER_WINDOW_CLASSNAME = "Emerald Viewer";
 // File scope definitons
 const char *VFS_DATA_FILE_BASE = "data.db2.x.";
 const char *VFS_INDEX_FILE_BASE = "index.db2.x.";
-
-static std::string gSecondLife;
-static std::string gWindowTitle;
 
 std::string gLoginPage;
 std::vector<std::string> gLoginURIs;

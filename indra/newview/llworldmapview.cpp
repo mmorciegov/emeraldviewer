@@ -473,7 +473,37 @@ void LLWorldMapView::draw()
 			}
 			else
 			{
-				mesg = info->getName();
+				S32 agent_count = info->getAgentCount();
+				LLViewerRegion *region = gAgent.getRegion();
+
+				if (region && region->getHandle() == info->mHandle)
+				{
+					++agent_count; // Bump by 1 if we're in this region
+				}
+				mesg = info->mName;
+				if (agent_count > 0)
+				{
+					mesg += llformat(" (%d)",agent_count);
+				}
+				U8 access = info->mAccess;
+				switch(access)
+				{
+				case SIM_ACCESS_MIN:
+					mesg += " (Min)";
+					break;
+				case SIM_ACCESS_PG:
+					mesg += " (PG)";
+					break;
+				case SIM_ACCESS_MATURE:
+					mesg += " (Mature)";
+					break;
+				case SIM_ACCESS_ADULT:
+					mesg += " (Adult)";
+					break;
+				default:
+					mesg += llformat(" (Access=%d)",access);
+					break;
+				}
 			}
 			if (!mesg.empty())
 			{

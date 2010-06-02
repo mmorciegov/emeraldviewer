@@ -4149,7 +4149,7 @@ void LLAgent::changeCameraToMouselook(BOOL animate)
 	if( mCameraMode != CAMERA_MODE_MOUSELOOK )
 	{
 		gFocusMgr.setKeyboardFocus( NULL );
-		if (gSavedSettings.getBOOL("EmeraldAONoStandsInMouselook"))	LLFloaterAO::stopMotion(LLFloaterAO::getCurrentStandId(), FALSE,TRUE);
+		if (gSavedPerAccountSettings.getBOOL("EmeraldAONoStandsInMouselook"))	LLFloaterAO::stopMotion(LLFloaterAO::getCurrentStandId(), FALSE,TRUE);
 		
 		mLastCameraMode = mCameraMode;
 		mCameraMode = CAMERA_MODE_MOUSELOOK;

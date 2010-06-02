@@ -33,6 +33,61 @@
 	      <key>Value</key>
 	      <integer>0</integer>
 	    </map>
+		<key>EmeraldAOEnabled</key>
+		<map>
+			<key>Comment</key>
+			<string>Turn on Animation Overrider</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
+		<key>EmeraldAOSitsEnabled</key>
+		<map>
+			<key>Comment</key>
+			<string>Overrides sit animations.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>1</integer>
+		</map>
+		<key>EmeraldAONoStandsInMouselook</key>
+		<map>
+			<key>Comment</key>
+			<string>Disables stand anims during mouselook</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>1</integer>
+		</map>
+		<key>EmeraldAOStandInterval</key>
+		<map>
+			<key>Comment</key>
+			<string>AO stand time in seconds</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>F32</string>
+			<key>Value</key>
+			<real>20</real>
+		</map>
+		<key>EmeraldAOStandRandomize</key>
+		<map>
+			<key>Comment</key>
+			<string>Randomize stand anims</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
 <key>EmeraldInstantMessageAnnounceIncoming</key>
 	<map>
 	<key>Comment</key>

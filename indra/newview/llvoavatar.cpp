@@ -5034,7 +5034,7 @@ void LLVOAvatar::processAnimationStateChanges()
 		{
 			if (mIsSelf)
 			{
-				if ((gSavedSettings.getBOOL("EmeraldAOEnabled")) && LLFloaterAO::stopMotion(anim_it->first, FALSE)) // if the AO replaced this anim serverside then stop it serverside
+				if ((gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled")) && LLFloaterAO::stopMotion(anim_it->first, FALSE)) // if the AO replaced this anim serverside then stop it serverside
 				{
 //					return TRUE; //no local stop needed
 				}
@@ -5061,7 +5061,7 @@ void LLVOAvatar::processAnimationStateChanges()
 
 				if (mIsSelf) // AO is only for ME
 				{
-					if (gSavedSettings.getBOOL("EmeraldAOEnabled"))
+					if (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
 					{
 						if (LLFloaterAO::startMotion(anim_it->first, 0,FALSE)) // AO overrides the anim if needed
 						{

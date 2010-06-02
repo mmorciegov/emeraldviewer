@@ -89,6 +89,7 @@ BOOL LLPanelPermissions::postBuild()
 
 	
 	this->childSetAction("button owner profile",LLPanelPermissions::onClickOwner,this);
+	this->childSetAction("button last owner profile",LLPanelPermissions::onClickLastOwner,this);
 	this->childSetAction("button creator profile",LLPanelPermissions::onClickCreator,this);
 
 	this->childSetAction("button set group",LLPanelPermissions::onClickGroup,this);
@@ -96,6 +97,8 @@ BOOL LLPanelPermissions::postBuild()
 	this->childSetCommitCallback("checkbox share with group",LLPanelPermissions::onCommitGroupShare,this);
 
 	this->childSetAction("button deed",LLPanelPermissions::onClickDeedToGroup,this);
+
+	this->childSetAction("button cpy_key",LLPanelPermissions::onClickCopyObjKey,this);
 
 	this->childSetCommitCallback("checkbox allow everyone move",LLPanelPermissions::onCommitEveryoneMove,this);
 
@@ -181,6 +184,11 @@ void LLPanelPermissions::refresh()
 		childSetText("Owner Name",LLStringUtil::null);
 		childSetEnabled("Owner Name",false);
 		childSetEnabled("button owner profile",false);
+
+		childSetEnabled("Last Owner:",false);
+		childSetText("Last Owner Name",LLStringUtil::null);
+		childSetEnabled("Last Owner Name",false);
+		childSetEnabled("button last owner profile",false);
 
 		childSetEnabled("Group:",false);
 		childSetText("Group Name",LLStringUtil::null);
@@ -301,6 +309,8 @@ void LLPanelPermissions::refresh()
 	owners_identical = LLSelectMgr::getInstance()->selectGetOwner(mOwnerID, owner_name);
 
 //	llinfos << "owners_identical " << (owners_identical ? "TRUE": "FALSE") << llendl;
+	std::string last_owner_name;
+	LLSelectMgr::getInstance()->selectGetLastOwner(mLastOwnerID, last_owner_name);
 
 	if (mOwnerID.isNull())
 	{
@@ -311,8 +321,8 @@ void LLPanelPermissions::refresh()
 		else
 		{
 			// Display last owner if public
-			std::string last_owner_name;
-			LLSelectMgr::getInstance()->selectGetLastOwner(mLastOwnerID, last_owner_name);
+			//std::string last_owner_name;
+			//LLSelectMgr::getInstance()->selectGetLastOwner(mLastOwnerID, last_owner_name);
 
 			// It should never happen that the last owner is null and the owner
 			// is null, but it seems to be a bug in the simulator right now. JC
@@ -325,7 +335,7 @@ void LLPanelPermissions::refresh()
 	}
 
 // [RLVa:KB] - Checked: 2009-07-08 (RLVa-1.0.0e)
-	bool fRlvEnableOwner = true;
+	bool fRlvEnableOwner = true; bool fRlvEnableLastOwner = true;
 	if ( (rlv_handler_t::isEnabled()) && (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) )
 	{
 		// Only filter the owner name if: the selection is all owned by the same avie and not group owned
@@ -333,6 +343,14 @@ void LLPanelPermissions::refresh()
 		{
 			owner_name = RlvStrings::getAnonym(owner_name);
 			fRlvEnableOwner = false;
+		}
+
+		// Emerald specific code
+		// TODO-RLVa: need to test the last owner filtering more
+		if ( (owners_identical) && (mLastOwnerID.notNull()) && (!last_owner_name.empty()) )
+		{
+			last_owner_name = RlvStrings::getAnonym(last_owner_name);
+			fRlvEnableLastOwner = false;
 		}
 	}
 // [/RLVa:KB]
@@ -343,6 +361,13 @@ void LLPanelPermissions::refresh()
 // [RLVa:KB] - Checked: 2009-07-08 (RLVa-1.0.0e)
 	childSetEnabled("button owner profile",
 		fRlvEnableOwner && owners_identical && (mOwnerID.notNull() || LLSelectMgr::getInstance()->selectIsGroupOwned()));
+// [/RLVa:KB]
+
+	childSetText("Last Owner Name",last_owner_name);
+	childSetEnabled("Last Owner Name",TRUE);
+//	childSetEnabled("button last owner profile",owners_identical && mLastOwnerID.notNull());
+// [RLVa:KB] - Alternate: Emerald-370
+	childSetEnabled("button last owner profile", fRlvEnableLastOwner && owners_identical && mLastOwnerID.notNull());
 // [/RLVa:KB]
 
 	// update group text field
@@ -870,6 +895,19 @@ void LLPanelPermissions::onClickOwner(void *data)
 	}
 }
 
+void LLPanelPermissions::onClickLastOwner(void *data)
+{
+	LLPanelPermissions *self = (LLPanelPermissions *)data;
+
+// [RLVa:KB] - Alternate: Emerald-370
+	if ( (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) && (self->mLastOwnerID.notNull()) )
+	{
+		LLFloaterAvatarInfo::showFromObject(self->mLastOwnerID);
+	}
+// [/RLVa:KB]
+//	if(self->mLastOwnerID.notNull())LLFloaterAvatarInfo::showFromObject(self->mLastOwnerID);
+}
+
 void LLPanelPermissions::onClickGroup(void* data)
 {
 	LLPanelPermissions* panelp = (LLPanelPermissions*)data;
@@ -923,6 +961,27 @@ bool callback_deed_to_group(const LLSD& notification, const LLSD& response)
 void LLPanelPermissions::onClickDeedToGroup(void* data)
 {
 	LLNotifications::instance().add( "DeedObjectToGroup", LLSD(), LLSD(), callback_deed_to_group);
+}
+
+void LLPanelPermissions::onClickCopyObjKey(void* data)
+{
+	//NAMESHORT - Was requested on the forums, was going to integrate a textbox with the ID, but due to lack of room on the floater,
+	//We now have a copy button :>
+	//Madgeek - Hacked together method to copy more than one key, separated by comma.
+	std::string output;
+	std::string separator = gSavedSettings.getString("EmeraldCopyObjKeySeparator");
+	for (LLObjectSelection::root_iterator iter = LLSelectMgr::getInstance()->getSelection()->root_begin();
+		iter != LLSelectMgr::getInstance()->getSelection()->root_end(); iter++)
+	{
+		LLSelectNode* selectNode = *iter;
+		LLViewerObject* object = selectNode->getObject();
+		if (object)
+		{
+			if (!output.empty()) output.append(separator);
+			output.append(object->getID().asString());
+		}
+	}
+	if (!output.empty()) gViewerWindow->mWindow->copyTextToClipboard(utf8str_to_wstring(output));
 }
 
 ///----------------------------------------------------------------------------

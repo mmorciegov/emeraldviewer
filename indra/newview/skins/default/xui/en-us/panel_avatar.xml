@@ -7,7 +7,7 @@
       <string name="CaptionTextAcctInfo">
 [ACCTTYPE]
 [PAYMENTINFO]
-[AGEVERIFICATION]
+[EMERALD]
       </string>
       <string name="AcctTypeResident">
 Resident
@@ -35,6 +35,12 @@ Age-verified
       </string>
       <string name="NotAgeVerified">
 Not Age-verified
+      </string>
+      <string name="EmeraldDeveloper">
+Emerald Developer
+      </string>
+      <string name="EmeraldSupport">
+Emerald Support
       </string>
       <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 			     bottom="-24" drop_shadow_visible="true" follows="left|top"

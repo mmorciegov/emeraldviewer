@@ -42,6 +42,7 @@
 #include "llgl.h"
 #include "lltimer.h"
 
+#include "llcalc.h"
 //#include "llclipboard.h"
 #include "llcontrol.h"
 #include "llbutton.h"
@@ -163,6 +164,7 @@ LLLineEditor::LLLineEditor(const std::string& name, const LLRect& rect,
 		mDrawAsterixes( FALSE ),
 		mHandleEditKeysDirectly( FALSE ),
 		mSelectAllonFocusReceived( FALSE ),
+		mSelectAllonCommit( TRUE ),
 		mPassDelete(FALSE),
 		mReadOnly(FALSE),
 		mHaveHistory(FALSE),
@@ -311,7 +313,10 @@ void LLLineEditor::onCommit()
 	updateHistory();
 
 	LLUICtrl::onCommit();
-	selectAll();
+
+	// Selection on commit needs to be turned off when evaluating maths
+	// expressions, to allow indication of the error position
+	if (mSelectAllonCommit) selectAll();
 }
 
 
@@ -1895,7 +1900,6 @@ void LLLineEditor::draw()
 		mText = text;
 	}
 
-	
 	// draw rectangle for the background
 	LLRect background( 0, getRect().getHeight(), getRect().getWidth(), 0 );
 	background.stretch( -mBorderThickness );
@@ -2569,6 +2573,32 @@ BOOL LLLineEditor::prevalidateASCII(const LLWString &str)
 		}
 	}
 	return rv;
+}
+
+BOOL LLLineEditor::evaluateFloat()
+{
+	bool success;
+	F32 result = 0.f;
+	std::string expr = getText();
+	LLStringUtil::toUpper(expr);
+
+	success = LLCalc::getInstance()->evalString(expr, result);
+
+	if (!success)
+	{
+		// Move the cursor to near the error on failure
+		setCursor(LLCalc::getInstance()->getLastErrorPos());
+		// *TODO: Translated error message indicating the type of error? Select error text?
+	}
+	else
+	{
+		// Replace the expression with the result
+		std::string result_str = llformat("%f",result);
+		setText(result_str);
+		selectAll();
+	}
+
+	return success;
 }
 
 void LLLineEditor::onMouseCaptureLost()

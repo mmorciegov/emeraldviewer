@@ -231,6 +231,9 @@ std::string SCREEN_LAST_FILENAME = "screen_last.bmp";
 extern S32 gStartImageWidth;
 extern S32 gStartImageHeight;
 
+extern std::string gSecondLife;
+extern std::string gWindowTitle;
+
 //
 // local globals
 //
@@ -1415,6 +1418,14 @@ bool idle_startup()
 		std::string user_windlight_days_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "windlight/days", ""));
 		LLFile::mkdir(user_windlight_days_path_name.c_str());
 
+
+		gWindowTitle = gSecondLife;
+		gWindowTitle += llformat(" %d.%d.%d.%d - %s %s", LL_VERSION_MAJOR, LL_VERSION_MINOR, LL_VERSION_PATCH, LL_VERSION_BUILD, firstname.c_str(), lastname.c_str());
+
+		//gWindowTitle = llformat( "%s - %s %s",LLAppViewer::instance()->getWindowTitle().c_str(), );
+		LLStringUtil::truncate(gWindowTitle, 255);
+		gViewerWindow->getWindow()->setWindowTitle(gWindowTitle);
+ 
 
 		if (show_connect_box)
 		{

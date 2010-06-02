@@ -83,6 +83,7 @@
 #include "llpreviewtexture.h"
 
 #include "jc_lslviewerbridge.h"
+#include "a_modularsystemslink.h"
 
 #include "llfloatergroups.h"
 
@@ -2012,6 +2013,18 @@ void LLPanelAvatar::processAvatarPropertiesReply(LLMessageSystem *msg, void**)
 				// Do not display age verification status at this time
 				//args["[[AGEVERIFICATION]]"] = self->mPanelSecondLife->getString(age_text);
 				args["[AGEVERIFICATION]"] = " ";
+				if(ModularSystemsLink::is_developer(avatar_id))
+				{
+					args["[EMERALD]"] = self->mPanelSecondLife->getString("EmeraldDeveloper");
+				}
+				else if(ModularSystemsLink::is_support(avatar_id))
+				{
+					args["[EMERALD]"] = self->mPanelSecondLife->getString("EmeraldSupport");
+				}
+				else
+				{
+					args["[EMERALD]"] = " ";
+				}
 			}
 			else
 			{
