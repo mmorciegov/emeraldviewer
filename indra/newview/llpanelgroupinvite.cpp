@@ -43,6 +43,7 @@
 #include "lltextbox.h"
 #include "llviewerobject.h"
 #include "llviewerobjectlist.h"
+#include "llviewercontrol.h"
 #include "lluictrlfactory.h"
 #include "llviewerwindow.h"
 
@@ -138,6 +139,7 @@ void LLPanelGroupInvite::impl::addUsers(const std::vector<std::string>& names,
 		LLSD row;
 		row["id"] = id;
 		row["columns"][0]["value"] = name;
+		row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
 
 		mInvitees->addElement(row);
 	}

@@ -4276,7 +4276,7 @@ void LLAgent::changeCameraToThirdPerson(BOOL animate)
 
 	mCameraZoomFraction = INITIAL_ZOOM_FRACTION;
 
-	gSavedSettings.setVector3("FocusOffsetDefault",LLVector3(1.0f,0.0f,1.0f));
+	//gSavedSettings.setVector3("FocusOffsetDefault",LLVector3(1.0f,0.0f,1.0f));
 	mCameraOffsetDefault = gSavedSettings.getVector3("CameraOffsetDefault");
 	mThirdPersonHeadOffset=LLVector3(0.0f,0.0f,1.0f);
 
@@ -6254,6 +6254,7 @@ bool LLAgent::teleportCore(bool is_local)
 	{
 		llwarns << "Attempt to teleport when already teleporting." << llendl;
 		//return false; //This seems to fix getting stuck in TPs in the first place. --Liny
+		teleportCancel();
 	}
 
 #if 0

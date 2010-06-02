@@ -111,7 +111,7 @@
 				     tab_group="1" />
 				<spinner bottom="-23" decimal_digits="0" follows="right|bottom" height="20"
 			     increment="1.00" initial_val="0" label="Chan" label_width="29" left="-155"
-			     max_val="2147483647" min_val="0" mouse_opaque="true" name="ChatChannel"
+			     max_val="2147483647" min_val="-2147483647" mouse_opaque="true" name="ChatChannel"
 			     text_enabled_color="110, 15, 15, 255" width="80" />
 
 				<flyout_button bottom="0" follows="right|bottom" height="20" label="Say" left="-65"

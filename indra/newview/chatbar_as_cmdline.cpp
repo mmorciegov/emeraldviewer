@@ -299,6 +299,10 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 						gSavedSettings.setBOOL("EmeraldAOEnabled",FALSE);
 						LLFloaterAO::run();
 					}
+					else if (status == "sit" )
+					{
+						gSavedSettings.setBOOL("EmeraldAOSitsEnabled",!gSavedSettings.getBOOL("EmeraldAOSitsEnabled"));
+					}
 				}
 				return false;
             }

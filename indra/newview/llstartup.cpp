@@ -195,6 +195,7 @@
 #include "jcfloater_areasearch.h"
 #include "lgghunspell_wrapper.h"
 #include "llfloaterteleporthistory.h"
+#include "exporttracker.h"
 #include "wlfPanel_AdvSettings.h"
 
 // [RLVa:KB]
@@ -4021,7 +4022,7 @@ void pass_processObjectPropertiesFamily(LLMessageSystem *msg, void**)
 void pass_processObjectProperties(LLMessageSystem *msg, void**)
 {
 	// send it to 'observers'
-	//JCExportTracker::processObjectProperties(msg,0);
+	JCExportTracker::processObjectProperties(msg,0);
 	LLSelectMgr::processObjectProperties(msg,0);
 	ScriptCounter::processObjectProperties(msg,0);
 }
