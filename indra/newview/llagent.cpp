@@ -6458,20 +6458,10 @@ void LLAgent::teleportViaLocation(const LLVector3d& pos_global, bool go_to)
 //	LLSimInfo* info = LLWorldMap::getInstance()->simInfoFromPosGlobal(pos_global);
 	bool isLocal = regionp->getHandle() == to_region_handle_global((F32)pos_global.mdV[VX], (F32)pos_global.mdV[VY]);
 	bool ml = gSavedSettings.getBOOL("EmeraldUseBridgeMoveToTarget");
-//	bool tpchat = gSavedSettings.getBOOL("EmeraldDoubleClickTeleportChat");
-	bool calc = gSavedSettings.getBOOL("EmeraldDoubleClickTeleportAvCalc");
-	bool vel = gSavedSettings.getBOOL("EmeraldVelocityDoubleClickTeleport");
+	bool tpchat = gSavedSettings.getBOOL("EmeraldDoubleClickTeleportChat");
 
-	F32 zo = gSavedSettings.getF32("EmeraldDoubleClickZOffset");
 	LLVector3 offset = LLVector3(0.f,0.f,0.f);
-	if(go_to)
-	{
-		offset = LLVector3(0.f,0.f,zo);
-		if(vel)
-			offset += gAgent.getVelocity() * 0.25;
-	}
-	if(calc)
-		offset += LLVector3(0.f,0.f,gAgent.getAvatarObject()->getScale().mV[2] / 2);
+
 	U64 handle = to_region_handle(pos_global);
 	LLSimInfo* info = LLWorldMap::getInstance()->simInfoFromHandle(handle);
 	if(regionp && info)
@@ -6499,7 +6489,6 @@ void LLAgent::teleportViaLocation(const LLVector3d& pos_global, bool go_to)
 		LLVector3 pos(fmod((F32)pos_global.mdV[VX], width),
 					  fmod((F32)pos_global.mdV[VY], width),
 					  (F32)pos_global.mdV[VZ]);
-		pos += offset;
 		F32 region_x = (F32)(pos_global.mdV[VX]);
 		F32 region_y = (F32)(pos_global.mdV[VY]);
 		U64 region_handle = to_region_handle_global(region_x, region_y);
@@ -6526,14 +6515,27 @@ void LLAgent::teleportViaLocation(const LLVector3d& pos_global, bool go_to)
 		LLVector3 pos_local(fmod((F32)pos_global.mdV[VX], width),
 						fmod((F32)pos_global.mdV[VY], width),
 						(F32)pos_global.mdV[VZ]);
-		pos_local += offset;
 
 		std::stringstream strstr;
 		strstr << std::setiosflags(std::ios::fixed) << std::setprecision(6); // delicious iomanip
 		strstr << "<" << pos_local.mV[VX] << ", " << pos_local.mV[VY] << ", "  << pos_local.mV[VZ] << ">";
 
-//		if(tpchat)
-//			GUS::whisper(gSavedSettings.getS32("EmeraldDoubleClickTeleportChannel"),  GUS::sVec3(pos_local)); //keep this to deactivate movelocks.
+		if(tpchat)
+		{
+			gMessageSystem->newMessage("ScriptDialogReply");
+			gMessageSystem->nextBlock("AgentData");
+			gMessageSystem->addUUID("AgentID", gAgent.getID());
+			gMessageSystem->addUUID("SessionID", gAgent.getSessionID());
+			gMessageSystem->nextBlock("Data");
+			gMessageSystem->addUUID("ObjectID", gAgent.getID());
+			gMessageSystem->addS32("ChatChannel", gSavedSettings.getS32("EmeraldDoubleClickTeleportChannel"));
+			gMessageSystem->addS32("ButtonIndex", 1);
+			std::stringstream strstr;
+			strstr << std::setiosflags(std::ios::fixed) << std::setprecision(6); // delicious iomanip
+			strstr << "<" << pos_local.mV[VX] << ", " << pos_local.mV[VY] << ", "  << pos_local.mV[VZ] << ">";		 
+			gMessageSystem->addString("ButtonLabel",strstr.str());
+			gAgent.sendReliableMessage();
+		}
 		if(ml)
 		{
 			gAgent.setControlFlags(AGENT_CONTROL_STAND_UP); //GIT UP

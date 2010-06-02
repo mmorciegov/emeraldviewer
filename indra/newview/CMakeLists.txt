@@ -111,6 +111,7 @@ set(viewer_SOURCE_FILES
 	scriptcounter.cpp
 	growlmanager.cpp
 	growlnotifier.cpp
+	streamtitledisplay.cpp
     llagent.cpp
     llagentaccess.cpp
     llagentdata.cpp
@@ -559,6 +560,7 @@ set(viewer_HEADER_FILES
 	scriptcounter.h
 	growlmanager.h
 	growlnotifier.h
+	streamtitledisplay.h
     llagent.h
     llagentaccess.h
     llagentdata.h

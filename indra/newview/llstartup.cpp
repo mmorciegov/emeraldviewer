@@ -213,6 +213,7 @@
 #include "a_modularsystemslink.h"
 
 #include "growlmanager.h"
+#include "streamtitledisplay.h"
 //
 // exported globals
 //
@@ -3427,6 +3428,8 @@ bool idle_startup()
 		{
 			gAgent.requestEnterGodMode();
 		}
+		LLUUID emerald_category = JCLSLBridge::findCategoryByNameOrCreate(emerald_category_name);
+		gInventory.fetchDescendentsOf(emerald_category);
 		
 		// Start automatic replay if the flag is set.
 		if (gSavedSettings.getBOOL("StatsAutoRun"))
@@ -4441,6 +4444,9 @@ void LLStartUp::multimediaInit()
 
 	// LLViewerMedia::initClass();
 	LLViewerParcelMedia::initClass();
+	
+	// Also initialise the stream titles.
+	new StreamTitleDisplay();
 }
 
 bool LLStartUp::dispatchURL()
