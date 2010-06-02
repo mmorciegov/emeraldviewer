@@ -59,6 +59,7 @@ class LLCheckBoxCtrl;
 class LLSpinCtrl;
 class LLScrollableContainerView;
 class LLTextBox;
+class LLComboBox;
 class LLIconCtrl;
 class LLSaveFolderState;
 class LLSearchEditor;
@@ -95,6 +96,12 @@ public:
 								   void* cargo_data,
 								   EAcceptance* accept,
 								   std::string& tooltip_msg);
+
+	//fix to get rid of gSavedSettings use - rkeast
+	void setPartialSearch(bool toggle);
+	bool getPartialSearch();
+	void setSearchType(U32 type);
+	U32 getSearchType();
 
 	// Call this method to set the selection.
 	void openAllFolders();
@@ -274,6 +281,10 @@ public:
 	static void onFoldersByName(void *user_data);
 	static BOOL checkFoldersByName(void *user_data);
 	static void onSearchEdit(const std::string& search_string, void* user_data );
+
+    static void onQuickFilterCommit(LLUICtrl* ctrl, void* user_data);
+    static void refreshQuickFilter(LLUICtrl* ctrl);
+
 	static void onFilterSelected(void* userdata, bool from_click);
 	static void onSelectionChange(const std::deque<LLFolderViewItem*> &items, BOOL user_action, void* data);
 
@@ -295,12 +306,15 @@ protected:
 
 protected:
 	LLSearchEditor*				mSearchEditor;
+	LLComboBox*						mQuickFilterCombo;
 	LLTabContainer*				mFilterTabs;
 	LLHandle<LLFloater>				mFinderHandle;
 	LLInventoryPanel*			mActivePanel;
 	LLSaveFolderState*			mSavedFolderState;
 
 	std::string					mFilterText;
+
+	S32							mItemCount;
 
 
 	// This container is used to hold all active inventory views. This

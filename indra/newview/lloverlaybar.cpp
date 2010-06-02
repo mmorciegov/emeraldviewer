@@ -141,10 +141,11 @@ BOOL LLOverlayBar::postBuild()
 	childSetAction("Set Not Busy",onClickSetNotBusy,this);
 	childSetAction("Mouselook",onClickMouselook,this);
 	childSetAction("Stand Up",onClickStandUp,this);
+	childSetAction("Cancel TP",onClickCancelTP,this);
  	childSetAction("Flycam",onClickFlycam,this);
 	childSetVisible("chat_bar", gSavedSettings.getBOOL("ChatVisible"));
 
-
+	mCancelBtn = getChild<LLButton>("Cancel TP");
 	setFocusRoot(TRUE);
 	mBuilt = true;
 
@@ -307,6 +308,32 @@ void LLOverlayBar::refresh()
 		buttons_changed = TRUE;
 	}
 
+	BOOL teleporting = FALSE;
+	if ((gAgent.getTeleportState() == LLAgent::TELEPORT_START) ||
+		(gAgent.getTeleportState() == LLAgent::TELEPORT_REQUESTED) ||
+		(gAgent.getTeleportState() == LLAgent::TELEPORT_MOVING) ||
+		(gAgent.getTeleportState() == LLAgent::TELEPORT_START))
+	{
+		//teleporting = TRUE;
+// [RLVa:KB] - Checked: 2009-10-15 (RLVa-1.0.5e)
+		teleporting = (!rlv_handler_t::isEnabled()) || (gRlvHandler.getCanCancelTp());
+// [/RLVa:KB]
+	}
+	else
+	{
+		teleporting = FALSE;
+	}
+
+
+	button = getChild<LLButton>("Cancel TP");
+
+	if (button && button->getVisible() != teleporting)
+	{
+		button->setVisible(teleporting);
+		sendChildToFront(button);
+		moveChildToBackOfTabGroup(button);
+		buttons_changed = TRUE;
+	}
 
 	moveChildToBackOfTabGroup(mMediaRemote);
 	moveChildToBackOfTabGroup(mVoiceRemote);
@@ -400,6 +427,24 @@ void LLOverlayBar::onClickStandUp(void*)
 	LLSelectMgr::getInstance()->deselectAllForStandingUp();
 	gAgent.setControlFlags(AGENT_CONTROL_STAND_UP);
 }
+
+//static
+void LLOverlayBar::onClickCancelTP(void* data)
+{
+	LLOverlayBar* self = (LLOverlayBar*)data;
+	self->setCancelTPButtonVisible(FALSE,std::string("Cancel"));
+	gAgent.teleportCancel();
+	llinfos << "trying to cancel teleport" << llendl;
+}
+
+void LLOverlayBar::setCancelTPButtonVisible(BOOL b, const std::string& label)
+{
+	mCancelBtn->setVisible( b );
+//	mCancelBtn->setEnabled( b );
+	mCancelBtn->setLabelSelected(label);
+	mCancelBtn->setLabelUnselected(label);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // static media helpers

@@ -129,7 +129,7 @@
 #include "llfloatersettingsdebug.h"
 #include "llfloaterenvsettings.h"
 #include "llfloaterstats.h"
-#include "llfloaterteleport.h"
+#include "llfloaterteleporthistory.h"
 #include "llfloatertest.h"
 #include "llfloatertools.h"
 #include "llfloaterwater.h"
@@ -884,8 +884,7 @@ void init_client_menu(LLMenuGL* menu)
 	if (gSavedSettings.getBOOL("OpenGridProtocol"))
 	{
 		sub_menu = new LLMenuGL("Interop");
-		sub_menu->append(new LLMenuItemCallGL("Teleport Region...", 
-			&LLFloaterTeleport::show, NULL, NULL, 'R', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
+		//sub_menu->append(new LLMenuItemCallGL("Teleport Region...",&LLFloaterTeleport::show, NULL, NULL, 'R', MASK_CONTROL|MASK_ALT|MASK_SHIFT));
 		menu->appendMenu(sub_menu);
 	}
 
@@ -2454,6 +2453,76 @@ class LLObjectEnableScriptDelete : public view_listener_t
 
                 return true;
         }
+};
+
+//Madgeek - Option in pie menu to disable objects if you are an estate manager.
+class LLObjectEnableObjectDisable : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		bool new_value = false;
+		LLViewerRegion* region = gAgent.getRegion();
+		if (region)
+		{
+			if (region->canManageEstate())
+			{
+				new_value = true;
+			}
+		}
+		gMenuHolder->findControl(userdata["control"].asString())->setValue(new_value);
+		return true;
+	}
+};
+
+//Madgeek - Option in pie menu to disable objects if you are an estate manager.
+class LLObjectDisable : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		LLViewerRegion* region = gAgent.getRegion();
+		if (region)
+		{
+			if (region->canManageEstate())
+			{
+				bool start_message = true;
+				for (LLObjectSelection::root_iterator iter = LLSelectMgr::getInstance()->getSelection()->root_begin();
+					iter != LLSelectMgr::getInstance()->getSelection()->root_end(); iter++)
+				{
+					LLSelectNode* selectNode = *iter;
+					LLViewerObject* object = selectNode->getObject();
+
+					if (object)
+					{
+						if (start_message)
+						{
+							gMessageSystem->newMessageFast(_PREHASH_ParcelDisableObjects);
+							gMessageSystem->nextBlockFast(_PREHASH_AgentData);
+							gMessageSystem->addUUIDFast(_PREHASH_AgentID,	gAgent.getID());
+							gMessageSystem->addUUIDFast(_PREHASH_SessionID,gAgent.getSessionID());
+							gMessageSystem->nextBlockFast(_PREHASH_ParcelData);
+							gMessageSystem->addS32Fast(_PREHASH_LocalID, -1);
+							gMessageSystem->addS32Fast(_PREHASH_ReturnType, RT_NONE);
+							start_message = false;
+						}
+
+						gMessageSystem->nextBlockFast(_PREHASH_TaskIDs);
+						gMessageSystem->addUUIDFast(_PREHASH_TaskID, object->getID());
+
+						if (gMessageSystem->isSendFullFast(_PREHASH_TaskIDs))
+						{
+							gMessageSystem->sendReliable(region->getHost());
+							start_message = true;
+						}
+					}
+				}
+				if (!start_message)
+				{
+					gMessageSystem->sendReliable(region->getHost());
+				}
+			}
+		}
+		return true;
+	}
 };
 class LLScriptCount : public view_listener_t
 {
@@ -5817,6 +5886,11 @@ class LLShowFloater : public view_listener_t
 		{
 			LLFloaterChat::toggleInstance(LLSD());
 		}
+		else if (floater_name == "teleport history")
+		{
+			gFloaterTeleportHistory->setVisible(!gFloaterTeleportHistory->getVisible());
+			gFloaterTeleportHistory->setFocus(TRUE);
+		}
 		else if (floater_name == "im")
 		{
 			LLFloaterChatterBox::toggleInstance(LLSD());
@@ -5975,6 +6049,10 @@ class LLFloaterVisible : public view_listener_t
 		else if (floater_name == "chat history")
 		{
 			new_value = LLFloaterChat::instanceVisible();
+		}
+		else if (floater_name == "teleport history")
+		{
+			new_value = gFloaterTeleportHistory->getVisible();
 		}
 		else if (floater_name == "im")
 		{
@@ -7569,9 +7647,11 @@ class LLToolsShowSelectionHighlights : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
+		//LLSelectMgr::enableSilhouette = !LLSelectMgr::enableSilhouette;
+		//gSavedSettings.setBOOL("EmeraldRenderHighlightSelections",!gSavedSettings.getBOOL("EmeraldRenderHighlightSelections"));
 		LLSelectMgr::sRenderSelectionHighlights = !LLSelectMgr::sRenderSelectionHighlights;
 		
-		gSavedSettings.setBOOL("RenderHighlightSelections", LLSelectMgr::sRenderSelectionHighlights);
+		gSavedSettings.setBOOL("EmeraldRenderHighlightSelections", LLSelectMgr::sRenderSelectionHighlights);
 		return true;
 	}
 };
@@ -8580,11 +8660,11 @@ class LLEmeraldToggleRadar: public view_listener_t
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
 		//open the radar panel
-		FloaterAvatarList::toggle();
+		LLFloaterAvatarList::toggle(NULL);
 		bool vis = false;
-		if(FloaterAvatarList::getInstance())
+		if(LLFloaterAvatarList::getInstance())
 		{
-			vis = (bool)FloaterAvatarList::getInstance()->getVisible();
+			vis = (bool)LLFloaterAvatarList::getInstance()->getVisible();
 		}
 		//gMenuHolder->findControl(userdata["control"].asString())->setValue(vis);
 		return true;
@@ -9113,6 +9193,7 @@ void initialize_menus()
 	addMenu(new LLObjectExport(), "Object.Export");
     addMenu(new LLScriptCount(), "Object.ScriptCount");
     addMenu(new LLObjectVisibleScriptCount(), "Object.VisibleScriptCount");
+	addMenu(new LLObjectDisable(), "Object.Disable");
 	addMenu(new LLObjectMute(), "Object.Mute");
 	addMenu(new LLObjectBuy(), "Object.Buy");
 	addMenu(new LLObjectEdit(), "Object.Edit");
@@ -9128,6 +9209,7 @@ void initialize_menus()
 	addMenu(new LLObjectEnableReportAbuse(), "Object.EnableReportAbuse");
 	addMenu(new LLObjectEnableMute(), "Object.EnableMute");
 	addMenu(new LLObjectEnableBuy(), "Object.EnableBuy");
+	addMenu(new LLObjectEnableObjectDisable(), "Object.EnableDisableObject");
 
 	/*addMenu(new LLObjectVisibleTouch(), "Object.VisibleTouch");
 	addMenu(new LLObjectVisibleCustomTouch(), "Object.VisibleCustomTouch");

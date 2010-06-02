@@ -41,7 +41,7 @@ if (WINDOWS)
       "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Od /Zi /MD"
       CACHE STRING "C++ compiler release-with-debug options" FORCE)
   set(CMAKE_CXX_FLAGS_RELEASE
-      "${CMAKE_CXX_FLAGS_RELEASE} ${LL_CXX_FLAGS} /O2 /Zi /MD /arch:SSE2"
+      "${CMAKE_CXX_FLAGS_RELEASE} ${LL_CXX_FLAGS} /O2 /Zi /MD /arch:SSE2 /MP"
       CACHE STRING "C++ compiler release options" FORCE)
 
   set(CMAKE_CXX_STANDARD_LIBRARIES "")
@@ -62,7 +62,7 @@ if (WINDOWS)
      
   if(MSVC80 OR MSVC90)
     set(CMAKE_CXX_FLAGS_RELEASE
-      "${CMAKE_CXX_FLAGS_RELEASE} -D_SECURE_STL=0 -D_HAS_ITERATOR_DEBUGGING=0 /MP2"
+      "${CMAKE_CXX_FLAGS_RELEASE} -D_SECURE_STL=0 -D_HAS_ITERATOR_DEBUGGING=0"
       CACHE STRING "C++ compiler release options" FORCE)
    
     add_definitions(
@@ -167,7 +167,8 @@ if (LINUX)
     # don't catch SIGCHLD in our base application class for the viewer - some of our 3rd party libs may need their *own* SIGCHLD handler to work.  Sigh!  The viewer doesn't need to catch SIGCHLD anyway.
     add_definitions(-DLL_IGNORE_SIGCHLD)
     if (NOT STANDALONE)
-      # this stops us requiring a really recent glibc at runtime
+      add_definitions(-march=i686)
+      # this stops us requiring a really recent glibc at runtime (O RLY?)
       add_definitions(-fno-stack-protector)
     endif (NOT STANDALONE)
   endif (VIEWER)
@@ -223,12 +224,12 @@ else (STANDALONE)
   set(${ARCH}_linux_INCLUDES
       ELFIO
       atk-1.0
+      cairo
       glib-2.0
       gstreamer-0.10
       gtk-2.0
       llfreetype2
       pango-1.0
-      cairo
       )
 endif (STANDALONE)
 

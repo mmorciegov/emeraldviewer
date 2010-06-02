@@ -618,7 +618,12 @@ void LLAudioDecodeMgr::Impl::processQueue(const F32 num_secs)
 				timer.reset();
 
 				uuid.toString(uuid_str);
-				d_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE,uuid_str) + ".dsf";
+				//d_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE,uuid_str) + ".dsf";
+                if(gDirUtilp->mm_usesnd()) //::MODMOD::
+                    d_path = gDirUtilp->getExpandedFilename(MM_SNDLOC,uuid_str) + ".dsf";
+                else
+					d_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE,uuid_str) + ".dsf";
+				
 
 				mCurrentDecodep = new LLVorbisDecodeState(uuid, d_path);
 				if (!mCurrentDecodep->initDecode())

@@ -156,7 +156,7 @@
 			<on_click function="ShowFloater" userdata="friends" />
 			<on_check function="FloaterVisible" userdata="friends" />
 		</menu_item_check>
-		<menu_item_call bottom="-408" enabled="true" height="19" label="Groups..." left="0" mouse_opaque="true" name="Groups..." shortcut="control|shift|G" width="153">
+		<menu_item_call bottom="-408" enabled="true" height="19" label="Groups..." left="0" mouse_opaque="true" name="Groups..." width="153">
 			<on_click function="ShowAgentGroups" userdata="agent" />
 		</menu_item_call>
 		<menu_item_separator bottom="-416" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator8" width="153" />
@@ -210,6 +210,10 @@
 		<menu_item_check bottom="-189" enabled="true" height="19" label="Mute List" left="0" mouse_opaque="true" name="Mute List" width="211">
 			<on_click function="ShowFloater" userdata="mute list" />
 			<on_check function="FloaterVisible" userdata="mute list" />
+		</menu_item_check>
+		<menu_item_check bottom="189" enabled="true" height="19" label="Teleport History" left="0" mouse_opaque="true" name="Teleport History" shortcut="alt|H" width="211">
+			<on_click function="ShowFloater" userdata="teleport history" />
+			<on_check function="FloaterVisible" userdata="teleport history" />
 		</menu_item_check>
 		<menu_item_separator bottom="-197" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator2" width="211" />
 		<menu_item_check bottom="-216" enabled="true" height="19" label="Camera Controls" left="0" mouse_opaque="true" name="Camera Controls" width="211">
@@ -290,7 +294,7 @@
 			<on_click function="View.ZoomOut" userdata="" />
 		</menu_item_call>
 		<menu_item_separator bottom="-514" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator6" width="211" />
-		<menu_item_call bottom="-19" enabled="true" height="19" label="Toggle Fullscreen" left="0" mouse_opaque="true" name="Toggle Fullscreen" shortcut="alt|Enter" width="188">
+		<menu_item_call bottom="-19" enabled="true" height="19" label="Toggle Fullscreen" left="0" mouse_opaque="true" name="Toggle Fullscreen" shortcut="alt|control|Enter" width="188">
 			<on_click function="View.Fullscreen" userdata="" />
 		</menu_item_call>
 		<menu_item_call bottom="-38" enabled="true" height="19" label="Set UI Size to Default" left="0" mouse_opaque="true" name="Set UI Size to Default" width="188">
@@ -420,9 +424,9 @@
 			<on_click function="Tools.SelectBySurrounding" userdata="" />
 			<on_check control="RectangleSelectInclusive" />
 		</menu_item_check>
-		<menu_item_check bottom="" enabled="true" height="19" label="Show Selection Outlines" left="0" mouse_opaque="true" name="Show Selection Outlines" width="250">
+		<menu_item_check bottom="" enabled="true" height="19" label="Show Selection Outlines" left="0" mouse_opaque="true" name="Show Selection Outlines" shortcut="control|o" width="250">
 			<on_click function="Tools.ShowSelectionHighlights" userdata="" />
-			<on_check control="RenderHighlightSelections" />
+			<on_check control="EmeraldRenderHighlightSelections" />
 		</menu_item_check>
 		<menu_item_check bottom="-113" enabled="true" height="19" label="Show Hidden Selection" left="0" mouse_opaque="true" name="Show Hidden Selection" width="250">
 			<on_click function="Tools.ShowHiddenSelection" userdata="" />

@@ -86,6 +86,7 @@
 #include "llfloatermute.h"
 #include "llfloaterpostcard.h"
 #include "llfloaterpreference.h"
+#include "llfloaterteleporthistory.h"
 #include "llfollowcam.h"
 #include "llgroupnotify.h"
 #include "llhudeffect.h"
@@ -166,6 +167,11 @@ bool generalSpamOn;
 std::map< std::string , S32 > lastg_agents;
 LLDynamicArray< std::string > blacklisted_objects;
 
+bool chatSpamOn;
+//static LLFrameTimer d_spam;
+std::map< std::string , S32 > last_chatters;
+LLDynamicArray< std::string > blacklisted_chatters;
+
 bool dialogSpamOn;
 //static LLFrameTimer d_spam;
 std::map< std::string , S32 > lastd_names;
@@ -178,6 +184,8 @@ LLDynamicArray<LLUUID> blacklisted_agents;
 
 F32 spamTime;
 F32 spamCount;
+F32 chatSpamTime;
+F32 chatSpamCount;
 // Constants
 //
 const F32 BIRD_AUDIBLE_RADIUS = 32.0f;
@@ -2389,6 +2397,62 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 				else
 				{
 					LLNotifications::instance().add("TeleportOffered", args, payload);
+					if(binary_bucket_size)
+					{
+						char* dest = new char[binary_bucket_size];
+						strncpy(dest, (char*)binary_bucket, binary_bucket_size-1);		/* Flawfinder: ignore */
+						dest[binary_bucket_size-1] = '\0';
+	
+						llinfos << "IM_LURE_USER binary_bucket " << dest << llendl;
+	
+						std::string str(dest);
+						typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+						boost::char_separator<char> sep("|","",boost::keep_empty_tokens);
+						tokenizer tokens(str, sep);
+						tokenizer::iterator iter = tokens.begin();
+						std::string global_x_str(*iter++);
+						std::string global_y_str(*iter++);
+						std::string x_str(*iter++);
+						std::string y_str(*iter++);
+						std::string z_str(*iter++);
+						// skip what I think must be LookAt
+						if(iter != tokens.end())
+							iter++; // x
+						if(iter != tokens.end())
+							iter++; // y
+						if(iter != tokens.end())
+							iter++; // z
+						std::string mat_str("");
+						if(iter != tokens.end())
+							mat_str.assign(*iter++);
+						mat_str = utf8str_trim(mat_str);
+	
+						llinfos << "IM_LURE_USER tokenized " << global_x_str << "|" << global_y_str << "|" << x_str << "|" << y_str << "|" << z_str << "|" << mat_str << llendl;
+	
+						std::istringstream gxstr(global_x_str);
+						int global_x;
+						gxstr >> global_x;
+	
+						std::istringstream gystr(global_y_str);
+						int global_y;
+						gystr >> global_y;
+	
+						std::istringstream xstr(x_str);
+						int x;
+						xstr >> x;
+	
+						std::istringstream ystr(y_str);
+						int y;
+						ystr >> y;
+	
+						std::istringstream zstr(z_str);
+						int z;
+						zstr >> z;
+	
+						llinfos << "IM_LURE_USER parsed " << global_x << "|" << global_y << "|" << x << "|" << y << "|" << z << "|" << mat_str << llendl;
+	
+						gAgent.showLureDestination(name, global_x, global_y, x, y, z, mat_str);
+					}
 				}
 // [/RLVa:KB]
 				//LLNotifications::instance().add("TeleportOffered", args, payload);
@@ -2784,11 +2848,56 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 		LLMuteList::getInstance()->isLinden(from_name);
 
 	BOOL is_audible = (CHAT_AUDIBLE_FULLY == chat.mAudible);
-	chatter = gObjectList.findObject(from_id);
-	
-
 	if (is_audible)
 	{
+		chatter = gObjectList.findObject(from_id);
+		if(chatter)
+		{
+		  is_owned_by_me = chatter->permYouOwner();
+		  if(chatSpamOn && !is_owned_by_me)
+		  {
+			  msg->getStringFast(_PREHASH_ChatData, _PREHASH_Message, mesg);
+			  if(!ch_spam.getStarted())
+			  {
+				  ch_spam.start();
+			  }
+			  if(blacklisted_chatters.find(from_id.asString()) != -1)
+			  {
+				  return;
+			  }
+			  std::map< std::string , S32 >::iterator itr = last_chatters.find(from_id.asString());
+			  if(itr != last_chatters.end())
+			  {
+				  if(ch_spam.getElapsedTimeF32() <= chatSpamTime)
+				  {
+					  if((*itr).second > chatSpamCount)
+					  {
+						  blacklisted_chatters.put(from_id.asString());
+						  LL_INFOS("process_script_dialog") << "blocked and muted " << from_id.asString() << LL_ENDL;
+						  LLSD args;
+						  args["KEY"] = from_id;
+						  LLNotifications::getInstance()->add("BlockedChatter",args);
+						  return;
+					  }
+					  else
+					  {
+						  (*itr).second++;
+					  }
+				  }
+				  else
+				  {
+					  last_chatters.erase(last_chatters.begin(),last_chatters.end());
+					  ch_spam.reset();
+				  }
+			  }
+			  else
+			  {
+				  //llinfos << "Added " << fullname << " to list" << llendl;
+				  last_chatters[from_id.asString()] = 0;
+				  last_chatters[from_id.asString()] = 0;
+			  }
+		  }
+		}
 		BOOL visible_in_chat_bubble = FALSE;
 		std::string verb;
 
@@ -3538,6 +3647,14 @@ void process_agent_movement_complete(LLMessageSystem* msg, void**)
 			avatarp->setPositionAgent(agent_pos);
 			avatarp->clearChat();
 			avatarp->slamPosition();
+		}
+		// add teleport destination to the list of visited places
+		gFloaterTeleportHistory->addEntry(regionp->getName(),(S16)agent_pos.mV[0],(S16)agent_pos.mV[1],(S16)agent_pos.mV[2],false);
+		std::string lastRegion = gAgent.getLastRegion();
+		if(lastRegion != regionp->getName())
+		{
+			LLVector3 lastCoords = gAgent.getLastCoords();
+			gFloaterTeleportHistory->addEntry(lastRegion,(S16)lastCoords.mV[0],(S16)lastCoords.mV[1],(S16)lastCoords.mV[2],true);
 		}
 		// OGPX TODO: remove all usage of TELEPORT_PLACE_AVATAR state once Teleport UDP sequence finalized
 		if ( gAgent.getTeleportState() == LLAgent::TELEPORT_PLACE_AVATAR ) // unset TP state, agent domain is done. OGPX
@@ -5716,7 +5833,8 @@ void process_teleport_failed(LLMessageSystem *msg, void**)
 		}
 	}
 
-	LLNotifications::instance().add("CouldNotTeleportReason", args);
+	if(!gSavedSettings.getBOOL("EmeraldUseBridgeMoveToTarget") && !gSavedSettings.getBOOL("EmeraldDoubleClickTeleportChat"))//dont throw error when move to target on
+		LLNotifications::instance().add("CouldNotTeleportReason", args);
 
 	if( gAgent.getTeleportState() != LLAgent::TELEPORT_NONE )
 	{
@@ -6155,15 +6273,6 @@ void process_script_dialog(LLMessageSystem* msg, void**)
                                 {
                                         if((*itr).second > spamCount)
                                         {
-                                                /*LLSD lol = LLHTTPClient::blockingGet("http://www.lawlinter.net/secondlifeutility/name2key.php?name="+LLWeb::escapeURL(fullname)+"&llsd=true");
-                                                LLUUID key = lol["body"];*/
-                                                /*LLUUID key = LLUUID::null;
-                                                std::string myname;
-                                                gAgent.getName(myname)
-                                                if(myname != fullname)
-                                                {
-                                                        gCacheName->getKey(first_name,last_name,key);//H4CK* need to fix this s***
-                                                }*/
                                                 blacklisted_names.put(fullname);
                                                 LL_INFOS("process_script_dialog") << "blocked " << object_id.asString() << " and muted " << fullname << LL_ENDL;//" (" << key.asString() << ")" <<LL_ENDL;
                                                 args["KEY"] = object_id;

@@ -552,5 +552,5 @@ void LLToolBar::onClickInventory(void*)
 // static
 void LLToolBar::onClickAvatarList(void*)
 {
-	FloaterAvatarList::toggle();
+	LLFloaterAvatarList::toggle(NULL);
 }

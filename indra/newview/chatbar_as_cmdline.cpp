@@ -504,19 +504,19 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 // even if they are out of draw distance.
 LLUUID cmdline_partial_name2key(std::string partial_name)
 {
-/*	std::vector<LLUUID> avatars;
+	std::vector<LLUUID> avatars;
 	std::string av_name;
 	LLStringUtil::toLower(partial_name);
 	LLWorld::getInstance()->getAvatars(&avatars);
 	typedef std::vector<LLUUID>::const_iterator av_iter;
-	bool has_avatarlist = (FloaterAvatarList::getInstance() ? true : false);
+	bool has_avatarlist = (LLFloaterAvatarList::getInstance() ? true : false);
 	if(has_avatarlist)
-		FloaterAvatarList::getInstance()->updateAvatarList();
+		LLFloaterAvatarList::getInstance()->updateAvatarList();
 	for(av_iter i = avatars.begin(); i != avatars.end(); ++i)
 	{
 		if(has_avatarlist)
 		{
-			LLAvatarListEntry* entry = FloaterAvatarList::getInstance()->getAvatarEntry(*i);
+			LLAvatarListEntry* entry = LLFloaterAvatarList::getInstance()->getAvatarEntry(*i);
 			if(entry)
 			{
 				av_name = entry->getName();
@@ -536,7 +536,7 @@ LLUUID cmdline_partial_name2key(std::string partial_name)
 		{
 			return *i;
 		}
-	}*/
+	}
 	return LLUUID::null;
 }
 					
@@ -544,13 +544,13 @@ LLUUID cmdline_partial_name2key(std::string partial_name)
 
 void cmdline_tp2name(std::string target)
 {
-	/*LLUUID avkey = cmdline_partial_name2key(target);
+	LLUUID avkey = cmdline_partial_name2key(target);
 	if(avkey.isNull())
 	{
 		cmdline_printchat("Avatar not found.");
 		return;
 	}
-	FloaterAvatarList* avlist = FloaterAvatarList::getInstance();
+	LLFloaterAvatarList* avlist = LLFloaterAvatarList::getInstance();
 	LLViewerObject* obj = gObjectList.findObject(avkey);
 	if(obj)
 	{
@@ -567,7 +567,7 @@ void cmdline_tp2name(std::string target)
 			pos.mdV[VZ] += 2.0;
 			gAgent.teleportViaLocation(pos);
 		}
-	}*/
+	}
 }
 
 void cmdline_rezplat(bool use_saved_value, F32 visual_radius) //cmdline_rezplat() will still work... just will use the saved value

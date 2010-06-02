@@ -1083,7 +1083,7 @@ void LLViewerObjectList::renderObjectsForMap(LLNetMap &netmap)
 	LLColor4 group_own_below_water_color = 
 						gColors.getColor( "NetMapGroupOwnBelowWater" );
 
-	F32 max_radius = gSavedSettings.getF32("MiniMapPrimMaxRadius");
+	F32 max_radius = gSavedSettings.getF32("EmeraldMiniMapPrimMaxRadius");
 
 	for (S32 i = 0; i < mMapObjects.count(); i++)
 	{
@@ -1099,9 +1099,7 @@ void LLViewerObjectList::renderObjectsForMap(LLNetMap &netmap)
 
 		F32 approx_radius = (scale.mV[VX] + scale.mV[VY]) * 0.5f * 0.5f * 1.3f;  // 1.3 is a fudge
 
-		// Limit the size of megaprims so they don't blot out everything on the minimap.
-		// Attempting to draw very large megaprims also causes client lag.
-		// See DEV-17370 and SNOW-79 for details.
+		// DEV-17370 - megaprims of size > 4096 cause lag.  (go figger.)
 		approx_radius = llmin(approx_radius, max_radius);
 
 		LLColor4U color = above_water_color;

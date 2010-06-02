@@ -110,14 +110,8 @@ Not Age-verified
 			     width="121">
         [FIRST] [LAST]
       </line_editor>
-      <button bottom_delta="0" follows="left|top" font="SansSerif" halign="center"
-			     height="23" label="" left="40"  bottom="-42" width="24"
-			 image_selected="icon_avatar_expand.png"
-			 image_unselected="icon_avatar_expand.png"
-			 image_hover_selected="icon_avatar_expand.png"
-			 image_hover_unselected="icon_avatar_expand.png"
-			 mouse_opaque="true"
-			  name="bigimg"/>
+      <button bottom_delta="0" follows="left|top" left="40"  bottom="-42" height="20" halign="center"
+              label="&lt; &lt;" label_selected="&gt; &gt;" name="bigimg" tool_tip="Open Full Size." width="40" />
       <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 			     bottom="-68" drop_shadow_visible="true" follows="left|top"
 			     font="SansSerifSmall" h_pad="0" halign="right" height="16" left="4"
@@ -379,14 +373,8 @@ Not Age-verified
 			     default_image_name="None" follows="left|top" height="151" label=""
 			     left="70" mouse_opaque="true" name="img"
 			     tool_tip="Click to choose a picture" width="135" />
-      <button bottom_delta="0" follows="left|top" font="SansSerif" halign="center"
-			     height="23" label="" left="30"  bottom="-42" width="24"
-			 image_selected="icon_avatar_expand.png"
-			 image_unselected="icon_avatar_expand.png"
-			 image_hover_selected="icon_avatar_expand.png"
-			 image_hover_unselected="icon_avatar_expand.png"
-			 mouse_opaque="true"
-			  name="flbigimg"/>
+      <button bottom_delta="14" follows="left|top" left="29"  bottom="-42" height="20" halign="center"
+              label="&lt; &lt;" label_selected="&gt; &gt;" name="flbigimg" tool_tip="Open Full Size." width="40" />
       <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
 			     bottom="-203" drop_shadow_visible="true" follows="left|top"
 			     font="SansSerifSmall" h_pad="0" halign="right" height="16" left="4"

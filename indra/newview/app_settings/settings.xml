@@ -1,6 +1,61 @@
 <?xml version="1.0" ?>
 <llsd>
 	<map>
+		<key>EmeraldUseChatBar</key>
+		<map>
+			<key>Comment</key>
+			<string>Set to FALSE to disable the chat bar and chat display in the bottom left. All chat will go to the Communicate window.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>1</integer>
+		</map>
+		<key>EmeraldUseBridgeMoveToTarget</key>
+		<map>
+			<key>Comment</key>
+			<string>Enable llmovetotarget teleporting (requires bridge)</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<real>0</real>
+		</map>
+		<key>EmeraldDoubleClickTeleportChat</key>
+		<map>
+			<key>Comment</key>
+			<string>Send TP destination coordinates to channel?</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<real>0</real>
+		</map>
+		<key>EmeraldDoubleClickTeleportChannel</key>
+		<map>
+			<key>Comment</key>
+			<string>Channel for magical move-lock teleporting system</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>S32</string>
+			<key>Value</key>
+			<real>90000</real>
+		</map>
+		<key>EmeraldDoubleClickWearInventoryObjects</key>
+		<map>
+			<key>Comment</key>
+			<string>Whether or not to automatically wear objects in your inventory you wear</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
 		<key>EmeraldAgentUpdatesPerSecond</key>
 		<map>
 			<key>Comment</key>
@@ -12,17 +67,17 @@
 			<key>Value</key>
 			<real>10.0</real>
 		</map>
-	<key>EmeraldAllowMUpose</key>
-	<map>
-		<key>Comment</key>
-		<string>Allow MU* pose style in chat and IM (with ':' as a synonymous to '/me ')</string>
-		<key>Persist</key>
-		<integer>1</integer>
-		<key>Type</key>
-		<string>Boolean</string>
-		<key>Value</key>
-		<integer>0</integer>
-	</map>
+		<key>EmeraldAllowMUpose</key>
+		<map>
+			<key>Comment</key>
+			<string>Allow MU* pose style in chat and IM (with ':' as a synonymous to '/me ')</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
     <key>EmeraldAppearanceAnimate</key>
     <map>
       <key>Comment</key>
@@ -166,6 +221,17 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
+    <key>EmeraldChatSpamEnabled</key>
+    <map>
+      <key>Comment</key>
+      <string>Enables Chat Spam Prevention</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>EmeraldCardSpamEnabled</key>
     <map>
       <key>Comment</key>
@@ -267,6 +333,29 @@
       <key>Value</key>
       <integer>1</integer>
 	</map>
+    <key>EmeraldChatSpamTime</key>
+    <map>
+      <key>Comment</key>
+          <string>ADVANCED SETTINGS: Time of Evalulating spam. RECOMMENDED NUMBER IS 1.000</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.0</real>
+    </map>
+        <key>EmeraldChatSpamCount</key>
+    <map>
+      <key>Comment</key>
+      <string>ADVANCED SETTINGS: Number of items spammed per time set in EmeraldSpamTime. RECOMMENDED IS 10.000</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>10.0</real>
+    </map>
+
     <key>EmeraldSpamTime</key>
     <map>
       <key>Comment</key>
@@ -767,17 +856,7 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
-		<key>EmeraldUseBridgeMoveToTarget</key>
-		<map>
-			<key>Comment</key>
-			<string>oh murr</string>
-			<key>Persist</key>
-			<integer>1</integer>
-			<key>Type</key>
-			<string>Boolean</string>
-			<key>Value</key>
-			<real>0</real>
-		</map>
+
 		<key>EmeraldUseOTR</key>
 		<map>
 			<key>Comment</key>
@@ -974,6 +1053,17 @@
 		<map>
 			<key>Comment</key>
 			<string>Attempts to rez objects in the lands group if you're apart of it</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
+		<key>mm_fastminimap</key>
+		<map>
+			<key>Comment</key>
+			<string>Skips object drawing on the minimap when true</string>
 			<key>Persist</key>
 			<integer>1</integer>
 			<key>Type</key>
@@ -4462,6 +4552,17 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
+		<key>EmeraldMiniMapPrimMaxRadius</key>
+		<map>
+			<key>Comment</key>
+			<string>Radius of the largest prim to show on the MiniMap. Increasing beyond 256 may cause client lag.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>F32</string>
+			<key>Value</key>
+			<real>16.0</real>
+		</map>
 		<key>EmeraldDisableLoginScreens</key>
 		<map>
 			<key>Comment</key>
@@ -4494,6 +4595,28 @@
 			<string>Boolean</string>
 			<key>Value</key>
 			<integer>1</integer>
+		</map>
+		<key>Emeraldmm_sndcacheloc</key>
+		<map>
+			<key>Comment</key>
+			<string>Location of unpacked sound files.</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>String</string>
+			<key>Value</key>
+			<string></string>
+		</map>
+		<key>EmeraldPurgeInvCache</key>
+		<map>
+			<key>Comment</key>
+			<string>agent id to purge, if purge is desired</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>String</string>
+			<key>Value</key>
+			<string></string>
 		</map>
 		<key>DragAndDropToolTipDelay</key>
 		<map>
@@ -4768,6 +4891,17 @@
 		<map>
 			<key>Comment</key>
 			<string>now you fucked up</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
+		<key>EmeraldKeepUnpackedCacheFiles</key>
+		<map>
+			<key>Comment</key>
+			<string>If TRUE, the viewer won't delete unpacked cache files when logging out (improves overall performance and fixes sound bugs)</string>
 			<key>Persist</key>
 			<integer>1</integer>
 			<key>Type</key>
@@ -13955,5 +14089,21 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
+	    <key>FloaterTeleportHistoryRect</key>
+	    <map>
+	      <key>Comment</key>
+	      <string>Rectangle for teleport history window</string>
+	      <key>Persist</key>
+	      <integer>1</integer>
+	      <key>Type</key>
+	      <string>Rect</string>
+	      <key>Value</key>
+	      <array>
+	        <integer>20</integer>
+	        <integer>20</integer>
+	        <integer>470</integer>
+	        <integer>200</integer>
+	      </array>
+	    </map>
 	</map>
 </llsd>

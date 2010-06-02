@@ -37,6 +37,11 @@ else (STANDALONE)
   if (LINUX)
     set(UI_LIBRARIES
         atk-1.0
+        cairo
+        dbus-glib-1
+        direct
+        directfb
+        fusion
         gdk-x11-2.0
         gdk_pixbuf-2.0
         Xinerama
@@ -46,10 +51,10 @@ else (STANDALONE)
         gthread-2.0
         gtk-x11-2.0
         pango-1.0
+        pangocairo-1.0
         pangoft2-1.0
         pangox-1.0
         pangoxft-1.0
-        cairo
         )
   endif (LINUX)
 

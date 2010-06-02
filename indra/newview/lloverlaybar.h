@@ -72,6 +72,7 @@ public:
 	static void onClickSetNotBusy(void* data);
 	static void onClickMouselook(void* data);
 	static void onClickStandUp(void* data);
+	static void onClickCancelTP(void* data);
 	static void onClickResetView(void* data);
  	static void onClickFlycam(void* data);
 
@@ -84,6 +85,8 @@ public:
 
 	static void toggleAudioVolumeFloater(void*);
 
+	void setCancelTPButtonVisible(BOOL b, const std::string& label);
+
 protected:	
 	static void* createMediaRemote(void* userdata);
 	static void* createVoiceRemote(void* userdata);
@@ -95,6 +98,7 @@ protected:
 protected:
 	LLMediaRemoteCtrl*	mMediaRemote;
 	LLVoiceRemoteCtrl*	mVoiceRemote;
+	LLButton*	mCancelBtn;
 	wlfPanel_AdvSettings*	mAdvSettings;
 	bool mBuilt;	// dialog constructed yet?
 	enum { STOPPED=0, PLAYING=1, PAUSED=2 };

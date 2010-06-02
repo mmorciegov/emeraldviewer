@@ -180,6 +180,11 @@ public:
 	void			clearRenderState(U8 clearstate);
 	U8				getRenderState();
 
+	// get/set last region data
+	std::string		getLastRegion();
+	LLVector3		getLastCoords();
+	void			setLastRegionData(std::string regionName,LLVector3 agentCoords);
+
 	// Set the home data
 	void			setRegion(LLViewerRegion *regionp);
 	LLViewerRegion	*getRegion() const;
@@ -463,7 +468,7 @@ public:
 	void			moveLeftNudge(S32 direction);
 	void			moveUp(S32 direction);
 	void			moveYaw(F32 mag, bool reset_view = true);
-	void			movePitch(S32 direction);
+	void			movePitch(F32 mag);
 
 	void			setOrbitLeftKey(F32 mag)				{ mOrbitLeftKey = mag; }
 	void			setOrbitRightKey(F32 mag)				{ mOrbitRightKey = mag; }
@@ -518,7 +523,7 @@ public:
 
 	// to a global location - this will probably need to be
 	// deprecated.
-	void teleportViaLocation(const LLVector3d& pos_global); 
+	void teleportViaLocation(const LLVector3d& pos_global, bool go_to = false); 
 
 	// to a global location, preserving camera rotation
 	void teleportViaLocationLookAt(const LLVector3d& pos_global);
@@ -780,6 +785,16 @@ public:
 
 	BOOL			mInitialized;
 
+	static BOOL lure_show;
+	static std::string lure_name;
+	static LLVector3d lure_posglobal;
+	static U16 lure_global_x;
+	static U16 lure_global_y;
+	static int lure_x;
+	static int lure_y;
+	static int lure_z;
+	static std::string lure_maturity;
+
 	S32				mNumPendingQueries;
 	S32*			mActiveCacheQueries;
 
@@ -795,7 +810,13 @@ public:
 	LLFrameTimer mDoubleTapRunTimer;
 	EDoubleTapRunMode mDoubleTapRunMode;
 
+	static BOOL sFirstPersonBtnState;
+	static BOOL sMouselookBtnState;
+	static BOOL sThirdPersonBtnState;
+	static BOOL sBuildBtnState;
         BOOL mBlockSpam;
+	static void showLureDestination(const std::string fromname, const int global_x, const int global_y, const int x, const int y, const int z, const std::string maturity);
+	static void onFoundLureDestination();
 
 private:
 	bool mbTeleportKeepsLookAt; // try to keep look-at after teleport is complete
@@ -945,6 +966,9 @@ private:
 	BOOL			mFirstLogin;
 	BOOL			mGenderChosen;
 	
+	std::string		mLastRegion;
+	LLVector3		mLastCoordinates;
+
 	//--------------------------------------------------------------------
 	// Wearables
 	//--------------------------------------------------------------------

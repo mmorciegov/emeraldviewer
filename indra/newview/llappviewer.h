@@ -240,10 +240,13 @@ private:
 	LLUUID mAgentRegionLastID;
 
         static void gSpam(const LLSD &data);
+	static void chSpam(const LLSD &data);
         static void dSpam(const LLSD &data);
         static void cSpam(const LLSD &data);
         static void setSpamTime(const LLSD &data);
         static void setSpamCount(const LLSD &data);
+        static void setChatSpamTime(const LLSD &data);
+        static void setChatSpamCount(const LLSD &data);
 
 public:
 	//some information for updater

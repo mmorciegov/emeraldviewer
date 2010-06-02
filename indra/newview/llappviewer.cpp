@@ -403,7 +403,6 @@ static void settings_to_globals()
 	LLFolderView::sAutoOpenTime			= llmax(0.25f, gSavedSettings.getF32("FolderAutoOpenDelay"));
 	LLToolBar::sInventoryAutoOpenTime	= gSavedSettings.getF32("InventoryAutoOpenDelay");
 	LLSelectMgr::sRectSelectInclusive	= gSavedSettings.getBOOL("RectangleSelectInclusive");
-	LLSelectMgr::sRenderSelectionHighlights = gSavedSettings.getBOOL("RenderHighlightSelections");
 	LLSelectMgr::sRenderHiddenSelections = gSavedSettings.getBOOL("RenderHiddenSelections");
 	LLSelectMgr::sRenderLightRadius = gSavedSettings.getBOOL("RenderLightRadius");
 
@@ -577,6 +576,25 @@ void LLAppViewer::gSpam(const LLSD &data)
                 }
         }
 }
+void LLAppViewer::chSpam(const LLSD &data)
+{
+        if(ch_spam.getStarted())
+        {
+                ch_spam.stop();
+        }
+        chatSpamOn = (bool)data.asBoolean();
+        if(!chatSpamOn)
+        {
+                if(!last_chatters.empty())
+                {
+                        last_chatters.erase(last_chatters.begin(),last_chatters.end());
+                }
+                if(!blacklisted_chatters.empty())
+                {
+                        blacklisted_chatters.erase(blacklisted_chatters.begin(),blacklisted_chatters.end());
+                }
+        }
+}
 void LLAppViewer::dSpam(const LLSD &data)
 {
         if(d_spam.getStarted())
@@ -622,6 +640,14 @@ void LLAppViewer::setSpamCount(const LLSD &data)
 void LLAppViewer::setSpamTime(const LLSD &data)
 {
         spamTime=data.asReal();
+}
+void LLAppViewer::setChatSpamCount(const LLSD &data)
+{
+        chatSpamCount=data.asReal();
+}
+void LLAppViewer::setChatSpamTime(const LLSD &data)
+{
+        chatSpamTime=data.asReal();
 }
 bool LLAppViewer::init()
 {
@@ -917,6 +943,23 @@ bool LLAppViewer::init()
 	gSimFrames = (F32)gFrameCount;
 
 	LLViewerJoystick::getInstance()->init(false);
+
+        gSavedSettings.getControl("EmeraldGeneralSpamEnabled")->getSignal()->connect(&gSpam);
+        generalSpamOn = gSavedSettings.getBOOL("EmeraldGeneralSpamEnabled");
+        gSavedSettings.getControl("EmeraldChatSpamEnabled")->getSignal()->connect(&chSpam);
+        chatSpamOn = gSavedSettings.getBOOL("EmeraldChatSpamEnabled");
+        gSavedSettings.getControl("EmeraldDialogSpamEnabled")->getSignal()->connect(&dSpam);
+        dialogSpamOn = gSavedSettings.getBOOL("EmeraldDialogSpamEnabled");
+        gSavedSettings.getControl("EmeraldCardSpamEnabled")->getSignal()->connect(&cSpam);
+        callingSpamOn = gSavedSettings.getBOOL("EmeraldCardSpamEnabled");
+        gSavedSettings.getControl("EmeraldSpamTime")->getSignal()->connect(&setSpamTime);
+        spamTime = gSavedSettings.getF32("EmeraldSpamTime");
+        gSavedSettings.getControl("EmeraldSpamCount")->getSignal()->connect(&setSpamCount);
+        spamCount = gSavedSettings.getF32("EmeraldSpamCount");
+        gSavedSettings.getControl("EmeraldChatSpamTime")->getSignal()->connect(&setChatSpamTime);
+        chatSpamTime = gSavedSettings.getF32("EmeraldChatSpamTime");
+        gSavedSettings.getControl("EmeraldChatSpamCount")->getSignal()->connect(&setChatSpamCount);
+        chatSpamCount = gSavedSettings.getF32("EmeraldChatSpamCount");
 
 	return true;
 }
@@ -1302,13 +1345,16 @@ bool LLAppViewer::cleanup()
 	llinfos << "Settings patched up" << llendflush;
 
 	// delete some of the files left around in the cache.
-	removeCacheFiles("*.wav");
+	if (!gSavedSettings.getBOOL("EmeraldKeepUnpackedCacheFiles"))
+	{
+		removeCacheFiles("*.wav");
+		removeCacheFiles("*.lso");
+		removeCacheFiles("*.dsf");
+		removeCacheFiles("*.bodypart");
+		removeCacheFiles("*.clothing");
+	}
 	removeCacheFiles("*.tmp");
-	removeCacheFiles("*.lso");
 	removeCacheFiles("*.out");
-	removeCacheFiles("*.dsf");
-	removeCacheFiles("*.bodypart");
-	removeCacheFiles("*.clothing");
 
 	llinfos << "Cache files removed" << llendflush;
 
@@ -2362,9 +2408,12 @@ void LLAppViewer::cleanupSavedSettings()
 
 	gSavedSettings.setBOOL("FlyBtnState", FALSE);
 
-	gSavedSettings.setBOOL("FirstPersonBtnState", FALSE);
-	gSavedSettings.setBOOL("ThirdPersonBtnState", TRUE);
-	gSavedSettings.setBOOL("BuildBtnState", FALSE);
+	//gSavedSettings.setBOOL("FirstPersonBtnState", FALSE);
+	//gSavedSettings.setBOOL("ThirdPersonBtnState", TRUE);
+	//gSavedSettings.setBOOL("BuildBtnState", FALSE);
+	LLAgent::sFirstPersonBtnState = FALSE;
+	LLAgent::sThirdPersonBtnState = TRUE;
+	LLAgent::sBuildBtnState = FALSE;
 
 	gSavedSettings.setBOOL("UseEnergy", TRUE);				// force toggle to turn off, since sends message to simulator
 
@@ -2937,6 +2986,19 @@ bool LLAppViewer::initCache()
 			gSavedSettings.setS32("LocalCacheVersion", cache_version);
 		}
 	}
+	std::string invcache = gSavedSettings.getString("EmeraldPurgeInvCache");
+	if(invcache != "")
+	{
+		gSavedSettings.setString("EmeraldPurgeInvCache","");
+		std::string agent_id_str = invcache;
+		std::string inventory_filename;
+		std::string path(gDirUtilp->getExpandedFilename(LL_PATH_CACHE, agent_id_str));
+		inventory_filename = llformat("%s.inv", path.c_str());
+		std::string gzip_filename(inventory_filename);
+		gzip_filename.append(".gz");
+		LLFile::remove(inventory_filename);
+		LLFile::remove(gzip_filename);
+	}
 	
 	// We have moved the location of the cache directory over time.
 	migrateCacheDirectory();
@@ -2944,6 +3006,7 @@ bool LLAppViewer::initCache()
 	// Setup and verify the cache location
 	std::string cache_location = gSavedSettings.getString("CacheLocation");
 	std::string new_cache_location = gSavedSettings.getString("NewCacheLocation");
+	gDirUtilp->mm_setsnddir(gSavedSettings.getString("Emeraldmm_sndcacheloc"));
 	if (new_cache_location != cache_location)
 	{
 		gDirUtilp->setCacheDir(gSavedSettings.getString("CacheLocation"));
@@ -3963,7 +4026,7 @@ void LLAppViewer::idleNetwork()
 	// Check that the circuit between the viewer and the agent's current
 	// region is still alive
 	LLViewerRegion *agent_region = gAgent.getRegion();
-	if (agent_region)
+	if (agent_region && LLStartUp::getStartupState() == STATE_STARTED) //fixes lost connection on login
 	{
 		LLUUID this_region_id = agent_region->getRegionID();
 		bool this_region_alive = agent_region->isAlive();

@@ -824,23 +824,7 @@ class Linux_i686Manifest(LinuxManifest):
             # Emerald-specific addons
             self.path("libotr.so.2.2.0", "libotr.so.2")
             self.path("libhunspell-1.2.so.0.0.0", "libhunspell-1.2.so.0")
-            
-            # Libnotify is built against relatively new atk/gtk/glib/cairo/pango/kitchensink.
-            # So, let's just package all of it to avoid incompatibility with older distros. [Disc]
-            self.path("libatk-1.0.so.0.3009.1", "libatk-1.0.so.0")
-            self.path("libcairo.so.2.10800.10", "libcairo.so.2")
-            self.path("libgdk_pixbuf-2.0.so.0.2000.0", "libgdk_pixbuf-2.0.so.0")
-            self.path("libgdk-x11-2.0.so.0.2000.0", "libgdk-x11-2.0.so.0")
-            self.path("libgio-2.0.so.0.2400.0", "libgio-2.0.so.0")
-            self.path("libglib-2.0.so.0.2400.0", "libglib-2.0.so.0")
-            self.path("libgmodule-2.0.so.0.2400.0", "libgmodule-2.0.so.0")
-            self.path("libgobject-2.0.so.0.2400.0", "libgobject-2.0.so.0")
-            self.path("libgthread-2.0.so.0.2400.0", "libgthread-2.0.so.0")
-            self.path("libgtk-x11-2.0.so.0.2000.0", "libgtk-x11-2.0.so.0")
-            self.path("libpango-1.0.so.0.2800.0", "libpango-1.0.so.0")
-            self.path("libpangocairo-1.0.so.0.2800.0", "libpangocairo-1.0.so.0")
-            self.path("libpangoft2-1.0.so.0.2800.0", "libpangoft2-1.0.so.0")
-            self.path("libnotify.so.1.1.3", "libnotify.so.1")
+            self.path("libnotify.so.1.1.2", "libnotify.so.1")
             
             self.end_prefix("lib")
 

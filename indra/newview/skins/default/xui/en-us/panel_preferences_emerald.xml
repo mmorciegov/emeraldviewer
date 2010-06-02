@@ -136,7 +136,7 @@
 					 name="EmeraldHelp_Shields" tool_tip="Click here for help regarding the settings in this page."
 					 right="490" width="18"/>
 				
-                                <panel name="antispam_options" left="10" width="480" height="116" bottom_delta="-131"
+                                <panel name="antispam_options" left="10" width="480" height="186" bottom_delta="-171"
                                          border="true" mouse_opaque="true" bevel_style="in" background_visible="true" background_opaque="true"
                                          follows="top|left" bg_opaque_color="0,0,0,0.1" bg_alpha_color="blue" can_resize="false">
                                         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
@@ -145,6 +145,9 @@
                                         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
                                                  initial_value="false" label="CallingCard Anti-Spam" left_delta="0" mouse_opaque="true"
                                                  name="card_spam_prevention" radio_style="false" width="270" control_name="EmeraldCardSpamEnabled"/>
+                                        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+                                                 initial_value="false" label="Chat Anti-Spam" left_delta="0" mouse_opaque="true"
+                                                 name="chat_spam_prevention" radio_style="false" width="270" control_name="EmeraldChatSpamEnabled"/>
                                         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
                                                  initial_value="false" label="General Anti-Spam" left_delta="0" mouse_opaque="true"
                                                  name="general_spam_prevention" radio_style="false" width="270" control_name="EmeraldGeneralSpamEnabled"/>
@@ -156,7 +159,15 @@
                                                  label="Time" label_width="50" left_delta="0" bottom_delta="-25" max_val="2"
                                                  min_val="0" name="Time" tool_tip="Controls the amount of time you want between count refreshing."
                                                  width="110" control_name="EmeraldSpamTime"/>
-                                        <view_border bevel_style="none" border_thickness="1" bottom_delta="0" follows="top|left" height="106"
+                                        <spinner decimal_digits="1" follows="left|top" height="18" increment="1" initial_val="0"
+                                                 label="Count" label_width="50" left_delta="0" bottom_delta="-25" max_val="7"
+                                                 min_val="0" name="ChatCount" tool_tip="Controls the number of chat spam items per time to set off the trigger"
+                                                 width="110" control_name="EmeraldChatSpamCount"/>
+                                        <spinner decimal_digits="1" follows="left|top" height="18" increment="1" initial_val="0"
+                                                 label="Time" label_width="50" left_delta="0" bottom_delta="-25" max_val="2"
+                                                 min_val="0" name="ChatTime" tool_tip="Controls the amount of time you want between chat count refreshing."
+                                                 width="110" control_name="EmeraldChatSpamTime"/>
+                                        <view_border bevel_style="none" border_thickness="1" bottom_delta="0" follows="top|left" height="176"
                                                  left="175" name="EmDivisor" width="0"/>
                                         <text bottom_delta="65" follows="left|top" font="SansSerifSmall" height="16" left_delta="5"
                                                  name="loltxt" width="512">To clear the blacklist, turn the protection off and back on.

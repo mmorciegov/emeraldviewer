@@ -87,14 +87,14 @@
             <key>linux</key>
             <map>
             <key>md5sum</key>
-            <string>f2cef5ea31ce9eb56051db8a8f4f32bd</string>
+            <string>f51e2295cc1f88700d79f618be4b5c22</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/libotr-3.2.0-linux-20100503.tar.bz2</uri>
+            <uri>http://modularsystems.sl/box/libotr-2.2.0-linux-20100522.tar.bz2</uri>
             </map>
             <key>darwin</key>
             <map>
             <key>md5sum</key>
-            <string>9332b37a9a24f7b8108fdc1489536ca4</string>
+            <string>6e68314811d65a2e0ef3e338e1084f39</string>
             <key>url</key>
             <uri>http://modularsystems.sl/box/libotr-darwin.tar.bz2</uri>
             </map>
@@ -127,9 +127,9 @@
           <key>linux</key>
           <map>
             <key>md5sum</key>
-            <string>b1cc6309eb52207ee4e37dabeaa1958e</string>
+            <string>dc389633048895349aea262cacf02e0a</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/libnotify-0.4.5-linux-20100517.tar.bz2</uri>
+            <uri>http://modularsystems.sl/box/libnotify-1.1.2-linux-20100522.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -421,7 +421,7 @@
         <key>copyright</key>
         <string>Copyright (C) 2002, 2003 CodeFactory AB / Copyright (C) 2003, 2004 Red Hat, Inc.</string>
         <key>description</key>
-        <string>dbus/dbus-glib: headers only</string>
+        <string>dbus/dbus-glib headers and libs</string>
         <key>license</key>
         <string>AFL2.1</string>
         <key>packages</key>
@@ -429,9 +429,9 @@
           <key>linux</key>
           <map>
             <key>md5sum</key>
-            <string>eb25444142d4102b0ce1b7ffaadb071e</string>
+            <string>c2e2c2aa40bbd92f4d3b939ebd963aa2</string>
             <key>url</key>
-            <uri>http://s3.amazonaws.com/viewer-source-downloads/install_pkgs/dbusglib-linux-20080707.tar.bz2</uri>
+            <uri>http://modularsystems.sl/box/dbus-glib-2.1.0-linux-20100523.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -736,9 +736,9 @@
           <key>linux</key>
           <map>
             <key>md5sum</key>
-            <string>4d67efd2e7e8289be5602f4c368abbf9</string>
+            <string>5286e04c3fbc7c11b5e9390131e63a46</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/gtk-atk-pango-glib-cairo-linux-20100519.tar.bz2</uri>
+            <uri>http://modularsystems.sl/box/gtk-build-libs-linux-20100523.tar.bz2</uri>
           </map>
           <key>windows</key>
           <map>

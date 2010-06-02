@@ -48,8 +48,11 @@ public:
 
 private:
 	static void onClickClearCache(void*);
+	static void onClickClearInvCache(void*);
 	static void onClickSetCache(void*);
 	static void onClickResetCache(void*);
+	static void onClickSetSoundCache(void*);
+	static void onClickResetSoundCache(void*);
 	static void onCommitPort(LLUICtrl* ctrl, void*);
 	static void onCommitSocks5ProxyEnabled(LLUICtrl* ctrl, void* data);
 	static void onClickTestProxy(void* user_data);

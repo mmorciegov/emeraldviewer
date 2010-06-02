@@ -231,6 +231,11 @@ static LLFrameTimer g_spam;
 extern std::map< std::string , S32 > lastg_agents;
 extern LLDynamicArray< std::string > blacklisted_objects;
 
+extern bool chatSpamOn;
+static LLFrameTimer ch_spam;
+extern std::map< std::string , S32 > last_chatters;
+extern LLDynamicArray< std::string > blacklisted_chatters;
+
 extern bool dialogSpamOn;
 static LLFrameTimer d_spam;
 extern std::map< std::string , S32 > lastd_names;
@@ -243,6 +248,8 @@ extern LLDynamicArray<LLUUID> blacklisted_agents;
 
 extern F32 spamTime;
 extern F32 spamCount;
+extern F32 chatSpamTime;
+extern F32 chatSpamCount;
 
 #endif
 

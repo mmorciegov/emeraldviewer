@@ -99,6 +99,8 @@ public:
 	LLPanelAvatarFirstLife(const std::string& name, const LLRect &rect, LLPanelAvatar* panel_avatar);
 
 	/*virtual*/ BOOL postBuild(void);
+	static void onClickImage(			void *userdata);
+	
 
 	void enableControls(BOOL own_avatar);
 };
@@ -259,6 +261,8 @@ public:
 private:
 	static void onClickNew(void* data);
 	static void onClickDelete(void* data);
+	static void onClickImport(void* data);
+	static void onClickExport(void* data);
 
 	bool callbackDelete(const LLSD& notification, const LLSD& response);
 };

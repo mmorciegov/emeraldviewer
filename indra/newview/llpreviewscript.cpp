@@ -875,7 +875,7 @@ void LLScriptEdCore::xedLaunch()
 	CFRelease(tempPath);
 	CFRelease(strPath);
 #else
-	std::system(std::string(gSavedSettings.getString("EmeraldLSLExternalEditor") + " " + mXfname).c_str());
+	//std::system(std::string(gSavedSettings.getString("EmeraldLSLExternalEditor") + " " + mXfname).c_str());
 #endif
 }
 void LLScriptEdCore::XedUpd()

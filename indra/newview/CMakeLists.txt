@@ -238,7 +238,7 @@ set(viewer_SOURCE_FILES
     llfloatersnapshot.cpp
     llfloaterstats.cpp
     llfloatertelehub.cpp
-    llfloaterteleport.cpp
+	llfloaterteleporthistory.cpp
     llfloatertest.cpp
     llfloatertools.cpp
     llfloatertopobjects.cpp
@@ -528,10 +528,6 @@ if (LINUX)
       llviewerjointmesh_sse2.cpp
       PROPERTIES COMPILE_FLAGS "-msse2 -mfpmath=sse"
       )
-  set_source_files_properties(
-      llpreviewscript.cpp
-      COMPILE_FLAGS "-Wno-error=unused-result"
-      )
 endif (LINUX)
 
 set(viewer_HEADER_FILES
@@ -677,6 +673,7 @@ set(viewer_HEADER_FILES
     llfloaternotificationsconsole.h
     llfloaterobjectiminfo.h
     llfloateropenobject.h
+	llfloaterteleporthistory.h
     llfloaterparcel.h
     llfloaterpermissionsmgr.h
     llfloaterpostcard.h
@@ -692,7 +689,6 @@ set(viewer_HEADER_FILES
     llfloatersnapshot.h
     llfloaterstats.h
     llfloatertelehub.h
-    llfloaterteleport.h
     llfloatertest.h
     llfloatertools.h
     llfloatertopobjects.h

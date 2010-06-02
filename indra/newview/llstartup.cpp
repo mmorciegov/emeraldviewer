@@ -194,7 +194,7 @@
 #include "jcfloater_animation_list.h"
 #include "jcfloater_areasearch.h"
 #include "lgghunspell_wrapper.h"
-
+#include "llfloaterteleporthistory.h"
 #include "wlfPanel_AdvSettings.h"
 
 // [RLVa:KB]
@@ -738,7 +738,7 @@ void update_texture_fetch()
 void pass_process_sound_trigger(LLMessageSystem* msg,void**)
 {
 	process_sound_trigger(msg,0);
-	FloaterAvatarList::processSoundTrigger(msg,0);
+	LLFloaterAvatarList::processSoundTrigger(msg,0);
 	JCLSLBridge::processSoundTrigger(msg,0);
 }
 bool idle_startup()
@@ -2618,13 +2618,13 @@ bool idle_startup()
 		if (gSavedSettings.getBOOL("ShowAvatarList"))
 		{
 			//FloaterAvatarList::showInstance();
-			FloaterAvatarList::toggle();
+			LLFloaterAvatarList::toggle(NULL);
 		}
 		else if (gSavedSettings.getBOOL("EmeraldAvatarListKeepOpen"))
 		{
 			//FloaterAvatarList::showInstance();
-			FloaterAvatarList::toggle();
-			FloaterAvatarList::toggle();
+			LLFloaterAvatarList::toggle(NULL);
+			LLFloaterAvatarList::toggle(NULL);
 		}
 
 		if (gSavedSettings.getBOOL("BeaconAlwaysOn"))
@@ -3398,6 +3398,11 @@ bool idle_startup()
 		set_startup_status(1.0, "", "");
 
 		LLVOAvatar::loadClientTags();
+		// Add login location to teleport history 'teleported-into'
+		LLVector3 agent_pos=gAgent.getPositionAgent();
+		LLViewerRegion* regionp = gAgent.getRegion();
+		gFloaterTeleportHistory->addEntry(regionp->getName(),(S16)agent_pos.mV[0],(S16)agent_pos.mV[1],(S16)agent_pos.mV[2],false);
+
 		// Let the map know about the inventory.
 		if(gFloaterWorldMap)
 		{
@@ -3998,7 +4003,7 @@ void pass_processAvatarPropertiesReply(LLMessageSystem *msg, void**)
 {
 	// send it to 'observers'
 	LLPanelAvatar::processAvatarPropertiesReply(msg,0);
-	FloaterAvatarList::processAvatarPropertiesReply(msg,0);
+	LLFloaterAvatarList::processAvatarPropertiesReply(msg,0);
 }
 
 void pass_processObjectPropertiesFamily(LLMessageSystem *msg, void**)
