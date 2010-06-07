@@ -282,12 +282,28 @@ LLScriptEdCore::LLScriptEdCore(
 			tooltips.push_back(desc);
 		}
 	}
+
+	//gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,"keywords.ini")
+	std::string keyword_path = gDirUtilp->getUserSkinDir()+gDirUtilp->getDirDelimiter()+"keywords.ini";
+	if(!LLFile::isfile(keyword_path))
+	{
+		llinfos << "nothing at " << keyword_path << llendl;
+		keyword_path = gDirUtilp->getSkinDir()+gDirUtilp->getDirDelimiter()+"keywords.ini";
+		if(!LLFile::isfile(keyword_path))
+		{
+			llinfos << "nothing at " << keyword_path << " ; will use default" << llendl;
+			keyword_path = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,"keywords.ini");
+		}
+	}else
+	{
+		llinfos << "loaded skin-specific keywords from " << keyword_path << llendl;
+	}
 	
 	//LLColor3 color(0.5f, 0.0f, 0.15f);
 	LLColor3 color(gSavedSettings.getColor3("EmeraldColorllFunction"));
 	if(mPostEditor)
 	{
-		mPostEditor->loadKeywords(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,"keywords.ini"), funcs, tooltips, color);
+		mPostEditor->loadKeywords(keyword_path, funcs, tooltips, color);
 		mEditor->addToken(LLKeywordToken::WORD,"#assert",LLColor3(0.0f,0.0f,0.8f),
 			std::string("Preprocessor command. See Advanced menu of the script editor."));
 		mEditor->addToken(LLKeywordToken::WORD,"#define",LLColor3(0.0f,0.0f,0.8f),
@@ -341,7 +357,7 @@ LLScriptEdCore::LLScriptEdCore(
 
 		//couldn'tr define in file because # represented a comment
 	}
-	mEditor->loadKeywords(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS,"keywords.ini"), funcs, tooltips, color);
+	mEditor->loadKeywords(keyword_path, funcs, tooltips, color);
 
 	std::vector<std::string> primary_keywords;
 	std::vector<std::string> secondary_keywords;

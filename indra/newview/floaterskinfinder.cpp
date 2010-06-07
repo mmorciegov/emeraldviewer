@@ -41,8 +41,7 @@
 #include "llviewercontrol.h"
 #include "llfloaterpreference.h"
 
-//TODO: change URL. Be nice if I actually had write access to anything useful.
-FloaterSkinfinder::FloaterSkinfinder(const LLSD& key = LLSD()) : LLFloaterHtmlSimple("http://lab.kathar.in/emeraldskins/")
+FloaterSkinfinder::FloaterSkinfinder(const LLSD& key = LLSD()) : LLFloaterHtmlSimple("http://modularsystems.sl/app/skins/")
 {
 	setTrusted(true);
 	setTitle("Skin Browser");
@@ -120,7 +119,6 @@ void FloaterSkinfinderHandler::notificationCallback(const LLSD& notification, co
 		return;
 	}
 	
-	//TODO: change URL.
 	std::string url = llformat("http://modularsystems.sl/box/skins7z/%s.7z", skin_name.c_str());
 	
 	LL_INFOS("SkinDownload") << "Downloading '" << display_name << "' (" << skin_name << ") skin from " << url << LL_ENDL;
