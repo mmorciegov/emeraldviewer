@@ -4,7 +4,7 @@
  *
  * $LicenseInfo:firstyear=2007&license=viewergpl$
  * 
- * Copyright (c) 2007-2009, Linden Research, Inc.
+ * Copyright (c) 2007-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -34,6 +34,9 @@
 #include "llviewerprecompiledheaders.h"
 #include "llappviewer.h"
 #include "llprimitive.h"
+
+#include "hippoGridManager.h"
+#include "hippoLimits.h"
 
 #include "llversionviewer.h"
 #include "llfeaturemanager.h"
@@ -295,7 +298,7 @@ static BOOL gDoDisconnect = FALSE;
 static std::string gLaunchFileOnQuit;
 
 // Used on Win32 for other apps to identify our window (eg, win_setup)
-const char* const VIEWER_WINDOW_CLASSNAME = "Emerald Viewer";
+const char* const VIEWER_WINDOW_CLASSNAME = "Second Life"; // Don't change this.
 
 //----------------------------------------------------------------------------
 // File scope definitons
@@ -463,40 +466,6 @@ static void settings_modify()
 	gSavedSettings.setU32("VectorizeProcessor", 0 );
 	gSavedSettings.setBOOL("VectorizeSkin", FALSE);
 #endif
-}
-
-void LLAppViewer::initGridChoice()
-{
-	// Load	up the initial grid	choice from:
-	//	- hard coded defaults...
-	//	- command line settings...
-	//	- if dev build,	persisted settings...
-
-	// Set the "grid choice", this is specified	by command line.
-	std::string	grid_choice	= gSavedSettings.getString("CmdLineGridChoice");
-	LLViewerLogin* vl = LLViewerLogin::getInstance();
-	vl->setGridChoice(grid_choice);
-
-	// Load last server choice by default 
-	// ignored if the command line grid	choice has been	set
-	if(grid_choice.empty() && vl->getGridChoice() != GRID_INFO_OTHER)
-	{
-		S32	server = gSavedSettings.getS32("ServerChoice");
-		std::string custom_server = gSavedSettings.getString("CustomServer");
-		server = llclamp(server, 0,	(S32)GRID_INFO_COUNT - 1);
-		if(server == GRID_INFO_OTHER && !custom_server.empty())
-		{
-			vl->setGridChoice(custom_server);
-		}
-		else if(server != (S32)GRID_INFO_NONE && server != GRID_INFO_OTHER)
-		{
-			vl->setGridChoice((EGridInfo)server);
-		}
-		else
-		{
-			vl->setGridChoice(DEFAULT_GRID_CHOICE);
-		}
-	}
 }
 
 //virtual
@@ -2019,7 +1988,14 @@ bool LLAppViewer::initConfiguration()
         }
     }
 
-    initGridChoice();
+	if (!gHippoGridManager) {
+		gHippoGridManager = new HippoGridManager();
+		gHippoGridManager->init();
+	}
+
+	if (!gHippoLimits) {
+		gHippoLimits = new HippoLimits();
+	}
 
 	// If we have specified crash on startup, set the global so we'll trigger the crash at the right time
 	if(clp.hasOption("crashonstartup"))
@@ -3830,65 +3806,16 @@ void LLAppViewer::idleShutdown()
 	}
 }
 
-// OGPX : Instead of sending UDP messages to the sim, tell the Agent Domain about logoff
-//... This responder is used with rez_avatar/place when the specialized case
-//... of sending a null region name is sent to the agent domain. Null region name means
-//... log me off of agent domain. *But* what about cases where you want to be logged into
-//... agent domain, but not physically on a region? 
-class LLLogoutResponder :
-	public LLHTTPClient::Responder
-{
-public:
-	LLLogoutResponder()
-	{
-	}
-
-	~LLLogoutResponder()
-	{
-	}
-	
-	void error(U32 statusNum, const std::string& reason)
-	{		
-		// consider retries
-		llinfos << "LLLogoutResponder error "
-				<< statusNum << " " << reason << llendl;
-	}
-
-	void result(const LLSD& content)
-	{
-		// perhaps logoutReply should come through this in the future
-		llinfos << "LLLogoutResponder completed successfully" << llendl;
-	
-	}
-
-};
-
-
 void LLAppViewer::sendLogoutRequest()
 {
 	if(!mLogoutRequestSent)
 	{
-
-		if (!gSavedSettings.getBOOL("OpenGridProtocol")) // OGPX : if not OGP mode, then tell sim bye
-		{
 		LLMessageSystem* msg = gMessageSystem;
 		msg->newMessageFast(_PREHASH_LogoutRequest);
 		msg->nextBlockFast(_PREHASH_AgentData);
 		msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID() );
 		msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
 		gAgent.sendReliableMessage();
-		}
-		else 
-		{
-			// OGPX : Send log-off to Agent Domain instead of sim. This is done via HTTP using the
-			// rez_avatar/place cap. Also, note that sending a null region is how a 
-			// "logoff" is indicated.
-			LLSD args;
-			args["public_region_seed_capability"] = "";
-			std::string cap = LLAppViewer::instance()->getPlaceAvatarCap();
-			LLHTTPClient::post(cap, args, new LLLogoutResponder());
-		}
-
 
 		gLogoutTimer.reset();
 		gLogoutMaxTime = LOGOUT_REQUEST_TIME;

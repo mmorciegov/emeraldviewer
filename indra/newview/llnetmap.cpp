@@ -361,9 +361,10 @@ void LLNetMap::draw()
 
 		// Draw avatars
 //		LLColor4 mapcolor = gAvatarMapColor;
-		LLColor4 avatar_color = gColors.getColor( "MapAvatar" );
+		static LLColor4* sMapAvatar = rebind_llcontrol<LLColor4>("MapAvatar", &gColors, true);
+		LLColor4 avatar_color = (*sMapAvatar).getValue();
 
-		LLColor4 standard_color = gColors.getColor( "MapAvatar" );
+		LLColor4 standard_color = avatar_color;
 		//LLColor4 friend_color = gColors.getColor( "MapFriend" );
 // [RLVa:KB] - Version: 1.23.4 | Alternate: Snowglobe-1.2.4 | Checked: 2009-07-08 (RLVa-1.0.0e) | Modified: RLVa-0.2.0b
 		LLColor4 friend_color = (!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) ? gColors.getColor("MapFriend") : avatar_color;

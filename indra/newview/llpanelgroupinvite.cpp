@@ -135,11 +135,13 @@ void LLPanelGroupInvite::impl::addUsers(const std::vector<std::string>& names,
 			continue;
 		}
 
+		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
 		//add the name to the names list
 		LLSD row;
 		row["id"] = id;
 		row["columns"][0]["value"] = name;
-		row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+		row["columns"][0]["color"] = (*sDefaultListText).getValue();
 
 		mInvitees->addElement(row);
 	}

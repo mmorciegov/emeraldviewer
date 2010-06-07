@@ -185,7 +185,8 @@ void LLDrawPoolBump::prerender()
 // static
 S32 LLDrawPoolBump::numBumpPasses()
 {
-	if (gSavedSettings.getBOOL("RenderObjectBump"))
+	static BOOL* sRenderObjectBump = rebind_llcontrol<BOOL>("RenderObjectBump", &gSavedSettings, true);
+	if (*sRenderObjectBump)
 	{
 		if (mVertexShaderLevel > 1)
 		{
@@ -583,6 +584,11 @@ BOOL LLDrawPoolBump::bindBumpMap(LLDrawInfo& params, S32 channel)
 	case BE_DARKNESS:
 		if( tex )
 		{
+			if(tex->getID()== IMG_DEFAULT)
+			{
+				return TRUE;
+			}
+
 			bump = gBumpImageList.getBrightnessDarknessImage( tex, bump_code );
 		}
 		break;

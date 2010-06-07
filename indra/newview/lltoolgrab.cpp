@@ -4,7 +4,7 @@
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
  * 
- * Copyright (c) 2001-2009, Linden Research, Inc.
+ * Copyright (c) 2001-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -64,6 +64,7 @@
 #include "llvoavatar.h"
 #include "llworld.h"
 
+#include "hippoLimits.h"
 // [RLVa:KB]
 #include "rlvhandler.h"
 // [/RLVa:KB]
@@ -637,9 +638,10 @@ void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 			}
 
 			// For safety, cap heights where objects can be dragged
-			if (grab_point_global.mdV[VZ] > MAX_OBJECT_Z)
+			float maxHeight = gHippoLimits->getMaxHeight();
+			if (grab_point_global.mdV[VZ] > maxHeight)
 			{
-				grab_point_global.mdV[VZ] = MAX_OBJECT_Z;
+				grab_point_global.mdV[VZ] = maxHeight;
 			}
 
 			grab_point_global = LLWorld::getInstance()->clipToVisibleRegions(mDragStartPointGlobal, grab_point_global);

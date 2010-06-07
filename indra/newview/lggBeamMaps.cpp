@@ -91,29 +91,30 @@ LLSD lggBeamMaps::getPic(std::string filename)
 }
 LLColor4U lggBeamMaps::getCurrentColor(LLColor4U agentColor)
 {
-	std::string settingName = gSavedSettings.getString("EmeraldBeamColorFile");
 
-	if(settingName=="===OFF===") return agentColor;
+	static std::string* settingName = rebind_llcontrol<std::string >("EmeraldBeamColorFile", &gSavedSettings, true);
 
-	if(settingName != lastColorFileName)
+	if(*settingName == "===OFF===") return agentColor;
+
+	if(*settingName != lastColorFileName)
 	{
-		lastColorFileName=settingName;
+		lastColorFileName = *settingName;
 	
 		std::string path_name(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "beamsColors", ""));
 		std::string path_name2(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "beamsColors", ""));
-		std::string filename =path_name +settingName+".xml";
+		std::string filename = path_name + *settingName + ".xml";
 		if(gDirUtilp->fileExists(filename))
 		{
 		}else
 		{
-			filename =path_name2 +settingName+".xml";
+			filename = path_name2 + *settingName + ".xml";
 			if(!gDirUtilp->fileExists(filename))
 			{
 				return agentColor;
 			}
 		}
 
-		lastColorsData=lggBeamsColors::fromLLSD(getPic(filename));
+		lastColorsData = lggBeamsColors::fromLLSD(getPic(filename));
 	}
 	agentColor = beamColorFromData(lastColorsData);
 	
@@ -154,7 +155,8 @@ void lggBeamMaps::fireCurrentBeams(LLPointer<LLHUDEffectSpiral> mBeam, LLColor4U
 	for(int i = 0; i < (int)dots.size(); i++)
 	{
 		LLColor4U myColor = rgb;
-		if(	gSavedSettings.getString("EmeraldBeamColorFile")=="===OFF===")
+		static std::string* colorf = rebind_llcontrol<std::string >("EmeraldBeamColorFile", &gSavedSettings, true);
+		if(*colorf == "===OFF===")
 			myColor = dots[i].c;
 
 		F32 distanceAdjust = dist_vec(mBeam->getPositionGlobal(),gAgent.getPositionGlobal()) ;
@@ -196,21 +198,21 @@ void lggBeamMaps::forceUpdate()
 }
 F32 lggBeamMaps::setUpAndGetDuration()
 {
-	std::string settingName = gSavedSettings.getString("EmeraldBeamShape");
-	if(settingName != lastFileName)
+	static std::string* settingName = rebind_llcontrol<std::string>("EmeraldBeamShape", &gSavedSettings, true);
+	if(*settingName != lastFileName)
 	{
-		lastFileName=settingName;
-		if( settingName != "===OFF===" && settingName != "")
+		lastFileName = *settingName;
+		if( *settingName != "===OFF===" && *settingName != "")
 		{
 
 			std::string path_name(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "beams", ""));
 			std::string path_name2(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "beams", ""));
-			std::string filename =path_name +settingName+".xml";
+			std::string filename = path_name + *settingName + ".xml";
 			if(gDirUtilp->fileExists(filename))
 			{
 			}else
 			{
-				filename =path_name2 +settingName+".xml";
+				filename =path_name2 + *settingName +".xml";
 			}
 			LLSD mydata = getPic(filename);
 			scale = (F32)mydata["scale"].asReal()/10.0f;

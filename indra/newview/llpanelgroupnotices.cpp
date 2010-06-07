@@ -452,6 +452,9 @@ void LLPanelGroupNotices::processNotices(LLMessageSystem* msg)
 	BOOL has_attachment;
 	U8 asset_type;
 
+	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+
 	S32 i=0;
 	S32 count = msg->getNumberOfBlocks("Data");
 	for (;i<count;++i)
@@ -487,21 +490,21 @@ void LLPanelGroupNotices::processNotices(LLMessageSystem* msg)
 
 		row["columns"][1]["column"] = "subject";
 		row["columns"][1]["value"] = subj;
-		row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
+		row["columns"][1]["color"] = (*sDefaultListText).getValue();
 
 		row["columns"][2]["column"] = "from";
 		row["columns"][2]["value"] = name;
-		row["columns"][2]["color"] = gColors.getColor("DefaultListText").getValue();
+		row["columns"][2]["color"] = (*sDefaultListText).getValue();
 
 		std::string buffer = build_notice_date(t);
 		row["columns"][3]["column"] = "date";
 		row["columns"][3]["value"] = buffer;
-		row["columns"][3]["color"] = gColors.getColor("DefaultListText").getValue();
+		row["columns"][3]["color"] = (*sDefaultListText).getValue();
 
 		buffer = llformat( "%u", timestamp);
 		row["columns"][4]["column"] = "sort";
 		row["columns"][4]["value"] = buffer;
-		row["columns"][4]["color"] = gColors.getColor("DefaultListText").getValue();
+		row["columns"][4]["color"] = (*sDefaultListText).getValue();
 
 		mNoticesList->addElement(row, ADD_BOTTOM);
 	}

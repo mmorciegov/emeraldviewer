@@ -4,7 +4,7 @@
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
  * 
- * Copyright (c) 2001-2009, Linden Research, Inc.
+ * Copyright (c) 2001-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -122,6 +122,8 @@
 // [RLVa:KB]
 #include "rlvhandler.h"
 // [/RLVa:KB]
+
+#include "hippoLimits.h"
 
 #if LL_MSVC
 // disable boost::lexical_cast warning
@@ -1600,7 +1602,7 @@ void LLVOAvatar::getSpatialExtents(LLVector3& newMin, LLVector3& newMax)
 	LLVector3 pos = getRenderPosition();
 	newMin = pos - buffer;
 	newMax = pos + buffer;
-	float max_attachment_span = DEFAULT_MAX_PRIM_SCALE * 5.0f;
+	float max_attachment_span = gHippoLimits->getMaxPrimScale() * 5.0f;
 	
 	//stretch bounding box by joint positions
 	for (polymesh_map_t::iterator i = mMeshes.begin(); i != mMeshes.end(); ++i)
@@ -2765,6 +2767,7 @@ void LLVOAvatar::idleUpdateVoiceVisualizer(bool voice_enabled)
 			{
 				gAgent.clearAFK();
 			}
+			mIdleTimer.reset();
 		}
 		else
 		{
@@ -2925,6 +2928,7 @@ void LLVOAvatar::idleUpdateAppearanceAnimation()
 			{
 				gAgent.sendAgentSetAppearance();
 			}
+			mIdleTimer.reset();
 		}
 		else
 		{
@@ -3036,6 +3040,7 @@ void LLVOAvatar::idleUpdateLipSync(bool voice_enabled)
 		mLipSyncActive = true;
 		LLCharacter::updateVisualParams();
 		dirtyMesh();
+		mIdleTimer.reset();
 	}
 }
 
@@ -3245,13 +3250,19 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 	}
 	
 	const F32 time_visible = mTimeVisible.getElapsedTimeF32();
-	const F32 NAME_SHOW_TIME = gSavedSettings.getF32("RenderNameShowTime");	// seconds
-	const F32 FADE_DURATION = gSavedSettings.getF32("RenderNameFadeDuration"); // seconds
+
+	static F32* sRenderNameShowTime = rebind_llcontrol<F32>("RenderNameShowTime", &gSavedSettings, true);
+	static F32* sRenderNameFadeDuration = rebind_llcontrol<F32>("RenderNameFadeDuration", &gSavedSettings, true);
+	
+
+	const F32 NAME_SHOW_TIME = *sRenderNameShowTime;	// seconds
+	const F32 FADE_DURATION = *sRenderNameFadeDuration; // seconds
 // [RLVa:KB] - Checked: 2009-07-08 (RLVa-1.0.0e) | Added: RLVa-0.2.0b
 	bool fRlvShowNames = gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES);
 // [/RLVa:KB]
 	BOOL visible_avatar = isVisible() || mNeedsAnimUpdate;
-	BOOL visible_chat = gSavedSettings.getBOOL("UseChatBubbles") && (mChats.size() || mTyping);
+	static BOOL* sUseChatBubbles = rebind_llcontrol<BOOL>("UseChatBubbles", &gSavedSettings, true);
+	BOOL visible_chat = *sUseChatBubbles && (mChats.size() || mTyping);
 	BOOL render_name =	visible_chat ||
 						(visible_avatar &&
 // [RLVa:KB] - Checked: 2009-08-11 (RLVa-1.0.1h) | Added: RLVa-1.0.0h
@@ -3293,6 +3304,9 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 			mRenderGroupTitles = sRenderGroupTitles;
 			new_name = TRUE;
 		}
+
+		static LLColor4* sAvatarNameColor = rebind_llcontrol<LLColor4>("AvatarNameColor", &gColors, true);
+
 		std::string client;
 		// First Calculate Alpha
 		// If alpha > 0, create mNameText if necessary, otherwise delete it
@@ -3332,15 +3346,19 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 					sNumVisibleChatBubbles++;
 					new_name = TRUE;
 				}
-				
-				LLColor4 avatar_name_color = gColors.getColor( "AvatarNameColor" );
+
+				LLColor4 avatar_name_color = (*sAvatarNameColor);
 				if(!mIsSelf)
 					resolveClient(avatar_name_color,client, this);
-				if(!gSavedSettings.getBOOL("EmeraldChangeColorOnClient"))
+
+				static BOOL* sEmeraldChangeColorOnClient = rebind_llcontrol<BOOL>("EmeraldChangeColorOnClient", &gSavedSettings, true);
+				static BOOL* sEmeraldClientTagDisplay = rebind_llcontrol<BOOL>("EmeraldClientTagDisplay", &gSavedSettings, true);
+	
+				if(!*sEmeraldChangeColorOnClient)
 				{
-					avatar_name_color = gColors.getColor( "AvatarNameColor" );
+					avatar_name_color = (*sAvatarNameColor);
 				}
-				if(!gSavedSettings.getBOOL("EmeraldClientTagDisplay"))
+				if(!*sEmeraldClientTagDisplay)
 				{
 					client = "";
 				}
@@ -3385,6 +3403,9 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 			BOOL is_away = mSignaledAnimations.find(ANIM_AGENT_AWAY)  != mSignaledAnimations.end();
 			BOOL is_busy = mSignaledAnimations.find(ANIM_AGENT_BUSY) != mSignaledAnimations.end();
 			BOOL is_appearance = mSignaledAnimations.find(ANIM_AGENT_CUSTOMIZE) != mSignaledAnimations.end();
+
+			if((mNameAway && ! is_away) || (mNameBusy && ! is_busy) || (mNameAppearance && ! is_appearance)) mIdleTimer.reset();
+
 			BOOL is_muted;
 			if (mIsSelf)
 			{
@@ -3479,6 +3500,11 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 					line += "\n";
 					line += "(Editing Appearance)";
 				}
+				/*if(!mIsSelf && mIdleTimer.getElapsedTimeF32() > 120)
+				{
+					line += "\n";
+					line += getIdleTime();
+				}*/ //lol broken features
 				mNameAway = is_away;
 				mNameBusy = is_busy;
 				mNameMute = is_muted;
@@ -3491,6 +3517,7 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 
 			if (visible_chat)
 			{
+				mIdleTimer.reset();
 				mNameText->setDropShadow(TRUE);
 				mNameText->setFont(LLFontGL::getFontSansSerif());
 				mNameText->setTextAlignment(LLHUDText::ALIGN_TEXT_LEFT);
@@ -3505,7 +3532,7 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 				std::deque<LLChat>::iterator chat_iter = mChats.begin();
 				mNameText->clearString();
 
-				LLColor4 new_chat = gColors.getColor( "AvatarNameColor" );
+				LLColor4 new_chat = (*sAvatarNameColor);
 				LLColor4 normal_chat = lerp(new_chat, LLColor4(0.8f, 0.8f, 0.8f, 1.f), 0.7f);
 				LLColor4 old_chat = lerp(normal_chat, LLColor4(0.6f, 0.6f, 0.6f, 1.f), 0.7f);
 				if (mTyping && mChats.size() >= MAX_BUBBLE_CHAT_UTTERANCES) 
@@ -3562,12 +3589,13 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 						mNameText->addLine("...", new_chat);
 						break;
 					}
-
+					mIdleTimer.reset();
 				}
 			}
 			else
 			{
-				if (gSavedSettings.getBOOL("SmallAvatarNames"))
+				static BOOL* sSmallAvatarNames = rebind_llcontrol<BOOL>("SmallAvatarNames", &gSavedSettings, true);
+				if (*sSmallAvatarNames)
 				{
 					mNameText->setFont(LLFontGL::getFontSansSerif());
 				}
@@ -5190,6 +5218,15 @@ void LLVOAvatar::resetAnimations()
 	flushAllMotions();
 }
 
+std::string LLVOAvatar::getIdleTime()
+{
+	F32 elapsed_time = mIdleTimer.getElapsedTimeF32();
+	U32 minutes = (U32)(elapsed_time/60);
+	
+	std::string output = llformat("(idle %dmin)", minutes);
+	return output;
+}
+
 //-----------------------------------------------------------------------------
 // startMotion()
 // id is the asset if of the animation to start
@@ -5217,6 +5254,35 @@ BOOL LLVOAvatar::startMotion(const LLUUID& id, F32 time_offset)
 		gAgent.setAFK();
 	}
 
+	if( id == ANIM_AGENT_BUSY ||
+		id == ANIM_AGENT_CROUCH ||
+		id == ANIM_AGENT_CROUCHWALK ||
+		id == ANIM_AGENT_FEMALE_WALK ||
+		id == ANIM_AGENT_FLY ||
+		id == ANIM_AGENT_FLYSLOW ||
+		id == ANIM_AGENT_HOVER ||
+		id == ANIM_AGENT_HOVER_DOWN ||
+		id == ANIM_AGENT_HOVER_UP ||
+		id == ANIM_AGENT_JUMP ||
+		id == ANIM_AGENT_LAND ||
+		id == ANIM_AGENT_PRE_JUMP ||
+		id == ANIM_AGENT_RUN ||
+		id == ANIM_AGENT_SHOUT ||
+		id == ANIM_AGENT_SIT ||
+		id == ANIM_AGENT_SIT_FEMALE ||
+		id == ANIM_AGENT_SIT_GENERIC ||
+		id == ANIM_AGENT_SIT_GROUND ||
+		id == ANIM_AGENT_SIT_GROUND_CONSTRAINED ||
+		id == ANIM_AGENT_SNAPSHOT ||
+		id == ANIM_AGENT_STAND ||
+		id == ANIM_AGENT_TURNLEFT ||
+		id == ANIM_AGENT_TURNRIGHT ||
+		id == ANIM_AGENT_TYPE ||
+		id == ANIM_AGENT_WALK ||
+		id == ANIM_AGENT_WHISPER ||
+		id == ANIM_AGENT_WHISPER
+	)mIdleTimer.reset();
+
 	return LLCharacter::startMotion(id, time_offset);
 }
 
@@ -5238,6 +5304,10 @@ BOOL LLVOAvatar::stopMotion(const LLUUID& id, BOOL stop_immediate)
 	{
 		LLCharacter::stopMotion(ANIM_AGENT_SIT_FEMALE, stop_immediate);
 	}
+
+	if(id == ANIM_AGENT_AWAY ||
+		id == ANIM_AGENT_BUSY) 
+	mIdleTimer.reset();
 
 	return LLCharacter::stopMotion(id, stop_immediate);
 }

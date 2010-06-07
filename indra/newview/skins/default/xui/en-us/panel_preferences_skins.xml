@@ -4,10 +4,14 @@
      name="Skins panel" width="517">
           <text bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="16" left="200"
                name="EmSkin_txt1" width="512">Selected Skin</text>
-          <combo_box allow_text_entry="false" bottom_delta="-20" left_delta="-110" follows="left|top" height="18"
+          <combo_box allow_text_entry="false" bottom_delta="-20" left_delta="-175" follows="left|top" height="18"
 			max_chars="200" mouse_opaque="true" name="emrd_skin_combo" width="300"
 			control_name="emrd_skin_combo" tool_tip=""/>
-          <text bottom_delta="-22" follows="left|top" font="SansSerifSmall" height="16" left_delta="20"
+			<button follows="right|top" font="SansSerif" halign="center"
+				 height="24" label="Get More" label_selected="Get More"
+				 left_delta="350" bottom_delta="-4" mouse_opaque="true" name="emrd_skin_browser_button" scale_image="TRUE"
+				 width="120" />
+          <text bottom_delta="-22" follows="left|top" font="SansSerifSmall" height="16" left_delta="-260"
                name="EmSkin_txt2" width="512">Primary Author</text>
 		<view_border blevel_style="in" bottom_delta="-18" follows="left|top" height="16" left_delta="-0"
                mouse_opaque="false" name="emrd_box1" width="260"/>

@@ -15,17 +15,11 @@ Hover your mouse over the options for more help.
 	     label="?" label_selected="?" left="391" mouse_opaque="true"
 	     name="help_button" width="20" />
 	<line_editor bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
-	     bottom="-24" drop_shadow_visible="true" follows="left|top" font="SansSerif"
+	     bottom="-20" drop_shadow_visible="true" follows="left|top" font="SansSerif"
 	     h_pad="0" halign="left" height="16" label="Type your new group name here"
 	     left="7" max_length="35" mouse_opaque="true" name="group_name_editor"
 	     prevalidate="ascii" v_pad="0" width="300" />
-	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
-	     bottom="-20" drop_shadow_visible="true" follows="left|top"
-	     font="SansSerifBig" h_pad="0" halign="left" height="16" left="7"
-	     mouse_opaque="true" name="group_name" v_pad="0" width="300">
-		Type your new group name here
-	</text>
-	<text font="SansSerifSmall" name="prepend_founded_by">
+	<text bottom_delta="-12" font="SansSerifSmall" name="prepend_founded_by">
 		Founded by
 	</text>
 	<text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
@@ -34,11 +28,19 @@ Hover your mouse over the options for more help.
 	     mouse_opaque="true" name="founder_name" v_pad="0" width="200">
 		(waiting)
 	</text>
-	<text bottom_delta="-16" font="SansSerifSmall" halign="left" height="16"
+	<text font="SansSerifSmall" name="emerald_guuid-pre" follows="left|top" left="7" bottom="-50">
+		Group Key:
+	</text>
+      <name_editor bevel_style="in" border_style="line"
+			     border_thickness="1" bottom="-55" enabled="false" follows="left|top"
+			     font="SansSerifSmall" height="16" is_unicode="false" left_delta="65"
+			     max_length="254" mouse_opaque="false" name="groupkey_"
+			     width="256" />
+	<text bottom_delta="-20" font="SansSerifSmall" halign="left" height="16"
 	     name="group_charter_label" right="410" width="265">
 		Group Charter
 	</text>
-	<texture_picker bottom_delta="-129" follows="left|top" height="144"
+	<texture_picker bottom_delta="-130" follows="left|top" height="144"
 	      label="Group Insignia" left="7"
 	     mouse_opaque="true" name="insignia" tool_tip="Click to choose a picture"
 	     width="128" />

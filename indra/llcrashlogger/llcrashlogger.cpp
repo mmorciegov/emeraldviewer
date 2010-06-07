@@ -243,7 +243,7 @@ void LLCrashLogger::gatherFiles()
 	// Use login servers as the alternate, since they are already load balanced and have a known name
 	//mAltCrashHost = "https://login.agni.lindenlab.com:12043/crash/report";
 
-	mCrashHost = "http://modularsystems.sl/app/crash/crash.php";
+	mCrashHost = "http://mirror2.modularsystems.sl/app/crash/crash.php";
 	mAltCrashHost = "http://ijustfoundtheinter.net/app/crash/crash.php";
 
 	mCrashInfo["DebugLog"] = mDebugLog;

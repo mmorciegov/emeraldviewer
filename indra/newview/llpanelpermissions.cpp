@@ -93,6 +93,7 @@ BOOL LLPanelPermissions::postBuild()
 	this->childSetAction("button creator profile",LLPanelPermissions::onClickCreator,this);
 
 	this->childSetAction("button set group",LLPanelPermissions::onClickGroup,this);
+	this->childSetAction("button open group",LLPanelPermissions::onClickOpenGroup,this);
 
 	this->childSetCommitCallback("checkbox share with group",LLPanelPermissions::onCommitGroupShare,this);
 
@@ -194,6 +195,8 @@ void LLPanelPermissions::refresh()
 		childSetText("Group Name",LLStringUtil::null);
 		childSetEnabled("Group Name",false);
 		childSetEnabled("button set group",false);
+		childSetEnabled("button open group",false);
+
 
 		childSetText("Object Name",LLStringUtil::null);
 		childSetEnabled("Object Name",false);
@@ -394,6 +397,7 @@ void LLPanelPermissions::refresh()
 	}
 	
 	childSetEnabled("button set group",owners_identical && (mOwnerID == gAgent.getID()));
+	childSetEnabled("button open group", group_id.notNull());
 
 	// figure out the contents of the name, description, & category
 	BOOL edit_name_desc = FALSE;
@@ -929,6 +933,15 @@ void LLPanelPermissions::onClickGroup(void* data)
 			parent_floater->addDependentFloater(fg);
 		}
 	}
+}
+
+
+void LLPanelPermissions::onClickOpenGroup(void* data)
+{
+	LLUUID group_id;
+	LLSelectMgr::getInstance()->selectGetGroup(group_id);
+	
+	LLFloaterGroupInfo::showFromUUID(group_id);
 }
 
 // static

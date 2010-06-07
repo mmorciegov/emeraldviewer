@@ -40,6 +40,7 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "llfloatergroups.h"
+#include "llfloatergroupinvite.h"
 
 #include "message.h"
 #include "roles_constants.h"
@@ -57,6 +58,9 @@
 #include "llviewercontrol.h"
 #include "llviewerwindow.h"
 #include "llimview.h"
+
+#include "hippoLimits.h"
+
 
 // static
 std::map<const LLUUID, LLFloaterGroupPicker*> LLFloaterGroupPicker::sInstances;
@@ -199,7 +203,7 @@ void LLPanelGroups::reset()
 		group_list->operateOnAll(LLCtrlListInterface::OP_DELETE);
 	}
 	childSetTextArg("groupcount", "[COUNT]", llformat("%d",gAgent.mGroups.count()));
-	childSetTextArg("groupcount", "[MAX]", llformat("%d",MAX_AGENT_GROUPS));
+	childSetTextArg("groupcount", "[MAX]", llformat("%d", gHippoLimits->getMaxAgentGroups()));
 
 	init_group_list(getChild<LLScrollListCtrl>("group list"), gAgent.getGroupID());
 	enableButtons();
@@ -210,7 +214,7 @@ BOOL LLPanelGroups::postBuild()
 	childSetCommitCallback("group list", onGroupList, this);
 
 	childSetTextArg("groupcount", "[COUNT]", llformat("%d",gAgent.mGroups.count()));
-	childSetTextArg("groupcount", "[MAX]", llformat("%d",MAX_AGENT_GROUPS));
+	childSetTextArg("groupcount", "[MAX]", llformat("%d", gHippoLimits->getMaxAgentGroups()));
 
 	init_group_list(getChild<LLScrollListCtrl>("group list"), gAgent.getGroupID());
 
@@ -225,6 +229,8 @@ BOOL LLPanelGroups::postBuild()
 	childSetAction("Create", onBtnCreate, this);
 
 	childSetAction("Search...", onBtnSearch, this);
+
+	childSetAction("Invite...", onBtnInvite, this);
 
 	setDefaultBtn("IM");
 
@@ -265,7 +271,7 @@ void LLPanelGroups::enableButtons()
 		childDisable("IM");
 		childDisable("Leave");
 	}
-	if(gAgent.mGroups.count() < MAX_AGENT_GROUPS)
+	if(gAgent.mGroups.count() < gHippoLimits->getMaxAgentGroups())
 	{
 		childEnable("Create");
 	}
@@ -273,6 +279,15 @@ void LLPanelGroups::enableButtons()
 	{
 		childDisable("Create");
 	}
+	if (group_id.notNull() && gAgent.hasPowerInGroup(group_id, GP_MEMBER_INVITE))
+	{
+		LLPanelGroups::childEnable("Invite...");
+	}
+	else
+	{
+		LLPanelGroups::childDisable("Invite...");
+	}
+
 }
 
 
@@ -280,6 +295,12 @@ void LLPanelGroups::onBtnCreate(void* userdata)
 {
 	LLPanelGroups* self = (LLPanelGroups*)userdata;
 	if(self) self->create();
+}
+
+void LLPanelGroups::onBtnInvite(void* userdata)
+{
+	LLPanelGroups* self = (LLPanelGroups*)userdata;
+	if(self) self->invite();
 }
 
 void LLPanelGroups::onBtnActivate(void* userdata)
@@ -404,6 +425,22 @@ void LLPanelGroups::search()
 	LLFloaterDirectory::showGroups();
 }
 
+void LLPanelGroups::invite()
+{
+	LLCtrlListInterface *group_list = childGetListInterface("group list");
+	LLUUID group_id;
+
+	//if (group_list && (group_id = group_list->getCurrentID()).notNull())
+	
+	if (group_list)
+	{
+		group_id = group_list->getCurrentID();
+	}
+
+		LLFloaterGroupInvite::showForGroup(group_id);
+}
+
+
 // static
 bool LLPanelGroups::callbackLeaveGroup(const LLSD& notification, const LLSD& response)
 {
@@ -436,6 +473,9 @@ void init_group_list(LLScrollListCtrl* ctrl, const LLUUID& highlight_id, U64 pow
 	LLCtrlListInterface *group_list = ctrl->getListInterface();
 	if (!group_list) return;
 
+	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+
 	group_list->operateOnAll(LLCtrlListInterface::OP_DELETE);
 
 	for(S32 i = 0; i < count; ++i)
@@ -456,7 +496,7 @@ void init_group_list(LLScrollListCtrl* ctrl, const LLUUID& highlight_id, U64 pow
 			element["columns"][0]["value"] = group_datap->mName;
 			element["columns"][0]["font"] = "SANSSERIF";
 			element["columns"][0]["font-style"] = style;
-			element["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+			element["columns"][0]["color"] = (*sDefaultListText).getValue();
 
 			group_list->addElement(element, ADD_SORTED);
 		}
@@ -475,7 +515,7 @@ void init_group_list(LLScrollListCtrl* ctrl, const LLUUID& highlight_id, U64 pow
 		element["columns"][0]["value"] = "none"; // *TODO: Translate
 		element["columns"][0]["font"] = "SANSSERIF";
 		element["columns"][0]["font-style"] = style;
-		element["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+		element["columns"][0]["color"] = (*sDefaultListText).getValue();
 
 		group_list->addElement(element, ADD_TOP);
 	}

@@ -416,6 +416,9 @@ void LLPanelGroupLandMoney::impl::processGroupLand(LLMessageSystem* msg)
 		std::string sim_name;
 		std::string land_sku;
 		std::string land_type;
+
+		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
 		
 		for(S32 i = first_block; i < count; ++i)
 		{
@@ -462,22 +465,22 @@ void LLPanelGroupLandMoney::impl::processGroupLand(LLMessageSystem* msg)
 			row["columns"][0]["column"] = "name";
 			row["columns"][0]["value"] = name;
 			row["columns"][0]["font"] = "SANSSERIFSMALL";
-			row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+			row["columns"][0]["color"] = (*sDefaultListText).getValue();
 
 			row["columns"][1]["column"] = "location";
 			row["columns"][1]["value"] = location;
 			row["columns"][1]["font"] = "SANSSERIFSMALL";
-			row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
+			row["columns"][1]["color"] = (*sDefaultListText).getValue();
 			
 			row["columns"][2]["column"] = "area";
 			row["columns"][2]["value"] = area;
 			row["columns"][2]["font"] = "SANSSERIFSMALL";
-			row["columns"][2]["color"] = gColors.getColor("DefaultListText").getValue();
+			row["columns"][2]["color"] = (*sDefaultListText).getValue();
 			
 			row["columns"][3]["column"] = "type";
 			row["columns"][3]["value"] = land_type;
 			row["columns"][3]["font"] = "SANSSERIFSMALL";
-			row["columns"][3]["color"] = gColors.getColor("DefaultListText").getValue();
+			row["columns"][3]["color"] = (*sDefaultListText).getValue();
 			
 			// hidden is always last column
 			row["columns"][4]["column"] = "hidden";

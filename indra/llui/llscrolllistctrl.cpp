@@ -1732,7 +1732,10 @@ void LLScrollListCtrl::drawItems()
 		S32 max_columns = 0;
 
 		LLColor4 highlight_color = LLColor4::white;
-		F32 type_ahead_timeout = LLUI::sConfigGroup->getF32("TypeAheadTimeout");
+
+		static F32 *sTypeAheadTimeout = rebind_llcontrol<F32>("TypeAheadTimeout", LLUI::sConfigGroup, true);
+
+		F32 type_ahead_timeout = *sTypeAheadTimeout;
 		highlight_color.mV[VALPHA] = clamp_rescale(mSearchTimer.getElapsedTimeF32(), type_ahead_timeout * 0.7f, type_ahead_timeout, 0.4f, 0.f);
 
 		item_list::iterator iter;
@@ -2392,8 +2395,11 @@ BOOL LLScrollListCtrl::handleUnicodeCharHere(llwchar uni_char)
 		return FALSE;
 	}
 
+	static F32 *sTypeAheadTimeout = rebind_llcontrol<F32>("TypeAheadTimeout", LLUI::sConfigGroup, true);
+
+
 	// perform incremental search based on keyboard input
-	if (mSearchTimer.getElapsedTimeF32() > LLUI::sConfigGroup->getF32("TypeAheadTimeout"))
+	if (mSearchTimer.getElapsedTimeF32() > *sTypeAheadTimeout)
 	{
 		mSearchString.clear();
 	}

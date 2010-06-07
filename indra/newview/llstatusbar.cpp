@@ -237,11 +237,14 @@ void LLStatusBar::draw()
 {
 	refresh();
 
+	static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
+	static S32* sDropShadowFloater = rebind_llcontrol<S32>("DropShadowFloater", LLUI::sConfigGroup, true);
+
 	if (isBackgroundVisible())
 	{
 		gl_drop_shadow(0, getRect().getHeight(), getRect().getWidth(), 0, 
-			LLUI::sColorsGroup->getColor("ColorDropShadow"), 
-			LLUI::sConfigGroup->getS32("DropShadowFloater") );
+			(*sColorDropShadow), 
+			(*sDropShadowFloater) );
 	}
 	LLPanel::draw();
 }
@@ -250,6 +253,9 @@ void LLStatusBar::draw()
 // Per-frame updates of visibility
 void LLStatusBar::refresh()
 {
+	if(gDisconnected)
+	return; //or crash if the sim crashes; because: already ~LLMenuBarGL()
+
 	// Adding Net Stat Meter back in
 	F32 bwtotal = gViewerThrottle.getMaxBandwidth() / 1000.f;
 	mSGBandwidth->setMin(0.f);

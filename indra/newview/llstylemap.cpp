@@ -88,7 +88,7 @@ const LLStyleSP &LLStyleMap::lookup(const LLUUID& id, const std::string& link)
 		LLStyleSP style(new LLStyle);
 		style->setVisible(true);
 		style->setFontName(LLStringUtil::null);
-		if (id != LLUUID::null && !link.empty())
+		if (!link.empty()) //id != LLUUID::null && 
 		{
 			style->setColor(gSavedSettings.getColor4("HTMLLinkColor"));
 			style->setLinkHREF(link);

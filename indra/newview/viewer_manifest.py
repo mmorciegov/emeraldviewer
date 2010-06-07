@@ -471,6 +471,12 @@ class DarwinManifest(ViewerManifest):
 	    
 	    # Growl library
 	    self.path("../../libraries/universal-darwin/lib_release/libgrowl.dylib", "Frameworks/Growl.framework/Versions/A/Growl");
+	    
+	    # 7zip (this is hackish, I guess)
+	    self.path("../../libraries/universal-darwin/lib_release/7za", "MacOS/7za");
+	    
+	    # emkdu
+	    self.path("emkdu/universal-darwin/libemkdu.dylib", "Resources/libemkdu.dylib")
 
             # most everything goes in the Resources directory
             if self.prefix(src="", dst="Resources"):
@@ -827,6 +833,9 @@ class Linux_i686Manifest(LinuxManifest):
             self.path("libnotify.so.1.1.2", "libnotify.so.1")
             
             self.end_prefix("lib")
+
+	    # Standalone 7zip binary
+	    self.path("linux_tools/7za", "bin/7za")
 
             # Vivox runtimes
 #            if self.prefix(src="vivox-runtime/i686-linux", dst="bin"):

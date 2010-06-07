@@ -4,7 +4,7 @@
  *
  * $LicenseInfo:firstyear=2002&license=viewergpl$
  * 
- * Copyright (c) 2002-2009, Linden Research, Inc.
+ * Copyright (c) 2002-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -42,6 +42,7 @@
 #include "llfloater.h"
 #include "lltabcontainervertical.h"
 
+class HippoPanelGrids;
 class LLPanelGeneral;
 class LLPanelInput;
 class LLPanelLCD;
@@ -63,6 +64,8 @@ class LLPreferenceCore
 {
 
 public:
+	enum { TAB_GRIDS = 11 };
+
 	LLPreferenceCore(LLTabContainer* tab_container, LLButton * default_btn);
 	~LLPreferenceCore();
 
@@ -71,17 +74,22 @@ public:
 
 	LLTabContainer* getTabContainer() { return mTabContainer; }
 
+	void selectLastTab();
+
 	void setPersonalInfo(const std::string& visibility, bool im_via_email, const std::string&  email);
 
 	static void onTabChanged(void* user_data, bool from_click);
 	
 	// refresh all the graphics preferences menus
 	void refreshEnabledGraphics();
+	
+	void refreshSkinPanel();
 
 private:
 	LLTabContainer	*mTabContainer;
 	LLPanelGeneral	        *mGeneralPanel;
 	LLPanelSkins			*mSkinsPanel;
+	HippoPanelGrids			*mGridsPanel;
 	LLPanelInput			*mInputPanel;
 	LLPanelNetwork	        *mNetworkPanel;
 	LLPanelDisplay	        *mDisplayPanel;
@@ -108,11 +116,16 @@ public:
 	virtual BOOL postBuild();
 	static void show(void*);
 
+	static void overrideLastTab(S32 tabIndex);
+
 	// static data update, called from message handler
 	static void updateUserInfo(const std::string& visibility, bool im_via_email, const std::string& email);
 
 	// refresh all the graphics preferences menus
 	static void refreshEnabledGraphics();
+	
+	// refresh the skins
+	static void refreshSkinPanel();
 
 protected:
 	LLPreferenceCore		*mPreferenceCore;

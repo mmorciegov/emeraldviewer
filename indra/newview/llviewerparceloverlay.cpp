@@ -314,13 +314,18 @@ void LLViewerParcelOverlay::updatePropertyLines()
 	
 	S32 row, col;
 
-	// Can do this because gColors are actually stored as LLColor4U
-	const LLColor4U self_coloru  = gColors.getColor4U("PropertyColorSelf");
-	const LLColor4U other_coloru = gColors.getColor4U("PropertyColorOther");
-	const LLColor4U group_coloru = gColors.getColor4U("PropertyColorGroup");
-	const LLColor4U for_sale_coloru = gColors.getColor4U("PropertyColorForSale");
-	const LLColor4U auction_coloru = gColors.getColor4U("PropertyColorAuction");
+	static LLColor4* sPropertyColorSelf = rebind_llcontrol<LLColor4>("PropertyColorSelf", &gColors, true);
+	static LLColor4* sPropertyColorOther = rebind_llcontrol<LLColor4>("PropertyColorOther", &gColors, true);
+	static LLColor4* sPropertyColorGroup = rebind_llcontrol<LLColor4>("PropertyColorGroup", &gColors, true);
+	static LLColor4* sPropertyColorForSale = rebind_llcontrol<LLColor4>("PropertyColorForSale", &gColors, true);
+	static LLColor4* sPropertyColorAuction = rebind_llcontrol<LLColor4>("PropertyColorAuction", &gColors, true);
 
+	// Can do this because gColors are actually stored as LLColor4U
+	const LLColor4U self_coloru  = (*sPropertyColorSelf).getValue();
+	const LLColor4U other_coloru = (*sPropertyColorOther).getValue();
+	const LLColor4U group_coloru = (*sPropertyColorGroup).getValue();
+	const LLColor4U for_sale_coloru = (*sPropertyColorForSale).getValue();
+	const LLColor4U auction_coloru = (*sPropertyColorAuction).getValue();
 	// Build into dynamic arrays, then copy into static arrays.
 	LLDynamicArray<LLVector3, 256> new_vertex_array;
 	LLDynamicArray<LLColor4U, 256> new_color_array;

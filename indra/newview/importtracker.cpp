@@ -169,14 +169,17 @@ void ImportTracker::get_update(S32 newid, BOOL justCreated, BOOL createSelected)
 				LLPrimitive obj;
 				obj.setNumTEs(U8(10));	
 				S32 shinnyLevel = 0;
-				if(gSavedSettings.getString("EmeraldBuildPrefs_Shiny")== "None") shinnyLevel = 0;
-				if(gSavedSettings.getString("EmeraldBuildPrefs_Shiny")== "Low") shinnyLevel = 1;
-				if(gSavedSettings.getString("EmeraldBuildPrefs_Shiny")== "Medium") shinnyLevel = 2;
-				if(gSavedSettings.getString("EmeraldBuildPrefs_Shiny")== "High") shinnyLevel = 3;
+				static std::string* shinystr = rebind_llcontrol<std::string>("EmeraldBuildPrefs_Shiny", &gSavedSettings, true);
+				if(*shinystr == "None") shinnyLevel = 0;
+				if(*shinystr == "Low") shinnyLevel = 1;
+				if(*shinystr == "Medium") shinnyLevel = 2;
+				if(*shinystr == "High") shinnyLevel = 3;
 				
 				for (int i = 0; i < 10; i++)
 				{
-					LLTextureEntry tex =  LLTextureEntry(LLUUID(gSavedSettings.getString("EmeraldBuildPrefs_Texture")));
+					static std::string* buildpreftex = rebind_llcontrol<std::string>("EmeraldBuildPrefs_Texture", &gSavedSettings, true);
+
+					LLTextureEntry tex =  LLTextureEntry(LLUUID(*buildpreftex));
 					tex.setColor(gSavedSettings.getColor4("EmeraldBuildPrefs_Color"));
 					tex.setAlpha(1.0 - ((gSavedSettings.getF32("EmeraldBuildPrefs_Alpha")) / 100.0));
 					tex.setGlow(gSavedSettings.getF32("EmeraldBuildPrefs_Glow"));

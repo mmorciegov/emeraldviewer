@@ -370,6 +370,11 @@ void LLHUDEffectLookAt::unpackData(LLMessageSystem *mesgsys, S32 blocknum)
 
 	U8 lookAtTypeUnpacked = 0;
 	htonmemcpy(&lookAtTypeUnpacked, &(packed_data[LOOKAT_TYPE]), MVT_U8, 1);
+	if (lookAtTypeUnpacked > 10)
+	{
+		LL_DEBUGS("LookAt")<< "wrong lookAtTypeUnpacked: " << lookAtTypeUnpacked << LL_ENDL;
+		lookAtTypeUnpacked = 0;
+	}
 	mTargetType = (ELookAtType)lookAtTypeUnpacked;
 
 	if (mTargetType == LOOKAT_TARGET_NONE)
@@ -502,7 +507,9 @@ void LLHUDEffectLookAt::setSourceObject(LLViewerObject* objectp)
 //-----------------------------------------------------------------------------
 void LLHUDEffectLookAt::render()
 {
-	if (gSavedSettings.getBOOL("EmeraldDontShowMyLookAt") &&
+	static BOOL *sEmeraldDontShowMyLookAt = rebind_llcontrol<BOOL>("EmeraldDontShowMyLookAt", &gSavedSettings, true);
+	
+	if (*sEmeraldDontShowMyLookAt &&
         (gAgent.getAvatarObject() == ((LLVOAvatar*)(LLViewerObject*)mSourceObject))) return;
 		if (sDebugLookAt && mSourceObject.notNull())
 		{
@@ -527,9 +534,10 @@ void LLHUDEffectLookAt::render()
 				gGL.vertex3f(0.f, 0.f, 1.f);
 			} gGL.end();
 			gGL.popMatrix();
-			if( gSavedSettings.getBOOL("EmeraldShowLookAtNames") )
+
+			static BOOL *sEmeraldShowLookAtNames = rebind_llcontrol<BOOL>("EmeraldShowLookAtNames", &gSavedSettings, true);
+			if (*sEmeraldShowLookAtNames)
 				{
-					//const LLFontGL* fontp = LLFontGL::sSansSerifSmall;
 					const LLFontGL* fontp = LLResMgr::getInstance()->getRes( LLFONT_SANSSERIF_SMALL );
 					LLGLEnable color_mat(GL_COLOR_MATERIAL);
 					LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
@@ -548,9 +556,6 @@ void LLHUDEffectLookAt::render()
 					LLColor4 Color = LLColor4( (*mAttentions)[mTargetType].mColor, 1.0f ); 
 					std::string text = ((LLVOAvatar*)(LLViewerObject*)mSourceObject)->getFullname();
 					
-					// render shadow first
-		//			gViewerWindow->setupViewport(1, -1);
-		//			hud_render_utf8text(text, render_pos, *fontp, LLFontGL::NORMAL, -0.5f * fontp->getWidthF32(text), 3.f, LLColor4( 0.f, 0.f, 0.f, 0.5f ), FALSE );
 					gViewerWindow->setupViewport();
 					hud_render_utf8text(text, render_pos, *fontp, LLFontGL::NORMAL, -0.5f * fontp->getWidthF32(text), 3.f, Color, FALSE );
 					
@@ -564,7 +569,9 @@ void LLHUDEffectLookAt::render()
 //-----------------------------------------------------------------------------
 void LLHUDEffectLookAt::update()
 {
-	LLHUDEffectLookAt::sDebugLookAt = gSavedSettings.getBOOL("PersistShowLookAt");
+	static BOOL *sPersistShowLookAt = rebind_llcontrol<BOOL>("PersistShowLookAt", &gSavedSettings, true);
+	
+	LLHUDEffectLookAt::sDebugLookAt = *sPersistShowLookAt;
 	// If the target object is dead, set the target object to NULL
 	if (!mTargetObject.isNull() && mTargetObject->isDead())
 	{

@@ -213,7 +213,8 @@ void add_timestamped_line(LLViewerTextEditor* edit, LLChat chat, const LLColor4&
 	if (chat.mSourceType == CHAT_SOURCE_AGENT &&
 //		chat.mFromID != LLUUID::null)
 // [RLVa:KB] - Version: 1.23.4 | Checked: 2009-07-08 (RLVa-1.0.0e)
-		chat.mFromID != LLUUID::null && 
+		chat.mFromID != LLUUID::null &&
+
 		(!gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES)) )
 // [/RLVa:KB]
 	{

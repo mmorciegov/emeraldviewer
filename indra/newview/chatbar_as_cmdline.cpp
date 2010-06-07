@@ -69,6 +69,8 @@
 
 #include "jclslpreproc.h"
 
+//#define JC_PROFILE_GSAVED
+
 void cmdline_printchat(std::string message);
 void cmdline_rezplat(bool use_saved_value = true, F32 visual_radius = 30.0);
 void cmdline_tp2name(std::string target);
@@ -216,6 +218,29 @@ static std::string *sEmeraldCmdLineCalc;
 static std::string *sEmeraldCmdLineTP2;
 static std::string *sEmeraldCmdLineClearChat;
 static F32 *sEmeraldCmdLinePlatformSize;*/
+
+/*
+class another_rebind_group
+{
+	
+}
+
+template <class T>
+class another_rebind
+{
+	T *mVal;
+	static std::map<another_rebind*, std::map<std::string, T*> > instances;
+
+	
+	
+};
+*/
+
+
+#ifdef JC_PROFILE_GSAVED
+std::map<std::string, int> get_gsaved_calls();
+#endif
+
 bool cmd_line_chat(std::string revised_text, EChatType type)
 {
 	static BOOL *sEmeraldCmdLine = rebind_llcontrol<BOOL>("EmeraldCmdLine", &gSavedSettings, true);
@@ -234,6 +259,8 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 	static std::string *sEmeraldCmdLineCalc = rebind_llcontrol<std::string>("EmeraldCmdLineCalc", &gSavedSettings, true);
 	static std::string *sEmeraldCmdLineTP2 = rebind_llcontrol<std::string>("EmeraldCmdLineTP2", &gSavedSettings, true);
 	static std::string *sEmeraldCmdLineClearChat = rebind_llcontrol<std::string>("EmeraldCmdLineClearChat", &gSavedSettings, true);
+	//static std::string *sEmeraldCmdUndeform = rebind_llcontrol<std::string>("EmeraldCmdUndeform", &gSavedSettings, true);
+	//gSavedSettings.getString("EmeraldCmdUndeform")
 	
 	if(*sEmeraldCmdLine)
 	{
@@ -283,6 +310,12 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 				gAgent.teleportViaLocation(gAgent.getCameraPositionGlobal());
 				return false;
             }
+			/*else if(command == *sEmeraldCmdUndeform)
+            {
+				llinfos << "UNDEFORM: Do you feel your bones cracking back into place?" << llendl;
+				gAgent.getAvatarObject()->undeform();
+				return false;
+            }*/ //what the fuck is this shit, thought it would be something useful like repairing the skeleton but its some shitty playing of inworld anims
 			else if(command == *sEmeraldCmdLineAO)
             {
 				std::string status;
@@ -498,6 +531,43 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 			{
 				invrepair();
 			}
+#ifdef JC_PROFILE_GSAVED
+			else if(command == "gsavedprofile")
+			{	
+				int count = 0;
+				int top = 0;
+				if(i >> top)
+				{
+					cmdline_printchat("printing top " + llformat("%d", top) + " calls");
+					std::map<std::string, int> data = get_gsaved_calls();
+					
+					std::multimap<int, std::string> flip;
+					for(std::map<std::string, int>::iterator iter = data.begin(); iter != data.end(); ++iter )
+					{
+						flip.insert(std::pair<int, std::string>(iter->second,iter->first));
+					}
+					for(std::multimap<int, std::string>::reverse_iterator iter = flip.rbegin(); iter != flip.rend() && count < top; ++iter)
+					{
+						cmdline_printchat(iter->second + " = " + llformat("%d", iter->first) + " calls");
+						count += 1;
+					}
+				}
+			}else if(command == "gsavedcalls")
+			{
+				std::string name;
+				if(i >> name)
+				{
+					std::map<std::string, int> data = get_gsaved_calls();
+					if(data.find(name) != data.end())
+					{
+						cmdline_printchat(llformat("%d", data[name])+" calls for "+name);
+					}else
+					{
+						cmdline_printchat("no entry for "+name);
+					}
+				}
+			}
+#endif
 		}
 	}
 	return true;

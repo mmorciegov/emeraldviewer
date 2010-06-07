@@ -1642,6 +1642,9 @@ void LLPanelAvatar::resetGroupList()
 	{
 		return;
 	}
+
+	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
 		
 	if (mPanelSecondLife)
 	{
@@ -1678,11 +1681,13 @@ void LLPanelAvatar::resetGroupList()
 				row["columns"][0]["font"] = "SANSSERIF_SMALL";
 				if (group_data.mListInProfile)
 				{
-				row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+					row["columns"][0]["color"] = (*sDefaultListText).getValue();
 				}
 				else
 				{
-					row["columns"][0]["color"] = gColors.getColor("ScrollUnselectedColor").getValue();
+					static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
+
+					row["columns"][0]["color"] = (*sScrollUnselectedColor).getValue();
 				}
 				row["columns"][0]["width"] = 0;
 				group_list->addElement(row);
@@ -2030,6 +2035,7 @@ void LLPanelAvatar::processAvatarPropertiesReply(LLMessageSystem *msg, void**)
 			{
 				args["[PAYMENTINFO]"] = " ";
 				args["[AGEVERIFICATION]"] = " ";
+				args["[EMERALD]"] = " ";
 			}
 			LLStringUtil::format(caption_text, args);
 		}
@@ -2137,6 +2143,9 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 	msg->getUUIDFast(_PREHASH_AgentData, _PREHASH_AgentID, agent_id);
 	msg->getUUIDFast(_PREHASH_AgentData, _PREHASH_AvatarID, avatar_id );
 
+	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+
 	for (panel_list_t::iterator iter = sAllPanels.begin(); iter != sAllPanels.end(); ++iter)
 	{
 		LLPanelAvatar* self = *iter;
@@ -2210,11 +2219,13 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 				// Set normal color if not found or if group is visible in profile
 				if (!group_data || group_data->mListInProfile)
 				{
-				row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+					row["columns"][0]["color"] = (*sDefaultListText).getValue();
 				}
 				else
 				{
-					row["columns"][0]["color"] = gColors.getColor("ScrollUnselectedColor").getValue();
+					static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
+
+					row["columns"][0]["color"] = (*sScrollUnselectedColor).getValue();
 				}
 				if (group_list)
 				{

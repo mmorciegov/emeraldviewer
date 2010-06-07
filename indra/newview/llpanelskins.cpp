@@ -44,6 +44,7 @@
 #include "llviewerwindow.h"
 #include "llcombobox.h"
 #include "llsdserialize.h"
+#include "floaterskinfinder.h"
 
 
 LLPanelSkins* LLPanelSkins::sInstance;
@@ -62,79 +63,77 @@ LLPanelSkins::~LLPanelSkins()
 BOOL LLPanelSkins::postBuild()
 {
 	mSkin = gSavedSettings.getString("SkinCurrent");
-	oldSkin=mSkin;
+	oldSkin = mSkin;
 	getChild<LLComboBox>("emrd_skin_combo")->setCommitCallback(onComboBoxCommit);
+	getChild<LLButton>("emrd_skin_browser_button")->setClickedCallback(onClickFindMore);
 	refresh();
 	return TRUE;
 }
 
+void LLPanelSkins::scanFolder(const std::string& folder)
+{
+	LLComboBox* comboBox = getChild<LLComboBox>("emrd_skin_combo");
+	std::string name;
+	while(true) 
+	{
+		if(!gDirUtilp->getNextFileInDir(folder, "*.xml", name, false))
+			break;
+		
+		LLSD data;
+		llifstream importer(folder + name);
+		LLSDSerialize::fromXMLDocument(data, importer);
+		
+		if(data.has("folder_name"))
+		{
+			datas.push_back(data);
+			comboBox->add(data["skin_name"].asString());
+
+			if(data["folder_name"].asString() == mSkin)
+			{
+				childSetValue("emrd_skin_author", data["author_name"].asString());
+				childSetValue("emrd_skin_ad_authors", data["additional_author_names"].asString());
+				childSetValue("emrd_skin_info", data["skin_info"].asString());
+				childSetValue("emrd_skin_folder", data["folder_name"].asString());
+				LLButton* b = getChild<LLButton>("emrd_skin_preview");
+				std::string imageprev(".." + gDirUtilp->getDirDelimiter() +
+									  ".." + gDirUtilp->getDirDelimiter() +
+									  data["folder_name"].asString() + gDirUtilp->getDirDelimiter() +
+									  "textures" + gDirUtilp->getDirDelimiter() +
+									  "preview.png");
+				b->setImages(imageprev, imageprev);
+				b->setHoverImages(imageprev, imageprev);
+				b->setScaleImage(TRUE);
+			}
+		}
+	}
+}
+
 void LLPanelSkins::refresh()
 {
-	if(mSkin=="")
+	if(mSkin == "")
 	{
-		oldSkin=mSkin="default";
-		gSavedSettings.setString("SkinCurrent",mSkin);
+		oldSkin = mSkin = "default";
+		gSavedSettings.setString("SkinCurrent", mSkin);
 	}
 	LLComboBox* comboBox = getChild<LLComboBox>("emrd_skin_combo");
 
 	if(comboBox != NULL) 
 	{
-		std::string name;
-		gDirUtilp->getNextFileInDir(gDirUtilp->getChatLogsDir(),"*",name,false);//stupid hack to clear last file search
 		comboBox->removeall();
 		datas.clear();
-		//comboBox->add("===OFF===");
-		std::string path_name(gDirUtilp->getSkinBaseDir()+gDirUtilp->getDirDelimiter());
-		bool found = true;	
-		std::string currentSkinName("");
-		while(found) 
+		
+		scanFolder(gDirUtilp->getSkinBaseDir() + gDirUtilp->getDirDelimiter());
+		comboBox->addSeparator(ADD_BOTTOM);
+		scanFolder(gDirUtilp->getOSUserAppDir() + gDirUtilp->getDirDelimiter() + "skins" + gDirUtilp->getDirDelimiter());
+		
+		for(std::vector<LLSD>::iterator itr = datas.begin(); itr != datas.end(); ++itr)
 		{
-			found = gDirUtilp->getNextFileInDir(path_name, "*.xml", name, false);
-			llinfos << "path name " << path_name << " and name " << name << " and found " << found << llendl;
-			if(found)
+			if((*itr)["folder_name"].asString() == mSkin)
 			{
-				LLSD data;
-				llifstream importer(path_name+name);
-				LLSDSerialize::fromXMLDocument(data, importer);
-
-				if(data.has("folder_name"))
-				{
-					datas.push_back(data);
-					comboBox->add(data["skin_name"].asString());
-					llinfos << "data is length " << datas.size() << " foldername field is "
-						<< data["folder_name"].asString() << " and looking for " << gSavedSettings.getString("SkinCurrent") <<llendl;
-					if(data["folder_name"].asString()==mSkin)
-					{
-						llinfos << "found!!!!!!1!1" << llendl;
-						currentSkinName = data["skin_name"].asString();
-
-						//LLButton* b;
-						//b.setImageOverlay()
-						childSetValue("emrd_skin_author",data["author_name"].asString());
-						childSetValue("emrd_skin_ad_authors",data["additional_author_names"].asString());
-						childSetValue("emrd_skin_info",data["skin_info"].asString());
-						childSetValue("emrd_skin_folder",data["folder_name"].asString());
-						LLButton* b = getChild<LLButton>("emrd_skin_preview");
-						std::string imageprev(".."+gDirUtilp->getDirDelimiter()+
-							".."+gDirUtilp->getDirDelimiter()+
-							data["folder_name"].asString()+gDirUtilp->getDirDelimiter()+
-							"textures"+gDirUtilp->getDirDelimiter()+
-							"preview.png");
-						b->setImages(imageprev,imageprev);
-						b->setHoverImages(imageprev,imageprev);
-						b->setScaleImage(TRUE);
-
-						//<button scale_image="true" image_selected="skin_thumbnail_default.png"
-						//image_unselected="skin_thumbnail_default.png" 
-						//	image_hover_selected="skin_thumbnail_default.png" 
-						//	image_hover_unselected="skin_thumbnail_default.png"/>
-
-						//set the rest here!
-					}
-				}
+				comboBox->setSimple((*itr)["skin_name"].asString());
+				break;
 			}
 		}
-		comboBox->setSimple(currentSkinName);
 	}
 }
 
@@ -176,5 +175,10 @@ void LLPanelSkins::onComboBoxCommit(LLUICtrl* ctrl, void* userdata)
 			}
 		}
 	}	
+}
+
+void LLPanelSkins::onClickFindMore(void*)
+{
+	FloaterSkinfinder::showInstance(LLSD());
 }
 

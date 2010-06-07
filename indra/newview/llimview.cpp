@@ -665,9 +665,11 @@ void LLIMMgr::addMessage(
 
 	// now add message to floater
 	bool is_from_system = target_id.isNull() || (from == SYSTEM_FROM);
-	const LLColor4& color = ( is_from_system ? 
+	bool is_encrypted = (msg.substr(0, 3) == "\xe2\x80\xa7");
+	LLColor4 color = ( is_from_system ? 
 							  gSavedSettings.getColor4("SystemChatColor") : 
-							  gSavedSettings.getColor("IMChatColor"));
+							  ( is_encrypted ? gSavedSettings.getColor("EmeraldIMEncryptedChatColor") :
+		                        gSavedSettings.getColor("IMChatColor") ) );
 	if ( !link_name )
 	{
 		floater->addHistoryLine(msg,color); // No name to prepend, so just add the message normally
@@ -820,7 +822,7 @@ LLUUID LLIMMgr::addSession(
 		floater->open();
 	}
 	//mTabContainer->selectTabPanel(panel);
-	floater->setInputFocus(TRUE);
+	if(gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageAnnounceStealFocus"))floater->setInputFocus(TRUE);
 	return floater->getSessionID();
 }
 
@@ -870,7 +872,7 @@ LLUUID LLIMMgr::addSession(
 		floater->open();
 	}
 	//mTabContainer->selectTabPanel(panel);
-	floater->setInputFocus(TRUE);
+	if(gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageAnnounceStealFocus"))floater->setInputFocus(TRUE);
 	return floater->getSessionID();
 }
 

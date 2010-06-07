@@ -245,6 +245,22 @@ bool LLControlVariable::isSaveValueDefault()
         || ((mValues.size() > 1) && llsd_compare(mValues[1], mValues[0]));
 }
 
+//#define JC_PROFILE_GSAVED
+
+#ifdef JC_PROFILE_GSAVED
+std::map<std::string, int> gSavedCalls;
+std::map<std::string, int> get_gsaved_calls(){ return gSavedCalls; }
+#endif
+
+LLSD LLControlVariable::get() const
+{
+#ifdef JC_PROFILE_GSAVED
+	if(gSavedCalls.find(mName) == gSavedCalls.end())gSavedCalls[mName] = 0;
+	else gSavedCalls[mName] = gSavedCalls[mName] + 1;
+#endif
+	return getValue();
+}
+
 LLSD LLControlVariable::getSaveValue() const
 {
 	//The first level of the stack is default
@@ -1203,6 +1219,12 @@ void LLControlGroup::resetWarnings()
 		setBOOL(*iter, TRUE);
 	}
 }
+
+template <>					void jc_rebind::rebind_callback<S32>(const LLSD &data, S32 *reciever){ *reciever = data.asInteger(); }
+template <>					void jc_rebind::rebind_callback<F32>(const LLSD &data, F32 *reciever){ *reciever = data.asReal(); }
+template <>					void jc_rebind::rebind_callback<U32>(const LLSD &data, U32 *reciever){ *reciever = data.asInteger(); }
+template <>					void jc_rebind::rebind_callback<std::string>(const LLSD &data, std::string *reciever){ *reciever = data.asString(); }
+template <>					void jc_rebind::rebind_callback<LLColor4>(const LLSD &data, LLColor4 *reciever){ *reciever = LLColor4(LLColor4U(data)); }
 
 //============================================================================
 

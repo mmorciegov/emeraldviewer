@@ -3278,8 +3278,10 @@ void LLFolderView::draw()
 		setShowSingleSelection(FALSE);
 	}
 
+	static F32 *sTypeAheadTimeout = rebind_llcontrol<F32>("TypeAheadTimeout", &gSavedSettings, true);
 
-	if (mSearchTimer.getElapsedTimeF32() > gSavedSettings.getF32("TypeAheadTimeout") || !mSearchString.size())
+
+	if (mSearchTimer.getElapsedTimeF32() > *sTypeAheadTimeout || !mSearchString.size())
 	{
 		mSearchString.clear();
 	}
@@ -4009,8 +4011,11 @@ BOOL LLFolderView::handleUnicodeCharHere(llwchar uni_char)
 			LLMenuGL::sMenuContainer->hideMenus();
 		}
 
+		static F32 *sTypeAheadTimeout = rebind_llcontrol<F32>("TypeAheadTimeout", &gSavedSettings, true);
+
+
 		//do text search
-		if (mSearchTimer.getElapsedTimeF32() > gSavedSettings.getF32("TypeAheadTimeout"))
+		if (mSearchTimer.getElapsedTimeF32() > *sTypeAheadTimeout)
 		{
 			mSearchString.clear();
 		}
@@ -4354,10 +4359,10 @@ void LLFolderView::doIdle()
 {
 	LLFastTimer t2(LLFastTimer::FTM_INVENTORY);
 
-	BOOL debug_filters = gSavedSettings.getBOOL("DebugInventoryFilters");
-	if (debug_filters != getDebugFilters())
+	static BOOL* debug_filters = rebind_llcontrol<BOOL>("DebugInventoryFilters", &gSavedSettings, true);
+	if (*debug_filters != getDebugFilters())
 	{
-		mDebugFilters = debug_filters;
+		mDebugFilters = *debug_filters;
 		arrangeAll();
 	}
 

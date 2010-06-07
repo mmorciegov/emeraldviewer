@@ -1555,6 +1555,10 @@ void LLFloaterWorldMap::updateSims(bool found_null_sim)
 
 	S32 name_length = mCompletingRegionName.length();
 
+	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+
+
 	BOOL match_found = FALSE;
 	S32 num_results = 0;
 	std::map<U64, LLSimInfo*>::const_iterator it;
@@ -1575,11 +1579,13 @@ void LLFloaterWorldMap::updateSims(bool found_null_sim)
 				}
 			}
 
+
+
 			LLSD value;
 			value["id"] = info->getName();
 			value["columns"][0]["column"] = "sim_name";
 			value["columns"][0]["value"] = info->getName();
-			value["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+			value["columns"][0]["color"] = (*sDefaultListText).getValue();
 			list->addElement(value);
 			num_results++;
 		}

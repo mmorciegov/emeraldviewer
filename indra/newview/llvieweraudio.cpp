@@ -114,8 +114,12 @@ void init_audio()
 
 void audio_update_volume(bool force_update)
 {
-	F32 master_volume = gSavedSettings.getF32("AudioLevelMaster");
-	BOOL mute_audio = gSavedSettings.getBOOL("MuteAudio");
+
+	static BOOL* sMuteAudio = rebind_llcontrol<BOOL>("MuteAudio", &gSavedSettings, true);
+	static F32 *sAudioLevelMaster = rebind_llcontrol<F32>("AudioLevelMaster", &gSavedSettings, true);
+
+	F32 master_volume = (*sAudioLevelMaster);
+	BOOL mute_audio = (*sMuteAudio);
 	if (!gViewerWindow->getActive() && (gSavedSettings.getBOOL("MuteWhenMinimized")))
 	{
 		mute_audio = TRUE;
@@ -201,6 +205,8 @@ void audio_update_listener()
 
 void audio_update_wind(bool force_update)
 {
+/* TOO WINDY
+
 #ifdef kAUDIO_ENABLE_WIND
 	//
 	//  Extract height above water to modulate filter by whether above/below water 
@@ -245,4 +251,5 @@ void audio_update_wind(bool force_update)
 		gAudiop->updateWind(gRelativeWindVec, camera_water_height);
 	}
 #endif
+*/
 }

@@ -181,7 +181,9 @@ void LLFloaterBuy::show(const LLSaleInfo& sale_info)
 	row["columns"][1]["column"] = "text";
 	row["columns"][1]["value"] = text;
 	row["columns"][1]["font"] = "SANSSERIF";
-	row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
+	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+	row["columns"][1]["color"] = (*sDefaultListText).getValue();
 
 	// Add after columns added so appropriate heights are correct.
 	object_list->addElement(row);
@@ -286,7 +288,9 @@ void LLFloaterBuy::inventoryChanged(LLViewerObject* obj,
 		row["columns"][1]["column"] = "text";
 		row["columns"][1]["value"] = text;
 		row["columns"][1]["font"] = "SANSSERIF";
-		row["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
+		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+		row["columns"][1]["color"] = (*sDefaultListText).getValue();
 
 		item_list->addElement(row);
 	}

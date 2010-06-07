@@ -68,6 +68,7 @@
 #include "llsdserialize.h"
 #include "llfilepicker.h"
 
+#include "hippogridmanager.h"
 //static
 std::list<LLPanelPick*> LLPanelPick::sAllPanels;
 
@@ -256,12 +257,9 @@ void LLPanelPick::exportPick()
 	LLSD header;
 	header["Version"] = 2;
 	file["Header"] = header;
-	
-	/* commented out because hippo grid manager isn't in yet. --vaa */
-	//std::string grid_uri = gHippoGridManager->getConnectedGrid()->getLoginUri();
-	/* was previously commented out -> */	//LLStringUtil::toLower(uris[0]);
-	//file["Grid"] = grid_uri;
-
+	std::string grid_uri = gHippoGridManager->getConnectedGrid()->getLoginUri();
+	//LLStringUtil::toLower(uris[0]);
+	file["Grid"] = grid_uri;
 	file["Data"] = datas;
 
 	// Create a file stream and write to it

@@ -2964,11 +2964,14 @@ BOOL LLMenuGL::handleHover( S32 x, S32 y, MASK mask )
 
 void LLMenuGL::draw( void )
 {
+	static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
+	static S32* sDropShadowFloater = rebind_llcontrol<S32>("DropShadowFloater", LLUI::sConfigGroup, true);
+
 	if (mDropShadowed && !mTornOff)
 	{
 		gl_drop_shadow(0, getRect().getHeight(), getRect().getWidth(), 0, 
-			LLUI::sColorsGroup->getColor("ColorDropShadow"), 
-			LLUI::sConfigGroup->getS32("DropShadowFloater") );
+			(*sColorDropShadow), 
+			(*sDropShadowFloater) );
 	}
 
 	LLColor4 bg_color = mBackgroundColor;

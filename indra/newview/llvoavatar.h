@@ -210,6 +210,10 @@ public:
 	static void		onCustomizeStart();
 	static void		onCustomizeEnd();
 
+	LLFrameTimer 	mIdleTimer;
+
+	std::string		getIdleTime();
+
 public:
 	static void		dumpTotalLocalTextureByteCount();
 protected:
@@ -241,7 +245,7 @@ public:
 
 	void			addChat(const LLChat& chat);
 	void			clearChat();
-	void			startTyping() { mTyping = TRUE; mTypingTimer.reset(); }
+	void			startTyping() { mTyping = TRUE; mTypingTimer.reset(); mIdleTimer.reset();}
 	void			stopTyping() { mTyping = FALSE; }
 
 	// Returns "FirstName LastName"

@@ -152,7 +152,10 @@ void lggBeamMapFloater::draw()
 		gGL.end();
 	}
 
-	mContextConeOpacity = lerp(mContextConeOpacity, gSavedSettings.getF32("PickerContextOpacity"), LLCriticalDamp::getInterpolant(CONTEXT_FADE_TIME));
+	static F32* opacity = rebind_llcontrol<F32>("PickerContextOpacity", &gSavedSettings, true);
+
+
+	mContextConeOpacity = lerp(mContextConeOpacity, *opacity, LLCriticalDamp::getInterpolant(CONTEXT_FADE_TIME));
 
 
 	//getChild<LLPanel>("beamshape_draw")->setBackgroundColor(getChild<LLColorSwatchCtrl>("back_color_swatch")->get());

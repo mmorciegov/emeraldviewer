@@ -4,7 +4,7 @@
  *
  * $LicenseInfo:firstyear=2002&license=viewergpl$
  * 
- * Copyright (c) 2002-2009, Linden Research, Inc.
+ * Copyright (c) 2002-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -77,6 +77,7 @@
 #include "llkeyboard.h"
 #include "llscrollcontainer.h"
 #include "llfloaterhardwaresettings.h"
+#include "hippopanelgrids.h"
 
 const S32 PREF_BORDER = 4;
 const S32 PREF_PAD = 5;
@@ -133,6 +134,7 @@ LLPreferenceCore::LLPreferenceCore(LLTabContainer* tab_container, LLButton * def
 	mAudioPanel(NULL),
 	mMsgPanel(NULL),
 	mSkinsPanel(NULL),
+	mGridsPanel(NULL),
 	mLCDPanel(NULL),
 	mEmeraldPanel(NULL)
 {
@@ -193,6 +195,10 @@ LLPreferenceCore::LLPreferenceCore(LLTabContainer* tab_container, LLButton * def
 	mSkinsPanel = new LLPanelSkins();
 	mTabContainer->addTabPanel(mSkinsPanel, mSkinsPanel->getLabel(), FALSE, onTabChanged, mTabContainer);
 	mSkinsPanel->setDefaultBtn(default_btn);
+
+	mGridsPanel = HippoPanelGrids::create();
+	mTabContainer->addTabPanel(mGridsPanel, mGridsPanel->getLabel(), FALSE, onTabChanged, mTabContainer);
+	mGridsPanel->setDefaultBtn(default_btn);
 
 	mEmeraldPanel = new LLPanelEmerald();
 	mTabContainer->addTabPanel(mEmeraldPanel, mEmeraldPanel->getLabel(), FALSE, onTabChanged, mTabContainer);
@@ -264,6 +270,11 @@ LLPreferenceCore::~LLPreferenceCore()
 		mEmeraldPanel = NULL;
 	}
 
+	if (mGridsPanel)
+	{
+		delete mGridsPanel;
+		mGridsPanel = NULL;
+	}
 }
 
 
@@ -279,6 +290,7 @@ void LLPreferenceCore::apply()
 	mPrefsIM->apply();
 	mMsgPanel->apply();
 	mSkinsPanel->apply();
+	mGridsPanel->apply();
 	mEmeraldPanel->apply();
 
 	// hardware menu apply
@@ -308,6 +320,7 @@ void LLPreferenceCore::cancel()
 	mPrefsIM->cancel();
 	mMsgPanel->cancel();
 	mSkinsPanel->cancel();
+	mGridsPanel->cancel();
 	mEmeraldPanel->cancel();
 
 	// cancel hardware menu
@@ -322,6 +335,11 @@ void LLPreferenceCore::cancel()
 	}
 #endif
 //	mWebPanel->cancel();
+}
+
+void LLPreferenceCore::selectLastTab()
+{
+       mTabContainer->selectTab(gSavedSettings.getS32("LastPrefTab"));
 }
 
 // static
@@ -342,6 +360,12 @@ void LLPreferenceCore::refreshEnabledGraphics()
 {
 	LLFloaterHardwareSettings::instance()->refreshEnabledState();
 	mDisplayPanel->refreshEnabledState();
+}
+
+void LLPreferenceCore::refreshSkinPanel()
+{
+	mSkinsPanel->mSkin = gSavedSettings.getString("SkinCurrent");
+	mSkinsPanel->refresh();
 }
 
 //////////////////////////////////////////////
@@ -377,10 +401,12 @@ BOOL LLFloaterPreference::postBuild()
 	mOKBtn = getChild<LLButton>("OK");
 	mOKBtn->setClickedCallback(onBtnOK, this);
 			
-	mPreferenceCore = new LLPreferenceCore(
+	// avoid race condition, where mPreferenceCore is non-null, but not fully created
+	LLPreferenceCore *pcore = new LLPreferenceCore(
 		getChild<LLTabContainer>("pref core"),
 		getChild<LLButton>("OK")
 		);
+	mPreferenceCore = pcore;
 	
 	sInstance = this;
 
@@ -407,12 +433,20 @@ void LLFloaterPreference::cancel()
 
 
 // static
+void LLFloaterPreference::overrideLastTab(S32 tabIndex)
+{
+	gSavedSettings.setS32("LastPrefTab", tabIndex);
+}
+
+// static
 void LLFloaterPreference::show(void*)
 {
 	if (!sInstance)
 	{
 		new LLFloaterPreference();
 		sInstance->center();
+	} else if (sInstance->mPreferenceCore) {
+		sInstance->mPreferenceCore->selectLastTab();
 	}
 
 	sInstance->open();		/* Flawfinder: ignore */
@@ -527,4 +561,9 @@ void LLFloaterPreference::updateUserInfo(const std::string& visibility, bool im_
 void LLFloaterPreference::refreshEnabledGraphics()
 {
 	sInstance->mPreferenceCore->refreshEnabledGraphics();
+}
+
+void LLFloaterPreference::refreshSkinPanel()
+{
+	sInstance->mPreferenceCore->refreshSkinPanel();
 }

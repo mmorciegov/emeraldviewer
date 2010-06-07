@@ -38,6 +38,11 @@
 #include "llmemtype.h"
 #include "emkdu.h"
 
+// We need this to get an OS X version number
+#ifdef LL_DARWIN
+#include <Carbon/Carbon.h>
+#endif
+
 typedef LLImageJ2CImpl* (*CreateLLImageJ2CFunction)();
 typedef void (*DestroyLLImageJ2CFunction)(LLImageJ2CImpl*);
 typedef const char* (*EngineInfoLLImageJ2CFunction)();
@@ -74,6 +79,19 @@ bool LLImageJ2C::useEMKDU = false;
 //Loads the required "create", "destroy" and "engineinfo" functions needed
 void LLImageJ2C::openDSO()
 {
+	// Loading emkdu on Tiger on Intel machines crashes, so don't do that.
+	// So does loading it on PPC (despite being supposedly universal).
+#ifdef LL_DARWIN
+#ifdef __ppc__
+	return;
+#else
+	SInt32 osx_version;
+	if(Gestalt(gestaltSystemVersion, &osx_version) != noErr)
+		return;
+	if(osx_version < 0x1050)
+		return;
+#endif // __ppc__
+#endif // LL_DARWIN
 	//attempt to load a DSO and get some functions from it
 	std::string dso_name;
 	std::string emdso_name;

@@ -5,7 +5,7 @@
  *
  * $LicenseInfo:firstyear=2002&license=viewergpl$
  * 
- * Copyright (c) 2002-2009, Linden Research, Inc.
+ * Copyright (c) 2002-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -146,6 +146,8 @@
 
 #include <boost/tokenizer.hpp>
 
+#include "hippoGridManager.h"
+#include "hippoLimits.h"
 #if LL_WINDOWS // For Windows specific error handler
 #include "llwindebug.h"	// For the invalid message handler
 #endif
@@ -683,7 +685,7 @@ bool join_group_response(const LLSD& notification, const LLSD& response)
 	if(option == 0 && !group_id.isNull())
 	{
 		// check for promotion or demotion.
-		S32 max_groups = MAX_AGENT_GROUPS;
+		S32 max_groups = gHippoLimits->getMaxAgentGroups();
 		if(gAgent.isInGroup(group_id)) ++max_groups;
 
 		if(gAgent.mGroups.count() < max_groups)
@@ -709,6 +711,7 @@ bool join_group_response(const LLSD& notification, const LLSD& response)
 			delete_context_data = FALSE;
 			LLSD args;
 			args["COST"] = llformat("%d", fee);
+			args["CURRENCY"] = gHippoGridManager->getConnectedGrid()->getCurrencySymbol();
 			// Set the fee for next time to 0, so that we don't keep
 			// asking about a fee.
 			LLSD next_payload = notification["payload"];
@@ -1618,6 +1621,10 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
                         lastg_agents[from_id.asString()] = 0;
                 }
         }
+
+	std::string decrypted_msg;
+	bool encrypted = false;
+
 // [$PLOTR$]
 //     if ((CHAT_SOURCE_SYSTEM == chat.mSourceType) &&
 //         ((std::string::npos != message.find("not online")) ||
@@ -1705,16 +1712,16 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 		{
             // message was processed by OTR.  Maybe decrypted, maybe just stripping off the
             // white-space "I have OTR" tag
-//			decrypted_msg = newmessage;  // use processed message
+			decrypted_msg = newmessage;  // use processed message
 			message = newmessage;        // use processed message
 			otrl_message_free(newmessage);
-/*			ConnContext *context = otrl_context_find(
+			ConnContext *context = otrl_context_find(
 				gOTR->get_userstate(), 
 				their_uuid,
 				my_uuid,
 				gOTR->get_protocolid(),
-				0, NULL, NULL, NULL);*/
-//			encrypted = (context && (OTRL_MSGSTATE_ENCRYPTED == context->msgstate));
+				0, NULL, NULL, NULL);
+			encrypted = (context && (OTRL_MSGSTATE_ENCRYPTED == context->msgstate));
             if (IM_TYPING_STOP == dialog)
             {
                 if ("typing" == message) return; // don't display whitespace tagged "typing" stop messages
@@ -1728,12 +1735,239 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 	std::string separator_string(": ");
 	int message_offset = 0;
 
+	if(encrypted)
+	{
+		separator_string = "\xe2\x80\xa7: ";
+		message = decrypted_msg;
+	}
+
 		//Handle IRC styled /me messages.
 	std::string prefix = message.substr(0, 4);
 	if (prefix == "/me " || prefix == "/me'")
 	{
-		separator_string = "";
+		separator_string = encrypted ? "\xe2\x80\xa7" : "";
 		message_offset = 3;
+	}
+
+	if(dialog == IM_TYPING_START
+	|| dialog == IM_NOTHING_SPECIAL
+	|| dialog == IM_TYPING_STOP
+	|| dialog == IM_BUSY_AUTO_RESPONSE)
+	{
+		
+		if(session_id != computed_session_id)
+		{
+			session_id = computed_session_id;
+		}
+	}
+	bool typing_init = false;
+	if( dialog == IM_TYPING_START && !is_muted )
+	{
+		if(!gIMMgr->hasSession(computed_session_id) && gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageAnnounceIncoming"))
+		{
+			typing_init = true;
+			if( gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageAnnounceStealFocus") )
+			{
+				/*LLUUID sess =*/ gIMMgr->addSession(name, IM_NOTHING_SPECIAL, from_id);
+				make_ui_sound("UISndNewIncomingIMSession");
+			}
+			gIMMgr->addMessage(
+					computed_session_id,
+					from_id,
+					name,
+					llformat("You sense a disturbance in the force...  (%s is typing)",name.c_str()),
+					name,
+					IM_NOTHING_SPECIAL,
+					parent_estate_id,
+					region_id,
+					position,
+					false);
+		}
+	}
+
+	bool is_auto_response = false;
+	if(dialog == IM_NOTHING_SPECIAL) {
+		// detect auto responses from GreenLife and compatible viewers
+		is_auto_response = ( message.substr(0, 21) == "/me (auto-response): " );
+	}
+
+	bool do_auto_response = false;
+	if( gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageResponseAnyone" ) )
+		do_auto_response = true;
+
+	// odd name for auto respond to non-friends
+	if( gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageResponseFriends") &&
+		LLAvatarTracker::instance().getBuddyInfo(from_id) == NULL )
+		do_auto_response = true;
+
+	if( is_muted && !gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageResponseMuted") )
+		do_auto_response = false;
+
+	if( offline != IM_ONLINE )
+		do_auto_response = false;
+
+	if( is_auto_response )
+		do_auto_response = false;
+
+	// handle cases where IM_NOTHING_SPECIAL is not an IM
+	if( name == SYSTEM_FROM ||
+		from_id.isNull() ||
+		to_id.isNull() )
+		do_auto_response = false;
+
+	if (do_auto_response)
+	{
+		if((dialog == IM_NOTHING_SPECIAL && !is_auto_response) ||
+			(dialog == IM_TYPING_START && gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageShowOnTyping"))
+			)
+		{
+			BOOL has = gIMMgr->hasSession(computed_session_id);
+			if(!has || gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageResponseRepeat") || typing_init)
+			{
+				BOOL show = !gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageShowResponded");
+				if(!has && show)
+				{
+					gIMMgr->addSession(name, IM_NOTHING_SPECIAL, from_id);
+				}
+				if(show)
+				{
+					gIMMgr->addMessage(
+							computed_session_id,
+							from_id,
+							SYSTEM_FROM,
+							llformat("Autoresponse sent to %s.",name.c_str()),
+							LLStringUtil::null,
+							IM_NOTHING_SPECIAL,
+							parent_estate_id,
+							region_id,
+							position,
+							false);
+				}
+				std::string my_name;
+				gAgent.buildFullname(my_name);
+
+				//<-- Personalized Autoresponse by Madgeek
+				std::string autoresponse = gSavedPerAccountSettings.getText("EmeraldInstantMessageResponse");
+				//Define Wildcards
+				std::string fname_wildcard = "#f";
+				std::string lname_wildcard = "#l";
+				std::string time_wildcard = "#t";
+				std::string region_wildcard = "#r";
+				std::string idle_wildcard = "#i";
+				//Extract Name
+				std::string f_name, l_name;
+				std::istringstream inname(name);
+				inname >> f_name >> l_name;
+				//Generate a Timestamp
+				time_t rawtime;
+				time(&rawtime);
+				char * timestamp_chars;
+				timestamp_chars = asctime(localtime(&rawtime));
+				std::string timestamp;
+				timestamp.assign(timestamp_chars);
+				timestamp = timestamp.substr(0, timestamp.find('\n'));
+				//Generate slurl
+				std::string slrul = gAgent.getSLURL();
+				//Generate idle time
+				LLVOAvatar* myavatar = gAgent.getAvatarObject();
+				std::string idle_time = "";
+				if(myavatar)idle_time = llformat("%d mins", (U8)(myavatar->mIdleTimer.getElapsedTimeF32()/60.));
+				
+				//Handle Replacements
+				size_t found = autoresponse.find(fname_wildcard);
+				while(found != std::string::npos)
+				{
+					autoresponse.replace(found, 2, f_name);
+					found = autoresponse.find(fname_wildcard);
+				}
+				found = autoresponse.find(lname_wildcard);
+				while(found != std::string::npos)
+				{
+					autoresponse.replace(found, 2, l_name);
+					found = autoresponse.find(lname_wildcard);
+				}
+				found = autoresponse.find(time_wildcard);
+				while(found != std::string::npos)
+				{
+					autoresponse.replace(found, 2, timestamp);
+					found = autoresponse.find(time_wildcard);
+				}
+				found = autoresponse.find(region_wildcard);
+				while(found != std::string::npos)
+				{
+					autoresponse.replace(found, 2, slrul);
+					found = autoresponse.find(region_wildcard);
+				}
+				found = autoresponse.find(idle_wildcard);
+				while(found != std::string::npos)
+				{
+					autoresponse.replace(found, 2, idle_time);
+					found = autoresponse.find(idle_wildcard);
+				}
+				//--> Personalized Autoresponse
+
+				if(gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageResponseRepeat") && has && !typing_init) {
+					// send as busy auto response instead to prevent endless repeating replies
+					// when other end is a bot or broken client that answers to every usual IM
+					// reasoning for this decision can be found in RFC2812 3.3.2 Notices
+					// where PRIVMSG can be seen as IM_NOTHING_SPECIAL and NOTICE can be seen as
+					// IM_BUSY_AUTO_RESPONSE. The assumption here is that no existing client
+					// responds to IM_BUSY_AUTO_RESPONSE. --TS
+					std::string response = autoresponse;
+					pack_instant_message(
+						gMessageSystem,
+						gAgent.getID(),
+						FALSE,
+						gAgent.getSessionID(),
+						from_id,
+						my_name,
+						response,
+						IM_OFFLINE,
+						IM_BUSY_AUTO_RESPONSE,
+						session_id);
+				} else {
+					std::string response = "/me (auto-response): "+autoresponse;
+					pack_instant_message(
+						gMessageSystem,
+						gAgent.getID(),
+						FALSE,
+						gAgent.getSessionID(),
+						from_id,
+						my_name,
+						response,
+						IM_OFFLINE,
+						IM_NOTHING_SPECIAL,
+						session_id);
+				}
+				gAgent.sendReliableMessage();
+				if(gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageResponseItem") && (!has || typing_init))
+				{
+					LLUUID itemid = (LLUUID)gSavedPerAccountSettings.getString("EmeraldInstantMessageResponseItemData");
+					LLViewerInventoryItem* item = gInventory.getItem(itemid);
+					if(item)
+					{
+						//childSetValue("im_give_disp_rect_txt","Currently set to: "+item->getName());
+						if(show)
+						{
+							gIMMgr->addMessage(
+									computed_session_id,
+									from_id,
+									SYSTEM_FROM,
+									llformat("Sent %s auto-response item \"%s\"",name.c_str(),item->getName().c_str()),
+									LLStringUtil::null,
+									IM_NOTHING_SPECIAL,
+									parent_estate_id,
+									region_id,
+									position,
+									false);
+						}
+						LLToolDragAndDrop::giveInventory(from_id, item);
+					}
+				}
+				//EmeraldInstantMessageResponseItem<
+				
+			}
+		}
 	}
 
 	LLSD args;
@@ -2993,7 +3227,8 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 
 			if (!is_muted && !is_busy)
 			{
-				visible_in_chat_bubble = gSavedSettings.getBOOL("UseChatBubbles");
+				static BOOL* sUseChatBubbles = rebind_llcontrol<BOOL>("UseChatBubbles", &gSavedSettings, true);
+				visible_in_chat_bubble = *sUseChatBubbles;
 				((LLVOAvatar*)chatter)->addChat(chat);
 			}
 		}
@@ -4937,7 +5172,8 @@ void process_money_balance_reply( LLMessageSystem* msg, void** )
 	msg->getS32("MoneyData", "SquareMetersCredit", credit);
 	msg->getS32("MoneyData", "SquareMetersCommitted", committed);
 	msg->getStringFast(_PREHASH_MoneyData, _PREHASH_Description, desc);
-	LL_INFOS("Messaging") << "L$, credit, committed: " << balance << " " << credit << " "
+	LL_INFOS("Messaging") << gHippoGridManager->getConnectedGrid()->getCurrencySymbol()
+			<< ", credit, committed: " << balance << " " << credit << " "
 			<< committed << LL_ENDL;
 
 	if (gStatusBar)
@@ -5345,10 +5581,11 @@ void process_economy_data(LLMessageSystem *msg, void** /*user_data*/)
 	LLFloaterImagePreview::setUploadAmount(upload_cost);
 	LLFloaterAnimPreview::setUploadAmount(upload_cost);
 
-	gMenuHolder->childSetLabelArg("Upload Image", "[COST]", llformat("%d", upload_cost));
-	gMenuHolder->childSetLabelArg("Upload Sound", "[COST]", llformat("%d", upload_cost));
-	gMenuHolder->childSetLabelArg("Upload Animation", "[COST]", llformat("%d", upload_cost));
-	gMenuHolder->childSetLabelArg("Bulk Upload", "[COST]", llformat("%d", upload_cost));
+	std::string fee = gHippoGridManager->getConnectedGrid()->getUploadFee();
+	gMenuHolder->childSetLabelArg("Upload Image", "[UPLOADFEE]", fee);
+	gMenuHolder->childSetLabelArg("Upload Sound", "[UPLOADFEE]", fee);
+	gMenuHolder->childSetLabelArg("Upload Animation", "[UPLOADFEE]", fee);
+	gMenuHolder->childSetLabelArg("Bulk Upload", "[UPLOADFEE]", fee);
 }
 
 void notify_cautioned_script_question(const LLSD& notification, const LLSD& response, S32 orig_questions, BOOL granted)
@@ -5424,7 +5661,9 @@ void notify_cautioned_script_question(const LLSD& notification, const LLSD& resp
 					perms.append(", ");
 				}
 
-				perms.append(LLFloaterChat::getInstance()->getString(SCRIPT_QUESTIONS[i]));
+				LLStringUtil::format_map_t args;
+				args["[CURRENCY]"] = gHippoGridManager->getConnectedGrid()->getCurrencySymbol();
+				perms.append(LLFloaterChat::getInstance()->getString(SCRIPT_QUESTIONS[i], args));
 			}
 		}
 
@@ -5588,8 +5827,11 @@ void process_script_question(LLMessageSystem *msg, void **user_data)
 		{
 			if (questions & LSCRIPTRunTimePermissionBits[i])
 			{
+				LLStringUtil::format_map_t args;
+				args["[CURRENCY]"] = gHippoGridManager->getConnectedGrid()->getCurrencySymbol();
+				
 				count++;
-				script_question += "    " + LLFloaterChat::getInstance()->getString(SCRIPT_QUESTIONS[i]) + "\n";
+				script_question += "    " + LLFloaterChat::getInstance()->getString(SCRIPT_QUESTIONS[i], args) + "\n";
 
 				// check whether permission question should cause special caution dialog
 				caution |= (SCRIPT_QUESTION_IS_CAUTION[i]);
@@ -6241,7 +6483,6 @@ void process_script_dialog(LLMessageSystem* msg, void**)
 	LLSD args;
 	args["TITLE"] = title;
 	args["MESSAGE"] = message;
-	args["CHANNEL"] = llformat("Channel: %d",chat_channel);
 	LLNotificationPtr notification;
 	if (!first_name.empty())
 	{

@@ -41,6 +41,7 @@ include(ViewerArtwork.cmake)
 
 include(Growl)
 include(libotr)
+include(7zip)
 
 if (WINDOWS)
   include(CopyWinLibs)
@@ -99,6 +100,10 @@ set(viewer_SOURCE_FILES
 	floaterlocalassetbrowse.cpp
 	floateravatarlist.cpp
 	floaterao.cpp
+	hippogridmanager.cpp
+	hippolimits.cpp
+	hipporestrequest.cpp
+	hippopanelgrids.cpp
 	importtracker.cpp
 	jclslpreproc.cpp
 	jc_lslviewerbridge.cpp
@@ -112,6 +117,7 @@ set(viewer_SOURCE_FILES
 	growlmanager.cpp
 	growlnotifier.cpp
 	streamtitledisplay.cpp
+	floaterskinfinder.cpp
     llagent.cpp
     llagentaccess.cpp
     llagentdata.cpp
@@ -234,6 +240,7 @@ set(viewer_SOURCE_FILES
     llfloaterregioninfo.cpp
     llfloaterreporter.cpp
     llfloaterscriptdebug.cpp
+    llfloatersearchreplace.cpp
     llfloatersellland.cpp
     llfloatersettingsdebug.cpp
     llfloatersnapshot.cpp
@@ -542,6 +549,10 @@ set(viewer_HEADER_FILES
 	floaterlocalassetbrowse.h
 	floateravatarlist.h
 	floaterao.h
+	hippogridmanager.h
+	hippolimits.h
+	hipporestrequest.h
+	hippopanelgrids.h
 	importtracker.h
 	jclslpreproc.h
 	jc_lslviewerbridge.h
@@ -561,6 +572,7 @@ set(viewer_HEADER_FILES
 	growlmanager.h
 	growlnotifier.h
 	streamtitledisplay.h
+	floaterskinfinder.h
     llagent.h
     llagentaccess.h
     llagentdata.h
@@ -685,6 +697,7 @@ set(viewer_HEADER_FILES
     llfloaterproperties.h
     llfloaterregioninfo.h
     llfloaterreporter.h
+    llfloatersearchreplace.h
     llfloaterscriptdebug.h
     llfloatersellland.h
     llfloatersettingsdebug.h

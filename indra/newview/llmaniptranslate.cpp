@@ -4,7 +4,7 @@
  *
  * $LicenseInfo:firstyear=2002&license=viewergpl$
  * 
- * Copyright (c) 2002-2009, Linden Research, Inc.
+ * Copyright (c) 2002-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -65,6 +65,8 @@
 #include "llworld.h"
 #include "llui.h"
 #include "pipeline.h"
+
+#include "hippoLimits.h"
 
 // [RLVa:KB]
 #include "rlvhandler.h"
@@ -735,9 +737,10 @@ BOOL LLManipTranslate::handleHover(S32 x, S32 y, MASK mask)
 				}
 
 				// For safety, cap heights where objects can be dragged
-				if (new_position_global.mdV[VZ] > MAX_OBJECT_Z)
+				float maxHeight = gHippoLimits->getMaxHeight();
+				if (new_position_global.mdV[VZ] > maxHeight)
 				{
-					new_position_global.mdV[VZ] = MAX_OBJECT_Z;
+					new_position_global.mdV[VZ] = maxHeight;
 				}
 
 				// Grass is always drawn on the ground, so clamp its position to the ground

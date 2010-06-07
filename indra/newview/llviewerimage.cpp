@@ -963,7 +963,7 @@ void LLViewerImage::setBoostLevel(S32 level)
 		setCategory(mBoostLevel);
 	}
 
-	if(mBoostLevel != LLViewerImageBoostLevel::BOOST_NONE)
+	if(mBoostLevel != LLViewerImageBoostLevel::BOOST_UI)
 	{
 		setNoDelete() ;		
 	}
@@ -1278,6 +1278,8 @@ BOOL LLViewerImage::forceFetch()
 
 void LLViewerImage::setIsMissingAsset()
 {
+	//spammy while IMG_DEFAULT is missing... GG LL
+	/*
 	if (mUrl.empty())
 	{
 		llwarns << mID << ": Marking image as missing" << llendl;
@@ -1286,6 +1288,7 @@ void LLViewerImage::setIsMissingAsset()
 	{
 		llwarns << mUrl << ": Marking image as missing" << llendl;
 	}
+	*/
 	if (mHasFetcher)
 	{
 		LLAppViewer::getTextureFetch()->deleteRequest(getID(), true);

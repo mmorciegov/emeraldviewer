@@ -2304,8 +2304,10 @@ void LLPipeline::postSort(LLCamera& camera)
 		std::sort(sCull->beginAlphaGroups(), sCull->endAlphaGroups(), LLSpatialGroup::CompareDepthGreater());
 	}
 	
+	static BOOL* sBeaconAlwaysOn = rebind_llcontrol<BOOL>("BeaconAlwaysOn", &gSavedSettings, true);
+
 	// only render if the flag is set. The flag is only set if we are in edit mode or the toggle is set in the menus
-	if (gSavedSettings.getBOOL("BeaconAlwaysOn") && !sShadowRender)
+	if (*sBeaconAlwaysOn && !sShadowRender)
 	{
 		if (sRenderScriptedTouchBeacons)
 		{

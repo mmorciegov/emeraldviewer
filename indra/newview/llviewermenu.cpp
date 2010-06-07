@@ -9012,6 +9012,15 @@ static void addMenu(view_listener_t *menu, const std::string& name)
 	menu->registerListener(gMenuHolder, name);
 }
 
+class LLToggleDebugMenus : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		toggle_debug_menus(NULL);
+		return true;
+	}
+};
+
 void initialize_menus()
 {
 	// A parameterized event handler used as ctrl-8/9/0 zoom controls below.
@@ -9113,7 +9122,7 @@ void initialize_menus()
         addMenu(new EmeraldCheckBlockSpam(), "Emerald.CheckBlockSpam");
 	//addMenu(new LLEmeraldCheckRadar(), "Emerald.CheckAvatarList");
 	//addMenu(new LLEmeraldDisable(), "Emerald.Disable");
-	//addMenu(new LLToggleDebugMenus(), "ToggleDebugMenus");
+	addMenu(new LLToggleDebugMenus(), "ToggleDebugMenus");
 	//addMenu(new EmeraldMarkAllDead(), "Emerald.ClearEffects");
 	//addMenu(new LLPhoxToggleAssetBrowser(),"Phox.ToggleAssetBrowser");
 	//addMenu(new LLPhoxCheckAssetBrowser(),"Phox.CheckAssetBrowser");

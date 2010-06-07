@@ -137,17 +137,19 @@ void LLFloaterTeleportHistory::addEntry(std::string regionName, S16 x, S16 y, S1
 		internal_time = utc_to_pacific_time(time_corrected(), is_daylight_savings());
 		std::string timeString=llformat("%02d:%02d:%02d ", internal_time->tm_hour, internal_time->tm_min, internal_time->tm_sec)+timeZone;
 
+		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
 		// build the list entry
 		LLSD value;
 		value["id"] = id;
 		value["columns"][0]["column"] = "region";
-		value["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+		value["columns"][0]["color"] = (*sDefaultListText).getValue();
 		value["columns"][0]["value"] = regionName;
 		value["columns"][1]["column"] = "position";
-		value["columns"][1]["color"] = gColors.getColor("DefaultListText").getValue();
+		value["columns"][1]["color"] = (*sDefaultListText).getValue();
 		value["columns"][1]["value"] = position;
 		value["columns"][2]["column"] = "visited";
-		value["columns"][2]["color"] = gColors.getColor("DefaultListText").getValue();
+		value["columns"][2]["color"] = (*sDefaultListText).getValue();
 		value["columns"][2]["value"] = timeString;
 
 		// these columns are hidden and serve as data storage for simstring and SLURL

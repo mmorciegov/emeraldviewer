@@ -90,7 +90,9 @@ void LLFloaterBump::show(void *contents)
 		LLSD row;
 		row["columns"][0]["value"] = none_detected;
 		row["columns"][0]["font"] = "SansSerifBold";
-		row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+		row["columns"][0]["color"] = (*sDefaultListText).getValue();
 		list->addElement(row);
 	}
 	else
@@ -161,6 +163,8 @@ void LLFloaterBump::add(LLScrollListCtrl* list, LLMeanCollisionData* mcd)
 	row["id"] = mcd->mPerp;
 	row["columns"][0]["value"] = text;
 	row["columns"][0]["font"] = "SansSerifBold";
-	row["columns"][0]["color"] = gColors.getColor("DefaultListText").getValue();
+	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+	row["columns"][0]["color"] = (*sDefaultListText).getValue();
 	list->addElement(row);
 }

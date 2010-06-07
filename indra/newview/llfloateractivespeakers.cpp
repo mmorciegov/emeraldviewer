@@ -515,7 +515,9 @@ void LLPanelActiveSpeakers::refreshSpeakers()
 			}
 			else
 			{
-				name_cell->setColor(gColors.getColor("DefaultListText"));
+				static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+				name_cell->setColor((*sDefaultListText));
 			}
 
 			std::string speaker_name;
