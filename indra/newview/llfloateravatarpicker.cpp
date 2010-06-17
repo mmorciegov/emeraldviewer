@@ -350,9 +350,6 @@ void LLFloaterAvatarPicker::populateNearMe()
 		if(av == gAgent.getID()) continue;
 		LLSD element;
 		element["id"] = av; // value
-		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
-		element["columns"][0]["color"] = (*sDefaultListText).getValue();
 		std::string fullname;
 		if(!gCacheName->getFullName(av, fullname))
 		{
@@ -530,9 +527,6 @@ void LLFloaterAvatarPicker::processAvatarPickerReply(LLMessageSystem* msg, void*
 		LLSD element;
 		element["id"] = avatar_id; // value
 		element["columns"][0]["value"] = avatar_name;
-		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
-		element["columns"][0]["color"] = (*sDefaultListText).getValue();
 		search_results->addElement(element);
 	}
 

@@ -66,8 +66,12 @@
 #include "llchat.h"
 
 #include "llfloaterchat.h"
-
-#include "jclslpreproc.h"
+#include "llviewerparcelmgr.h"
+#include "llviewerparcelmedia.h"
+#include "llparcel.h"
+#include "llaudioengine.h"
+#include "llviewerparcelmediaautoplay.h"
+#include "lloverlaybar.h"
 
 //#define JC_PROFILE_GSAVED
 
@@ -259,6 +263,8 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 	static std::string *sEmeraldCmdLineCalc = rebind_llcontrol<std::string>("EmeraldCmdLineCalc", &gSavedSettings, true);
 	static std::string *sEmeraldCmdLineTP2 = rebind_llcontrol<std::string>("EmeraldCmdLineTP2", &gSavedSettings, true);
 	static std::string *sEmeraldCmdLineClearChat = rebind_llcontrol<std::string>("EmeraldCmdLineClearChat", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineMedia = rebind_llcontrol<std::string>("EmeraldCmdLineMedia", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineMusic = rebind_llcontrol<std::string>("EmeraldCmdLineMusic", &gSavedSettings, true);
 	//static std::string *sEmeraldCmdUndeform = rebind_llcontrol<std::string>("EmeraldCmdUndeform", &gSavedSettings, true);
 	//gSavedSettings.getString("EmeraldCmdUndeform")
 	
@@ -316,6 +322,37 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 				gAgent.getAvatarObject()->undeform();
 				return false;
             }*/ //what the fuck is this shit, thought it would be something useful like repairing the skeleton but its some shitty playing of inworld anims
+			else if(command == *sEmeraldCmdLineMedia)
+			{
+				std::string url;
+				std::string type;
+
+				if(i >> url)
+				{
+					if(i >> type)
+					{
+						LLParcel *parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
+						parcel->setMediaURL(url);
+						parcel->setMediaType(type);
+						LLViewerParcelMedia::play(parcel);
+						LLViewerParcelMediaAutoPlay::playStarted();
+						return false;
+					}
+				}
+			}
+			else if(command == *sEmeraldCmdLineMusic)
+			{
+				std::string status;
+				if(i >> status)
+				{
+					if(!gOverlayBar->musicPlaying())
+					{
+						gOverlayBar->toggleMusicPlay(gOverlayBar);
+					}
+					gAudiop->startInternetStream(status);
+					return false;
+				}
+			}
 			else if(command == *sEmeraldCmdLineAO)
             {
 				std::string status;

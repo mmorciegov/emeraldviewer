@@ -104,6 +104,7 @@ public:
 	static void		doSave( void* userdata, BOOL close_after_save );
 	static void		doSaveComplete( void* userdata, BOOL close_after_save );
 	static void		onBtnSave(void*);
+	static void		onBtnXEd(void*);
 	static void		onBtnUndoChanges(void*);
 	static void		onSearchMenu(void* userdata);
 	
@@ -173,6 +174,7 @@ private:
 	LLFrameTimer	mLiveHelpTimer;
 	S32				mLiveHelpHistorySize;
 	BOOL			mEnableSave;
+	BOOL			mEnableXEd;
 	BOOL			mHasScriptData;
 	JCLSLPreprocessor* mLSLProc;
 	

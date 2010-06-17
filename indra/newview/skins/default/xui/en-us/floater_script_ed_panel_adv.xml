@@ -27,6 +27,9 @@
 	<button bottom="-499" enabled="true" follows="right|bottom" font="SansSerif"
 	     halign="center" height="20" label="Save" label_selected="Save" left="360"
 	     mouse_opaque="true" name="Save_btn" width="128" />
+  <button bottom="-479" enabled="false" follows="right|bottom" font="SansSerif"
+   halign="center" height="20" label="Open In XEd" label_selected="Open In XEd" left="360"
+   mouse_opaque="true" name="XEd_btn" width="128" />
 	<scroll_list background_visible="true" bottom="-457" column_padding="5" draw_border="true"
 	     draw_heading="false" draw_stripes="true" enabled="true"
 	     follows="left|right|bottom" height="120" left="4" mouse_opaque="true"

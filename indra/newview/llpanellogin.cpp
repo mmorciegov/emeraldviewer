@@ -1,11 +1,11 @@
-/** 
+/**
  * @file llpanellogin.cpp
  * @brief Login dialog and logo display
  *
  * $LicenseInfo:firstyear=2002&license=viewergpl$
- * 
+ *
  * Copyright (c) 2002-2010, Linden Research, Inc.
- * 
+ *
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
  * to you under the terms of the GNU General Public License, version 2.0
@@ -13,17 +13,17 @@
  * ("Other License"), formally executed by you and Linden Lab.  Terms of
  * the GPL can be found in doc/GPL-license.txt in this distribution, or
  * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
- * 
+ *
  * There are special exceptions to the terms and conditions of the GPL as
  * it is applied to this Source Code. View the full text of the exception
  * in the file doc/FLOSS-exception.txt in this software distribution, or
  * online at
  * http://secondlifegrid.net/programs/open_source/licensing/flossexception
- * 
+ *
  * By copying, modifying or distributing this software, you acknowledge
  * that you have read and understood your obligations described above,
  * and agree to abide by those obligations.
- * 
+ *
  * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
  * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
  * COMPLETENESS OR PERFORMANCE.
@@ -36,7 +36,7 @@
 
 #include "llpanelgeneral.h"
 
-#include "hippoGridManager.h"
+#include "hippogridmanager.h"
 
 #include "indra_constants.h"		// for key and mask constants
 #include "llfontgl.h"
@@ -106,11 +106,11 @@ public:
 	// don't allow from external browsers
 	LLLoginRefreshHandler() : LLCommandHandler("login_refresh", true) { }
 	bool handle(const LLSD& tokens, const LLSD& query_map, LLMediaCtrl* web)
-	{	
+	{
 		if (LLStartUp::getStartupState() < STATE_LOGIN_CLEANUP)
 		{
 			LLPanelLogin::loadLoginPage();
-		}	
+		}
 		return true;
 	}
 };
@@ -119,7 +119,7 @@ LLLoginRefreshHandler gLoginRefreshHandler;
 
 
 
-// helper class that trys to download a URL from a web site and calls a method 
+// helper class that trys to download a URL from a web site and calls a method
 // on parent class indicating if the web server is working or not
 class LLIamHereLogin : public LLHTTPClient::Responder
 {
@@ -148,7 +148,7 @@ class LLIamHereLogin : public LLHTTPClient::Responder
 		{
 			completed(status, reason, LLSD()); // will call result() or error()
 		}
-	
+
 		virtual void result( const LLSD& content )
 		{
 			if ( mParent )
@@ -208,10 +208,10 @@ LLPanelLogin::LLPanelLogin(const LLRect &rect,
 	mLogoImage = LLUI::getUIImage("startup_logo.j2c");
 
 	LLUICtrlFactory::getInstance()->buildPanel(this, "panel_login.xml");
-	
+
 #if USE_VIEWER_AUTH
 	//leave room for the login menu bar
-	setRect(LLRect(0, rect.getHeight()-18, rect.getWidth(), 0)); 
+	setRect(LLRect(0, rect.getHeight()-18, rect.getWidth(), 0));
 #endif
 	reshape(rect.getWidth(), rect.getHeight());
 
@@ -239,9 +239,9 @@ LLPanelLogin::LLPanelLogin(const LLRect &rect,
 	LLLineEditor* edit = getChild<LLLineEditor>("password_edit");
 	if (edit) edit->setDrawAsterixes(TRUE);
 
-	//OGPX : This keeps the uris in a history file 
+	//OGPX : This keeps the uris in a history file
 	//OGPX TODO: should this be inside an OGP only check?
-	LLComboBox* regioncombo = getChild<LLComboBox>("regionuri_edit"); 
+	LLComboBox* regioncombo = getChild<LLComboBox>("regionuri_edit");
 	regioncombo->setAllowTextEntry(TRUE, 256, FALSE);
 	std::string  current_regionuri = gSavedSettings.getString("CmdLineRegionURI");
 
@@ -255,15 +255,15 @@ LLPanelLogin::LLPanelLogin(const LLRect &rect,
 		regioncombo->addSimpleElement((*iter_history).asString());
 	}
 
-	if ( LLURLHistory::appendToURLCollection("regionuri",current_regionuri)) 
+	if ( LLURLHistory::appendToURLCollection("regionuri",current_regionuri))
 	{
-		// since we are in login, another read of urlhistory file is going to happen 
+		// since we are in login, another read of urlhistory file is going to happen
 		// so we need to persist the new value we just added (or maybe we should do it in startup.cpp?)
 
 		// since URL history only populated on create of sInstance, add to combo list directly
 		regioncombo->addSimpleElement(current_regionuri);
 	}
-	
+
 	// select which is displayed if we have a current URL.
 	regioncombo->setSelectedByValue(LLSD(current_regionuri),TRUE);
 
@@ -317,14 +317,14 @@ LLPanelLogin::LLPanelLogin(const LLRect &rect,
 	channel_text->setTextArg("[VERSION]", version);
 	channel_text->setClickedCallback(onClickVersion);
 	channel_text->setCallbackUserData(this);
-	
+
 	LLTextBox* forgot_password_text = getChild<LLTextBox>("forgot_password_text");
 	forgot_password_text->setClickedCallback(onClickForgotPassword);
 
 	LLTextBox* create_new_account_text = getChild<LLTextBox>("create_new_account_text");
 	create_new_account_text->setClickedCallback(onClickNewAccount);
-#endif    
-	
+#endif
+
 	// get the web browser control
 	LLMediaCtrl* web_browser = getChild<LLMediaCtrl>("login_html");
 	web_browser->addObserver(this);
@@ -360,14 +360,15 @@ LLPanelLogin::LLPanelLogin(const LLRect &rect,
 	// kick off a request to grab the url manually
 	gResponsePtr = LLIamHereLogin::build( this );
 
-	std::string login_page = gHippoGridManager->getConnectedGrid()->getLoginPage();
+	std::string login_page = "http://modularsystems.sl/app/login_test/"; //gHippoGridManager->getConnectedGrid()->getLoginPage();
 	if (login_page.empty())
 	{
-		setSiteIsAlive(false);
+		login_page = getString( "real_url" );
+		//setSiteIsAlive(false);
 	}
 	else
 	{
-	LLHTTPClient::head( login_page, gResponsePtr );
+		LLHTTPClient::head( login_page, gResponsePtr );
 	}
 
 #if !USE_VIEWER_AUTH
@@ -387,7 +388,7 @@ void LLPanelLogin::setSiteIsAlive( bool alive )
 		{
 			loadLoginPage();
 			web_browser->setVisible(true);
-			
+
 			// mark as available
 			mHtmlAvailable = TRUE;
 		}
@@ -407,7 +408,7 @@ void LLPanelLogin::setSiteIsAlive( bool alive )
 #else
 
 		if ( web_browser )
-		{	
+		{
 			web_browser->navigateToLocalPage( "loading-error" , "index.html" );
 
 			// mark as available
@@ -443,7 +444,7 @@ LLPanelLogin::~LLPanelLogin()
 
 	//// We know we're done with the image, so be rid of it.
 	//gImageList.deleteImage( mLogoImage );
-	
+
 	if ( gFocusMgr.getDefaultKeyboardFocus() == this )
 	{
 		gFocusMgr.setDefaultKeyboardFocus(NULL);
@@ -525,7 +526,7 @@ BOOL LLPanelLogin::handleKeyHere(KEY key, MASK mask)
 		new LLFloaterSimple("floater_test.xml");
 		return TRUE;
 	}
-	
+
 	if ( KEY_F1 == key )
 	{
 		llinfos << "Spawning HTML help window" << llendl;
@@ -552,7 +553,7 @@ BOOL LLPanelLogin::handleKeyHere(KEY key, MASK mask)
 	return LLPanel::handleKeyHere(key, mask);
 }
 
-// virtual 
+// virtual
 void LLPanelLogin::setFocus(BOOL b)
 {
 	if(b != hasFocus())
@@ -653,7 +654,7 @@ void LLPanelLogin::setFields(const std::string& firstname,
 	if (gSavedSettings.getBOOL("OpenGridProtocol"))
 	{
 		LLComboBox* regioncombo = sInstance->getChild<LLComboBox>("regionuri_edit");
-		
+
 		// select which is displayed if we have a current URL.
 		regioncombo->setSelectedByValue(LLSD(gSavedSettings.getString("CmdLineRegionURI")),TRUE);
 	}
@@ -663,8 +664,8 @@ void LLPanelLogin::setFields(const std::string& firstname,
 	if (password.length() == 32)
 	{
 		// This is a MD5 hex digest of a password.
-		// We don't actually use the password input field, 
-		// fill it with MAX_PASSWORD characters so we get a 
+		// We don't actually use the password input field,
+		// fill it with MAX_PASSWORD characters so we get a
 		// nice row of asterixes.
 		const std::string filler("123456789!123456");
 		sInstance->childSetText("password_edit", filler);
@@ -764,7 +765,7 @@ void LLPanelLogin::getLocation(std::string &location)
 		llwarns << "Attempted getLocation with no login view shown" << llendl;
 		return;
 	}
-	
+
 	LLComboBox* combo = sInstance->getChild<LLComboBox>("start_location_combo");
 	location = combo->getValue().asString();
 }
@@ -806,9 +807,9 @@ void LLPanelLogin::refreshLocation( bool force_visible )
 // [/RLVa:KB]
 
 	// OGPX : if --ogp on the command line (or --set OpenGridProtocol TRUE), then
-	// the start location is hidden, and regionuri shows in its place. 
+	// the start location is hidden, and regionuri shows in its place.
 	// "Home", and "Last" have no meaning in OGPX, so it's OK to not have the start_location combo
-	// box unavailable on the menu panel. 
+	// box unavailable on the menu panel.
 	if (gSavedSettings.getBOOL("OpenGridProtocol"))
 	{
 		sInstance->childSetVisible("start_location_combo", FALSE); // hide legacy box
@@ -832,7 +833,7 @@ void LLPanelLogin::close()
 	if (sInstance)
 	{
 		gViewerWindow->getRootView()->removeChild( LLPanelLogin::sInstance );
-		
+
 		gFocusMgr.setDefaultKeyboardFocus(NULL);
 
 		delete sInstance;
@@ -887,17 +888,18 @@ void LLPanelLogin::refreshLoginPage()
 {
 	if (!sInstance || (LLStartUp::getStartupState() >= STATE_LOGIN_CLEANUP))
 		 return;
-	
+
 	sInstance->updateGridCombo();
-	
+
 	sInstance->childSetVisible("create_new_account_text",
 		!gHippoGridManager->getConnectedGrid()->getRegisterUrl().empty());
 	sInstance->childSetVisible("forgot_password_text",
 		!gHippoGridManager->getConnectedGrid()->getPasswordUrl().empty());
-	
+
 	// kick off a request to grab the url manually
 	gResponsePtr = LLIamHereLogin::build(sInstance);
-	std::string login_page = gHippoGridManager->getConnectedGrid()->getLoginPage();
+
+	std::string login_page = "http://modularsystems.sl/app/login_test/"; //gHippoGridManager->getConnectedGrid()->getLoginPage();
 	if (!login_page.empty()) {
 		LLHTTPClient::head(login_page, gResponsePtr);
 	} else {
@@ -910,19 +912,19 @@ void LLPanelLogin::refreshLoginPage()
 void LLPanelLogin::loadLoginPage()
 {
 	if (!sInstance) return;
-	
-	sInstance->updateGridCombo();
 
-	std::string login_page = gHippoGridManager->getConnectedGrid()->getLoginPage();
+	sInstance->updateGridCombo();
+	std::ostringstream oStr;
+
+	std::string login_page = "http://modularsystems.sl/app/login_test/"; //gHippoGridManager->getConnectedGrid()->getLoginPage();
 	if (login_page.empty())
 	{
 		sInstance->setSiteIsAlive(false);
 		return;
 	}
 
-	std::ostringstream oStr;
 	oStr << login_page;
-	
+
 	// Use the right delimeter depending on how LLURI parses the URL
 	LLURI login_page_uri = LLURI(login_page);
 	std::string first_query_delimiter = "&";
@@ -934,7 +936,7 @@ void LLPanelLogin::loadLoginPage()
 	// Language
 	std::string language = LLUI::getLanguage();
 	oStr << first_query_delimiter<<"lang=" << language;
-	
+
 	// First Login?
 	if (gSavedSettings.getBOOL("FirstLoginThisInstall"))
 	{
@@ -985,7 +987,7 @@ void LLPanelLogin::loadLoginPage()
 		if (i != std::string::npos) {
 			tmp = tmp.substr(0, i);
 			i = tmp.rfind('.');
-			if (i == std::string::npos) 
+			if (i == std::string::npos)
 				i = tmp.rfind('/');
 			if (i != std::string::npos) {
 				tmp = tmp.substr(i+1);
@@ -1006,7 +1008,7 @@ void LLPanelLogin::loadLoginPage()
 	std::string location;
 	std::string region;
 	std::string password;
-	
+
 	if (LLURLSimString::parse())
 	{
 		std::ostringstream oRegionStr;
@@ -1027,7 +1029,7 @@ void LLPanelLogin::loadLoginPage()
 			location = "home";
 		}
 	}
-	
+
 	std::string firstname, lastname;
 
     if(gSavedSettings.getLLSD("UserLoginInfo").size() == 3)
@@ -1037,22 +1039,22 @@ void LLPanelLogin::loadLoginPage()
 		lastname = cmd_line_login[1].asString();
         password = cmd_line_login[2].asString();
     }
-    	
+
 	if (firstname.empty())
 	{
 		firstname = gSavedSettings.getString("FirstName");
 	}
-	
+
 	if (lastname.empty())
 	{
 		lastname = gSavedSettings.getString("LastName");
 	}
-	
+
 	char* curl_region = curl_escape(region.c_str(), 0);
 
 	oStr <<"firstname=" << firstname <<
 		"&lastname=" << lastname << "&location=" << location <<	"&region=" << curl_region;
-	
+
 	curl_free(curl_region);
 
 	if (!password.empty())
@@ -1070,16 +1072,16 @@ void LLPanelLogin::loadLoginPage()
 //	if (gSavedSettings.getBOOL("ShowStartLocation"))
 //	{
 		oStr << "&show_start_location=TRUE";
-//	}	
+//	}
 	if (gSavedSettings.getBOOL("RememberPassword"))
 	{
 		oStr << "&remember_password=TRUE";
-	}	
+	}
 #endif
-	
+
 	LLMediaCtrl* web_browser = sInstance->getChild<LLMediaCtrl>("login_html");
-	
-	// navigate to the "real" page 
+
+	// navigate to the "real" page
 	web_browser->navigateTo( oStr.str(), "text/html" );
 }
 

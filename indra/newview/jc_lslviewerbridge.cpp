@@ -776,7 +776,7 @@ U32 JCLSLBridge::registerCB(JCBridgeCallback* cb)
 		lastcall++;
 
 	callback_map[lastcall] = cb;
-	while(callback_map.size() > 100)callback_map.erase(0);
+	//no while(callback_map.size() > 100)callback_map.erase(0);
 	return lastcall;
 }
 

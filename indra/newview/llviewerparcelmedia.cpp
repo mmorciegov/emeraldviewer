@@ -50,6 +50,7 @@
 // Static Variables
 
 S32 LLViewerParcelMedia::sMediaParcelLocalID = 0;
+BOOL LLViewerParcelMedia::sManuallyAllowedScriptedMedia = FALSE;
 LLUUID LLViewerParcelMedia::sMediaRegionID;
 viewer_media_t LLViewerParcelMedia::sMediaImpl;
 
@@ -136,6 +137,11 @@ void LLViewerParcelMedia::update(LLParcel* parcel)
 				|| ( sMediaImpl->getMediaTextureID() != parcel->getMediaID() )
 				|| ( sMediaImpl->getMimeType() != parcel->getMediaType() ))
 			{
+				if(gSavedSettings.getBOOL("EmeraldStopMusicOnParcelChange"))
+				{
+					stop();
+					sManuallyAllowedScriptedMedia=FALSE;
+				}else
 				// Only play if the media types are the same.
 				if(sMediaImpl->getMimeType() == parcel->getMediaType())
 				{
@@ -333,7 +339,7 @@ void LLViewerParcelMedia::processParcelMediaCommandMessage( LLMessageSystem *msg
 	msg->getU32( "CommandBlock", "Flags", flags );
 	msg->getU32( "CommandBlock", "Command", command);
 	msg->getF32( "CommandBlock", "Time", time );
-
+	
 	if (flags &( (1<<PARCEL_MEDIA_COMMAND_STOP)
 				| (1<<PARCEL_MEDIA_COMMAND_PAUSE)
 				| (1<<PARCEL_MEDIA_COMMAND_PLAY)
@@ -356,6 +362,15 @@ void LLViewerParcelMedia::processParcelMediaCommandMessage( LLMessageSystem *msg
 		if(( command == PARCEL_MEDIA_COMMAND_PLAY ) ||
 		   ( command == PARCEL_MEDIA_COMMAND_LOOP ))
 		{
+			if(!
+				( 
+				(gSavedSettings.getBOOL("EmeraldAllowScriptedMedia")) ||
+				(sManuallyAllowedScriptedMedia)||
+				(gSavedSettings.getBOOL("ParcelMediaAutoPlayEnable"))
+				)
+				)
+				return;
+
 			if (getStatus() == LLViewerMediaImpl::MEDIA_PAUSED)
 			{
 				start();

@@ -4579,6 +4579,7 @@ void LLFolderViewEventListener::arrangeAndSet(LLFolderViewItem* focus,
 											  BOOL set_selection,
 											  BOOL take_keyboard_focus)
 {
+	if(gSavedSettings.getBOOL("EmeraldFreezeInventoryArangement"))return;
 	if(!focus) return;
 	LLFolderView* root = focus->getRoot();
 	focus->getParentFolder()->requestArrange();

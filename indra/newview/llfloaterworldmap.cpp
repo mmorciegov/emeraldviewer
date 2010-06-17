@@ -1555,8 +1555,6 @@ void LLFloaterWorldMap::updateSims(bool found_null_sim)
 
 	S32 name_length = mCompletingRegionName.length();
 
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 
 
 	BOOL match_found = FALSE;
@@ -1585,7 +1583,6 @@ void LLFloaterWorldMap::updateSims(bool found_null_sim)
 			value["id"] = info->getName();
 			value["columns"][0]["column"] = "sim_name";
 			value["columns"][0]["value"] = info->getName();
-			value["columns"][0]["color"] = (*sDefaultListText).getValue();
 			list->addElement(value);
 			num_results++;
 		}

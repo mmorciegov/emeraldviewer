@@ -99,7 +99,7 @@
 	     follows="left|top|right|bottom" font="SansSerif" height="221" left="5"
 	     max_length="2147483647" mouse_opaque="true" name="im_history"
 	     text_color="ChatHistoryTextColor"
-       track_bottom="true" 
+       track_bottom="true"
 	     text_readonly_color="ChatHistoryTextColor" width="487" word_wrap="true" />
 	<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom="7"
 	     follows="left|right|bottom" font="SansSerif" height="20"
@@ -110,8 +110,8 @@
 	     label="Send" left="433" mouse_opaque="true" name="send_btn"
 	     scale_image="true" width="60" />
 	<string name="live_help_dialog">
-		*** Welcome to Help Request *** 
-Please first check our SL Help Pages by pressing F1, or by accessing the Knowledge Base http://secondlife.com/knowledgebase/ 
+		*** Welcome to Help Request ***
+Please first check our SL Help Pages by pressing F1, or by accessing the Knowledge Base http://secondlife.com/knowledgebase/
 If your answer is not there, please enter your question to begin, then allow a few moments for available helpers to respond.
 -=-=- Response times will vary, especially during peak times -=-=-
 	</string>

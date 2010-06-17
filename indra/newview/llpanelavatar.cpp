@@ -97,6 +97,7 @@ BOOL LLPanelAvatar::sAllowFirstLife = FALSE;
 
 extern void handle_lure(const LLUUID& invitee);
 extern void handle_pay_by_id(const LLUUID& payee);
+extern void callback_invite_name_to_group(LLUUID group_id, void *user_data);
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Class LLDropTarget
@@ -288,7 +289,7 @@ void LLPanelAvatarFirstLife::onClickImage(void* data)
 			LLPreviewTexture* preview = new LLPreviewTexture("preview task texture",
 													 rect,
 													 std::string("Profile First Life Picture"),
-													 mUUID);
+													 mUUID,FALSE,FALSE);
 			preview->setFocus(TRUE);
 			//preview->mIsCopyable=FALSE;
 			//preview->canSaveAs
@@ -324,7 +325,9 @@ void LLPanelAvatarSecondLife::onClickImage(void* data)
 				LLPreviewTexture* preview = new LLPreviewTexture("preview task texture",
 														 rect,
 														 std::string("Profile Picture: ") +	name_text,
-														 mUUID
+														 mUUID,
+														 FALSE,
+														 FALSE
 														 );
 				preview->setFocus(TRUE);
 				
@@ -1643,8 +1646,6 @@ void LLPanelAvatar::resetGroupList()
 		return;
 	}
 
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 		
 	if (mPanelSecondLife)
 	{
@@ -1679,11 +1680,7 @@ void LLPanelAvatar::resetGroupList()
 				row["id"] = id ;
 				row["columns"][0]["value"] = group_string;
 				row["columns"][0]["font"] = "SANSSERIF_SMALL";
-				if (group_data.mListInProfile)
-				{
-					row["columns"][0]["color"] = (*sDefaultListText).getValue();
-				}
-				else
+				if (!group_data.mListInProfile)
 				{
 					static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
 
@@ -1711,7 +1708,7 @@ void LLPanelAvatar::onClickIM(void* userdata)
 	if (nameedit) name = nameedit->getText();
 	gIMMgr->addSession(name, IM_NOTHING_SPECIAL, self->mAvatarID);
 }
-void callback_invite_to_group(LLUUID group_id, void *user_data);
+
 void LLPanelAvatar::onClickGroupInvite(void* userdata)
 {
 	LLPanelAvatar* self = (LLPanelAvatar*) userdata;
@@ -1721,13 +1718,20 @@ void LLPanelAvatar::onClickGroupInvite(void* userdata)
 		widget = LLFloaterGroupPicker::showInstance(LLSD(gAgent.getID()));
 		if (widget)
 		{
-			widget->center();
-			widget->setPowersMask(GP_MEMBER_INVITE);
-			widget->setSelectCallback(callback_invite_to_group, (void *)&(self->getAvatarID()));
+			LLNameEditor* nameedit = self->mPanelSecondLife->getChild<LLNameEditor>("name");
+			if (nameedit)
+			{
+				LLSD info;
+				info["name"]=nameedit->getText();
+				info["id"]=self->getAvatarID();
+				widget->center();
+				widget->setPowersMask(GP_MEMBER_INVITE);
+				LLSD *newLLSD = new LLSD(info);
+				widget->setSelectCallback(callback_invite_name_to_group, (void *)newLLSD);
+			}
 		}
 	}
 }
-
 
 
 // static
@@ -2138,13 +2142,10 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 	std::string	group_name;
 	LLUUID	group_insignia_id;
 
-	llinfos << "groups packet size " << msg->getReceiveSize() << llendl;
+	//llinfos << "groups packet size " << msg->getReceiveSize() << llendl;
 
 	msg->getUUIDFast(_PREHASH_AgentData, _PREHASH_AgentID, agent_id);
 	msg->getUUIDFast(_PREHASH_AgentData, _PREHASH_AvatarID, avatar_id );
-
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 
 	for (panel_list_t::iterator iter = sAllPanels.begin(); iter != sAllPanels.end(); ++iter)
 	{
@@ -2216,12 +2217,8 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 						}
 					}
 				}
-				// Set normal color if not found or if group is visible in profile
-				if (!group_data || group_data->mListInProfile)
-				{
-					row["columns"][0]["color"] = (*sDefaultListText).getValue();
-				}
-				else
+				// Set unselected color if found and group is not visible in profile
+				if (group_data && group_data->mListInProfile)
 				{
 					static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
 

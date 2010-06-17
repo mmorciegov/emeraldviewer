@@ -254,9 +254,6 @@ void LLFloaterBuyContents::inventoryChanged(LLViewerObject* obj,
 		row["columns"][1]["column"] = "text";
 		row["columns"][1]["value"] = text;
 		row["columns"][1]["font"] = "SANSSERIF";
-		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
-		row["columns"][1]["color"] = (*sDefaultListText).getValue();
 
 		item_list->addElement(row);
 	}

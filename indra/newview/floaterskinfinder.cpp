@@ -45,6 +45,9 @@ FloaterSkinfinder::FloaterSkinfinder(const LLSD& key = LLSD()) : LLFloaterHtmlSi
 {
 	setTrusted(true);
 	setTitle("Skin Browser");
+	F32 ui = gSavedSettings.getF32("UIScaleFactor");
+	reshape((S32)llround(670.0f/ui), (S32)llround(462.0f/ui), FALSE);
+	setCanResize(FALSE);
 	center();
 }
 

@@ -34,17 +34,50 @@
 	      <key>Value</key>
 	      <string>f54a0c32-3cd1-d49a-5b4f-7b792bebc204</string>
 	    </map>
-		<key>EmeraldTemporaryUpload</key>
-		<map>
-			<key>Comment</key>
-			<string>Whether or not a upload is temp</string>
-			<key>Persist</key>
-			<integer>0</integer>
-			<key>Type</key>
-			<string>Boolean</string>
-			<key>Value</key>
-			<integer>0</integer>
-		</map>
+    <key>EmeraldAllowScriptedMedia</key>
+    <map>
+      <key>Comment</key>
+      <string>Allow any script to press your play button</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>EmeraldAlertOnSnapshot</key>
+    <map>
+      <key>Comment</key>
+      <string>show a message when someone takes a detectable snapshot nearby</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>EmeraldTemporaryUpload</key>
+    <map>
+      <key>Comment</key>
+      <string>Whether or not a upload is temp</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldFreezeInventoryArangement</key>
+    <map>
+      <key>Comment</key>
+      <string>If true, prevents the inventory folders from changing on new items</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
 		<key>EmeraldExportProperties</key>
 		<map>
 			<key>Comment</key>
@@ -67,7 +100,18 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
-		<key>EmeraldUseChatBar</key>
+    <key>EmeraldTranslateReplace</key>
+    <map>
+      <key>Comment</key>
+      <string>Whether or not right click tranlate replaces the selected text or adds to it.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldUseChatBar</key>
 		<map>
 			<key>Comment</key>
 			<string>Set to FALSE to disable the chat bar and chat display in the bottom left. All chat will go to the Communicate window.</string>
@@ -216,6 +260,231 @@
       <string>Drop/kill all dialogs?</string>
       <key>Persist</key>
       <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldBuildPrefs_Xsize</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Size For New Objects to be created X</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.5</real>
+    </map>
+    <key>EmeraldBuildPrefs_Ysize</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Size For New Objects to be created Y</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.5</real>
+    </map>
+    <key>EmeraldBuildPrefs_Zsize</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Size For New Objects to be created Z</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.5</real>
+    </map>
+    <key>EmeraldBuildPrefs_Phantom</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Setting For New Objects to be created, phantom flag</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldBuildPrefs_Temporary</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Setting For New Objects to be created, temp flag</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldBuildPrefs_Physical</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Setting For New Objects to be created, physical flag</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldBuildPrefs_EmbedItem</key>
+    <map>
+      <key>Comment</key>
+      <string>Whether to add item to objects</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldBuildPrefs_Material</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Setting For New Objects to be created, physical flag</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>Wood</string>
+    </map>
+    <key>EmeraldBuildPrefs_Color</key>
+    <map>
+      <key>Comment</key>
+      <string>Color of new objects textures</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Color4</string>
+      <key>Value</key>
+      <array>
+        <real>1.0</real>
+        <real>1.0</real>
+        <real>1.0</real>
+        <real>1.0</real>
+      </array>
+    </map>
+    <key>EmeraldBuildPrefs_Texture</key>
+    <map>
+      <key>Comment</key>
+      <string>Texture used as 'Default' for new object created</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>89556747-24cb-43ed-920b-47caed15465f</string>
+    </map>
+    <key>EmeraldBuildPrefs_Item</key>
+    <map>
+      <key>Comment</key>
+      <string>item added to new object created</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string></string>
+    </map>
+    <key>EmeraldBuildPrefs_Alpha</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Alpha For New Objects to be created</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.0</real>
+    </map>
+    <key>EmeraldBuildPrefs_Glow</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Glow For New Objects to be created</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.0</real>
+    </map>
+    <key>EmeraldBuildPrefs_FullBright</key>
+    <map>
+      <key>Comment</key>
+      <string>Default Setting For New Objects to be created, whether textures are full bright</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldBuildPrefs_Shiny</key>
+    <map>
+      <key>Comment</key>
+      <string>Shiny level used as 'Default' for new objects created</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>None</string>
+    </map>
+    <key>EmeraldBuildPrefs_PivotX</key>
+    <map>
+      <key>Comment</key>
+      <string>Pivot point on the X axis</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>50</real>
+    </map>
+    <key>EmeraldBuildPrefs_PivotY</key>
+    <map>
+      <key>Comment</key>
+      <string>Pivot point on the Y axis</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>50</real>
+    </map>
+    <key>EmeraldBuildPrefs_PivotZ</key>
+    <map>
+      <key>Comment</key>
+      <string>Pivot point on the Z axis</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>50</real>
+    </map>
+    <key>EmeraldBuildPrefs_PivotIsPercent</key>
+    <map>
+      <key>Comment</key>
+      <string>Consider the Pivot points values as a percentage</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>EmeraldBuildPrefs_ActualRoot</key>
+    <map>
+      <key>Comment</key>
+      <string>Show the axis on the actual root of a linkset instead of mass center</string>
+      <key>Persist</key>
+      <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
@@ -525,18 +794,29 @@
 			<key>Value</key>
 			<string>5fcbee19-8dd4-2888-d6bf-14310d2f7c9f</string>
 		</map>
-		<key>EmeraldAvatarListKeepOpen</key>
-		<map>
-			<key>Comment</key>
-			<string>Keeps Avatar List updates running in background</string>
-			<key>Persist</key>
-			<integer>1</integer>
-			<key>Type</key>
-			<string>Boolean</string>
-			<key>Value</key>
-			<integer>0</integer>
-		</map>
-     <key>EmeraldAvatarXModifier</key>
+    <key>EmeraldAvatarListKeepOpen</key>
+    <map>
+      <key>Comment</key>
+      <string>Keeps Avatar List updates running in background</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldAvatarListColorEntries</key>
+    <map>
+      <key>Comment</key>
+      <string>Display names of friends and muted people in different colors in the list</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldAvatarXModifier</key>
     <map>
       <key>Comment</key>
       <string>wat</string>
@@ -1125,6 +1405,33 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
+    <key>ResetFocusOnSelfClick</key>
+    <map>
+      <key>Comment</key>
+      <string>Setting this to FALSE stops the cammera from reseting its view when your zoomed in on something and acedently left click your avatar.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+	  <key>FloaterGroupTitlesRect</key>
+	    <map>
+	      <key>Comment</key>
+	      <string>Rectangle for group titles window</string>
+	      <key>Persist</key>
+	      <integer>1</integer>
+	      <key>Type</key>
+	      <string>Rect</string>
+	      <key>Value</key>
+	      <array>
+	        <integer>0</integer>
+	        <integer>400</integer>
+	        <integer>500</integer>
+	        <integer>0</integer>
+	    </array>
+	  </map>
 		<key>FloaterAvatarListRect</key>
 		<map>
 			<key>Comment</key>
@@ -1140,6 +1447,50 @@
 				<integer>200</integer>
 				<integer>0</integer>
 			</array>
+		</map>
+		<key>zmm_deffov</key>
+		<map>
+			<key>Comment</key>
+			<string>default field of view for right mouse zoom</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>F32</string>
+			<key>Value</key>
+			<real>1.0</real>
+		</map>
+		<key>zmm_mlfov</key>
+		<map>
+			<key>Comment</key>
+			<string>1=norm, under1 zoom out, over1 zoom in</string>
+			<key>Persist</key>
+			<integer>1</integer>
+			<key>Type</key>
+			<string>F32</string>
+			<key>Value</key>
+			<real>1</real>
+		</map>
+		<key>zmm_isinml</key>
+		<map>
+			<key>Comment</key>
+			<string>mouselook</string>
+			<key>Persist</key>
+			<integer>0</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
+		</map>
+		<key>zmm_rightmousedown</key>
+		<map>
+			<key>Comment</key>
+			<string>insert rude comment here</string>
+			<key>Persist</key>
+			<integer>0</integer>
+			<key>Type</key>
+			<string>Boolean</string>
+			<key>Value</key>
+			<integer>0</integer>
 		</map>
 		<key>mm_alwaysRezWithLandGroup</key>
 		<map>
@@ -1232,7 +1583,7 @@
 			<key>Type</key>
 			<string>Boolean</string>
 			<key>Value</key>
-			<integer>1</integer>
+			<integer>0</integer>
 		</map>
 		<key>UIImgDefaultAlphaUUID</key>
 		<map>
@@ -8153,6 +8504,17 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
+    <key>EmeraldStopMusicOnParcelChange</key>
+    <map>
+      <key>Comment</key>
+      <string>Turns off your mmedia when you change parcels</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
 		<key>PerAccountSettingsFile</key>
 		<map>
 			<key>Comment</key>
@@ -8532,7 +8894,29 @@
 			<key>Value</key>
 			<string>cao</string>
 		</map>
-		<key>EmeraldCmdLineClearChat</key>
+    <key>EmeraldCmdLineMedia</key>
+    <map>
+      <key>Comment</key>
+      <string>Chat command for setting a media url</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>/media</string>
+    </map>
+    <key>EmeraldCmdLineMusic</key>
+    <map>
+      <key>Comment</key>
+      <string>Chat command for setting a music url</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string>/music</string>
+    </map>
+    <key>EmeraldCmdLineClearChat</key>
 		<map>
 			<key>Comment</key>
 			<string>Clear chat hsitory to stop lag from chat spam</string>
@@ -10997,7 +11381,7 @@
 			<key>Type</key>
 			<string>String</string>
 			<key>Value</key>
-			<string>default</string>
+			<string>gemini</string>
 		</map>
 		<key>SkyAmbientScale</key>
 		<map>

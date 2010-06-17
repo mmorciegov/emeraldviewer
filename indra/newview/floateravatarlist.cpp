@@ -1,7 +1,4 @@
 /** 
- * @file llfloatermute.cpp
- * @brief Container for mute list
- *
  * @author Dale Glass <dale@daleglass.net>, (C) 2007
  */
 
@@ -14,17 +11,17 @@
  * Added bridge info -lgg
  */
 
+// rewritten again by skills
+
 #include "llviewerprecompiledheaders.h"
 
 #include "llavatarconstants.h"
 #include "llappviewer.h"
 #include "floateravatarlist.h"
-
 #include "lluictrlfactory.h"
 #include "llviewerwindow.h"
 #include "llscrolllistctrl.h"
 #include "llviewercontrol.h"
-
 #include "llvoavatar.h"
 #include "llimview.h"
 #include "llfloateravatarinfo.h"
@@ -37,13 +34,14 @@
 #include "llviewercontrol.h"
 #include "llviewerstats.h"
 #include "llerror.h"
-#include "llchat.h"
 #include "llviewermessage.h"
 #include "llweb.h"
 #include "llviewerobjectlist.h"
 #include "llmutelist.h"
 #include "llchat.h"
+#include "llchatbar.h"
 #include "llfloaterchat.h"
+#include "chatbar_as_cmdline.h"
 #include "llcallbacklist.h"
 
 // [RLVa:KB] - Emerald specific
@@ -52,60 +50,31 @@
 
 #include <time.h>
 #include <string.h>
-
 #include <map>
 
-
 #include "llworld.h"
-
 #include "llsdutil.h"
 #include "jc_lslviewerbridge.h"
 #include "v3dmath.h"
-
 #include "scriptcounter.h"
-
 #include "llfloaterregioninfo.h"
 #include "llfocusmgr.h"
+
+#include "llmenugl.h"
+#include "llviewermenu.h"
+#include "llcombobox.h"
+#include "llfloateractivespeakers.h"
+#include "llimpanel.h" // for LLVoiceChannel
+
 void cmdline_printchat(std::string message);
+void send_chat_from_viewer(std::string utf8_out_text, EChatType type, S32 channel);
 
-/**
- * @brief How many seconds to wait between data requests
- *
- * This is intended to avoid flooding the server with requests
- */
-const F32 MIN_REQUEST_INTERVAL   = 1.0f;
-
-/**
- * @brief How long to wait for a request to arrive during the first try in seconds
- */
-const F32 FIRST_REQUEST_TIMEOUT  = 16.0f;
-
-/**
- * @brief Delay is doubled on each attempt. This is as high as it'll go
- */
-const F32 MAX_REQUEST_TIMEOUT    = 2048.0f;
- 
-/**
- * How long to wait for a request to arrive before assuming failure
- * and showing the failure icon in the list. This is just for the user's
- * information, if a reply arrives after this interval we'll accept it anyway.
- */
-const F32 REQUEST_FAIL_TIMEOUT   = 15.0f;
-
-/**
- * How long to keep people who are gone in the list. After this time is reached,
- * they're not shown in the list anymore, but still kept in memory until
- * CLEANUP_TIMEOUT is reached.
- */
-const F32 DEAD_KEEP_TIME = 10.0f;
-
-/**
- * @brief How long to keep entries around before removing them.
- *
- * @note Longer term, data like birth and payment info should be cached on disk.
- */
-const F32 CLEANUP_TIMEOUT = 3600.0f;
-
+const F32 MIN_REQUEST_INTERVAL   = 1.0f; //How many seconds to wait between data requests
+const F32 FIRST_REQUEST_TIMEOUT  = 16.0f; //How long to wait for a request to arrive during the first try in seconds
+const F32 MAX_REQUEST_TIMEOUT    = 2048.0f; //Delay is doubled on each attempt. This is as high as it'll go
+const F32 REQUEST_FAIL_TIMEOUT   = 15.0f; //How long to wait for a request to arrive before assuming failure
+const F32 DEAD_KEEP_TIME		 = 10.0f; //How long to keep people who are gone in the list.
+const F32 CLEANUP_TIMEOUT		 = 3600.0f; //How long to keep entries around before removing them.
 extern U32 gFrameCount;
 
 LLAvatarInfo::LLAvatarInfo()
@@ -191,8 +160,8 @@ void chat_avatar_status(std::string name, LLUUID key, ERadarAlertType type, bool
 	}
 }
 
-LLAvatarListEntry::LLAvatarListEntry(const LLUUID& id, const std::string &name, const LLVector3d &position, BOOL isLinden) :
-		mID(id), mName(name), mTime(time(NULL)), mPosition(position), mDrawPosition(), mAlert(FALSE), mMarked(FALSE), mFocused(FALSE), mIsLinden(isLinden), mAccountTitle(""),
+LLAvatarListEntry::LLAvatarListEntry(const LLUUID& id, const std::string &name, const LLVector3d &position, BOOL isLinden, BOOL isVoice) :
+		mID(id), mName(name), mTime(time(NULL)), mPosition(position), mDrawPosition(), mAlert(FALSE), mMarked(FALSE), mFocused(FALSE), mIsLinden(isLinden), mIsVoice(isVoice), mAccountTitle(""),
 			mUpdateTimer(), mFrame(gFrameCount), mInSimFrame(U32_MAX), mInDrawFrame(U32_MAX), mInChatFrame(U32_MAX)
 {
 }
@@ -210,7 +179,7 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 
 	//lgg if we already got a Z value from the bridge, dont over write it here
 	if(position.mdV[VZ] == 0.0)
-{
+	{
 		mPosition.mdV[VX] = position.mdV[VX];
 		mPosition.mdV[VY] = position.mdV[VY];
 		mNeedBridgeAssist = true;
@@ -227,35 +196,34 @@ void LLAvatarListEntry::setPosition(LLVector3d position, bool this_sim, bool dra
 		if(mInSimFrame == U32_MAX)
 		{
 			chat_avatar_status(mName,mID,ALERT_TYPE_SIM, true);
-	}
+		}
 		mInSimFrame = mFrame;
-}
+	}
 	if(drawn)
-{
+	{
 		if(mInDrawFrame == U32_MAX)chat_avatar_status(mName,mID,ALERT_TYPE_DRAW, true);
 		mInDrawFrame = mFrame;
-}
+	}
 	if(chatrange)
-{
+	{
 		if(mInChatFrame == U32_MAX)chat_avatar_status(mName,mID,ALERT_TYPE_CHATRANGE, true);
 		mInChatFrame = mFrame;
+	}
+	mUpdateTimer.start();
 }
 
-	mUpdateTimer.start();
-		}
-
 LLVector3d LLAvatarListEntry::getPosition()
-		{
+{
 	return mPosition;
-		}
+}
 
 BOOL LLAvatarListEntry::getNeedsBridgeAssist()
-		{
+{
 	return mNeedBridgeAssist;
-		}
+}
 
 bool LLAvatarListEntry::getAlive()
-		{
+{
 	U32 current = gFrameCount;
 	if(mInSimFrame != U32_MAX && (current - mInSimFrame) >= 2)
 	{
@@ -275,30 +243,18 @@ bool LLAvatarListEntry::getAlive()
 			gAgent.sendReliableMessage();
 		}
 	}
-        if(mInDrawFrame != U32_MAX && (current - mInDrawFrame) >= 2)
-        {
-                mInDrawFrame = U32_MAX;
-                chat_avatar_status(mName,mID,ALERT_TYPE_DRAW, false);
-        }
-        if(mInChatFrame != U32_MAX && (current - mInChatFrame) >= 2)
-        {
-                mInChatFrame = U32_MAX;
-                chat_avatar_status(mName,mID,ALERT_TYPE_CHATRANGE, false);
-        }
+    if(mInDrawFrame != U32_MAX && (current - mInDrawFrame) >= 2)
+    {
+            mInDrawFrame = U32_MAX;
+            chat_avatar_status(mName,mID,ALERT_TYPE_DRAW, false);
+    }
+    if(mInChatFrame != U32_MAX && (current - mInChatFrame) >= 2)
+    {
+            mInChatFrame = U32_MAX;
+            chat_avatar_status(mName,mID,ALERT_TYPE_CHATRANGE, false);
+    }
 	return ((current - mFrame) <= 2);
 }
-//U32 LLAvatarListEntry::getOffSimFrames()
-//{
-//	return (gFrameCount - mInSimFrame);
-//}
-//U32 LLAvatarListEntry::getOffDrawFrames()
-//{
-//	return (gFrameCount - mInDrawFrame);
-//}
-//U32 LLAvatarListEntry::getOutsideChatRangeFrames();
-//{
-//	return (gFrameCount - mInChatFrame);
-//}
 
 F32 LLAvatarListEntry::getEntryAgeSeconds()
 {
@@ -306,87 +262,81 @@ F32 LLAvatarListEntry::getEntryAgeSeconds()
 }
 
 void LLAvatarListEntry::setName(std::string name)
-			{
+{
 	if ( name.empty() || (name.compare(" ") == 0))
-				{
+	{
 		//llwarns << "Trying to set empty name" << llendl;
-				}
+	}
 	mName = name;
-			}
+}
 
 std::string LLAvatarListEntry::getName()
-			{
+{
 	return mName;
 }
 
 time_t LLAvatarListEntry::getTime()
-					{
+{
 	return mTime;
 }
 
 void LLAvatarListEntry::resetTime()
-						{
+{
 	mTime = time(NULL);
-						}
+}
 
 LLUUID LLAvatarListEntry::getID()
-						{
+{
 	return mID;
-						}
+}
 
 void LLAvatarListEntry::setID(LLUUID id)
-					{
-	if ( id.isNull() )
-						{
-		llwarns << "Trying to set null id" << llendl;
-	}
-	mID = id;
-						}
+{
+	if (!id.isNull())
+		mID = id;
+}
+
+BOOL LLAvatarListEntry::getIsVoice()
+{
+	return mIsVoice;
+}
+
+void LLAvatarListEntry::setIsVoice(BOOL voice)
+{
+	mIsVoice = voice;
+}
 
 BOOL LLAvatarListEntry::getIsLinden()
-						{
-	// Are there any employees that are not a Linden?
-	// I suppose this is a bit redundant.
+{
 	return ( mIsLinden || ( mAvatarInfo.getValue().Account == ACCOUNT_EMPLOYEE ) );
-						}
+}
 
 void LLAvatarListEntry::setAccountCustomTitle(std::string &title)
-					{
+{
 	mAccountTitle = title;
 	mAvatarInfo.getValue().Account = ACCOUNT_CUSTOM;
-					}
+}
 
 std::string LLAvatarListEntry::getAccountCustomTitle()
-					{
+{
 	return mAccountTitle;
-					}
+}
 		
 void LLAvatarListEntry::setAlert()
-			{
+{
 	mAlert = TRUE;
 }
 				
 BOOL LLAvatarListEntry::getAlert()
-				{
+{
 	return mAlert;
-				}
-
-void LLAvatarListEntry::toggleMark()
-					{
-	mMarked = !mMarked;
-			}
-
-BOOL LLAvatarListEntry::isMarked()
-			{
-	return mMarked;
-			}
-
+}
 
 class LggPosCallback : public JCBridgeCallback
 {
-public:
+	public:
 	LggPosCallback(std::vector<LLUUID> inavatars)
-			{
+	{
 		avatars = inavatars;
 	}
 
@@ -396,13 +346,13 @@ public:
 		LLFloaterAvatarList::processBridgeReply(avatars,data);
 	}
 
-private:
+	private:
 	std::vector<LLUUID> avatars;
 };
 
 
 BOOL LLAvatarListEntry::isDead()
-				{
+{
 	return getEntryAgeSeconds() > DEAD_KEEP_TIME;
 }
 
@@ -413,12 +363,534 @@ LLFloaterAvatarList::LLFloaterAvatarList() :  LLFloater(std::string("avatar list
 {
 	llassert_always(sInstance == NULL);
 	sInstance = this;
+
+	(new LLAgentProfile())->registerListener(this, "Avatarlist.Profile");
+	(new LLAgentChatcmd())->registerListener(this, "Avatarlist.Chatcmd");
+	(new LLAgentGetkey())->registerListener(this, "Avatarlist.Getkey");
+	(new LLAgentTrack())->registerListener(this, "Avatarlist.Track");
+	(new LLAgentIM())->registerListener(this, "Avatarlist.IM");
+	(new LLAgentScripts())->registerListener(this, "Avatarlist.Scripts");
+	(new LLAgentTpto())->registerListener(this, "Avatarlist.Tpto");
+	(new LLAgentOffertp())->registerListener(this, "Avatarlist.Offertp");
+
+	(new LLAgentMute())->registerListener(this, "Avatarlist.Mute");
+	(new LLAgentUnmute())->registerListener(this, "Avatarlist.Unmute");
+	(new LLAgentAr())->registerListener(this, "Avatarlist.Ar");
+	(new LLAgentEject())->registerListener(this, "Avatarlist.Eject");
+	(new LLAgentBan())->registerListener(this, "Avatarlist.Ban");
+	(new LLAgentFreeze())->registerListener(this, "Avatarlist.Freeze");
+	(new LLAgentUnfreeze())->registerListener(this, "Avatarlist.Unfreeze");
+
+	(new LLAgentEstatekick())->registerListener(this, "Avatarlist.Estatekick");
+	(new LLAgentEstateban())->registerListener(this, "Avatarlist.Estateban");
+	(new LLAgentEstatetphome())->registerListener(this, "Avatarlist.Estatetphome");
+	(new LLAgentEstategtfo())->registerListener(this, "Avatarlist.Estategtfo");
+
+	LLMenuGL* menu = LLUICtrlFactory::getInstance()->buildMenu("menu_avatarlist.xml", this);
+	if (!menu)
+	{
+		menu = new LLMenuGL(LLStringUtil::null);
+	}
+	menu->setVisible(FALSE);
+	mPopupMenuHandle = menu->getHandle();
 }
 
 LLFloaterAvatarList::~LLFloaterAvatarList()
 {
 	gIdleCallbacks.deleteFunction( LLFloaterAvatarList::callbackIdle );
 	sInstance = NULL;
+}
+
+BOOL LLFloaterAvatarList::handleRightMouseDown(S32 x, S32 y, MASK mask)
+{
+	LLFloaterAvatarList* self = getInstance();
+	self->setFocus( TRUE );
+	mAvatarList->handleRightMouseDown(x-7,y-30,mask);
+
+	LLMenuGL* menu = (LLMenuGL*)mPopupMenuHandle.get();
+	if (menu)
+	{
+		menu->buildDrawLabels();
+		menu->updateParent(LLMenuGL::sMenuContainer);
+		LLMenuGL::showPopup(this, menu, x, y);
+	}
+	return TRUE;
+}
+
+static void cmd_profile(const LLUUID& avatar, const std::string &name)
+{
+	LLFloaterAvatarInfo::showFromDirectory(avatar);
+}
+bool LLFloaterAvatarList::LLAgentProfile::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* self = getInstance();
+	self->doCommand(cmd_profile);
+	return true;
+}
+
+static void cmd_saycmd(const LLUUID& avatar, const std::string &avname)
+{
+	LLWString text = utf8str_to_wstring(gSavedPerAccountSettings.getString("EmeraldAvatarlistCustomAction"));
+	if (!text.empty())
+	{
+		LLChatBar* chatp = new LLChatBar();
+
+		EChatType nType = CHAT_TYPE_NORMAL;
+		S32 channel;
+		text = chatp->stripChannelNumber(text, &channel);
+		
+		std::string utf8text = wstring_to_utf8str(text);
+
+		//---------- placeholder stuff
+		std::string key_wildcard = "#k";
+		std::string name_wildcard = "#n";
+		//Extract Name
+		std::string key = avatar.asString().c_str();
+		std::string name = std::string(avname);
+
+		//Handle Replacements
+		size_t found = utf8text.find(key_wildcard);
+		while(found != std::string::npos)
+		{
+			utf8text.replace(found, 2, key);
+			found = utf8text.find(key_wildcard);
+		}
+
+		found = utf8text.find(name_wildcard);
+		while(found != std::string::npos)
+		{
+			utf8text.replace(found, 2, name);
+			found = utf8text.find(name_wildcard);
+		}
+		//----------
+
+		// Try to trigger a gesture, if not chat to a script.
+		std::string utf8_revised_text;
+		if (0 == channel)
+		{
+			// discard returned "found" boolean
+			gGestureManager.triggerAndReviseString(utf8text, &utf8_revised_text);
+		}
+		else
+		{
+			utf8_revised_text = utf8text;
+		}
+		utf8_revised_text = utf8str_trim(utf8_revised_text);
+		if (!utf8_revised_text.empty() && cmd_line_chat(utf8_revised_text, nType))
+		{
+			send_chat_from_viewer(utf8_revised_text, nType, channel);
+		}
+	}
+}
+
+bool LLFloaterAvatarList::LLAgentChatcmd::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* self = getInstance();
+	self->doCommand(cmd_saycmd);
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentGetkey::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* self = getInstance();
+ 	LLScrollListItem *item = self->mAvatarList->getFirstSelected();
+	if (!item ) return true;
+
+	LLUUID agent_id = item->getUUID();
+	char buffer[UUID_STR_LENGTH];		/*Flawfinder: ignore*/
+	agent_id.toString(buffer);
+
+	gViewerWindow->mWindow->copyTextToClipboard(utf8str_to_wstring(buffer));
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentTrack::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+ 	LLScrollListItem *item =   avlist->mAvatarList->getFirstSelected();
+	if (!item) return true;
+
+	LLUUID agent_id = item->getUUID();
+
+	if ( avlist->mTracking && avlist->mTrackedAvatar == agent_id )
+	{
+		LLTracker::stopTracking(NULL);
+		avlist->mTracking = FALSE;
+	}
+	else
+	{
+		avlist->mTracking = TRUE;
+		avlist->mTrackByLocation = FALSE;
+		avlist->mTrackedAvatar = agent_id;
+		LLTracker::trackAvatar(agent_id, avlist->mAvatars[agent_id].getName());
+	}
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentIM::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
+	if(ids.size() > 0)
+	{
+		if(ids.size() == 1)
+		{
+			// Single avatar
+			LLUUID agent_id = ids[0];
+			char buffer[MAX_STRING];
+			snprintf(buffer, MAX_STRING, "%s", avlist->mAvatars[agent_id].getName().c_str());
+			gIMMgr->setFloaterOpen(TRUE);
+			gIMMgr->addSession(buffer,IM_NOTHING_SPECIAL,agent_id);
+		}
+		else
+		{
+			// Group IM
+			LLUUID session_id;
+			session_id.generate();
+			gIMMgr->setFloaterOpen(TRUE);
+			gIMMgr->addSession("Avatars Conference", IM_SESSION_CONFERENCE_START, ids[0], ids);
+		}
+	}
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentOffertp::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
+	if(ids.size() > 0)
+	{
+		handle_lure(ids);
+	}
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentTpto::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	LLScrollListItem *item = avlist->mAvatarList->getFirstSelected();
+
+	if ( item )
+	{
+		LLUUID agent_id = item->getUUID();
+		LLAvatarListEntry *ent = avlist->getAvatarEntry(agent_id);
+		if ( ent )
+		{
+			llinfos << "Trying to teleport to " << ent->getName() << " at " << ent->getPosition() << llendl;
+			gAgent.teleportViaLocation( ent->getPosition() );
+		}
+	}
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentMute::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* self = getInstance();
+	LLDynamicArray<LLUUID> ids = self->mAvatarList->getSelectedIDs();
+	if(ids.size() > 0)
+	{
+		for(LLDynamicArray<LLUUID>::iterator itr = ids.begin(); itr != ids.end(); ++itr)
+		{
+			LLUUID agent_id = *itr;
+			std::string agent_name;
+			if(gCacheName->getFullName(agent_id, agent_name))
+			{
+				// *NOTE: Users may click on Mute multiple times to ensure a person is muted
+				// there is no visual feedback given in Avatar List as of now
+				if (LLMuteList::getInstance()->isMuted(agent_id))
+				{
+					//LLMute mute(agent_id, agent_name, LLMute::AGENT);
+					//LLMuteList::getInstance()->remove(mute);	
+					//LLFloaterMute::getInstance()->selectMute(agent_id);
+				}
+				else
+				{
+					LLMute mute(agent_id, agent_name, LLMute::AGENT);
+					LLMuteList::getInstance()->add(mute);
+				}
+			}
+		}
+	}
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentUnmute::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* self = getInstance();
+	LLDynamicArray<LLUUID> ids = self->mAvatarList->getSelectedIDs();
+	if(ids.size() > 0)
+	{
+		for(LLDynamicArray<LLUUID>::iterator itr = ids.begin(); itr != ids.end(); ++itr)
+		{
+			LLUUID agent_id = *itr;
+			std::string agent_name;
+			if(gCacheName->getFullName(agent_id, agent_name))
+			{
+				if (LLMuteList::getInstance()->isMuted(agent_id))
+				{
+					LLMute mute(agent_id, agent_name, LLMute::AGENT);
+					LLMuteList::getInstance()->remove(mute);	
+				}
+			}
+		}
+	}
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentAr::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+ 	LLScrollListItem *item = avlist->mAvatarList->getFirstSelected();
+	if ( item )
+	{
+		LLUUID agent_id = item->getUUID();
+		LLAvatarListEntry *ent = avlist->getAvatarEntry(agent_id);
+
+		if ( ent )
+		{
+			LLFloaterReporter::showFromObject(ent->getID());
+		}
+	}
+	return true;
+}
+
+std::string keyasname(LLUUID id)
+{
+	std::string ret;
+	gCacheName->getFullName(id,ret);
+	return ret;
+}
+static void send_freeze(const LLUUID& avatar_id, bool freeze)
+{
+	U32 flags = 0x0;
+	if (!freeze)
+	{
+		// unfreeze
+		flags |= 0x1;
+	}
+
+	LLMessageSystem* msg = gMessageSystem;
+	LLViewerObject* avatar = gObjectList.findObject(avatar_id);
+
+	if (avatar)
+	{
+		msg->newMessage("FreezeUser");
+		msg->nextBlock("AgentData");
+		msg->addUUID("AgentID", gAgent.getID());
+		msg->addUUID("SessionID", gAgent.getSessionID());
+		msg->nextBlock("Data");
+		msg->addUUID("TargetID", avatar_id );
+		msg->addU32("Flags", flags );
+		msg->sendReliable( avatar->getRegion()->getHost() );
+	}
+}
+
+static void cmd_freeze(const LLUUID& avatar, const std::string &name)
+{
+	cmdline_printchat("Moderation: Freezing "+ keyasname(avatar)+".");
+	send_freeze(avatar, true);
+}
+
+static void cmd_unfreeze(const LLUUID& avatar, const std::string &name)
+{
+	cmdline_printchat("Moderation: Unfreezing "+ keyasname(avatar)+".");
+	send_freeze(avatar, false);
+}
+
+bool LLFloaterAvatarList::LLAgentFreeze::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	avlist->doCommand(cmd_freeze);
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentUnfreeze::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	avlist->doCommand(cmd_unfreeze);
+	return true;
+}
+
+
+static void send_eject(const LLUUID& avatar_id, bool ban)
+{	
+	LLMessageSystem* msg = gMessageSystem;
+	LLViewerObject* avatar = gObjectList.findObject(avatar_id);
+
+	if (avatar)
+	{
+		U32 flags = 0x0;
+		if ( ban )
+		{
+			// eject and add to ban list
+			flags |= 0x1;
+		}
+
+		msg->newMessage("EjectUser");
+		msg->nextBlock("AgentData");
+		msg->addUUID("AgentID", gAgent.getID() );
+		msg->addUUID("SessionID", gAgent.getSessionID() );
+		msg->nextBlock("Data");
+		msg->addUUID("TargetID", avatar_id );
+		msg->addU32("Flags", flags );
+		msg->sendReliable( avatar->getRegion()->getHost() );
+	}
+}
+
+
+static void cmd_eject(const LLUUID& avatar, const std::string &name)
+{
+	cmdline_printchat("Moderation: Ejecting "+ keyasname(avatar)+".");
+	send_eject(avatar, false);
+}
+
+bool LLFloaterAvatarList::LLAgentEject::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	if(gSavedSettings.getBOOL("EmeraldModerateConfirm"))
+	{
+		LLSD args;
+		args["AVATAR_NAME"] = avlist->getSelectedNames();
+		LLNotifications::instance().add("EjectAvatarFullnameNoBan", args, LLSD(), callbackEject);
+	}
+	else
+	{
+		avlist->doCommand(cmd_eject);
+	}
+	return true;
+}
+
+static void cmd_ban(const LLUUID& avatar, const std::string &name)
+{
+	cmdline_printchat("Moderation: Ejecting and banning "+ keyasname(avatar)+".");
+	send_eject(avatar, true);
+}
+
+bool LLFloaterAvatarList::LLAgentBan::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	avlist->doCommand(cmd_ban);
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentScripts::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+ 	LLScrollListItem *item =   avlist->mAvatarList->getFirstSelected();
+	if(!item)return true;
+	LLViewerObject *obj=gObjectList.findObject(item->getUUID());
+	if(obj)
+	{
+		LLSelectMgr::getInstance()->selectObjectOnly(obj);
+		ScriptCounter::serializeSelection(false);
+		LLSelectMgr::getInstance()->deselectAll();
+	}
+	return true;
+}
+
+typedef std::vector<std::string> strings_t;
+static void sendEstateOwnerMessage( LLMessageSystem* msg,const std::string& request,const LLUUID& invoice,const strings_t& strings)
+{
+	llinfos << "Sending estate request '" << request << "'" << llendl;
+	msg->newMessage("EstateOwnerMessage");
+	msg->nextBlockFast(_PREHASH_AgentData);
+	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+	msg->addUUIDFast(_PREHASH_TransactionID, LLUUID::null); //not used
+	msg->nextBlock("MethodData");
+	msg->addString("Method", request);
+	msg->addUUID("Invoice", invoice);
+	if(strings.empty())
+	{
+		msg->nextBlock("ParamList");
+		msg->addString("Parameter", NULL);
+	}
+	else
+	{
+		strings_t::const_iterator it = strings.begin();
+		strings_t::const_iterator end = strings.end();
+		for(; it != end; ++it)
+		{
+			msg->nextBlock("ParamList");
+			msg->addString("Parameter", *it);
+		}
+	}
+	msg->sendReliable(gAgent.getRegion()->getHost());
+}
+
+static void cmd_estate_eject(const LLUUID &avatar, const std::string &name)
+{
+	cmdline_printchat("Moderation: Kicking "+ keyasname(avatar)+" from estate.");
+	strings_t strings;
+	strings.push_back(avatar.asString());
+	sendEstateOwnerMessage(gMessageSystem, "kickestate", LLFloaterRegionInfo::getLastInvoice(), strings);
+}
+
+static void cmd_estate_ban(const LLUUID &avatar, const std::string &name)
+{
+	cmdline_printchat("Moderation: Banning "+ keyasname(avatar)+" from estate.");
+	//send_estate_message("teleporthomeuser", avatar); // Kick first, just to be sure
+	LLPanelEstateInfo::sendEstateAccessDelta(ESTATE_ACCESS_BANNED_AGENT_ADD | ESTATE_ACCESS_ALLOWED_AGENT_REMOVE | ESTATE_ACCESS_NO_REPLY, avatar);
+}
+
+static void cmd_tph_estate(const LLUUID &avatar, const std::string &name)
+{
+	cmdline_printchat("Moderation: Teleporting "+ keyasname(avatar)+" home.");
+	//send_estate_message("teleporthomeuser", avatar); // Kick first, just to be sure
+	//sendEstateAccessDelta(ESTATE_ACCESS_BANNED_AGENT_ADD | ESTATE_ACCESS_ALLOWED_AGENT_REMOVE, avatar);
+	strings_t strings;
+	// [0] = our agent id
+	// [1] = target agent id
+	std::string buffer;
+	gAgent.getID().toString(buffer);
+	strings.push_back(buffer);
+	avatar.toString(buffer);
+	strings.push_back(strings_t::value_type(buffer));
+	LLUUID invoice(LLFloaterRegionInfo::getLastInvoice());
+	sendEstateOwnerMessage(gMessageSystem, "teleporthomeuser", invoice, strings);
+}
+
+
+bool LLFloaterAvatarList::LLAgentEstatekick::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	LLSD args;
+	LLSD payload;
+	args["EVIL_USER"] = avlist->getSelectedNames();
+	LLNotifications::instance().add("EstateKickUser", args, payload, callbackEjectFromEstate);
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentEstateban::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	avlist->doCommand(cmd_estate_ban);
+	/*
+	LLSD args;
+	args["ALL_ESTATES"] = "all estates";
+	LLNotifications::instance().add("EstateBannedAgentAdd", args, LLSD(), callbackBanFromEstate);*/
+	return true;
+}
+	
+bool LLFloaterAvatarList::LLAgentEstatetphome::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	avlist->doCommand(cmd_tph_estate);
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentEstategtfo::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	avlist->doCommand(cmd_estate_ban);
+	avlist->doCommand(cmd_estate_eject);
+	//LLFloaterAvatarList* avlist = getInstance();
+	/*
+	LLAgentEstateban(userdata);
+	LLAgentEstatekick(userdata);
+	LLAgentEstatetphome(userdata);
+	*/
+	return true;
 }
 
 //static
@@ -443,7 +915,7 @@ void LLFloaterAvatarList::toggle(void*)
 		}
 	}
 	else
-					{
+	{
 		showInstance();
 	}
 }
@@ -459,7 +931,7 @@ void LLFloaterAvatarList::showInstance()
 		}
 	}
 	else
-							{
+	{
 		sInstance = new LLFloaterAvatarList();
 		LLUICtrlFactory::getInstance()->buildFloater(sInstance, "floater_avatar_scanner.xml");
 	}
@@ -491,68 +963,21 @@ void LLFloaterAvatarList::onClose(bool app_quitting)
 
 BOOL LLFloaterAvatarList::postBuild()
 {
+	LLTabContainer* tab = getChild<LLTabContainer>("actions_tab_container");
+
+	if(tab)
 	{
-		LLTabContainer* tab = getChild<LLTabContainer>("actions_tab_container");
+		LLPanel* panel = tab->getPanelByName("custom_tab");
 
-		if(tab)
+		if(panel)
 		{
-			LLPanel* panel = tab->getPanelByName("custom_tab");
-
-			if(panel)
-			{
-				tab->enableTabButton(tab->getIndexForPanel(panel), FALSE);
-							}
-						}
+			tab->enableTabButton(tab->getIndexForPanel(panel), FALSE);
+		}
 	}
 
-	// Default values
 	mTracking = FALSE;
 	mTrackByLocation = FALSE;
-	mARLastFrame = 0;
 	mlastBridgeCallTime = gFrameTimeSeconds;
-
-	// Create interface from XML
-	//gUICtrlFactory->buildFloater(this, "floater_avatar_scanner.xml");
-
-	// Floater starts hidden	
-	//setVisible(FALSE);
-
-	// Hide them until some other way is found
-	// Users may not expect to find a Ban feature on the Eject button
-	//childSetVisible("refresh_btn", false);
-	//childSetVisible("ban_btn", false);
-	//childSetVisible("unban_btn", false);
-	//childSetVisible("unmute_btn", false);
-	//childSetVisible("estate_ban_btn", false);
-
-	// Set callbacks
-	//childSetAction("refresh_btn", onClickRefresh, this);
-	childSetAction("profile_btn", onClickProfile, this);
-	childSetAction("im_btn", onClickIM, this);
-	childSetAction("offer_btn", onClickTeleportOffer, this);
-	childSetAction("track_btn", onClickTrack, this);
-	childSetAction("mark_btn", onClickMark, this);
-
-	childSetAction("prev_in_list_btn", onClickPrevInList, this);
-	childSetAction("next_in_list_btn", onClickNextInList, this);
-	childSetAction("prev_marked_btn", onClickPrevMarked, this);
-	childSetAction("next_marked_btn", onClickNextMarked, this);
-	
-	childSetAction("get_key_btn", onClickGetKey, this);
-
-	childSetAction("freeze_btn", onClickFreeze, this);
-	childSetAction("eject_btn", onClickEject, this);
-//	childSetAction("ban_btn", onClickBan, this);
-//	childSetAction("unban_btn", onClickUnban, this);
-	childSetAction("mute_btn", onClickMute, this);
-	childSetAction("unmute_btn", onClickUnmute, this);
-	childSetAction("ar_btn", onClickAR, this);
-	childSetAction("teleport_btn", onClickTeleport, this);
-	childSetAction("estate_kick_btn", onClickKickFromEstate, this);
-	childSetAction("estate_ban_btn", onClickBanFromEstate, this);
-	childSetAction("estate_tph_btn", onClickTPHFromEstate, this);
-	childSetAction("estate_gtfo_btn", onClickGTFOFromEstate, this);
-	childSetAction("script_count_btn", onClickScriptCount, this);
 
 	childSetCommitCallback("agealert", onClickAgeAlert,this);
 	childSetValue("agealert",gSavedSettings.getBOOL("EmeraldAvatarAgeAlert"));
@@ -560,9 +985,19 @@ BOOL LLFloaterAvatarList::postBuild()
 	childSetCommitCallback("AgeAlertDays",onClickAgeAlertDays,this);
 	childSetValue("AgeAlertDays",gSavedSettings.getF32("EmeraldAvatarAgeAlertDays"));
 
+	childSetAction("say_btn", onClickSayCmd,this);
+	childSetAction("tp_btn", onClickTP,this);
 
-	// *FIXME: Uncomment once onClickRefresh has been restored
-	//setDefaultBtn("refresh_btn");
+	mInputEditor = getChild<LLLineEditor>("customcommand");
+	childSetCommitCallback("customcommand", onCommandCommit,this);
+
+	if (mInputEditor)
+	{
+		mInputEditor->setText(gSavedPerAccountSettings.getString("EmeraldAvatarlistCustomAction"));
+		mInputEditor->setCommitOnFocusLost( TRUE );
+		mInputEditor->setRevertOnEsc( FALSE );
+		mInputEditor->setEnableLineHistory(TRUE);
+	}
 
 	// Get a pointer to the scroll list from the interface
 	mAvatarList = getChild<LLScrollListCtrl>("avatar_list");
@@ -574,178 +1009,166 @@ BOOL LLFloaterAvatarList::postBuild()
 	mUpdateThrottleTimer.start();
 	refreshAvatarList();
 
-	//LLMessageSystem *msg = gMessageSystem;
-	//msg->addHandlerFunc("AvatarPropertiesReply", processAvatarPropertiesReply);
-
 	gIdleCallbacks.addFunction( LLFloaterAvatarList::callbackIdle );
-						
 	return TRUE;
-						}
+}
 
 void LLFloaterAvatarList::updateAvatarList()
 {
-	if(gDisconnected)return;
-//	LLVOAvatar *avatarp;
+	if (gDisconnected) return;
+	if ( sInstance != this ) return;
+	if ( mUpdateThrottleTimer.getElapsedTimeF32() < 0.25) return;
 
-	if( sInstance != this ) return;
-
-	if ( mUpdateThrottleTimer.getElapsedTimeF32() < 0.25)
-		return;
 	mUpdateThrottleTimer.reset();
 
-	//llinfos << "avatar list refresh: updating map" << llendl;
-
-	// Check whether updates are enabled
 	LLCheckboxCtrl* check;
 	check = getChild<LLCheckboxCtrl>("update_enabled_cb");
 
-	if ( !check->getValue() )
-						{
-		return;
-	}
+	if ( !check->getValue() )return;
 
 	LLVector3d mypos = gAgent.getPositionGlobal();
 
-							{
-		std::vector<LLUUID> avatar_ids;
-		std::vector<LLUUID> sorted_avatar_ids;
-		std::vector<LLVector3d> positions;
+	std::vector<LLUUID> avatar_ids;
+	std::vector<LLUUID> sorted_avatar_ids;
+	std::vector<LLVector3d> positions;
+	LLWorld::instance().getAvatars(&avatar_ids, &positions, mypos, F32_MAX);
+	sorted_avatar_ids = avatar_ids;
+	std::sort(sorted_avatar_ids.begin(), sorted_avatar_ids.end());
 
-		LLWorld::instance().getAvatars(&avatar_ids, &positions, mypos, F32_MAX);
-
-		sorted_avatar_ids = avatar_ids;
-		std::sort(sorted_avatar_ids.begin(), sorted_avatar_ids.end());
-
-		for(std::vector<LLCharacter*>::const_iterator iter = LLCharacter::sInstances.begin(); iter != LLCharacter::sInstances.end(); ++iter)
+	for(std::vector<LLCharacter*>::const_iterator iter = LLCharacter::sInstances.begin(); iter != LLCharacter::sInstances.end(); ++iter)
+	{
+		LLUUID avid = (*iter)->getID();
+		if(!std::binary_search(sorted_avatar_ids.begin(), sorted_avatar_ids.end(), avid))
 		{
-			LLUUID avid = (*iter)->getID();
+			avatar_ids.push_back(avid);
+		}
+	}
 
-			if(!std::binary_search(sorted_avatar_ids.begin(), sorted_avatar_ids.end(), avid))
+	std::string name;
+	std::string first;
+	std::string last;
+
+	size_t i;
+	size_t count = avatar_ids.size();
+	for(i = 0; i < count; ++i)
+	{
+		const LLUUID &avid = avatar_ids[i];
+
+		LLVector3d position;
+		LLViewerObject *obj = gObjectList.findObject(avid);
+
+		if(obj)
+		{
+			LLVOAvatar* avatarp = dynamic_cast<LLVOAvatar*>(obj);
+			if (avatarp == NULL) continue;
+			if (avatarp->isDead() || avatarp->isSelf()) continue;
+
+			// Get avatar data
+			position = gAgent.getPosGlobalFromAgent(avatarp->getCharacterPosition());
+			name = avatarp->getFullname();
+
+			// Apparently, sometimes the name comes out empty, with a " " name. This is because
+			// getFullname concatenates first and last name with a " " in the middle.
+			// This code will avoid adding a nameless entry to the list until it acquires a name.
+
+			//duped for lower section
+			if (name.empty() || (name.compare(" ") == 0))// || (name.compare(gCacheName->getDefaultName()) == 0))
 			{
-				avatar_ids.push_back(avid);
+				if(gCacheName->getName(avid, first, last)) name = first + " " + last;
+				else continue;
 			}
-						}
-
-		size_t i;
-		size_t count = avatar_ids.size();
-
-		for(i = 0; i < count; ++i)
-						{
-			std::string name;
-			std::string first;
-			std::string last;
-			const LLUUID &avid = avatar_ids[i];
-
-			LLVector3d position;
-			LLViewerObject *obj = gObjectList.findObject(avid);
-
-			if(obj)
-							{
-				LLVOAvatar* avatarp = dynamic_cast<LLVOAvatar*>(obj);
-
-				if (avatarp == NULL)
-						{
-					continue;
-						}
-							
-				// Skip if avatar is dead(what's that?)
-				// or if the avatar is ourselves.
-				if (avatarp->isDead() || avatarp->isSelf())
-						{	
-					continue;
-						}
-
-				// Get avatar data
-				position = gAgent.getPosGlobalFromAgent(avatarp->getCharacterPosition());
-				name = avatarp->getFullname();
-
-				// Apparently, sometimes the name comes out empty, with a " " name. This is because
-				// getFullname concatenates first and last name with a " " in the middle.
-				// This code will avoid adding a nameless entry to the list until it acquires a name.
-
-				//duped for lower section
-				if (name.empty() || (name.compare(" ") == 0))// || (name.compare(gCacheName->getDefaultName()) == 0))
-						{
-					if(gCacheName->getName(avid, first, last))
-							{
-						name = first + " " + last;
-					}
-					else
-						{
-						continue;
-							}
-						}
-
-				if (avid.isNull())
-						{
-					//llinfos << "Key empty for avatar " << name << llendl;
-					continue;
-						}
-
-				if ( mAvatars.count( avid ) > 0 )
-				{
-					// Avatar already in list, update position
-					mAvatars[avid].setPosition(position, (avatarp->getRegion() == gAgent.getRegion()), true, (position - mypos).magVec() < 20.0);
-				}
-				else
-				{
-					// Avatar not there yet, add it
-					BOOL isLinden = ( strcmp(last.c_str(), "Linden") == 0 || last == "Linden" );
-
-					LLAvatarListEntry entry(avid, name, position, isLinden);
-					mAvatars[avid] = entry;
-
-					//sendAvatarPropertiesRequest(avid);
-					//llinfos << "avatar list refresh: adding " << name << llendl;
-
-				}
+			if (avid.isNull()) continue;
+			if ( mAvatars.count( avid ) > 0 )
+			{
+				// Avatar already in list, update position
+				mAvatars[avid].setPosition(position, (avatarp->getRegion() == gAgent.getRegion()), true, (position - mypos).magVec() < 20.0);
 			}
 			else
 			{
-				if( i < positions.size())
-						{
-					position = positions[i];
-				}
-				else
-							{
-					continue;
-							}
-
-				if(gCacheName->getName(avid, first, last))
-				{
-					name = first + " " + last;
-						}
-						else
-						{
-					//name = gCacheName->getDefaultName();
-					continue; //prevent (Loading...)
-						}
-
-				if ( mAvatars.count( avid ) > 0 )
-				{
-					// Avatar already in list, update position
-					mAvatars[avid].setPosition(position, gAgent.getRegion()->pointInRegionGlobal(position), false, (position - mypos).magVec() < 20.0);
-				}
-				else
-				{
-					// Avatar not there yet, add it
-					BOOL isLinden = last == "Linden";
-
-					LLAvatarListEntry entry(avid, name, position, isLinden);
-					mAvatars[avid] = entry;
-					}
-				}
+				// Avatar not there yet, add it
+				BOOL isLinden = ( strcmp(last.c_str(), "Linden") == 0 || last == "Linden" );
+				LLAvatarListEntry entry(avid, name, position, isLinden, 0);
+				mAvatars[avid] = entry;
 			}
 		}
-	
-//	llinfos << "avatar list refresh: done" << llendl;
+		else
+		{
+			if( i < positions.size())
+			{
+				position = positions[i];
+			}
+			else continue;
 
+			if(gCacheName->getName(avid, first, last)) name = first + " " + last;
+			else continue; //prevent (Loading...)
+
+			if ( mAvatars.count( avid ) > 0 )
+			{
+				// Avatar already in list, update position
+				mAvatars[avid].setPosition(position, gAgent.getRegion()->pointInRegionGlobal(position), false, (position - mypos).magVec() < 20.0);
+			}
+			else
+			{
+				// Avatar not there yet, add it
+				BOOL isLinden = last == "Linden";
+				LLAvatarListEntry entry(avid, name, position, isLinden, 0);
+				mAvatars[avid] = entry;
+			}
+		}
+	}
+
+	updateAvatarListVoice();
 	expireAvatarList();
 	refreshAvatarList();
 	checkTrackingStatus();
 	checkAnnouncements();
 	//processARQueue();
+}
+
+void LLFloaterAvatarList::updateAvatarListVoice() 
+{
+	if (gDisconnected) return;
+	if ( sInstance != this ) return;
+
+	std::string name;
+	std::string first;
+	std::string last;
+
+	LLVoiceClient::participantMap* participants = gVoiceClient->getParticipantList();
+	if(participants)
+	{
+		LLVoiceClient::participantMap::iterator participant_it;
+
+		for (participant_it = participants->begin(); participant_it != participants->end(); ++participant_it)
+		{
+			LLVoiceClient::participantState* participantp = participant_it->second;
+			LLUUID participant_id = participantp->mAvatarID;
+
+			if (participant_id.isNull()) continue;
+			if (participant_id == gAgent.getID()) continue;
+
+			if (mAvatars.count(participant_id) > 0)
+			{
+				mAvatars[participant_id].mIsVoice = TRUE; //if already in list, just give them voice
+				continue;
+			}
+
+			name = std::string(participantp->mAccountName); //participantp->mDisplayName;
+
+			llinfos << "voice participant not in list: " << participant_id.asString().c_str() << " - " << name << llendl;
+
+			if (name.empty() || (name.compare(" ") == 0))// || (name.compare(gCacheName->getDefaultName()) == 0))
+			{
+				if(gCacheName->getName(participant_id, first, last)) name = first + " " + last;
+				else continue;
+			}
+			BOOL isLinden = ( strcmp(last.c_str(), "Linden") == 0 || last == "Linden" );
+			LLAvatarListEntry entry(participant_id, name, LLVector3d::zero, isLinden, TRUE);
+			mAvatars[participant_id] = entry;
+			//setSpeaker(participantp->mAvatarID, participantp->mDisplayName, LLSpeaker::STATUS_VOICE_ACTIVE, (participantp->isAvatar()?LLSpeaker::SPEAKER_AGENT:LLSpeaker::SPEAKER_EXTERNAL));
+		}
 	}
+}
 
 void LLFloaterAvatarList::expireAvatarList()
 {
@@ -758,12 +1181,18 @@ void LLFloaterAvatarList::expireAvatarList()
 	for(iter = mAvatars.begin(); iter != mAvatars.end(); iter++)
 	{
 		LLAvatarListEntry *ent = &iter->second;
+		LLUUID av_id = ent->getID();
 
-                ent->getAlive();
+		if (ent->getIsVoice() && (gVoiceClient->findParticipantByID(av_id)==NULL))
+		{
+			ent->setIsVoice(FALSE);
+			//delete_queue.push(av_id);
+		}
+
+        ent->getAlive();
 		if ( ent->getEntryAgeSeconds() > CLEANUP_TIMEOUT )
 		{
 			//llinfos << "avatar list: expiring avatar " << ent->getName() << llendl;
-			LLUUID av_id = ent->getID();
 			delete_queue.push(av_id);
 		}
 	}
@@ -775,11 +1204,6 @@ void LLFloaterAvatarList::expireAvatarList()
 	}
 }
 
-/**
- * Redraws the avatar list
- * Only does anything if the avatar list is visible.
- * @author Dale Glass
- */
 void LLFloaterAvatarList::refreshAvatarList() 
 {
 	if(gDisconnected)return;
@@ -790,15 +1214,6 @@ void LLFloaterAvatarList::refreshAvatarList()
 	LLCheckboxCtrl* fetch_data;
 	fetch_data = getChild<LLCheckboxCtrl>("fetch_avdata_enabled_cb");
 
-	//BOOL db_enabled = gSavedSettings.getBOOL("DBEnabled");
-	//std::string db_avatar = gSavedPerAccountSettings.getString("DBAvatarName");
-	//if ( db_avatar.empty() )
-	//{
-	//	db_enabled = FALSE;
-	//}
-
-
-
 	// We rebuild the list fully each time it's refreshed
 	// The assumption is that it's faster to refill it and sort than
 	// to rebuild the whole list.
@@ -806,49 +1221,61 @@ void LLFloaterAvatarList::refreshAvatarList()
 	S32 scrollpos = mAvatarList->getScrollPos();
 
 	mAvatarList->deleteAllItems();
-
 	LLVector3d mypos = gAgent.getPositionGlobal();
-
-
 	std::map<LLUUID, LLAvatarListEntry>::iterator iter;
-
 	std::string toSendToBridge("");
 	std::vector<LLUUID> avatarsToSendToBridge;
+
+	static BOOL *sEmeraldAvatarListColorEntries = rebind_llcontrol<BOOL>("EmeraldAvatarListColorEntries", &gSavedSettings, true);
+	LLColor4 friend_color;
+	LLColor4 muted_color;
+	if(*sEmeraldAvatarListColorEntries)
+	{
+		static LLColor4* sMapFriend = rebind_llcontrol<LLColor4>("MapFriend", &gColors, true);
+		friend_color = (*sMapFriend).getValue();
+		static LLColor4* sMapMuted = rebind_llcontrol<LLColor4>("MapMuted", &gColors, true);
+		muted_color = (*sMapMuted).getValue();
+	}
+
+	LLColor4 av_color;
+	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
+
+	const std::string icon_image_0 = "icn_active-speakers-dot-lvl0.tga";
+	const std::string icon_image_1 = "icn_active-speakers-dot-lvl1.tga";
+	const std::string icon_image_2 = "icn_active-speakers-dot-lvl2.tga";
 
 	for(iter = mAvatars.begin(); iter != mAvatars.end(); iter++)
 	{
 		LLSD element;
 		LLUUID av_id;
-
-
 		LLAvatarListEntry *ent = &iter->second;
 
-		// Skip if avatar hasn't been around
-		if ( ent->isDead() )
+		av_id = ent->getID();
+		if ( av_id.isNull() ) continue;
+
+		BOOL av_isvoice = ent->getIsVoice();
+		BOOL flagForFedUpDistance = false;
+		LLVector3d position = LLVector3d::zero;
+		F32 distance = 0.0f;
+		std::string icon = "";
+
+		if (!av_isvoice)
 		{
-				continue;
+			// Skip if avatar hasn't been around
+			if ( ent->isDead() ) continue;
 		}
 
-		av_id = ent->getID();
-
-		// Get avatar name, position
-		LLAvatarInfo avinfo = ent->mAvatarInfo.getValue();
-
-		DATA_STATUS avinfo_status = ent->mAvatarInfo.getStatus();
-
-		LLVector3d position = ent->getPosition();
+		position = ent->getPosition();
 		//lgg stuff.. ok.. uhmm..
-		BOOL flagForFedUpDistance = false;
-
 		
 		LLVector3d delta = position - mypos;
-		F32 distance = (F32)delta.magVec();
+		distance = (F32)delta.magVec();
 		if(position.mdV[VZ] == 0.0)
 		{
 			flagForFedUpDistance = true;
 			distance = 9000;
-
 		}
+
 		if(ent->getNeedsBridgeAssist() )
 		{
 			toSendToBridge += std::string("|") +av_id.asString();
@@ -859,58 +1286,78 @@ void LLFloaterAvatarList::refreshAvatarList()
 		delta.mdV[2] = 0.0f;
 		F32 side_distance = (F32)delta.magVec();
 
-		std::string icon = "";
-
 		// HACK: Workaround for an apparent bug:
 		// sometimes avatar entries get stuck, and are registered
 		// by the client as perpetually moving in the same direction.
 		// this makes sure they get removed from the visible list eventually
-
-		//jcool410 -- this fucks up seeing dueds thru minimap data > 1024m away, so, lets just say > 2048m to the side is bad
-		//aka 8 sims
-		if ( side_distance > 2048.0f)
-		{
-				continue;
-		}
-
-		if ( av_id.isNull() )
-		{
-			//llwarns << "Avatar with null key somehow got into the list!" << llendl;
-			continue;
-		}
+		if ( side_distance > 2048.0f) continue;
 
 
 
-
+		LLAvatarInfo avinfo = ent->mAvatarInfo.getValue();
+		DATA_STATUS avinfo_status = ent->mAvatarInfo.getStatus();
 
 		element["id"] = av_id;
-
-		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
-		element["columns"][LIST_AVATAR_NAME]["color"] = (*sDefaultListText).getValue();
-
-
-		if ( ent->getIsLinden() )
+		if(*sEmeraldAvatarListColorEntries)
 		{
-			element["columns"][LIST_AVATAR_NAME]["font-style"] = "BOLD";
+			if ( is_agent_friend(av_id)) av_color = friend_color;
+			else if (LLMuteList::getInstance()->isMuted(av_id)) av_color = muted_color;
+			else av_color = (*sDefaultListText).getValue();
+		}
+		else
+		{
+			av_color = (*sDefaultListText).getValue();
 		}
 
-		if ( ent->isFocused() )
-		{
-			element["columns"][LIST_AVATAR_NAME]["color"] = LLColor4::cyan.getValue();
-		}
-	
-		//element["columns"][LIST_AVATAR_NAME]["font-color"] = getAvatarColor(ent, distance).getValue();
+		element["columns"][LIST_AVATAR_NAME]["color"] = av_color.getValue();
+
+		if ( ent->getIsLinden() ) element["columns"][LIST_AVATAR_NAME]["font-style"] = "BOLD";
+
 		element["columns"][LIST_AVATAR_NAME]["column"] = "avatar_name";
 		element["columns"][LIST_AVATAR_NAME]["type"] = "text";
 		element["columns"][LIST_AVATAR_NAME]["value"] = ent->getName().c_str();
+
+		if (av_isvoice)
+		{
+			F32 power = gVoiceClient->getCurrentPower(av_id);
+			S32 icon_image_idx = llmin(2, llfloor((power / LLVoiceClient::OVERDRIVEN_POWER_LEVEL) * 3.f));
+
+			std::string icon_image_id;
+			switch(icon_image_idx)
+			{
+			case 0:
+				icon_image_id = icon_image_0;
+				break;
+			case 1:
+				icon_image_id = icon_image_1;
+				break;
+			case 2:
+				icon_image_id = icon_image_2;
+				break;
+			}
+
+			LLColor4 icon_color;
+			if (power >= LLVoiceClient::OVERDRIVEN_POWER_LEVEL)
+			{
+				icon_color.setVec(1.f, 0.f, 0.f, 1.f);
+			}
+			else
+			{
+				icon_color.setVec(0.f, 1.f, 0.f, 1.f);
+			}
+			//icon_cell->setValue(icon_image_id);
+
+			element["columns"][LIST_AVATAR_VOICE]["column"] = "voice";
+			element["columns"][LIST_AVATAR_VOICE]["type"] = "icon";
+			element["columns"][LIST_AVATAR_VOICE]["value"] = icon_image_id; //"icn_active-speakers-dot-lvl0.tga";
+			element["columns"][LIST_AVATAR_VOICE]["color"] = icon_color.getValue();
+		}
 
 		char temp[32];
 		snprintf(temp, sizeof(temp), "%.2f", distance);
 
 		element["columns"][LIST_DISTANCE]["column"] = "distance";
 		element["columns"][LIST_DISTANCE]["type"] = "text";
-
 		element["columns"][LIST_DISTANCE]["value"] = temp;
 		if(flagForFedUpDistance)
 		{
@@ -920,13 +1367,10 @@ void LLFloaterAvatarList::refreshAvatarList()
 			element["columns"][LIST_DISTANCE]["value"] = llformat("> %d", (S32)(*sRenderFarClip) );
 		}
 		element["columns"][LIST_DISTANCE]["color"] = getAvatarColor(ent, distance, CT_DISTANCE).getValue();
-
 		
 		if ( avinfo_status == DATA_RETRIEVED )
 		{
-
 			static F32 *sEmeraldAvatarAgeAlertDays = rebind_llcontrol<F32>("EmeraldAvatarAgeAlertDays", &gSavedSettings, true);
-
 			if ((avinfo.getAge() < (*sEmeraldAvatarAgeAlertDays)) && !ent->getAlert())
 			{
 				ent->setAlert();
@@ -943,22 +1387,14 @@ void LLFloaterAvatarList::refreshAvatarList()
 		element["columns"][LIST_SIM]["type"] = "text";
 
 		icon = "";
-		if(gAgent.getRegion()->pointInRegionGlobal(position))
-		{
-			icon = "account_id_green.tga";
-		}
-
+		if(gAgent.getRegion()->pointInRegionGlobal(position)) icon = "account_id_green.tga";
 		if (!icon.empty() )
 		{
 			element["columns"][LIST_SIM].erase("color");
 			element["columns"][LIST_SIM]["type"] = "icon";
 			element["columns"][LIST_SIM]["value"] = icon;
 		}
-	
 
-		// Get an icon for the payment data
-		// These should be replaced with something proper instead of reusing whatever
-		// LL-provided images happened to fit
 		icon = "";
 
 		switch(avinfo_status)
@@ -994,18 +1430,11 @@ void LLFloaterAvatarList::refreshAvatarList()
 		element["columns"][LIST_PAYMENT]["column"] = "payment_data";
 		element["columns"][LIST_PAYMENT]["type"] = "text";
 	
-		// TODO: Add icon for "unknown" status
-		//if ( PAYMENT_NONE != avinfo.Payment && DATA_UNKNOWN != avinfo_status )
 		if ( !icon.empty() )
 		{
-//			element["columns"][LIST_PAYMENT]["color"] = gColors.getColor("DefaultListIcon").getValue();
 			element["columns"][LIST_PAYMENT]["type"] = "icon";
 			element["columns"][LIST_PAYMENT]["value"] =  icon;
-			//llinfos << "Payment icon: " << payment_icon << llendl;
 		}
-
-		//element["columns"][LIST_PAYMENT]["column"] = "payment_data";
-		//element["columns"][LIST_PAYMENT]["type"] = "text";
 
 		S32 seentime = (S32)difftime( time(NULL) , ent->getTime() );
 		S32 hours = (S32)(seentime / (60*60));
@@ -1055,10 +1484,10 @@ void LLFloaterAvatarList::refreshAvatarList()
 
 		// Request data only if fetching avatar data is enabled
 		if ( fetch_data->getValue() && ent->mAvatarInfo.requestIfNeeded() )
-{
+		{
 			sendAvatarPropertiesRequest(av_id);
 			//llinfos << "Data for avatar " << ent->getName() << " didn't arrive yet, retrying" << llendl;
-}
+		}
 	}
 	
 	//lgg send batch of names to bridge
@@ -1073,80 +1502,16 @@ void LLFloaterAvatarList::refreshAvatarList()
 
 		}
 		
-}
+	}
 	// finish
 	mAvatarList->sortItems();
 	mAvatarList->selectMultiple(selected);
 	mAvatarList->setScrollPos(scrollpos);
 
+	childSetEnabled("Say", mInputEditor->getText().size() > 0);
+
 //	llinfos << "avatar list refresh: done" << llendl;
 
-}
-
-// static
-void LLFloaterAvatarList::onClickIM(void* userdata)
-{
-	//llinfos << "LLFloaterFriends::onClickIM()" << llendl;
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-
-	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
-	if(ids.size() > 0)
-	{
-		if(ids.size() == 1)
-		{
-			// Single avatar
-			LLUUID agent_id = ids[0];
-
-			char buffer[MAX_STRING];
-			snprintf(buffer, MAX_STRING, "%s", avlist->mAvatars[agent_id].getName().c_str());
-			gIMMgr->setFloaterOpen(TRUE);
-			gIMMgr->addSession(
-				buffer,
-				IM_NOTHING_SPECIAL,
-				agent_id);
-		}
-		else
-		{
-			// Group IM
-			LLUUID session_id;
-			session_id.generate();
-			gIMMgr->setFloaterOpen(TRUE);
-			gIMMgr->addSession("Avatars Conference", IM_SESSION_CONFERENCE_START, ids[0], ids);
-		}
-	}
-}
-
-void LLFloaterAvatarList::onClickTeleportOffer(void *userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-
-	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
-	if(ids.size() > 0)
-	{
-		handle_lure(ids);
-	}
-}
-
-void LLFloaterAvatarList::onClickTrack(void *userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-	
- 	LLScrollListItem *item =   avlist->mAvatarList->getFirstSelected();
-	if (!item) return;
-
-	LLUUID agent_id = item->getUUID();
-
-	if ( avlist->mTracking && avlist->mTrackedAvatar == agent_id ) {
-		LLTracker::stopTracking(NULL);
-		avlist->mTracking = FALSE;
-	}
-	else
-	{
-		avlist->mTracking = TRUE;
-		avlist->mTrackByLocation = FALSE;
-		avlist->mTrackedAvatar = agent_id;
-		LLTracker::trackAvatar(agent_id, avlist->mAvatars[agent_id].getName());
-	}
 }
 
 void LLFloaterAvatarList::sendAvatarPropertiesRequest(LLUUID avid)
@@ -1371,6 +1736,45 @@ void LLFloaterAvatarList::callbackEmeraldChat(const LLSD &notification, const LL
 		if(self) self->clearAnnouncements();
 	}
 }
+
+// static
+void LLFloaterAvatarList::onClickSayCmd( void* userdata )
+{
+	LLFloaterAvatarList* self = getInstance();
+	if (self->mInputEditor)
+	{
+		gSavedPerAccountSettings.setString("EmeraldAvatarlistCustomAction",std::string(self->mInputEditor->getText()));
+		self->doCommand(cmd_saycmd);
+	}
+}
+
+void LLFloaterAvatarList::onCommandCommit(LLUICtrl* ctrl,void *userdata)
+{
+	LLFloaterAvatarList* self = getInstance();
+	if (self->mInputEditor)
+	{
+		gSavedPerAccountSettings.setString("EmeraldAvatarlistCustomAction",std::string(self->mInputEditor->getText()));
+	}
+}
+
+// static
+void LLFloaterAvatarList::onClickTP( void* userdata )
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	LLScrollListItem *item = avlist->mAvatarList->getFirstSelected();
+
+	if ( item )
+	{
+		LLUUID agent_id = item->getUUID();
+		LLAvatarListEntry *ent = avlist->getAvatarEntry(agent_id);
+		if ( ent )
+		{
+			llinfos << "Trying to teleport to " << ent->getName() << " at " << ent->getPosition() << llendl;
+			gAgent.teleportViaLocation( ent->getPosition() );
+		}
+	}
+}
+
 void LLFloaterAvatarList::checkTrackingStatus()
 {
 
@@ -1423,15 +1827,7 @@ LLAvatarListEntry * LLFloaterAvatarList::getAvatarEntry(LLUUID avatar)
 	{
 		return NULL;
 	}
-
 	return &iter->second;	
-	
-	//if ( mAvatars.count( avatar ) < 0 )
-	//{
-		//return NULL;
-	//}
-
-	//return &mAvatars[avatar];
 }
 
 void LLFloaterAvatarList::onClickAgeAlert(LLUICtrl* ctrl,void *userdata)
@@ -1444,24 +1840,6 @@ void LLFloaterAvatarList::onClickAgeAlertDays(LLUICtrl* ctrl,void *userdata)
 {
 	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
 	gSavedSettings.setF32("EmeraldAvatarAgeAlertDays", avlist->childGetValue("AgeAlertDays").asInteger());
-}
-
-
-//static
-void LLFloaterAvatarList::onClickMark(void *userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
-
-	for(LLDynamicArray<LLUUID>::iterator itr = ids.begin(); itr != ids.end(); ++itr)
-	{
-		LLUUID avid = *itr;
-		LLAvatarListEntry *ent = avlist->getAvatarEntry(avid);
-		if ( ent != NULL )
-		{
-			ent->toggleMark();
-		}
-	}
 }
 
 LLColor4 LLFloaterAvatarList::getAvatarColor(LLAvatarListEntry *ent, F32 distance, e_coloring_type type)
@@ -1540,375 +1918,6 @@ void LLFloaterAvatarList::lookAtAvatar(LLUUID &uuid)
                                                 uuid );
     }
 }
-
-void LLFloaterAvatarList::removeFocusFromAll()
-{
-	std::map<LLUUID, LLAvatarListEntry>::iterator iter;
-
-	for(iter = mAvatars.begin(); iter != mAvatars.end(); iter++)
-	{
-		LLAvatarListEntry *ent = &iter->second;
-		ent->setFocus(FALSE);
-	}
-}
-
-void LLFloaterAvatarList::focusOnPrev(BOOL marked_only)
-{
-	std::map<LLUUID, LLAvatarListEntry>::iterator iter;
-	LLAvatarListEntry *prev = NULL;
-	LLAvatarListEntry *ent;
-
-	if ( mAvatars.size() == 0 )
-	{
-		return;
-	}
-
-	for(iter = mAvatars.begin(); iter != mAvatars.end(); iter++)
-	{
-		ent = &iter->second;
-
-		if ( ent->isDead() )
-			continue;
-
-		if ( (ent->getID() == mFocusedAvatar) && (prev != NULL)  )
-		{
-			removeFocusFromAll();
-			prev->setFocus(TRUE);
-			mFocusedAvatar = prev->getID();
-			gAgent.lookAtObject(mFocusedAvatar, CAMERA_POSITION_OBJECT);
-			return;
-		}
-
-		if ( (!marked_only) || ent->isMarked() )
-		{
-			prev = ent;
-		}
-	}
-
-	if (prev != NULL && ((!marked_only) || prev->isMarked()) )
-	{
-		removeFocusFromAll();
-		prev->setFocus(TRUE);
-		mFocusedAvatar = prev->getID();
-		gAgent.lookAtObject(mFocusedAvatar, CAMERA_POSITION_OBJECT);
-	}
-}
-
-void LLFloaterAvatarList::focusOnNext(BOOL marked_only)
-{
-
-	
-	std::map<LLUUID, LLAvatarListEntry>::iterator iter;
-	BOOL found = FALSE;
-	LLAvatarListEntry *first = NULL;
-	LLAvatarListEntry *ent;
-
-	if ( mAvatars.size() == 0 )
-	{
-		return;
-	}
-
-	for(iter = mAvatars.begin(); iter != mAvatars.end(); iter++)
-	{
-		ent = &iter->second;
-
-		if ( ent->isDead() )
-			continue;
-
-		if ( NULL == first && ((!marked_only) || ent->isMarked()))
-		{
-			first = ent;
-		}
-
-		if ( found && ((!marked_only) || ent->isMarked()) )
-		{
-			removeFocusFromAll();
-			ent->setFocus(TRUE);
-			mFocusedAvatar = ent->getID();
-			gAgent.lookAtObject(mFocusedAvatar, CAMERA_POSITION_OBJECT);
-			return;
-		}
-
-		if ( ent->getID() == mFocusedAvatar )
-		{
-			found = TRUE;
-		} 
-	}
-
-	if (first != NULL && ((!marked_only) || first->isMarked()))
-	{
-		removeFocusFromAll();
-		first->setFocus(TRUE);
-		mFocusedAvatar = first->getID();
-		gAgent.lookAtObject(mFocusedAvatar, CAMERA_POSITION_OBJECT);
-	}
-}
-//static
-void LLFloaterAvatarList::onClickPrevInList(void *userdata)
-{
-	LLFloaterAvatarList *self = (LLFloaterAvatarList*)userdata;
-	self->focusOnPrev(FALSE);
-}
-
-//static
-void LLFloaterAvatarList::onClickNextInList(void *userdata)
-{
-	LLFloaterAvatarList *self = (LLFloaterAvatarList*)userdata;
-	self->focusOnNext(FALSE);
-}
-
-//static
-void LLFloaterAvatarList::onClickPrevMarked(void *userdata)
-{
-	LLFloaterAvatarList *self = (LLFloaterAvatarList*)userdata;
-	self->focusOnPrev(TRUE);
-}
-
-//static
-void LLFloaterAvatarList::onClickNextMarked(void *userdata)
-{
-	LLFloaterAvatarList *self = (LLFloaterAvatarList*)userdata;
-	self->focusOnNext(TRUE);
-}
-
-//static
-void LLFloaterAvatarList::onClickGetKey(void *userdata)
-{
-	LLFloaterAvatarList *self = (LLFloaterAvatarList*)userdata;
- 	LLScrollListItem *item = self->mAvatarList->getFirstSelected();
-
-	if ( NULL == item ) return;
-
-	LLUUID agent_id = item->getUUID();
-
-	char buffer[UUID_STR_LENGTH];		/*Flawfinder: ignore*/
-	agent_id.toString(buffer);
-
-	gViewerWindow->mWindow->copyTextToClipboard(utf8str_to_wstring(buffer));
-}
-
-
-static void send_freeze(const LLUUID& avatar_id, bool freeze)
-{
-	U32 flags = 0x0;
-	if (!freeze)
-	{
-		// unfreeze
-		flags |= 0x1;
-	}
-
-	LLMessageSystem* msg = gMessageSystem;
-	LLViewerObject* avatar = gObjectList.findObject(avatar_id);
-
-	if (avatar)
-	{
-		msg->newMessage("FreezeUser");
-		msg->nextBlock("AgentData");
-		msg->addUUID("AgentID", gAgent.getID());
-		msg->addUUID("SessionID", gAgent.getSessionID());
-		msg->nextBlock("Data");
-		msg->addUUID("TargetID", avatar_id );
-		msg->addU32("Flags", flags );
-		msg->sendReliable( avatar->getRegion()->getHost() );
-	}
-}
-
-static void send_eject(const LLUUID& avatar_id, bool ban)
-{	
-	LLMessageSystem* msg = gMessageSystem;
-	LLViewerObject* avatar = gObjectList.findObject(avatar_id);
-
-	if (avatar)
-	{
-		U32 flags = 0x0;
-		if ( ban )
-		{
-			// eject and add to ban list
-			flags |= 0x1;
-		}
-
-		msg->newMessage("EjectUser");
-		msg->nextBlock("AgentData");
-		msg->addUUID("AgentID", gAgent.getID() );
-		msg->addUUID("SessionID", gAgent.getSessionID() );
-		msg->nextBlock("Data");
-		msg->addUUID("TargetID", avatar_id );
-		msg->addU32("Flags", flags );
-		msg->sendReliable( avatar->getRegion()->getHost() );
-	}
-}
-/* ?? Deprecated?
-static void send_estate_message(
-	const char* request,
-	const LLUUID &target)
-{
-
-	LLMessageSystem* msg = gMessageSystem;
-	LLUUID invoice;
-
-	// This seems to provide an ID so that the sim can say which request it's
-	// replying to. I think this can be ignored for now.
-	invoice.generate();
-
-	llinfos << "Sending estate request '" << request << "'" << llendl;
-	msg->newMessage("EstateOwnerMessage");
-	msg->nextBlockFast(_PREHASH_AgentData);
-	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-	msg->addUUIDFast(_PREHASH_TransactionID, LLUUID::null); //not used
-	msg->nextBlock("MethodData");
-	msg->addString("Method", request);
-	msg->addUUID("Invoice", invoice);
-
-	// Agent id
-	msg->nextBlock("ParamList");
-	msg->addString("Parameter", gAgent.getID().asString().c_str());
-
-	// Target
-	msg->nextBlock("ParamList");
-	msg->addString("Parameter", target.asString().c_str());
-
-	msg->sendReliable(gAgent.getRegion()->getHost());
-}
-*/
-/* ?? Depcrecated? Apparently not in use
-static void send_estate_ban(const LLUUID& agent)
-{
-	LLUUID invoice;
-	U32 flags = ESTATE_ACCESS_BANNED_AGENT_ADD;
-
-	invoice.generate();
-
-	LLMessageSystem* msg = gMessageSystem;
-	msg->newMessage("EstateOwnerMessage");
-	msg->nextBlockFast(_PREHASH_AgentData);
-	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-	msg->addUUIDFast(_PREHASH_TransactionID, LLUUID::null); //not used
-
-	msg->nextBlock("MethodData");
-	msg->addString("Method", "estateaccessdelta");
-	msg->addUUID("Invoice", invoice);
-
-	char buf[MAX_STRING];		// Flawfinder: ignore
-	gAgent.getID().toString(buf);
-	msg->nextBlock("ParamList");
-	msg->addString("Parameter", buf);
-
-	snprintf(buf, MAX_STRING, "%u", flags);			// Flawfinder: ignore
-	msg->nextBlock("ParamList");
-	msg->addString("Parameter", buf);
-
-	agent.toString(buf);
-	msg->nextBlock("ParamList");
-	msg->addString("Parameter", buf);
-
-	gAgent.sendReliableMessage();
-}
-*/
-std::string keyasname(LLUUID id)
-{
-	std::string ret;
-	gCacheName->getFullName(id,ret);
-	return ret;
-}
-
-static void cmd_freeze(const LLUUID& avatar, const std::string &name)
-{
-	cmdline_printchat("Moderation: Freezing "+ keyasname(avatar)+".");
-	send_freeze(avatar, true);
-}
-static void cmd_unfreeze(const LLUUID& avatar, const std::string &name)
-{
-	cmdline_printchat("Moderation: Unfreezing "+ keyasname(avatar)+".");
-	send_freeze(avatar, false);
-}
-static void cmd_eject(const LLUUID& avatar, const std::string &name)
-{
-	cmdline_printchat("Moderation: Ejecting "+ keyasname(avatar)+".");
-	send_eject(avatar, false);
-}
-static void cmd_ban(const LLUUID& avatar, const std::string &name)
-{
-	cmdline_printchat("Moderation: Ejecting and banning "+ keyasname(avatar)+".");
-	send_eject(avatar, true);
-}
-static void cmd_profile(const LLUUID& avatar, const std::string &name)
-{
-	LLFloaterAvatarInfo::showFromDirectory(avatar);
-}
-//static void cmd_mute(const LLUUID&avatar, const std::string &name)         { LLMuteList::getInstance()->add(LLMute(avatar, name, LLMute::AGENT)); }
-//static void cmd_unmute(const LLUUID&avatar, const std::string &name)       { LLMuteList::getInstance()->remove(LLMute(avatar, name, LLMute::AGENT)); }
-
-
-
-typedef std::vector<std::string> strings_t;
-static void sendEstateOwnerMessage(
-	LLMessageSystem* msg,
-	const std::string& request,
-	const LLUUID& invoice,
-	const strings_t& strings)
-{
-	llinfos << "Sending estate request '" << request << "'" << llendl;
-	msg->newMessage("EstateOwnerMessage");
-	msg->nextBlockFast(_PREHASH_AgentData);
-	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-	msg->addUUIDFast(_PREHASH_TransactionID, LLUUID::null); //not used
-	msg->nextBlock("MethodData");
-	msg->addString("Method", request);
-	msg->addUUID("Invoice", invoice);
-	if(strings.empty())
-	{
-		msg->nextBlock("ParamList");
-		msg->addString("Parameter", NULL);
-	}
-	else
-	{
-		strings_t::const_iterator it = strings.begin();
-		strings_t::const_iterator end = strings.end();
-		for(; it != end; ++it)
-		{
-			msg->nextBlock("ParamList");
-			msg->addString("Parameter", *it);
-		}
-	}
-	msg->sendReliable(gAgent.getRegion()->getHost());
-}
-
-static void cmd_estate_eject(const LLUUID &avatar, const std::string &name)
-{
-	cmdline_printchat("Moderation: Kicking "+ keyasname(avatar)+" from estate.");
-	strings_t strings;
-	strings.push_back(avatar.asString());
-	sendEstateOwnerMessage(gMessageSystem, "kickestate", LLFloaterRegionInfo::getLastInvoice(), strings);
-}
-
-static void cmd_estate_ban(const LLUUID &avatar, const std::string &name)
-{
-	cmdline_printchat("Moderation: Banning "+ keyasname(avatar)+" from estate.");
-	//send_estate_message("teleporthomeuser", avatar); // Kick first, just to be sure
-	LLPanelEstateInfo::sendEstateAccessDelta(ESTATE_ACCESS_BANNED_AGENT_ADD | ESTATE_ACCESS_ALLOWED_AGENT_REMOVE | ESTATE_ACCESS_NO_REPLY, avatar);
-}
-
-static void cmd_tph_estate(const LLUUID &avatar, const std::string &name)
-{
-	cmdline_printchat("Moderation: Teleporting "+ keyasname(avatar)+" home.");
-	//send_estate_message("teleporthomeuser", avatar); // Kick first, just to be sure
-	//sendEstateAccessDelta(ESTATE_ACCESS_BANNED_AGENT_ADD | ESTATE_ACCESS_ALLOWED_AGENT_REMOVE, avatar);
-	strings_t strings;
-	// [0] = our agent id
-	// [1] = target agent id
-	std::string buffer;
-	gAgent.getID().toString(buffer);
-	strings.push_back(buffer);
-	avatar.toString(buffer);
-	strings.push_back(strings_t::value_type(buffer));
-	LLUUID invoice(LLFloaterRegionInfo::getLastInvoice());
-	sendEstateOwnerMessage(gMessageSystem, "teleporthomeuser", invoice, strings);
-}
-
-
 
 void LLFloaterAvatarList::doCommand(void (*func)(const LLUUID &avatar, const std::string &name))
 {
@@ -2029,191 +2038,6 @@ void LLFloaterAvatarList::callbackIdle(void *userdata) {
 	}
 }
 
-void LLFloaterAvatarList::onClickFreeze(void *userdata)
-{
-	LLSD args;
-	args["AVATAR_NAME"] = ((LLFloaterAvatarList*)userdata)->getSelectedNames();
-
-	LLNotifications::instance().add("FreezeAvatarFullname", args, LLSD(), callbackFreeze);
-}
-
-void LLFloaterAvatarList::onClickEject(void *userdata)
-{	
-	if(gSavedSettings.getBOOL("EmeraldModerateConfirm"))
-	{
-		LLSD args;
-		args["AVATAR_NAME"] = ((LLFloaterAvatarList*)userdata)->getSelectedNames();
-		LLNotifications::instance().add("EjectAvatarFullnameNoBan", args, LLSD(), callbackEject);
-	}else
-		{
-		LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-		avlist->doCommand(cmd_eject);
-	}
-		}
-
-void LLFloaterAvatarList::onClickBan(void *userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-	avlist->doCommand(cmd_ban);
-}
-
-//static
-
-void LLFloaterAvatarList::onClickScriptCount(void *userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
- 	LLScrollListItem *item =   avlist->mAvatarList->getFirstSelected();
-	if(!item)return;
-	LLViewerObject *obj=gObjectList.findObject(item->getUUID());
-	if(obj)
-{
-		LLSelectMgr::getInstance()->selectObjectOnly(obj);
-		ScriptCounter::serializeSelection(false);
-		LLSelectMgr::getInstance()->deselectAll();
-}
-}
-//static
-void LLFloaterAvatarList::onClickMute(void *userdata)
-{
-	LLFloaterAvatarList *self = (LLFloaterAvatarList*)userdata;
-
-	//LLFloaterMute::showInstance();
-
-	LLDynamicArray<LLUUID> ids = self->mAvatarList->getSelectedIDs();
-	if(ids.size() > 0)
-{
-		for(LLDynamicArray<LLUUID>::iterator itr = ids.begin(); itr != ids.end(); ++itr)
-{
-			LLUUID agent_id = *itr;
-
-			std::string agent_name;
-			if(gCacheName->getFullName(agent_id, agent_name))
-{
-				// *NOTE: Users may click on Mute multiple times to ensure a person is muted
-				// there is no visual feedback given in Avatar List as of now
-				if (LLMuteList::getInstance()->isMuted(agent_id))
-				{
-					//LLMute mute(agent_id, agent_name, LLMute::AGENT);
-					//LLMuteList::getInstance()->remove(mute);	
-					//LLFloaterMute::getInstance()->selectMute(agent_id);
-}
-				else
-{
-					LLMute mute(agent_id, agent_name, LLMute::AGENT);
-					LLMuteList::getInstance()->add(mute);
-				}
-			}
-		}
-	}
-}
-
-//static
-void LLFloaterAvatarList::onClickUnmute(void *userdata)
-{
-	LLFloaterAvatarList *self = (LLFloaterAvatarList*)userdata;
-
-	//LLFloaterMute::showInstance();
-	
-	LLDynamicArray<LLUUID> ids = self->mAvatarList->getSelectedIDs();
-	if(ids.size() > 0)
-	{
-		for(LLDynamicArray<LLUUID>::iterator itr = ids.begin(); itr != ids.end(); ++itr)
-{
-			LLUUID agent_id = *itr;
-
-			std::string agent_name;
-			if(gCacheName->getFullName(agent_id, agent_name))
-{
-				if (LLMuteList::getInstance()->isMuted(agent_id))
-	{
-					LLMute mute(agent_id, agent_name, LLMute::AGENT);
-		LLMuteList::getInstance()->remove(mute);	
-					//LLFloaterMute::getInstance()->selectMute(agent_id);
-				}
-				else
-				{
-					//LLMute mute(agent_id, agent_name, LLMute::AGENT);
-					//LLMuteList::getInstance()->add(mute);
-				}
-			}
-		}
-	}
-}
-
-//static
-void LLFloaterAvatarList::onClickKickFromEstate(void *userdata)
-{
-	LLSD args;
-	LLSD payload;
-	args["EVIL_USER"] = ((LLFloaterAvatarList*)userdata)->getSelectedNames();
-	LLNotifications::instance().add("EstateKickUser", args, payload, callbackEjectFromEstate);
-}
-
-void LLFloaterAvatarList::onClickBanFromEstate(void *userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-	avlist->doCommand(cmd_estate_ban);
-	/*
-	LLSD args;
-	args["ALL_ESTATES"] = "all estates";
-	LLNotifications::instance().add("EstateBannedAgentAdd", args, LLSD(), callbackBanFromEstate);*/
-}
-	
-void LLFloaterAvatarList::onClickTPHFromEstate(void *userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-	avlist->doCommand(cmd_tph_estate);
-}
-void LLFloaterAvatarList::onClickGTFOFromEstate(void *userdata)
-{
-	onClickBanFromEstate(userdata);
-	onClickKickFromEstate(userdata);
-	onClickTPHFromEstate(userdata);
-}
-//static
-void LLFloaterAvatarList::onClickAR(void *userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
- 	LLScrollListItem *item =   avlist->mAvatarList->getFirstSelected();
-
-	if ( item )
-	{
-	LLUUID agent_id = item->getUUID();
-		LLAvatarListEntry *ent = avlist->getAvatarEntry(agent_id);
-
-		if ( ent )
-		{
-			LLFloaterReporter::showFromObject(ent->getID());
-		}
-	}
-}
-
-// static
-void LLFloaterAvatarList::onClickProfile(void* userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-	avlist->doCommand(cmd_profile);
-}
-
-//static
-void LLFloaterAvatarList::onClickTeleport(void* userdata)
-{
-	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-	LLScrollListItem *item =   avlist->mAvatarList->getFirstSelected();
-
-	if ( item )
-	{
-	LLUUID agent_id = item->getUUID();
-		LLAvatarListEntry *ent = avlist->getAvatarEntry(agent_id);
-
-		if ( ent )
-	{
-			llinfos << "Trying to teleport to " << ent->getName() << " at " << ent->getPosition() << llendl;
-			gAgent.teleportViaLocation( ent->getPosition() );
-		}
-	}
-}
-
 void LLFloaterAvatarList::checkAnnouncements()
 {
 	LLViewerRegion* regionp = gAgent.getRegion();
@@ -2293,18 +2117,3 @@ void LLFloaterAvatarList::clearAnnouncements()
 {
 	mAnnouncedAvatars.clear();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -304,7 +304,9 @@ public:
 		U32 ypos = 64;
 		const U32 y_inc = 20;
 
-		if (gSavedSettings.getBOOL("DebugShowTime"))
+		static BOOL *sDebugShowTime = rebind_llcontrol<BOOL>("DebugShowTime", &gSavedSettings, true);
+
+		if(*sDebugShowTime)
 		{
 			const U32 y_inc2 = 15;
 			for (std::map<S32,LLFrameTimer>::reverse_iterator iter = gDebugTimers.rbegin();
@@ -325,7 +327,15 @@ public:
 			S32 hours = (S32)(time / (60*60));
 			S32 mins = (S32)((time - hours*(60*60)) / 60);
 			S32 secs = (S32)((time - hours*(60*60) - mins*60));
-			addText(xpos, ypos, llformat("Time: %d:%02d:%02d", hours,mins,secs)); ypos += y_inc;
+
+			std::string temp_str = llformat( "Time: %d:%02d:%02d / FPS %3.1f Phys %2.1f TD %1.3f",		/* Flawfinder: ignore */
+			hours,mins,secs,
+			LLViewerStats::getInstance()->mFPSStat.getMeanPerSec(),
+			LLViewerStats::getInstance()->mSimPhysicsFPS.getPrev(0),
+			LLViewerStats::getInstance()->mSimTimeDilation.getPrev(0));
+//			S32 len = temp_str.length();
+
+			addText(xpos, ypos, temp_str); ypos += y_inc;
 		}
 		
 		if (gDisplayCameraPos)
@@ -877,6 +887,15 @@ BOOL LLViewerWindow::handleMouseUp(LLWindow *window,  LLCoordGL pos, MASK mask)
 
 BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK mask)
 {
+	gSavedSettings.setBOOL("zmm_rightmousedown",1);
+    if(gAgent.cameraMouselook()&&gSavedSettings.getBOOL("zmm_isinml")==0)
+	{
+        llinfos << "zmmisinml set to true" << llendl;
+        gSavedSettings.setBOOL("zmm_isinml",1);
+        F32 deffov=LLViewerCamera::getInstance()->getDefaultFOV();
+        gSavedSettings.setF32("zmm_deffov",deffov);
+        LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("zmm_deffov")/gSavedSettings.getF32("zmm_mlfov"));
+    }
 	S32 x = pos.mX;
 	S32 y = pos.mY;
 	x = llround((F32)x / mDisplayScale.mV[VX]);
@@ -984,6 +1003,13 @@ BOOL LLViewerWindow::handleRightMouseDown(LLWindow *window,  LLCoordGL pos, MASK
 
 BOOL LLViewerWindow::handleRightMouseUp(LLWindow *window,  LLCoordGL pos, MASK mask)
 {
+	gSavedSettings.setBOOL("zmm_rightmousedown",0);
+    if(gSavedSettings.getBOOL("zmm_isinml")==1)
+	{
+        llinfos << "zmmisinml set to false" << llendl;
+        gSavedSettings.setBOOL("zmm_isinml",0);
+        LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("zmm_deffov"));
+    }
 	S32 x = pos.mX;
 	S32 y = pos.mY;
 	x = llround((F32)x / mDisplayScale.mV[VX]);
@@ -2363,7 +2389,7 @@ void LLViewerWindow::draw()
 		// Draw tooltips
 		// Adjust their rectangle so they don't go off the top or bottom
 		// of the screen.
-		if( mToolTip && mToolTip->getVisible() )
+		if( mToolTip && mToolTip->getVisible() && !mToolTipBlocked )
 		{
 			glMatrixMode(GL_MODELVIEW);
 			LLUI::pushMatrix();
@@ -2410,6 +2436,16 @@ void LLViewerWindow::draw()
 // Takes a single keydown event, usually when UI is visible
 BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 {
+	// Hide tooltips on keypress
+	mToolTipBlocked = TRUE; // block until next time mouse is moved
+
+	// Also hide hover info on keypress
+	if (gHoverView)
+	{
+		gHoverView->cancelHover();
+		gHoverView->setTyping(TRUE);
+	}
+
 	if (gFocusMgr.getKeyboardFocus() 
 		&& !(mask & (MASK_CONTROL | MASK_ALT))
 		&& !gFocusMgr.getKeystrokesOnly())
@@ -2430,17 +2466,6 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 		{
 			return TRUE;
 		}
-	}
-
-	// Hide tooltips on keypress
-	mToolTipBlocked = TRUE; // block until next time mouse is moved
-
-	// Also hide hover info on keypress
-	if (gHoverView)
-	{
-		gHoverView->cancelHover();
-
-		gHoverView->setTyping(TRUE);
 	}
 
 	// Explicit hack for debug menu.

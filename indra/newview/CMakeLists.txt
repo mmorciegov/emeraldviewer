@@ -106,6 +106,7 @@ set(viewer_SOURCE_FILES
 	hippopanelgrids.cpp
 	importtracker.cpp
 	jclslpreproc.cpp
+    hbfloatergrouptitles.cpp
 	jc_lslviewerbridge.cpp
 	jcfloater_animation_list.cpp
 	jcfloater_areasearch.cpp
@@ -555,6 +556,7 @@ set(viewer_HEADER_FILES
 	hippopanelgrids.h
 	importtracker.h
 	jclslpreproc.h
+	hbfloatergrouptitles.h
 	jc_lslviewerbridge.h
 	jcfloater_animation_list.h
 	jcfloater_areasearch.h

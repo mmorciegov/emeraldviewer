@@ -1710,7 +1710,12 @@ void optionally_start_music(const std::string& music_url)
 		// changed as part of SL-4878
 		if ( gOverlayBar && gOverlayBar->musicPlaying())
 		{
+			if(gSavedSettings.getBOOL("EmeraldStopMusicOnParcelChange"))
+			{
+				gOverlayBar->toggleMusicPlay(gOverlayBar);
+			}else
 			gAudiop->startInternetStream(music_url);
+			
 		}
 	}
 }

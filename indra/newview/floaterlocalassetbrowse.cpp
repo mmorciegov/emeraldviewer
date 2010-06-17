@@ -581,8 +581,6 @@ void LocalAssetBrowser::PingTimer()
 /* This function refills the texture picker floater's scrolllist with the updated contents of bitmaplist */
 void LocalAssetBrowser::UpdateTextureCtrlList(LLScrollListCtrl* ctrl)
 {
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 	if ( ctrl ) // checking again in case called externally for some silly reason.
 	{
 		ctrl->clearRows(); 
@@ -595,12 +593,10 @@ void LocalAssetBrowser::UpdateTextureCtrlList(LLScrollListCtrl* ctrl)
 				element["columns"][0]["column"] = "unit_name";
 				element["columns"][0]["type"] = "text";
 				element["columns"][0]["value"] = (*iter)->shortname;
-				element["columns"][0]["color"] = (*sDefaultListText).getValue();
 
 				element["columns"][1]["column"] = "unit_id_HIDDEN";
 				element["columns"][1]["type"] = "text";
 				element["columns"][1]["value"] = (*iter)->id;
-//				element["columns"][1]["color"] = (*sDefaultListText).getValue();
 
 				ctrl->addElement(element);
 			}
@@ -884,8 +880,6 @@ void FloaterLocalAssetBrowser::FloaterResize(bool expand)
 
 void FloaterLocalAssetBrowser::UpdateBitmapScrollList()
 {
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 	if ( !sLFInstance ) { return; }
 
 	sLFInstance->mBitmapList->clearRows();
@@ -899,12 +893,10 @@ void FloaterLocalAssetBrowser::UpdateBitmapScrollList()
 			element["columns"][BITMAPLIST_COL_NAME]["column"] = "bitmap_name";
 			element["columns"][BITMAPLIST_COL_NAME]["type"]   = "text";
 			element["columns"][BITMAPLIST_COL_NAME]["value"]  = (*iter)->getShortName();
-			element["columns"][BITMAPLIST_COL_NAME]["color"] = (*sDefaultListText).getValue();
 
 			element["columns"][BITMAPLIST_COL_ID]["column"] = "bitmap_uuid";
 			element["columns"][BITMAPLIST_COL_ID]["type"]   = "text";
 			element["columns"][BITMAPLIST_COL_ID]["value"]  = (*iter)->getID();
-			element["columns"][BITMAPLIST_COL_ID]["color"] = (*sDefaultListText).getValue();
 
 			sLFInstance->mBitmapList->addElement(element);
 		}

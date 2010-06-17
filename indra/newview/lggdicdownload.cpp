@@ -44,8 +44,25 @@
 #include "llcombobox.h"
 #include "llview.h"
 #include "llpanelemerald.h"
+#include "llhttpclient.h"
+#include "llbufferstream.h"
 
 class lggDicDownloadFloater;
+class EmeraldDicDownloader : public LLHTTPClient::Responder
+{
+public:
+	EmeraldDicDownloader(lggDicDownloadFloater * spanel,std::string sname);
+	~EmeraldDicDownloader() { }
+	void completedRaw(
+		U32 status,
+		const std::string& reason,
+		const LLChannelDescriptors& channels,
+		const LLIOPipe::buffer_ptr_t& buffer);
+private:
+	lggDicDownloadFloater* panel;
+	std::string name;
+};
+
 
 class lggDicDownloadFloater : public LLFloater, public LLFloaterSingleton<lggDicDownloadFloater>
 {
@@ -54,7 +71,6 @@ public:
 	virtual ~lggDicDownloadFloater();
 	BOOL postBuild(void);
 	void setData(std::vector<std::string> shortNames, std::vector<std::string> longNames, void * data);
-	void downloadDic(std::string name);
 	static void onClickDownload(void* data);
 	std::vector<std::string> sNames;
 	std::vector<std::string> lNames;
@@ -112,25 +128,23 @@ void lggDicDownloadFloater::onClickDownload(void* data)
 			{
 				index--;
 				std::string newDict(self->sNames[index]);
-				self->downloadDic(newDict+".aff");
-				self->downloadDic(newDict+".dic");
+				LLHTTPClient::get("http://www.modularsystems.sl/app/dics/"+newDict+".aff", new EmeraldDicDownloader(self,newDict+".aff"));
+				LLHTTPClient::get("http://www.modularsystems.sl/app/dics/"+newDict+".dic", new EmeraldDicDownloader(NULL,newDict+".dic"));
+				
+				LLButton* butt = self->getChild<LLButton>("Emerald_dic_download");
+				if(butt)
+				{
+					butt->setLabel(LLStringExplicit("Downloading... Please Wait"));
+					butt->setEnabled(FALSE);
+				}
+
 			}
 		}
 	}
-	if(self->empanel)self->empanel->refresh();
-	self->close();
-
+	
+ 
 }
-void lggDicDownloadFloater::downloadDic(std::string name)
-{
-	std::string dicpath(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries", 
-			name.c_str()));
-	//LLButton* butt = getChild<LLButton>("Emerald_dic_download");
-	//if(butt)butt->setLabel(LLStringExplicit("Downloading... Please Wait"));
 
-	LLHTTPClient::downloadFile(std::string("http://www.modularsystems.sl/app/dics/"+name),
-			dicpath);
-}
 void LggDicDownload::show(BOOL showin, std::vector<std::string> shortNames, std::vector<std::string> longNames, void * data)
 {
 	if(showin)
@@ -138,4 +152,32 @@ void LggDicDownload::show(BOOL showin, std::vector<std::string> shortNames, std:
 		lggDicDownloadFloater* dic_floater = lggDicDownloadFloater::showInstance();
 		dic_floater->setData(shortNames,longNames,data);
 	}
+}
+EmeraldDicDownloader::EmeraldDicDownloader(lggDicDownloadFloater* spanel, std::string sname):
+panel(spanel),name(sname){}
+
+
+void EmeraldDicDownloader::completedRaw(U32 status, const std::string& reason, const LLChannelDescriptors& channels, const LLIOPipe::buffer_ptr_t& buffer)
+{
+	if(status < 200 || status >= 300)
+	{
+		return;
+	}
+	LLBufferStream istr(channels, buffer.get());
+	std::string dicpath(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries", 
+		name.c_str()));
+	
+	
+	llofstream ostr(dicpath, std::ios::binary);
+
+	while(istr.good() && ostr.good())
+		ostr << istr.rdbuf();
+	ostr.close();
+	if(panel)
+	{
+		panel->empanel->refresh();
+		panel->close();
+	}
+	
+	
 }

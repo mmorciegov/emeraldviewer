@@ -245,9 +245,6 @@ BOOL LLPanelFriends::addFriend(const LLUUID& agent_id)
 	friend_column["value"] = fullname;
 	friend_column["font"] = "SANSSERIF";
 	friend_column["font-style"] = "NORMAL";
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
-	friend_column["color"] = (*sDefaultListText).getValue();
 
 	LLSD& online_status_column = element["columns"][LIST_ONLINE_STATUS];
 	online_status_column["column"] = "icon_online_status";

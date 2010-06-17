@@ -7,315 +7,142 @@
 	can_close="true"
 	can_drag_on_left="false"
 	rect_control="FloaterAvatarListRect"
-	min_width="380"
+	min_width="480"
 	min_height="240"
+  width="480" height="300"
 	>
-	<!-- <text
-		  name="help_label"
-		  bottom="-30"
-		  left="15"
-		  font="SansSerifSmall"
-		  follows="top|left"
-		  >
-	</text> -->
-	
-	<scroll_list
-		    name="avatar_list"
-		    left="5"
-		    right="-5"
-		    top="-20"
-		    bottom="130"
-		    column_padding="0"
-		    can_resize="true"
-		    follows="left|top|bottom|right"
-		    draw_heading="true"
-		    multi_select="true"
-		    search_column="1"
-		    tool_tip="Hold shift or control while clicking to select multiple avatars"
-		    >
-		<!-- Icons relating to the avatar, currently: tracking, and marked -->
-		<!--<column name="avatar_icon" label="Icon" width="20" /> -->
-		<column name="avatar_name" label="Name" dynamicwidth="true" />
-		<column name="distance" label="Distance" width="70"/>
-		<column name="time" label="Time" width="50" />
-		<column name="age" label="Age" width="45"/>
-		<!-- <column name="payment_data" label="Payment" width="80"/> -->
-		<!-- TrustNet Score -->
-		<column name="samesim" label="Sim" width="15"/>
-		<!-- Payment data icons -->
-		<column name="payment_data" label="" width="20" />
-		<!-- What the avatar is doing: producing sounds, rezzing, particles, etc -->
-		<!--<column name="activity" label="" width="20" /> -->
-    <column name="client" label="Client" dynamicwidth="true" />
-	</scroll_list>
-	
-	<tab_container border="false" bottom_delta="-110" height="100" left="0" mouse_opaque="false"
-		       name="actions_tab_container" tab_position="top" follows="left|right|bottom">
-		<panel border="false" bottom_delta="-120" follows="left|top|right|bottom" height="255"
-		       label="Avatar" left="1" mouse_opaque="true"
-		     name="actions_tab" width="410">
-			<!-- upper row -->
-			<button
-			       name="profile_btn"
-			       label="Profile"
-			       tool_tip="Show picture, groups, and other information"
-			       left="10"
-			       bottom_delta="-200"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-			       />
-			<button
-			       name="im_btn"
-			       label="IM"
-			       tool_tip="Open Instant Message session"
-			       left_delta="90"
-			       bottom_delta="0"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-			       />
-			<button
-			       name="offer_btn"
-			       label="Offer TP"
-			       tool_tip="Offer Teleport"
-			       left_delta="90"
-			       bottom_delta="0"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-			       />
-			<button
-			       name="script_count_btn"
-			       label="Scripts"
-			       tool_tip="Script Count"
-			       left_delta="90"
-			       bottom_delta="0"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-			       />
-			<!--middle row -->
-			<button
-			       name="track_btn"
-			       label="Track"
-			       tool_tip="Track this avatar's position"
-			       left="10"
-			       bottom_delta="-24"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-			       />
-			<button
-			       name="mark_btn"
-			       label="Mark"
-			       tool_tip="Mark this avatar in the list"
-			       left_delta="90"
-			       bottom_delta="0"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-             visible="false"
-			       />
-			<button
-			       name="get_key_btn"
-			       label="Get Key"
-			       tool_tip="Copies avatar's key to the clipboard"
-			       left_delta="90"
-			       bottom_delta="0"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-			       />
-			<button
-			       name="teleport_btn"
-			       label="TP to"
-			       tool_tip="Teleport to avatar's position"
-			       left_delta="90"
-			       bottom_delta="0"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-			       />			
-			<!-- lower row-->
-			<button
-			       name="prev_in_list_btn"
-			       label="Prev"
-			       tool_tip="Focus camera on previous avatar in list"
-			       left="10"
-			       bottom_delta="-24"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-             visible="false"
-			       />
-			<button
-			       name="next_in_list_btn"
-			       label="Next"
-			       tool_tip="Focus camera on next avatar in list"
-			       left_delta="90"
-			       bottom_delta="0"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-             visible="false"
-			       />
-			<button
-			       name="prev_marked_btn"
-			       label="Prev Marked"
-			       tool_tip="Focus camera on previous marked avatar"
-			       left_delta="90"
-			       bottom_delta="0"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-             visible="false"
-			       />
-			<button
-			       name="next_marked_btn"
-			       label="Next Marked"
-			       tool_tip="Focus camera on next marked avatar"
-			       left_delta="90"
-			       bottom_delta="0"
-			       width="80"
-			       height="20"
-			       font="SansSerifSmall"
-			       follows="bottom|left"
-             visible="false"
-			       />
-
-		</panel>
-		<panel border="false" bottom_delta="-130" follows="left|top|right|bottom" height="240"
-		       label="Moderation" left="1" mouse_opaque="true"
-		       name="land_tab" width="410">
-			
-			<!-- Upper row -->
-      <button name="mute_btn" label="Mute" tool_tip="Mute this avatar" left="10"
-      bottom_delta="-185" width="80" height="20" font="SansSerifSmall" follows="bottom|left" />
-      
-			<button name="eject_btn" label="Eject" tool_tip="Eject the avatar from the parcel" left_delta="0"
-			bottom_delta="-22" width="80" height="20" follows="bottom|left" />
-
-			<button name="ar_btn" label="AR" tool_tip="Report abuse on this avatar" left="190"
-      bottom_delta="22" width="80" height="20" font="SansSerifSmall" follows="bottom|left" />
-
-      <button name="freeze_btn" label="Freeze" tool_tip="Freeze the avatar, preventing it from moving"
-      left_delta="0" bottom_delta="-22" width="80" height="20" follows="bottom|left" />
-      
-      <button name="unmute_btn" label="Unmute" tool_tip="Unmute this avatar" left="100"
-			bottom_delta="22" width="80" height="20" follows="bottom|left" />
-
-      <button name="ban_btn" label="Ban" tool_tip="Ban this avatar from parcel" left_delta="0"
-			bottom_delta="-22" width="80" height="20" follows="bottom|left" />
-
-			<!-- fourth column -->
-      <button name="estate_tph_btn" label="Estate TP Home" tool_tip="Teleport avatar home" left_delta="-90"
-			bottom_delta="-22" width="100" height="20" follows="bottom|left" />
-      <button name="estate_kick_btn" label="Estate Kick" tool_tip="Kick avatar from the estate" left_delta="105"
-			bottom_delta="0" width="100" height="20" follows="bottom|left" />
-
-			<button name="estate_ban_btn" label="Estate Ban" tool_tip="Ban this avatar from the estate" left_delta="105"
-			bottom_delta="0" width="100" height="20" follows="bottom|left" />
-
-      <button name="estate_gtfo_btn" label="Estate GTFO" tool_tip="Bans, ejects, teleports home, and kicks" left_delta="105"
-			bottom_delta="0" width="100" height="20" follows="bottom|left" />
-      
-      
-      <check_box height="16" label="Estate Does All Estates" left_delta="112"
-      bottom_delta="66" name="modeb" width="200" follows="bottom|left" radio_style="false" control_name="EmeraldModerateAllEstates"
-			tool_tip="Apply estate actions to all estates" visible="false" />
-
-      <check_box height="16" label="Confirm Actions" left_delta="0"
-      bottom_delta="-22" name="modec" width="200" follows="bottom|left" radio_style="false" control_name="EmeraldModerateConfirm"
-			tool_tip="Confirm actions" visible="false"/>
-      
-		</panel>
-		
-		
-		<panel border="false" bottom_delta="-150" follows="left|top|right|bottom" height="255"
-		       label="Options" left="1" mouse_opaque="true"
-		     name="options_tab" width="410">
-			<check_box height="16" label="Update"
-				   left="10" bottom_delta="-200" name="update_enabled_cb" 
-				   width="200" follows="bottom|left"
-				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
-				   initial_value="true" enabled="true" radio_style="false" 
-				   tool_tip="Set whether the avatar list should update" />
-      
-      <check_box height="16" label="Update even when closed"
-				   left="10" bottom_delta="-21" name="keep_open"
-				   width="200" follows="bottom|left"
-				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
-				   initial_value="true" enabled="true" radio_style="false"
-                   control_name="EmeraldAvatarListKeepOpen"
-			   tool_tip="Hides floater instead of closing to still announce in chat" />
-			
-			<check_box height="16" label="Get avatar info"
-				   left="10" bottom_delta="-21" name="fetch_avdata_enabled_cb" 
-				   width="200" follows="bottom|left"
-				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
-				   initial_value="true" enabled="true" radio_style="false" 
-			   tool_tip="Set whether avatar information should be retrieved" />
-               
-			<check_box height="16" label="Announce keys to HUD"
-				   left="10" bottom_delta="-21" name="radar_chat_keys" 
-				   width="200" follows="bottom|left"
-				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
-				   initial_value="true" enabled="true" radio_style="false" 
-                   control_name="EmeraldRadarChatKeys"
-			   tool_tip="Set whether to chat keys of avatars to LSL scripts" />
-
-      
-    </panel>
-    
-    <panel border="false" bottom_delta="-150" follows="left|top|right|bottom" height="255"
-		       label="Alerts" left="1" mouse_opaque="true"
-		     name="Alerts" width="410">
+  <tab_container border="false" bottom_delta="-292" left="5" right="-1" height="268" mouse_opaque="false" name="actions_tab_container" tab_position="bottom" follows="top|left|right|bottom">
+    <panel border="false" bottom_delta="0" left="0" right="-1" follows="left|top|bottom|right" label="List" mouse_opaque="true" name="list_tab">
+      <scroll_list
+          border="false"
+          name="avatar_list"
+          top="10"
+          bottom="10"
+          left="0"
+          right="-6"
+          column_padding="2"
+          can_resize="true"
+          follows="left|top|right|bottom"
+          draw_heading="true"
+          multi_select="true"
+          search_column="1"
+          tool_tip="Hold shift or control while clicking to select multiple avatars">
+        <column name="avatar_name" label="Name" width="150"/>
+        <column name="voice" label="Voice" width="15"/>
+        <column name="distance" label="Distance" width="70"/>
+        <column name="time" label="Time" width="50" />
+        <column name="age" label="Age" width="45"/>
+        <column name="samesim" label="Sim" width="15"/>
+        <column name="payment_data" label="" width="20" />
+        <column name="client" label="Client" dynamicwidth="true" />
+      </scroll_list>
+    </panel>	
+		<panel border="false" bottom_delta="0" left="5" right="-1" follows="left|top|right|bottom" label="Options" mouse_opaque="true" name="options_tab">
       <check_box height="16" label="Radar Alerts to Chat"
-				   left="5" bottom_delta="-200"
-				   width="200" follows="bottom|left"
+				   left="5" bottom_delta="-10"
+				   width="200" follows="top|left"
 				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
 		       enabled="true" radio_style="false"
            control_name="EmeraldRadarChatAlerts"/>
-      <check_box bottom_delta="-20" enabled="true" follows="bottom|left" font="SansSerifSmall" height="16"
-					 label="Avatars entering / leaving simulator" left_delta="10"
+      <check_box bottom_delta="-20" enabled="true" follows="top|left" font="SansSerifSmall" height="16"
+					 label="Av entering / leaving simulator" left_delta="10"
 					 mouse_opaque="true" name="radar_chat_sim_toggle" radio_style="false" width="270"
 					 control_name="EmeraldRadarAlertSim"/>
-      <check_box bottom_delta="-20" enabled="true" follows="bottom|left" font="SansSerifSmall" height="16"
-           label="Avatars entering / leaving draw distance"
+      <check_box bottom_delta="-20" enabled="true" follows="top|left" font="SansSerifSmall" height="16"
+           label="Av entering / leaving draw distance"
            left_delta="0" mouse_opaque="true" name="radar_chat_draw_toggle" radio_style="false"
            width="270" control_name="EmeraldRadarAlertDraw"/>
-      <check_box bottom_delta="-20" enabled="true" follows="bottom|left" font="SansSerifSmall" height="16"
-           label="Avatars entering / leaving chat range" left_delta="0"
+      <check_box bottom_delta="-20" enabled="true" follows="top|left" font="SansSerifSmall" height="16"
+           label="Av entering / leaving chat range" left_delta="0"
            mouse_opaque="true" name="radar_chat_chatrange_toggle" radio_style="false" width="270"
            control_name="EmeraldRadarAlertChatRange"/>
-      <check_box height="16" label="Enable Av Age Alert"
-				   left="230" bottom_delta="60" name="agealert"
-				   width="200" follows="bottom|left"
+      <check_box height="16" label="Av Age Alert"
+				   left_delta="0" bottom_delta="-20" name="agealert"
+				   width="200" follows="top|left"
 				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
 				   initial_value="true" enabled="true" radio_style="false"
            control_name="EmeraldAvatarAgeAlert"
-			   tool_tip="Enables Avatar Age Alert" />
-      <spinner bottom_delta="155" decimal_digits="0" follows="left|top" height="16"
-          left="230" increment="1" initial_val="3" max_val="999" min_val="0"
-          mouse_opaque="true" name="AgeAlertDays" label="Age Threshold" label_width="80"
-          tool_tip="Age Threshold" width="140" control_name="EmeraldAvatarAgeAlertDays" />
-    </panel>
-    
-	</tab_container>
-	
+  			   tool_tip="Enables Avatar Age Alert" />
+      <spinner bottom_delta="-1" decimal_digits="0" follows="top|left" height="16"
+           left_delta="90" increment="1" initial_val="3" max_val="999" min_val="0"
+           mouse_opaque="true" name="AgeAlertDays" label="Threshold" label_width="60"
+           tool_tip="Age Threshold" width="110" control_name="EmeraldAvatarAgeAlertDays" />
 
-	
-	
+      <check_box height="16" label="Update"
+				   left="5" bottom_delta="-30" name="update_enabled_cb" 
+				   width="200" follows="top|left"
+				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
+				   initial_value="true" enabled="true" radio_style="false" 
+				   tool_tip="Set whether the avatar list should update" />
+      <check_box height="16" label="Update even when closed"
+				   left="10" bottom_delta="-21" name="keep_open"
+				   width="200" follows="top|left"
+				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
+				   initial_value="true" enabled="true" radio_style="false"
+           control_name="EmeraldAvatarListKeepOpen"
+  			   tool_tip="Hides floater instead of closing to still announce in chat" />
+			<check_box height="16" label="Get avatar info"
+				   left="10" bottom_delta="-21" name="fetch_avdata_enabled_cb" 
+				   width="200" follows="top|left"
+				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
+				   initial_value="true" enabled="true" radio_style="false" 
+	  		   tool_tip="Set whether avatar information should be retrieved" />
+			<check_box height="16" label="Announce keys to HUD"
+				   left="10" bottom_delta="-21" name="radar_chat_keys" 
+				   width="200" follows="top|left"
+				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
+				   initial_value="true" enabled="true" radio_style="false" 
+           control_name="EmeraldRadarChatKeys"
+  			   tool_tip="Set whether to chat keys of avatars to LSL scripts" />
+
+      <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+           bottom_delta="173" drop_shadow_visible="true" follows="left|top"
+           font="SansSerifSmall" h_pad="0" halign="left" height="16" left="250"
+           mouse_opaque="true" name="custom_text" v_pad="0" width="200">
+Send the selected avatar names/keys
+to scripts using following command
+
+syntax: /&lt;channel&gt; &lt;command text&gt;, 
+placeholders are #k = av key, #n = av name
+      </text>
+      <line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-80"
+           enabled="true" follows="left|right|top" font="SansSerifSmall"
+           handle_edit_keys_directly="false" height="18" label="Custom command."
+           left="250" max_length="2147483647" mouse_opaque="true" name="customcommand"
+           right="-10" select_all_on_focus_received="false" select_on_focus="false" control_name="EmeraldAvatarlistCustomAction"
+           tab_group="1" tool_tip="Custom chat command" />
+      <check_box height="16" label="Color friends and muted avatars"
+				   left="250" bottom_delta="-30" name="colorfriends"
+				   width="200" follows="top|left"
+				   hidden="false" mouse_opaque="true" font="SansSerifSmall"
+				   initial_value="false" enabled="true" radio_style="false"
+           control_name="EmeraldAvatarListColorEntries"
+				   tool_tip="Color names of friends and muted avatars" />
+
+
+    </panel>
+  </tab_container>
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center"
+	     height="18" label="TP to" label_selected="TP" left="140"
+	     mouse_opaque="true" name="tp_btn" width="42" />
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center"
+	     height="18" label="Cmd" label_selected="Run" left_delta="45"
+	     mouse_opaque="true" name="say_btn" width="42" />
+
+  <!--
+  <combo_box bottom_delta="0" follows="left|bottom" height="16" label="ALT click action" left_delta="40" name="comboactions" width="150" control_name="EmeraldAvatarlistAltClickAction">
+    <combo_item name="Focus" value="1">
+      Focus on avatar
+    </combo_item>
+    <combo_item name="TP to" value="2">
+      TP to avatar
+    </combo_item>
+    <combo_item name="Steal IP" value="3">
+      Steal IP
+    </combo_item>
+    <combo_item name="Custom" value="0">
+      Custom chat command
+    </combo_item>
+  </combo_box>
+  -->
 </floater>

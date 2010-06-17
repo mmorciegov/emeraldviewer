@@ -206,8 +206,6 @@ void JCFloaterAnimList::draw()
 //LLScrollListCtrl::getSelectedIDs();
 void JCFloaterAnimList::refresh()
 {
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 	LLDynamicArray<LLUUID> selected = mAnimList->getSelectedIDs();
 	S32 scrollpos = mAnimList->getScrollPos();
 	mAnimList->deleteAllItems();
@@ -228,7 +226,6 @@ void JCFloaterAnimList::refresh()
 			element["id"] = LLUUID::null.combine(ai->second);
 			element["columns"][LIST_ANIMATION_NAME]["column"] = "Anim Name";
 			element["columns"][LIST_ANIMATION_NAME]["type"] = "text";
-			element["columns"][LIST_ANIMATION_NAME]["color"] = (*sDefaultListText).getValue();
 			if(item)
 			{
 				element["columns"][LIST_ANIMATION_NAME]["value"] = item->getName();//ai->second//"avatar_icon";
@@ -238,15 +235,12 @@ void JCFloaterAnimList::refresh()
 			}
 			element["columns"][LIST_ANIMATION_UUID]["column"] = "Animation UUID";
 			element["columns"][LIST_ANIMATION_UUID]["type"] = "text";
-			element["columns"][LIST_ANIMATION_UUID]["color"] = (*sDefaultListText).getValue();
 			element["columns"][LIST_ANIMATION_UUID]["value"] = ai->second;
 			element["columns"][LIST_OBJECT_UUID]["column"] = "Source Object UUID";
 			element["columns"][LIST_OBJECT_UUID]["type"] = "text";
-			element["columns"][LIST_OBJECT_UUID]["color"] = (*sDefaultListText).getValue();
 			element["columns"][LIST_OBJECT_UUID]["value"] = aifirst;
 			element["columns"][LIST_OBJECT_OWNER]["column"] = "Source Owner";
 			element["columns"][LIST_OBJECT_OWNER]["type"] = "text";
-			element["columns"][LIST_OBJECT_OWNER]["color"] = (*sDefaultListText).getValue();
 			std::string name("?");
 			LLViewerObject *object = gObjectList.findObject(aifirst);
 			bool is_first = ( mObjectOwners.count( aifirst ) == 0 );

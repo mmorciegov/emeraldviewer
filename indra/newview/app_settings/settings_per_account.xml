@@ -1,6 +1,17 @@
 <llsd>
     <map>
-	    <key>EmeraldInventoryPreviousCount</key>
+      <key>EmeraldAvatarlistCustomAction</key>
+      <map>
+        <key>Comment</key>
+        <string>custom chat command to run on avatars</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>String</string>
+        <key>Value</key>
+        <string></string>
+      </map>
+      <key>EmeraldInventoryPreviousCount</key>
 	    <map>
 	      <key>Comment</key>
 	      <string>Used to keep track of the number of items in inventory when fetching for progress reasons. DO NOT EDIT.</string>

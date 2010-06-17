@@ -830,8 +830,6 @@ void LLPanelGroupGeneral::updateMembers()
 	all_timer.reset();
 	S32 i = 0;
 
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 
 	for( ; mMemberProgress != gdatap->mMembers.end() && i<UPDATE_MEMBERS_PER_FRAME; 
 			++mMemberProgress, ++i)
@@ -855,18 +853,15 @@ void LLPanelGroupGeneral::updateMembers()
 
 		row["columns"][0]["column"] = "name";
 		row["columns"][0]["font-style"] = style;
-		row["columns"][0]["color"] = (*sDefaultListText).getValue();
 		// value is filled in by name list control
 
 		row["columns"][1]["column"] = "title";
 		row["columns"][1]["value"] = member->getTitle();
 		row["columns"][1]["font-style"] = style;
-		row["columns"][1]["color"] = (*sDefaultListText).getValue();
 		
 		row["columns"][2]["column"] = "online";
 		row["columns"][2]["value"] = member->getOnlineStatus();
 		row["columns"][2]["font-style"] = style;
-		row["columns"][2]["color"] = (*sDefaultListText).getValue();
 
 		sSDTime += sd_timer.getElapsedTimeF32();
 

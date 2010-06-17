@@ -3670,8 +3670,17 @@ void reset_view_final( BOOL proceed, void* )
         return;
     }
 
-    gAgent.changeCameraToDefault();
-    
+    if(!gFloaterTools->getVisible() || gSavedSettings.getBOOL("EmeraldResetCamOnEscape"))
+    {
+    	gAgent.changeCameraToDefault();
+        gAgent.resetView(TRUE,TRUE);
+    }
+
+	if (gFloaterTools->getVisible())
+	{
+	    gFloaterTools->close();
+	}
+
     if (LLViewerJoystick::getInstance()->getOverrideCamera())
     {
         handle_toggle_flycam();
@@ -3682,15 +3691,6 @@ void reset_view_final( BOOL proceed, void* )
     {
         LLViewerJoystick::getInstance()->moveAvatar(true);
     }
-    if(gSavedSettings.getBOOL("EmeraldResetCamOnEscape"))
-    {
-        gAgent.resetView(TRUE,TRUE);
-    }
-    else
-    {
-        gAgent.resetView(!gFloaterTools->getVisible());
-    }
-    gFloaterTools->close();
     
     gViewerWindow->showCursor();
 
@@ -5609,12 +5609,27 @@ class LLToolsLookAtSelection : public view_listener_t
 
 void callback_invite_to_group(LLUUID group_id, void *user_data)
 {
+	LLUUID *av = (LLUUID *)user_data;
 	std::vector<LLUUID> agent_ids;
-	agent_ids.push_back(*(LLUUID *)user_data);
+	agent_ids.push_back(*av);
 	
 	LLFloaterGroupInvite::showForGroup(group_id, &agent_ids);
 }
+void callback_invite_name_to_group(LLUUID group_id, void *user_data)
+{
+	LLSD *point = (LLSD*)user_data;
+	LLSD info = *point;
+	delete (LLSD*)user_data;
+	LLUUID av= info["id"].asUUID();
+	//llinfos << " avatar id is " << av.asString().c_str() << llendl;
+	std::vector<LLUUID> agent_ids;
+	agent_ids.push_back(av);
+	std::string name=info["name"].asString();
+	std::vector<std::string> names;
+	names.push_back(name);
 
+	LLFloaterGroupInvite::showForGroup(group_id, &agent_ids, &names);
+}
 void invite_to_group(const LLUUID& dest_id)
 {
 	LLViewerObject* dest = gObjectList.findObject(dest_id);

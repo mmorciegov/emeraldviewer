@@ -1,11 +1,11 @@
-/** 
+/**
  * @file llimpanel.cpp
  * @brief LLIMPanel class definition
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
- * 
+ *
  * Copyright (c) 2001-2009, Linden Research, Inc.
- * 
+ *
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
  * to you under the terms of the GNU General Public License, version 2.0
@@ -13,17 +13,17 @@
  * ("Other License"), formally executed by you and Linden Lab.  Terms of
  * the GPL can be found in doc/GPL-license.txt in this distribution, or
  * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
- * 
+ *
  * There are special exceptions to the terms and conditions of the GPL as
  * it is applied to this Source Code. View the full text of the exception
  * in the file doc/FLOSS-exception.txt in this software distribution, or
  * online at
  * http://secondlifegrid.net/programs/open_source/licensing/flossexception
- * 
+ *
  * By copying, modifying or distributing this software, you acknowledge
  * that you have read and understood your obligations described above,
  * and agree to abide by those obligations.
- * 
+ *
  * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
  * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
  * COMPLETENESS OR PERFORMANCE.
@@ -164,7 +164,7 @@ void start_deprecated_conference_chat(
 	for(S32 i = 0; i < count; ++i)
 	{
 		LLUUID agent_id = agents_to_invite[i].asUUID();
-		
+
 		memcpy(pos, &agent_id, UUID_BYTES);
 		pos += UUID_BYTES;
 	}
@@ -180,7 +180,7 @@ void start_deprecated_conference_chat(
 		bucket_size);
 
 	gAgent.sendReliableMessage();
- 
+
 	delete[] bucket;
 }
 
@@ -346,7 +346,7 @@ void LLVoiceCallCapResponder::result(const LLSD& content)
 		LLSD::map_const_iterator iter;
 		for(iter = content.beginMap(); iter != content.endMap(); ++iter)
 		{
-			llinfos << "LLVoiceCallCapResponder::result got " 
+			llinfos << "LLVoiceCallCapResponder::result got "
 				<< iter->first << llendl;
 		}
 
@@ -359,9 +359,9 @@ void LLVoiceCallCapResponder::result(const LLSD& content)
 //
 // LLVoiceChannel
 //
-LLVoiceChannel::LLVoiceChannel(const LLUUID& session_id, const std::string& session_name) : 
-	mSessionID(session_id), 
-	mState(STATE_NO_CHANNEL_INFO), 
+LLVoiceChannel::LLVoiceChannel(const LLUUID& session_id, const std::string& session_name) :
+	mSessionID(session_id),
+	mState(STATE_NO_CHANNEL_INFO),
 	mSessionName(session_name),
 	mIgnoreNextSessionLeave(FALSE)
 {
@@ -384,7 +384,7 @@ LLVoiceChannel::~LLVoiceChannel()
 	{
 		gVoiceClient->removeObserver(this);
 	}
-	
+
 	sVoiceChannelMap.erase(mSessionID);
 	sVoiceChannelURIMap.erase(mURI);
 }
@@ -499,9 +499,9 @@ void LLVoiceChannel::handleError(EStatusType type)
 }
 
 BOOL LLVoiceChannel::isActive()
-{ 
+{
 	// only considered active when currently bound channel matches what our channel
-	return callStarted() && LLVoiceClient::getInstance()->getCurrentChannel() == mURI; 
+	return callStarted() && LLVoiceClient::getInstance()->getCurrentChannel() == mURI;
 }
 
 BOOL LLVoiceChannel::callStarted()
@@ -575,7 +575,7 @@ void LLVoiceChannel::getChannelInfo()
 	}
 }
 
-//static 
+//static
 LLVoiceChannel* LLVoiceChannel::getChannelByID(const LLUUID& session_id)
 {
 	voice_channel_map_t::iterator found_it = sVoiceChannelMap.find(session_id);
@@ -589,7 +589,7 @@ LLVoiceChannel* LLVoiceChannel::getChannelByID(const LLUUID& session_id)
 	}
 }
 
-//static 
+//static
 LLVoiceChannel* LLVoiceChannel::getChannelByURI(std::string uri)
 {
 	voice_channel_map_uri_t::iterator found_it = sVoiceChannelURIMap.find(uri);
@@ -646,7 +646,7 @@ void LLVoiceChannel::initClass()
 }
 
 
-//static 
+//static
 void LLVoiceChannel::suspend()
 {
 	if (!sSuspended)
@@ -656,7 +656,7 @@ void LLVoiceChannel::suspend()
 	}
 }
 
-//static 
+//static
 void LLVoiceChannel::resume()
 {
 	if (sSuspended)
@@ -681,7 +681,7 @@ void LLVoiceChannel::resume()
 // LLVoiceChannelGroup
 //
 
-LLVoiceChannelGroup::LLVoiceChannelGroup(const LLUUID& session_id, const std::string& session_name) : 
+LLVoiceChannelGroup::LLVoiceChannelGroup(const LLUUID& session_id, const std::string& session_name) :
 	LLVoiceChannel(session_id, session_name)
 {
 	mRetries = DEFAULT_RETRIES_COUNT;
@@ -848,7 +848,7 @@ void LLVoiceChannelGroup::setState(EState state)
 //
 // LLVoiceChannelProximal
 //
-LLVoiceChannelProximal::LLVoiceChannelProximal() : 
+LLVoiceChannelProximal::LLVoiceChannelProximal() :
 	LLVoiceChannel(LLUUID::null, LLStringUtil::null)
 {
 	activate();
@@ -856,7 +856,7 @@ LLVoiceChannelProximal::LLVoiceChannelProximal() :
 
 BOOL LLVoiceChannelProximal::isActive()
 {
-	return callStarted() && LLVoiceClient::getInstance()->inProximalChannel(); 
+	return callStarted() && LLVoiceClient::getInstance()->inProximalChannel();
 }
 
 void LLVoiceChannelProximal::activate()
@@ -941,8 +941,8 @@ void LLVoiceChannelProximal::deactivate()
 //
 // LLVoiceChannelP2P
 //
-LLVoiceChannelP2P::LLVoiceChannelP2P(const LLUUID& session_id, const std::string& session_name, const LLUUID& other_user_id) : 
-		LLVoiceChannelGroup(session_id, session_name), 
+LLVoiceChannelP2P::LLVoiceChannelP2P(const LLUUID& session_id, const std::string& session_name, const LLUUID& other_user_id) :
+		LLVoiceChannelGroup(session_id, session_name),
 		mOtherUserID(other_user_id),
 		mReceivedCall(FALSE)
 {
@@ -1011,7 +1011,7 @@ void LLVoiceChannelP2P::activate()
 		else
 		{
 			LLVoiceClient::getInstance()->answerInvite(mSessionHandle);
-			
+
 			// using the session handle invalidates it.  Clear it out here so we can't reuse it by accident.
 			mSessionHandle.clear();
 		}
@@ -1029,7 +1029,7 @@ void LLVoiceChannelP2P::getChannelInfo()
 
 // receiving session from other user who initiated call
 void LLVoiceChannelP2P::setSessionHandle(const std::string& handle, const std::string &inURI)
-{ 
+{
 	BOOL needs_activate = FALSE;
 	if (callStarted())
 	{
@@ -1061,7 +1061,7 @@ void LLVoiceChannelP2P::setSessionHandle(const std::string& handle, const std::s
 	{
 		setURI(LLVoiceClient::getInstance()->sipURIFromID(mOtherUserID));
 	}
-	
+
 	mReceivedCall = TRUE;
 
 	if (needs_activate)
@@ -1196,11 +1196,11 @@ void LLFloaterIMPanel::init(const std::string& session_label)
 	case IM_NOTHING_SPECIAL:
 
 		xml_filename = "floater_instant_message.xml";
-		
+
 		mTextIMPossible = LLVoiceClient::getInstance()->isSessionTextIMPossible(mSessionUUID);
 		mProfileButtonEnabled = LLVoiceClient::getInstance()->isParticipantAvatar(mSessionUUID);
 		mCallBackEnabled = LLVoiceClient::getInstance()->isSessionCallBackPossible(mSessionUUID);
-		
+
 		mVoiceChannel = new LLVoiceChannelP2P(mSessionUUID, mSessionLabel, mOtherParticipantUUID);
 		break;
 	default:
@@ -1231,7 +1231,7 @@ void LLFloaterIMPanel::init(const std::string& session_label)
 	{
 		if(ModularSystemsLink::is_support(mOtherParticipantUUID))
 		{
-			addHistoryLine(getString("emerald_no_support_available"), 
+			addHistoryLine(getString("emerald_no_support_available"),
 						   gSavedSettings.getColor4("SystemChatColor"),
 						   false);
 		}
@@ -1256,7 +1256,7 @@ void LLFloaterIMPanel::init(const std::string& session_label)
 			LLUIString session_start = sSessionStartString;
 
 			session_start.setArg("[NAME]", getTitle());
-			mSessionStartMsgPos = 
+			mSessionStartMsgPos =
 				mHistoryEditor->getWText().length();
 
 			addHistoryLine(
@@ -1272,7 +1272,7 @@ LLFloaterIMPanel::~LLFloaterIMPanel()
 {
 	delete mSpeakers;
 	mSpeakers = NULL;
-	
+
 	// End the text IM session if necessary
 	if(gVoiceClient && mOtherParticipantUUID.notNull())
 	{
@@ -1282,18 +1282,18 @@ LLFloaterIMPanel::~LLFloaterIMPanel()
 			case IM_SESSION_P2P_INVITE:
 				gVoiceClient->endUserIMSession(mOtherParticipantUUID);
 			break;
-			
+
 			default:
 				// Appease the compiler
 			break;
 		}
 	}
-	
+
 	//kicks you out of the voice channel if it is currently active
 
 	// HAVE to do this here -- if it happens in the LLVoiceChannel destructor it will call the wrong version (since the object's partially deconstructed at that point).
 	mVoiceChannel->deactivate();
-	
+
 	delete mVoiceChannel;
 	mVoiceChannel = NULL;
 
@@ -1308,7 +1308,7 @@ LLFloaterIMPanel::~LLFloaterIMPanel()
 // USE_OTR // [/$PLOTR$]
 }
 
-BOOL LLFloaterIMPanel::postBuild() 
+BOOL LLFloaterIMPanel::postBuild()
 {
 	requires<LLLineEditor>("chat_editor");
 	requires<LLTextEditor>("im_history");
@@ -1347,7 +1347,7 @@ BOOL LLFloaterIMPanel::postBuild()
 		{
 			childSetEnabled("profile_btn", FALSE);
 		}
-		
+
 		if(!mProfileButtonEnabled)
 		{
 			childSetEnabled("profile_callee_btn", FALSE);
@@ -1401,7 +1401,7 @@ void* LLFloaterIMPanel::createSpeakersPanel(void* data)
 	return floaterp->mSpeakerPanel;
 }
 
-//static 
+//static
 void LLFloaterIMPanel::onClickMuteVoice(void* user_data)
 {
 	LLFloaterIMPanel* floaterp = (LLFloaterIMPanel*)user_data;
@@ -1421,7 +1421,7 @@ void LLFloaterIMPanel::onClickMuteVoice(void* user_data)
 	}
 }
 
-//static 
+//static
 void LLFloaterIMPanel::onVolumeChange(LLUICtrl* source, void* user_data)
 {
 	LLFloaterIMPanel* floaterp = (LLFloaterIMPanel*)user_data;
@@ -1434,9 +1434,9 @@ void LLFloaterIMPanel::onVolumeChange(LLUICtrl* source, void* user_data)
 
 // virtual
 void LLFloaterIMPanel::draw()
-{	
+{
 	LLViewerRegion* region = gAgent.getRegion();
-	
+
 	BOOL enable_connect = (region && region->getCapability("ChatSessionRequest") != "")
 					  && mSessionInitialized
 					  && LLVoiceClient::voiceEnabled()
@@ -1447,7 +1447,7 @@ void LLFloaterIMPanel::draw()
 	childSetVisible("start_call_btn", LLVoiceClient::voiceEnabled() && mVoiceChannel->getState() < LLVoiceChannel::STATE_CALL_STARTED);
 	childSetEnabled("start_call_btn", enable_connect);
 	childSetEnabled("send_btn", !childGetValue("chat_editor").asString().empty());
-	
+
 	LLPointer<LLSpeaker> self_speaker = mSpeakers->findSpeaker(gAgent.getID());
 	if(!mTextIMPossible)
 	{
@@ -1542,7 +1542,7 @@ BOOL LLFloaterIMPanel::inviteToSession(const LLDynamicArray<LLUUID>& ids)
 	{
 		return FALSE;
 	}
-	
+
 	S32 count = ids.count();
 
 	if( isInviteAllowed() && (count > 0) )
@@ -1565,7 +1565,7 @@ BOOL LLFloaterIMPanel::inviteToSession(const LLDynamicArray<LLUUID>& ids)
 			url,
 			data,
 			new LLSessionInviteResponder(
-				mSessionUUID));		
+				mSessionUUID));
 	}
 	else
 	{
@@ -1590,21 +1590,21 @@ void LLFloaterIMPanel::addHistoryLine(const std::string &utf8msg, LLColor4 incol
 				incolor= gSavedPerAccountSettings.getColor4("EmeraldKeywordColor");
 		}
 	}
-	
+
 	const LLColor4& color = incolor;
 	// start tab flashing when receiving im for background session from user
 	if (source != LLUUID::null)
 	{
 		LLMultiFloater* hostp = getHost();
-		if( !isInVisibleChain() 
-			&& hostp 
+		if( !isInVisibleChain()
+			&& hostp
 			&& source != gAgent.getID())
 		{
 			hostp->setFloaterFlashing(this, TRUE);
 		}
 	}
 
-	// Now we're adding the actual line of text, so erase the 
+	// Now we're adding the actual line of text, so erase the
 	// "Foo is typing..." text segment, and the optional timestamp
 	// if it was present. JC
 	removeTypingIndicator(NULL);
@@ -1635,9 +1635,9 @@ void LLFloaterIMPanel::addHistoryLine(const std::string &utf8msg, LLColor4 incol
 		prepend_newline = false;
 	}
 	mHistoryEditor->appendColoredText(utf8msg, false, prepend_newline, color);
-	
+
 	if (log_to_file
-		&& gSavedPerAccountSettings.getBOOL("LogInstantMessages") ) 
+		&& gSavedPerAccountSettings.getBOOL("LogInstantMessages") )
 	{
 		std::string histstr;
 		if (gSavedPerAccountSettings.getBOOL("IMLogTimestamp"))
@@ -1741,12 +1741,12 @@ BOOL LLFloaterIMPanel::handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
 		LLToolDragAndDrop::handleGiveDragAndDrop(mOtherParticipantUUID, mSessionUUID, drop,
 												 cargo_type, cargo_data, accept);
 	}
-	
+
 	// handle case for dropping calling cards (and folders of calling cards) onto invitation panel for invites
 	else if (isInviteAllowed())
 	{
 		*accept = ACCEPT_NO;
-		
+
 		if (cargo_type == DAD_CALLINGCARD)
 		{
 			if (dropCallingCard((LLInventoryItem*)cargo_data, drop))
@@ -1763,7 +1763,7 @@ BOOL LLFloaterIMPanel::handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
 		}
 	}
 	return TRUE;
-} 
+}
 
 BOOL LLFloaterIMPanel::dropCallingCard(LLInventoryItem* item, BOOL drop)
 {
@@ -1819,7 +1819,7 @@ BOOL LLFloaterIMPanel::dropCategory(LLInventoryCategory* category, BOOL drop)
 BOOL LLFloaterIMPanel::isInviteAllowed() const
 {
 
-	return ( (IM_SESSION_CONFERENCE_START == mDialog) 
+	return ( (IM_SESSION_CONFERENCE_START == mDialog)
 			 || (IM_SESSION_INVITE == mDialog) );
 }
 
@@ -1837,7 +1837,7 @@ void LLFloaterIMPanel::onClickProfile( void* userdata )
 {
 	//  Bring up the Profile window
 	LLFloaterIMPanel* self = (LLFloaterIMPanel*) userdata;
-	
+
 	if (self->mOtherParticipantUUID.notNull())
 	{
 		LLFloaterAvatarInfo::showFromDirectory(self->getOtherParticipantID());
@@ -1849,7 +1849,7 @@ void LLFloaterIMPanel::onClickTeleport( void* userdata )
 {
 	//  Bring up the Profile window
 	LLFloaterIMPanel* self = (LLFloaterIMPanel*) userdata;
-	
+
 	if (self->mOtherParticipantUUID.notNull())
 	{
 		handle_lure(self->getOtherParticipantID());
@@ -1862,7 +1862,7 @@ void LLFloaterIMPanel::onClickTeleport( void* userdata )
 void LLFloaterIMPanel::onClickHistory( void* userdata )
 {
 	LLFloaterIMPanel* self = (LLFloaterIMPanel*) userdata;
-	
+
 	if (self->mOtherParticipantUUID.notNull())
 	{
 		char command[256];
@@ -1975,7 +1975,7 @@ void LLFloaterIMPanel::onClose(bool app_quitting)
 			FALSE,
 			gAgent.getSessionID(),
 			mOtherParticipantUUID,
-			name, 
+			name,
 			LLStringUtil::null,
 			IM_ONLINE,
 			IM_SESSION_LEAVE,
@@ -2006,15 +2006,15 @@ void deliver_message(const std::string& utf8_text,
 
 	const LLRelationship* info = NULL;
 	info = LLAvatarTracker::instance().getBuddyInfo(other_participant_id);
-	
+
 	U8 offline = (!info || info->isOnline()) ? IM_ONLINE : IM_OFFLINE;
-	
+
 	if((offline == IM_OFFLINE) && (LLVoiceClient::getInstance()->isOnlineSIP(other_participant_id)))
 	{
 		// User is online through the OOW connector, but not with a regular viewer.  Try to send the message via SLVoice.
 		sent = gVoiceClient->sendTextMessage(other_participant_id, utf8_text);
 	}
-	
+
 	if(!sent)
 	{
 		// Send message normally.
@@ -2084,7 +2084,7 @@ void otr_deliver_message(const std::string& utf8_text,
 
 	const LLRelationship* info = NULL;
 	info = LLAvatarTracker::instance().getBuddyInfo(other_participant_id);
-	
+
 	U8 offline = (!info || info->isOnline()) ? IM_ONLINE : IM_OFFLINE;
 
     // default to IM_SESSION_SEND unless it's nothing special - in
@@ -2205,8 +2205,8 @@ void LLFloaterIMPanel::doOtrStart()
         {
             // only try OTR for 1 on 1 IM's
             err = otrl_message_sending(
-                gOTR->get_userstate(), 
-                gOTR->get_uistate(), 
+                gOTR->get_userstate(),
+                gOTR->get_uistate(),
                 &mSessionUUID,
                 my_uuid,
                 gOTR->get_protocolid(),
@@ -2239,7 +2239,7 @@ void LLFloaterIMPanel::doOtrStart()
             {
                 char *extrafragment = NULL;
                 err = otrl_message_fragment_and_send(
-                    gOTR->get_uistate(), 
+                    gOTR->get_uistate(),
                     &mSessionUUID,
                     context,
                     newmessage,
@@ -2272,8 +2272,8 @@ void LLFloaterIMPanel::doOtrStop(bool pretend_they_did)
         llinfos << "$PLOTR$ otr menu stop 2 their_uuid:" << mOtherParticipantUUID << llendl;
         g_otr_force_typing_stop = true; // ugly hack
         otrl_message_disconnect(
-            gOTR->get_userstate(), 
-            gOTR->get_uistate(), 
+            gOTR->get_userstate(),
+            gOTR->get_uistate(),
             &mSessionUUID,
             my_uuid,
             gOTR->get_protocolid(),
@@ -2308,7 +2308,7 @@ void LLFloaterIMPanel::doOtrAuth()
     if (gOTR && (IM_NOTHING_SPECIAL == mDialog))
     {
         llinfos << "$PLOTR$ otr menu auth" << llendl;
-    
+
         ConnContext *context = getOtrContext();
         if (!context)
         {
@@ -2355,7 +2355,7 @@ void LLFloaterIMPanel::doOtrMenu()
             {
                 doOtrAuth();
             }
-            else if (getString("otr_help") == choice)
+            /*else if (getString("otr_help") == choice)
             {
                 llinfos << "$PLOTR$ otr help" << llendl;
                 LLWeb::loadURL("http://www.cypherpunks.ca/otr/");
@@ -2364,7 +2364,7 @@ void LLFloaterIMPanel::doOtrMenu()
             {
                 llinfos << "$PLOTR$ otr levels help" << llendl;
                 LLWeb::loadURL("http://www.cypherpunks.ca/otr/help/3.2.0/levels.php");
-            }
+            }*/
             else
             {
                 llwarns << "$PLOTR$ unknown menu item" << llendl;
@@ -2372,7 +2372,7 @@ void LLFloaterIMPanel::doOtrMenu()
         }
     }
 }
-    
+
 ConnContext *LLFloaterIMPanel::getOtrContext(int create_if_not_found, int *context_added)
 {
     ConnContext *context = NULL;
@@ -2383,7 +2383,7 @@ ConnContext *LLFloaterIMPanel::getOtrContext(int create_if_not_found, int *conte
         gAgent.getID().toString(&(my_uuid[0]));
         mOtherParticipantUUID.toString(&(their_uuid[0]));
         context = otrl_context_find(
-            gOTR->get_userstate(), 
+            gOTR->get_userstate(),
             their_uuid,
             my_uuid,
             gOTR->get_protocolid(),
@@ -2483,7 +2483,7 @@ void LLFloaterIMPanel::showOtrStatus()
                 mOtrLastStatus = context->msgstate;
             }
         }
-    }    
+    }
 }
 
 void LLFloaterIMPanel::otrLogMessage(std::string message)
@@ -2646,7 +2646,7 @@ void LLFloaterIMPanel::endSmpDialog()
     {
         llwarns << "$PLOTR$ couldn't find OtrFloaterSmpDialog" << llendl;
     }
-    else 
+    else
     {
         delete mOtrSmpDialog;
         mOtrSmpDialog = NULL;
@@ -2697,7 +2697,7 @@ void LLFloaterIMPanel::endSmpProgress()
     {
         llwarns << "$PLOTR$ couldn't find OtrFloaterSmpProgress" << llendl;
     }
-    else 
+    else
     {
         delete mOtrSmpProgress;
         mOtrSmpProgress = NULL;
@@ -2846,7 +2846,7 @@ void LLFloaterIMPanel::handleOtrTlvs(OtrlTLV *tlvs)
 // USE_OTR // [/$PLOTR$]
 void LLFloaterIMPanel::sendMsg()
 {
-	if (!gAgent.isGodlike() 
+	if (!gAgent.isGodlike()
 		&& (mDialog == IM_NOTHING_SPECIAL)
 		&& mOtherParticipantUUID.isNull())
 	{
@@ -2925,7 +2925,7 @@ void LLFloaterIMPanel::sendMsg()
 					utf8_text.replace(0, 1, "/me ");
 				}
 			}
-			
+
 // [RLVa:KB] - Alternate: Snowglobe-1.2.4 | Checked: 2009-07-10 (RLVa-1.0.0g) | Modified: RLVa-1.0.0g
 			if (gRlvHandler.hasBehaviour(RLV_BHVR_SENDIM))
 			{
@@ -2944,7 +2944,7 @@ void LLFloaterIMPanel::sendMsg()
 					LLSpeakerMgr::speaker_list_t speakers;
 					mSpeakers->getSpeakerList(&speakers, TRUE);
 
-					for (LLSpeakerMgr::speaker_list_t::const_iterator itSpeaker = speakers.begin(); 
+					for (LLSpeakerMgr::speaker_list_t::const_iterator itSpeaker = speakers.begin();
 							itSpeaker != speakers.end(); ++itSpeaker)
 					{
 						LLSpeaker* pSpeaker = *itSpeaker;
@@ -2987,7 +2987,7 @@ void LLFloaterIMPanel::sendMsg()
                 gAgent.getID().toString(&(my_uuid[0]));
                 mOtherParticipantUUID.toString(&(their_uuid[0]));
 
-			
+
                 bool was_finished = false;
                 if (gOTR && context && (context->msgstate == OTRL_MSGSTATE_FINISHED))
                 {
@@ -2997,8 +2997,8 @@ void LLFloaterIMPanel::sendMsg()
                 {
                     // only try OTR for 1 on 1 IM's
                     err = otrl_message_sending(
-                        gOTR->get_userstate(), 
-                        gOTR->get_uistate(), 
+                        gOTR->get_userstate(),
+                        gOTR->get_uistate(),
                         &mSessionUUID,
                         my_uuid,
                         gOTR->get_protocolid(),
@@ -3026,8 +3026,8 @@ void LLFloaterIMPanel::sendMsg()
                     // OTR just added the whitespace tag.
                     otrl_message_free(newmessage); // don't send the message with whitespace tag
                     err = otrl_message_sending(
-                        gOTR->get_userstate(), 
-                        gOTR->get_uistate(), 
+                        gOTR->get_userstate(),
+                        gOTR->get_uistate(),
                         &mSessionUUID,
                         my_uuid,
                         gOTR->get_protocolid(),
@@ -3076,7 +3076,7 @@ void LLFloaterIMPanel::sendMsg()
                         // Handle fragmentation of the message
                         char *extrafragment = NULL;
                         err = otrl_message_fragment_and_send(
-                            gOTR->get_uistate(), 
+                            gOTR->get_uistate(),
                             &mSessionUUID,
                             context,
                             newmessage,
@@ -3091,33 +3091,33 @@ void LLFloaterIMPanel::sendMsg()
 // USE_OTR // [/$PLOTR$]
                     // same code like in llchatbar.cpp
                     U32 split = MAX_MSG_BUF_SIZE - 1;
-					
+
                     if ( isEncrypted() ) split = 799; // Length left for message if encrypted
                     U32 pos = 0;
                     U32 total = utf8_text.length();
-					
+
                     while(pos < total)
                     {
                         U32 next_split = split;
-						
+
                         if(pos + next_split > total) next_split = total - pos;
-						
+
                         // don't split utf-8 bytes
                         while(U8(utf8_text[pos + next_split]) >= 0x80 && U8(utf8_text[pos + next_split]) < 0xC0
                               && next_split > 0)
                         {
                             --next_split;
                         }
-						
+
                         if(next_split == 0)
                         {
                             next_split = split;
                             LL_WARNS("Splitting") << "utf-8 couldn't be split correctly" << LL_ENDL;
                         }
-						
+
                         std::string send = utf8_text.substr(pos, pos + next_split);
                         pos += next_split;
-						
+
 							// *FIXME: Queue messages if IM is not IM_NOTHING_SPECIAL
 							deliver_message(send,
 											mSessionUUID,
@@ -3129,7 +3129,7 @@ void LLFloaterIMPanel::sendMsg()
 				}
 // USE_OTR // [/$PLOTR$]
 				// local echo
-				if((mDialog == IM_NOTHING_SPECIAL) && 
+				if((mDialog == IM_NOTHING_SPECIAL) &&
 				   (mOtherParticipantUUID.notNull()))
 				{
 					std::string history_echo;
@@ -3137,13 +3137,13 @@ void LLFloaterIMPanel::sendMsg()
 					// Look for IRC-style emotes here.
 					std::string prefix = utf8_text.substr(0, 4);
 					bool is_emote = (prefix == "/me " || prefix == "/me'");
-					
+
 					// Use the right prefix ("You" / your name)
 					if(!is_emote && gSavedSettings.getBOOL("EmeraldUseYou"))
 						history_echo += LLTrans::getString("You");
 					else
 						gAgent.buildFullname(history_echo);
-					
+
 					if (is_emote)
 					{
 	                    if(isEncrypted())
@@ -3177,8 +3177,8 @@ void LLFloaterIMPanel::sendMsg()
 	                {
 						addHistoryLine(history_echo, gSavedSettings.getColor("IMChatColor"), true, gAgent.getID());
 	                }
-	
-					if (other_was_typing) 
+
+					if (other_was_typing)
 					{
 						addTypingIndicator(mOtherTypingName);
 					}
@@ -3205,7 +3205,7 @@ void LLFloaterIMPanel::sendMsg()
 
 void LLFloaterIMPanel::updateSpeakersList(const LLSD& speaker_updates)
 {
-	mSpeakers->updateSpeakers(speaker_updates); 
+	mSpeakers->updateSpeakers(speaker_updates);
 }
 
 void LLFloaterIMPanel::processSessionUpdate(const LLSD& session_update)
@@ -3469,7 +3469,7 @@ void LLFloaterIMPanel::showSessionForceClose(
 
 }
 
-//static 
+//static
 void LLFloaterIMPanel::onKickSpeaker(void* user_data)
 {
 
@@ -3497,7 +3497,7 @@ bool LLFloaterIMPanel::isEncrypted()
         ConnContext *context = getOtrContext();
         if (context && (context->msgstate == OTRL_MSGSTATE_ENCRYPTED)) return true;
 		else return false;
-    }  
+    }
 	else return false;
 }
 // USE_OTR // [/$PLOTR$]

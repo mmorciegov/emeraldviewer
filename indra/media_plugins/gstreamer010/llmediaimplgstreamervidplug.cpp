@@ -512,18 +512,18 @@ plugin_init (GstPlugin * plugin)
    some g++ versions buggily avoid __attribute__((constructor)) functions -
    so we provide an explicit plugin init function.
  */
-void gst_slvideo_init_class (void)
-{
 #define PACKAGE (gchar*)"packagehack"
 	// this macro quietly refers to PACKAGE internally
-	static GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,
+		GST_PLUGIN_DEFINE (GST_VERSION_MAJOR,
 				  GST_VERSION_MINOR,
-				  (gchar*)"private-slvideoplugin", 
+				  (gchar*)"private-slvideoplugin",
 				  (gchar*)"SL Video sink plugin",
 				  plugin_init, (gchar*)"0.1", (gchar*)GST_LICENSE_UNKNOWN,
 				  (gchar*)"Second Life",
 				  (gchar*)"http://www.secondlife.com/");
 #undef PACKAGE
+void gst_slvideo_init_class (void)
+{
 	ll_gst_plugin_register_static (&gst_plugin_desc);
 	DEBUGMSG("CLASS INIT");
 }

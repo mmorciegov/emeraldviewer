@@ -1,11 +1,11 @@
-/** 
+/**
  * @file lltoolgrab.cpp
  * @brief LLToolGrab class implementation
  *
  * $LicenseInfo:firstyear=2001&license=viewergpl$
- * 
+ *
  * Copyright (c) 2001-2010, Linden Research, Inc.
- * 
+ *
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
  * to you under the terms of the GNU General Public License, version 2.0
@@ -13,17 +13,17 @@
  * ("Other License"), formally executed by you and Linden Lab.  Terms of
  * the GPL can be found in doc/GPL-license.txt in this distribution, or
  * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
- * 
+ *
  * There are special exceptions to the terms and conditions of the GPL as
  * it is applied to this Source Code. View the full text of the exception
  * in the file doc/FLOSS-exception.txt in this software distribution, or
  * online at
  * http://secondlifegrid.net/programs/open_source/licensing/flossexception
- * 
+ *
  * By copying, modifying or distributing this software, you acknowledge
  * that you have read and understood your obligations described above,
  * and agree to abide by those obligations.
- * 
+ *
  * ALL LINDEN LAB SOURCE CODE IS PROVIDED "AS IS." LINDEN LAB MAKES NO
  * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
  * COMPLETENESS OR PERFORMANCE.
@@ -33,7 +33,7 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "lltoolgrab.h"
- 
+
 // library headers
 #include "indra_constants.h"		// for agent control flags
 #include "llviewercontrol.h"
@@ -58,13 +58,13 @@
 #include "lltoolpie.h"
 #include "llviewercamera.h"
 #include "llviewerobject.h"
-#include "llviewerobjectlist.h" 
+#include "llviewerobjectlist.h"
 #include "llviewerregion.h"
 #include "llviewerwindow.h"
 #include "llvoavatar.h"
 #include "llworld.h"
 
-#include "hippoLimits.h"
+#include "hippolimits.h"
 // [RLVa:KB]
 #include "rlvhandler.h"
 // [/RLVa:KB]
@@ -136,7 +136,7 @@ BOOL LLToolGrab::handleMouseDown(S32 x, S32 y, MASK mask)
 
 	// call the base class to propogate info to sim
 	LLTool::handleMouseDown(x, y, mask);
-	
+
 	if (!gAgent.leftButtonGrabbed())
 	{
 		// can grab transparent objects (how touch event propagates, scripters rely on this)
@@ -219,7 +219,7 @@ BOOL LLToolGrab::handleObjectHit(const LLPickInfo& info)
 
 	if (!objectp->usePhysics())
 	{
-		// In mouselook, we shouldn't be able to grab non-physical, 
+		// In mouselook, we shouldn't be able to grab non-physical,
 		// non-touchable objects.  If it has a touch handler, we
 		// do grab it (so llDetectedGrab works), but movement is
 		// blocked on the server side. JC
@@ -246,7 +246,7 @@ BOOL LLToolGrab::handleObjectHit(const LLPickInfo& info)
 	}
 	else
 	{
-		// if mouse is over a physical object with move permission, 
+		// if mouse is over a physical object with move permission,
 		// select it and enter "grab" mode (hiding cursor, etc.)
 
 		mMode = GRAB_ACTIVE_CENTER;
@@ -287,8 +287,8 @@ BOOL LLToolGrab::handleObjectHit(const LLPickInfo& info)
 	}
 
 	// on transient grabs (clicks on world objects), kill the grab immediately
-	if (!gViewerWindow->getLeftMouseDown() 
-		&& gGrabTransientTool 
+	if (!gViewerWindow->getLeftMouseDown()
+		&& gGrabTransientTool
 		&& (mMode == GRAB_NONPHYSICAL || mMode == GRAB_LOCKED))
 	{
 		gBasicToolset->selectTool( gGrabTransientTool );
@@ -452,7 +452,7 @@ BOOL LLToolGrab::handleHover(S32 x, S32 y, MASK mask)
 	case GRAB_ACTIVE_CENTER:
 		handleHoverActive( x, y, mask );	// cursor hidden
 		break;
-		
+
 	case GRAB_NONPHYSICAL:
 		handleHoverNonPhysical(x, y, mask);
 		break;
@@ -470,7 +470,7 @@ BOOL LLToolGrab::handleHover(S32 x, S32 y, MASK mask)
 
 	mLastMouseX = x;
 	mLastMouseY = y;
-	
+
 	return TRUE;
 }
 
@@ -479,7 +479,7 @@ const F32 GRAB_SENSITIVITY_Y = 0.0075f;
 
 
 
-		
+
 // Dragging.
 void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 {
@@ -544,7 +544,7 @@ void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 
 		// mouse has moved outside center
 		mHasMoved = TRUE;
-		
+
 		if (mSpinGrabbing)
 		{
 			//------------------------------------------------------
@@ -599,8 +599,8 @@ void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 				y_part.normVec();
 			}
 
-			mGrabHiddenOffsetFromCamera = mGrabHiddenOffsetFromCamera 
-				+ (x_part * (-dx * GRAB_SENSITIVITY_X)) 
+			mGrabHiddenOffsetFromCamera = mGrabHiddenOffsetFromCamera
+				+ (x_part * (-dx * GRAB_SENSITIVITY_X))
 				+ (y_part * ( dy * GRAB_SENSITIVITY_Y));
 
 
@@ -719,8 +719,8 @@ void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 	// once we've initiated a drag, lock the camera down
 	if (mHasMoved)
 	{
-		if (!gAgent.cameraMouselook() && 
-			!objectp->isHUDAttachment() && 
+		if (!gAgent.cameraMouselook() &&
+			!objectp->isHUDAttachment() &&
 			objectp->getRoot() == gAgent.getAvatarObject()->getRoot())
 		{
 			// force focus to point in space where we were looking previously
@@ -734,11 +734,11 @@ void LLToolGrab::handleHoverActive(S32 x, S32 y, MASK mask)
 	}
 
 	// HACK to avoid assert: error checking system makes sure that the cursor is set during every handleHover.  This is actually a no-op since the cursor is hidden.
-	gViewerWindow->setCursor(UI_CURSOR_ARROW);  
+	gViewerWindow->setCursor(UI_CURSOR_ARROW);
 
-	lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (active) [cursor hidden]" << llendl;		
+	lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (active) [cursor hidden]" << llendl;
 }
- 
+
 
 void LLToolGrab::handleHoverNonPhysical(S32 x, S32 y, MASK mask)
 {
@@ -764,7 +764,7 @@ void LLToolGrab::handleHoverNonPhysical(S32 x, S32 y, MASK mask)
 	// mess of spaghetti.  so here we go:
 
 	LLVector3 grab_pos_region(0,0,0);
-	
+
 	const BOOL SUPPORT_LLDETECTED_GRAB = TRUE;
 	if (SUPPORT_LLDETECTED_GRAB)
 	{
@@ -775,12 +775,12 @@ void LLToolGrab::handleHoverNonPhysical(S32 x, S32 y, MASK mask)
 		{
 			mVerticalDragging = FALSE;
 		}
-	
+
 		else if (!mVerticalDragging && (mask == MASK_VERTICAL) )
 		{
 			mVerticalDragging = TRUE;
 		}
-	
+
 		S32 dx = x - mLastMouseX;
 		S32 dy = y - mLastMouseY;
 
@@ -788,14 +788,14 @@ void LLToolGrab::handleHoverNonPhysical(S32 x, S32 y, MASK mask)
 		{
 			mAccumDeltaX += dx;
 			mAccumDeltaY += dy;
-		
+
 			S32 dist_sq = mAccumDeltaX * mAccumDeltaX + mAccumDeltaY * mAccumDeltaY;
 			if (dist_sq > SLOP_DIST_SQ)
 			{
 				mOutsideSlop = TRUE;
 			}
 
-			// mouse has moved 
+			// mouse has moved
 			mHasMoved = TRUE;
 
 			//------------------------------------------------------
@@ -821,12 +821,12 @@ void LLToolGrab::handleHoverNonPhysical(S32 x, S32 y, MASK mask)
 				y_part.normVec();
 			}
 
-			mGrabHiddenOffsetFromCamera = mGrabHiddenOffsetFromCamera 
-				+ (x_part * (-dx * GRAB_SENSITIVITY_X)) 
+			mGrabHiddenOffsetFromCamera = mGrabHiddenOffsetFromCamera
+				+ (x_part * (-dx * GRAB_SENSITIVITY_X))
 				+ (y_part * ( dy * GRAB_SENSITIVITY_Y));
 
 		}
-		
+
 		// need to return offset from mGrabStartPoint
 		LLVector3d grab_point_global = gAgent.getCameraPositionGlobal() + mGrabHiddenOffsetFromCamera;
 		grab_pos_region = objectp->getRegion()->getPosRegionFromGlobal( grab_point_global );
@@ -834,7 +834,7 @@ void LLToolGrab::handleHoverNonPhysical(S32 x, S32 y, MASK mask)
 
 
 	// only send message if something has changed since last message
-	
+
 	BOOL changed_since_last_update = FALSE;
 
 	// test if touch data needs to be updated
@@ -879,7 +879,7 @@ void LLToolGrab::handleHoverNonPhysical(S32 x, S32 y, MASK mask)
 		mLastBinormal= pick.mBinormal;
 		mLastGrabPos = grab_pos_region;
 	}
-	
+
 	// update point-at / look-at
 	if (pick.mObjectFace != -1) // if the intersection was on the surface of the obejct
 	{
@@ -889,12 +889,12 @@ void LLToolGrab::handleHoverNonPhysical(S32 x, S32 y, MASK mask)
 		gAgent.setPointAt(POINTAT_TARGET_GRAB, objectp, local_edit_point );
 		gAgent.setLookAt(LOOKAT_TARGET_SELECT, objectp, local_edit_point );
 	}
-	
-	
-	
-	gViewerWindow->setCursor(UI_CURSOR_HAND);  
+
+
+
+	gViewerWindow->setCursor(UI_CURSOR_HAND);
 }
- 
+
 
 // Not dragging.  Just showing affordances
 void LLToolGrab::handleHoverInactive(S32 x, S32 y, MASK mask)
@@ -922,7 +922,7 @@ void LLToolGrab::handleHoverInactive(S32 x, S32 y, MASK mask)
 	}
 
 	// JC - TODO - change cursor based on gGrabBtnVertical, gGrabBtnSpin
-	lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (inactive-not over editable object)" << llendl;		
+	lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (inactive-not over editable object)" << llendl;
 	gViewerWindow->setCursor(UI_CURSOR_TOOLGRAB);
 }
 
@@ -932,7 +932,7 @@ void LLToolGrab::handleHoverFailed(S32 x, S32 y, MASK mask)
 	if( GRAB_NOOBJECT == mMode )
 	{
 		gViewerWindow->setCursor(UI_CURSOR_NO);
-		lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (not on object)" << llendl;		
+		lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (not on object)" << llendl;
 	}
 	else
 	{
@@ -945,13 +945,13 @@ void LLToolGrab::handleHoverFailed(S32 x, S32 y, MASK mask)
 			{
 			case GRAB_LOCKED:
 				gViewerWindow->setCursor(UI_CURSOR_GRABLOCKED);
-				lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (grab failed, no move permission)" << llendl;		
+				lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (grab failed, no move permission)" << llendl;
 				break;
 
-//  Non physical now handled by handleHoverActive - CRO				
+//  Non physical now handled by handleHoverActive - CRO
 //			case GRAB_NONPHYSICAL:
 //				gViewerWindow->setCursor(UI_CURSOR_ARROW);
-//				lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (grab failed, nonphysical)" << llendl;		
+//				lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (grab failed, nonphysical)" << llendl;
 //				break;
 			default:
 				llassert(0);
@@ -960,7 +960,7 @@ void LLToolGrab::handleHoverFailed(S32 x, S32 y, MASK mask)
 		else
 		{
 			gViewerWindow->setCursor(UI_CURSOR_ARROW);
-			lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (grab failed but within slop)" << llendl;		
+			lldebugst(LLERR_USER_INPUT) << "hover handled by LLToolGrab (grab failed but within slop)" << llendl;
 		}
 	}
 }
@@ -989,7 +989,7 @@ BOOL LLToolGrab::handleMouseUp(S32 x, S32 y, MASK mask)
 	//gAgent.setObjectTracking(gSavedSettings.getBOOL("TrackFocusObject"));
 
 	return TRUE;
-} 
+}
 
 void LLToolGrab::stopEditing()
 {
@@ -1008,7 +1008,7 @@ void LLToolGrab::onMouseCaptureLost()
 		return;
 	}
 	// First, fix cursor placement
-	if( !gAgent.cameraMouselook() 
+	if( !gAgent.cameraMouselook()
 		&& (GRAB_ACTIVE_CENTER == mMode))
 	{
 		if (objectp->isHUDAttachment())
@@ -1041,7 +1041,7 @@ void LLToolGrab::onMouseCaptureLost()
 	stopGrab();
 	if (mSpinGrabbing)
 	stopSpin();
-	
+
 	mMode = GRAB_INACTIVE;
 
 	mHideBuildHighlight = FALSE;

@@ -135,13 +135,10 @@ void LLPanelGroupInvite::impl::addUsers(const std::vector<std::string>& names,
 			continue;
 		}
 
-		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 		//add the name to the names list
 		LLSD row;
 		row["id"] = id;
 		row["columns"][0]["value"] = name;
-		row["columns"][0]["color"] = (*sDefaultListText).getValue();
 
 		mInvitees->addElement(row);
 	}
@@ -388,6 +385,10 @@ void LLPanelGroupInvite::clear()
 	mImplementation->mRoleNames->clear();
 	mImplementation->mRoleNames->removeall();
 	mImplementation->mOKButton->setEnabled(FALSE);
+}
+void LLPanelGroupInvite::addUsers(std::vector<LLUUID>& agent_ids,std::vector<std::string>& provided_names)
+{
+	mImplementation->addUsers(provided_names, agent_ids);	
 }
 
 void LLPanelGroupInvite::addUsers(std::vector<LLUUID>& agent_ids)

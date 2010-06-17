@@ -15,6 +15,7 @@
 #include "lltimer.h"
 #include "llchat.h"
 #include "llscrolllistctrl.h"
+#include "llmemberlistener.h"
 //#include "viewer.h"
 
 #include <time.h>
@@ -350,7 +351,7 @@ public:
 	 * @param position Avatar's current position
 	 * @param isLinden TRUE if the avatar is a Linden
 	 */
-	LLAvatarListEntry(const LLUUID& id = LLUUID::null, const std::string &name = "", const LLVector3d &position = LLVector3d::zero, BOOL isLinden = FALSE);
+	LLAvatarListEntry(const LLUUID& id = LLUUID::null, const std::string &name = "", const LLVector3d &position = LLVector3d::zero, BOOL isLinden = FALSE, BOOL isVoice = FALSE);
 
 	/**
 	 * Update world position.
@@ -398,6 +399,9 @@ public:
 	 */
 	BOOL getIsLinden();
 
+	BOOL getIsVoice();
+	void setIsVoice(BOOL voice);
+
 	/**
 	 * @brief Sets a custom title for the account
 	 * @note Changes account type to ACCOUNT_CUSTOM
@@ -412,21 +416,6 @@ public:
 	void setAlert();
 
 	BOOL getAlert();
-
-	/**
-	 * @brief Returns the activity type
-	 */
-	ACTIVITY_TYPE getActivity();
-
-	/**
-	 * @brief Sets the 'focus' status on this entry (camera focused on this avatar)
-	 */
-	void setFocus(BOOL value) { mFocused = value; }
-
-	BOOL isFocused() { return mFocused; }
-
-
-	BOOL isMarked();
 
 	/**
 	 * @brief Returns whether the item is dead and shouldn't appear in the list
@@ -449,6 +438,7 @@ private:
 	BOOL mMarked;
 	BOOL mFocused;
 	BOOL mIsLinden;
+	BOOL mIsVoice;
 
 	ACTIVITY_TYPE mActivityType;
 
@@ -457,20 +447,10 @@ private:
 	LLAvatarListDatum<LLAvatarInfo>   mAvatarInfo;
 	LLAvatarListDatum<LLMiscDBInfo> mMiscInfo;
 
-	/**
-	 * @brief Timer to keep track of whether avatars are still there
-	 */
-	LLTimer mUpdateTimer;
+	LLTimer mUpdateTimer; //Timer to keep track of whether avatars are still there
+	LLTimer mActivityTimer; //Timer for avatar activities
+	U32 mFrame; //Last frame when this avatar was updated
 
-	/**
-	 * @brief Timer for avatar activities
-	 */
-	LLTimer mActivityTimer;
-
-	/**
-	 * @brief Last frame when this avatar was updated
-	 */
-	U32 mFrame;
 	//last frame when this avatar was in sim
 	U32 mInSimFrame;
 	//last frame when this avatar was in draw
@@ -479,104 +459,72 @@ private:
 	U32 mInChatFrame;
 };
 
-
-/**
- * @brief Avatar List
- * Implements an avatar scanner in the client.
- *
- * This is my first attempt to modify the SL source. This code is intended
- * to have a dual purpose: doing the task, and providing an example of how
- * to do it. For that reason, it's going to be commented as exhaustively
- * as possible.
- *
- * Since I'm very new to C++ any suggestions on coding, style, etc are very
- * welcome.
- */
+//class LLIMSpeakerMgr;
 class LLFloaterAvatarList : public LLFloater
 {
-	/**
-	 * @brief Creates and initializes the LLFloaterAvatarList
-	 * Here the interface is created, and callbacks are initialized.
-	 */
 private:
 	LLFloaterAvatarList();
+	LLHandle<LLView>	mPopupMenuHandle;
+	
+	class LLAgentProfile : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentChatcmd : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentGetkey : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentTrack : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentScripts : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentIM : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentTpto : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentOffertp : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+
+	class LLAgentMute : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentUnmute : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentAr : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentEject : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentBan : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentFreeze : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentUnfreeze : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+
+	class LLAgentEstatekick : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentEstateban : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentEstatetphome : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentEstategtfo : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+
+
 public:
 	~LLFloaterAvatarList();
+
+	virtual BOOL	handleRightMouseDown( S32 x, S32 y, MASK mask );
 
 	/*virtual*/ void onClose(bool app_quitting);
 	/*virtual*/ void onOpen();
 	/*virtual*/ BOOL postBuild();
 	/*virtual*/ void draw();
 
-	/**
-	 * @brief Toggles interface visibility
-	 * There is only one instance of the avatar scanner at any time.
-	 */
-	static void toggle(void*);
-
+	static void toggle(void*); //Toggles interface visibility
 	static void showInstance();
-
-	/**
-	 * @brief Updates the internal avatar list with the currently present avatars.
-	 */
-	void updateAvatarList();
-
-	/**
-	 * @brief Refresh avatar list (display)
-	 */
-	void refreshAvatarList();
-
-	/**
-	 * @brief Process the reply to a request for avatar properties
-	 */
-	static void processAvatarPropertiesReply(LLMessageSystem *msg, void**);
-
-	/**
-	* @brief Process the update pos based on bridge info
-	*/
-	static void processBridgeReply(std::vector<LLUUID> avatars, LLSD bridgeResponce);
-
-	/**
-	 * @brief Process the reply to a request for avatar properties
-	 */
-	static void processSoundTrigger(LLMessageSystem *msg, void**);
-
+	void updateAvatarList(); //Updates the internal avatar list with the currently present avatars.
+	void updateAvatarListVoice(); //adds voice participants
+	void refreshAvatarList(); //Refresh avatar list (display)
+	static void processAvatarPropertiesReply(LLMessageSystem *msg, void**); //Process the reply to a request for avatar properties
+	static void processBridgeReply(std::vector<LLUUID> avatars, LLSD bridgeResponce); //Process the update pos based on bridge info
+	static void processSoundTrigger(LLMessageSystem *msg, void**); //Process the reply to a request for avatar properties
 	static void callbackEmeraldChat(const LLSD &notification, const LLSD &response);
 
-	/**
-	 * @brief Returns TRUE if the avatar is in the list of known avatars
-	 * @returns TRUE if the avatar is in the list
-	 */
-	BOOL avatarIsInList(LLUUID avatar);
-
-	/**
-	 * @brief Returns the entry for an avatar, if preset
-	 * @returns Pointer to avatar entry, NULL if not found.
-	 */
-	LLAvatarListEntry* getAvatarEntry(LLUUID avatar);
-
-	/**
-	 * @brief Returns a string with the selected names in the list
-	 */
-	std::string getSelectedNames(const std::string& separator = ", ");
+	BOOL avatarIsInList(LLUUID avatar); //Returns TRUE if the avatar is in the list of known avatars
+	LLAvatarListEntry* getAvatarEntry(LLUUID avatar); //Returns the entry for an avatar, if preset
+	std::string getSelectedNames(const std::string& separator = ", "); //Returns a string with the selected names in the list
 	std::string getSelectedName();
 	LLUUID getSelectedID();
 
-private:
-	static LLFloaterAvatarList* sInstance;
-
-public:
 	static LLFloaterAvatarList* getInstance(){ return sInstance; }
 	static void lookAtAvatar(LLUUID &uuid);
+
 private:
-	// when a line editor loses keyboard focus, it is committed.
-	// commit callbacks are named onCommitWidgetName by convention.
-	//void onCommitBaz(LLUICtrl* ctrl, void *userdata);
-	
+	static LLFloaterAvatarList* sInstance;
 	enum AVATARS_COLUMN_ORDER
 	{
 		LIST_AVATAR_ICON,
 		LIST_AVATAR_NAME,
+		LIST_AVATAR_VOICE,
 		LIST_DISTANCE,
 		LIST_AGE,
 		LIST_SIM,
@@ -590,63 +538,15 @@ private:
 
 	void speakText(S32 channel, EChatType type, std::string text);
 
-	/**
-	 * @brief Removes focus status from all avatars in list
-	 */
-	void removeFocusFromAll();
-
-	/**
-	 * @brief Focus camera on previous avatar
-	 * @param marked_only Whether to choose only marked avatars
-	 */
-	void focusOnPrev(BOOL marked_only);
-
-	/**
-	 * @brief Focus camera on next avatar
-	 * @param marked_only Whether to choose only marked avatars
-	 */
-	void focusOnNext(BOOL marked_only);
-
-	/**
-	 * @brief Handler for the "refresh" button click.
-	 * I am unsure whether this is actually necessary at the time.
-	 *
-	 * LL: By convention, button callbacks are named onClickButtonLabel
-	 * @param userdata Pointer to user data (LLFloaterAvatarList instance)
-	 */
-	//static void onClickRefresh(void* userdata);
-
-	static void onClickProfile(void *userdata);
-	static void onClickIM(void *userdata);
-	static void onClickTeleportOffer(void *userdata);
-	static void onClickTrack(void *userdata);
-	static void onClickMark(void *userdata);
-
 	static void onClickAgeAlert(LLUICtrl* ctrl,void *userdata);
 	static void onClickAgeAlertDays(LLUICtrl* ctrl,void *userdata);
+	static void onCommandCommit(LLUICtrl* ctrl,void *userdata);
 
-	static void onClickPrevInList(void *userdata);
-	static void onClickNextInList(void *userdata);
-	static void onClickPrevMarked(void *userdata);
-	static void onClickNextMarked(void *userdata);
-	static void onClickGetKey(void *userdata);
-
+	static void	onClickSayCmd(void *userdata);
+	
+	static void	onClickTP(void *userdata);
 	static void onDoubleClick(void *userdata);
 	//static void lookAtAvatar(LLUUID &uuid);
-
-	static void onClickFreeze(void *userdata);
-	static void onClickEject(void *userdata);
-	static void onClickBan(void *userdata);
-	static void onClickUnban(void *userdata);
-	static void onClickMute(void *userdata);
-	static void onClickUnmute(void *userdata);
-	static void onClickAR(void *userdata);
-	static void onClickTeleport(void *userdata);
-	static void onClickKickFromEstate(void *userdata);
-	static void onClickBanFromEstate(void *userdata);
-	static void onClickTPHFromEstate(void *userdata);
-	static void onClickGTFOFromEstate(void *userdata);
-	static void onClickScriptCount(void *userdata);
 
 	static void callbackFreeze(const LLSD& notification, const LLSD& response);
 	static void callbackEject(const LLSD& notification, const LLSD& response);
@@ -655,26 +555,11 @@ private:
 	static void callbackBanFromEstate(const LLSD& notification, const LLSD& response);
 
 	static void callbackIdle(void *userdata);
-
 	void doCommand(avlist_command_t cmd);
+	void expireAvatarList();//Cleanup avatar list, removing dead entries from it.
 
-	/**
-	 * @brief Cleanup avatar list, removing dead entries from it.
-	 * This lets dead entries remain for some time. This makes it possible
-	 * to keep people passing by in the list long enough that it's possible
-	 * to do something to them.
-	 */
-	void expireAvatarList();
-
-	/**
-	 * @brief Process the AR queue
-	 * This generates AR reports for the queued avatars
-	 */
-	//void processARQueue();
 private:
-	/**
-	 * @brief Pointer to the avatar scroll list
-	 */
+	LLLineEditor*	mInputEditor; //Pointer to the avatar scroll list
 	LLScrollListCtrl*			mAvatarList;
 	std::map<LLUUID, LLAvatarListEntry>	mAvatars;
 
@@ -685,68 +570,21 @@ private:
 		LLUUID key;
 		U32 area;
 	};
+
 	std::map<LLUUID, LLAreaAlertEntry>	mAreaAlertList;
 
-	/**
-	 * @brief Queue of abuse reports
-	 */
-	std::queue<LLUUID> mARQueue;
-
-	/**
-	 * @brief List of AR screens opened
-	 * We don't open them on creation to capture a clean screenshot. They're
-	 * opened only after finishing the process.
-	 */
-	std::queue<LLFloaterReporter*> mARReporterQueue;
-
-	/**
-	 * @brief Last time during which an AR was submitted
-	 * Used to give the camera some time to move between avatars. Perhaps this way
-	 * of doing things isn't ideal, though.
-	 */
-	S32 mARLastFrame;
-
-
-	/**
-	 * @brief Request information about the specified avatar
-	 * @param avid Avatar id to request info about
-	 */
-	void sendAvatarPropertiesRequest(LLUUID avid);
-
+	void sendAvatarPropertiesRequest(LLUUID avid);//Request information about the specified avatar
 	void checkTrackingStatus();
 
-	/**
-	 * @brief Returns the color for the specified avatar entry
-	 * @param ent Avatar entry
-	 * @param distance Distance from the user
-	 */
-	//LLColor4 getAvatarColor(LLAvatarListEntry *ent, F32 distance);
 	LLColor4 getAvatarColor(LLAvatarListEntry *ent, F32 distance, e_coloring_type type);
-	
-	/**
-	 * @brief Replace variables in string
-	 * @param str String to replace variables in
-	 * @param avatar Value for $KEY
-	 * @param name Value for $NAME
-	 */
-	//static void replaceVars(std::string &str, LLUUID avatar, const std::string& name);
 
-	// tracking data
 	BOOL mTracking;             // tracking?
 	BOOL mTrackByLocation;      // TRUE if tracking by known position, FALSE for tracking a friend
 	LLUUID mTrackedAvatar;     // who we're tracking
 
-	/**
-	 * @brief Used to delay avatar data requests
-	 */
 	LLTimer mDataRequestTimer;
 	LLTimer mUpdateThrottleTimer;
-
-	/**
-	 * @brief Avatar the camera is focused on
-	 */
 	LLUUID mFocusedAvatar;
-	//e_coloring_type mColoringType;
 
 	std::set<LLUUID> mAnnouncedAvatars;
 

@@ -438,7 +438,7 @@ Selecting &quot;Show in Search&quot; will show:
    type="alertmodal">
 You can propose to another Resident or dissolve an existing partnership through the [SECOND_LIFE] website.
 
-Go to the [GRID] web site for more information on partnering?
+Go to the Second Life web site for more information on partnering?
     <usetemplate
      name="okcancelbuttons"
      notext="Cancel"
@@ -469,7 +469,7 @@ Other residents can visit the URL you set when they look at your profile.
    icon="alertmodal.tga"
    name="JoinGroupCanAfford"
    type="alertmodal">
-Joining this group costs [CURRENCY][COST].
+Joining this group costs L$[COST].
 Do you wish to proceed?
     <usetemplate
      name="okcancelbuttons"
@@ -481,15 +481,15 @@ Do you wish to proceed?
    icon="alertmodal.tga"
    name="JoinGroupCannotAfford"
    type="alertmodal">
-Joining this group costs [CURRENCY][COST].
-You do not have enough [CURRENCY] to join this group.
+Joining this group costs L$[COST].
+You do not have enough L$ to join this group.
   </notification>
 
   <notification
    icon="alertmodal.tga"
    name="LandBuyPass"
    type="alertmodal">
-For [CURRENCY][COST] you can enter this land (&apos;[PARCEL_NAME]&apos;) for [TIME] hours.  Buy a pass?
+For L$[COST] you can enter this land (&apos;[PARCEL_NAME]&apos;) for [TIME] hours.  Buy a pass?
     <usetemplate
      name="okcancelbuttons"
      notext="Cancel"
@@ -500,8 +500,8 @@ For [CURRENCY][COST] you can enter this land (&apos;[PARCEL_NAME]&apos;) for [TI
    icon="alertmodal.tga"
    name="SalePriceRestriction"
    type="alertmodal">
-Sale price must be set to more than [CURRENCY]0 if selling to anyone.
-Please select an individual to sell to if selling for [CURRENCY]0.
+Sale price must be set to more than L$0 if selling to anyone.
+Please select an individual to sell to if selling for L$0.
   </notification>
 
   <notification
@@ -510,7 +510,7 @@ Please select an individual to sell to if selling for [CURRENCY]0.
    priority="high"
    type="alertmodal">
 The selected [LAND_SIZE] m² land is being set for sale.
-Your selling price will be [CURRENCY][SALE_PRICE] and will be authorized for sale to [NAME].
+Your selling price will be L$[SALE_PRICE] and will be authorized for sale to [NAME].
     <usetemplate
      name="okcancelbuttons"
      notext="Cancel"
@@ -521,10 +521,10 @@ Your selling price will be [CURRENCY][SALE_PRICE] and will be authorized for sal
    icon="alertmodal.tga"
    name="ConfirmLandSaleToAnyoneChange"
    type="alertmodal">
-ATTENTION: Clicking &apos;sell to anyone&apos; makes your land available to the entire community, even those not in this region.
+ATTENTION: Clicking &apos;sell to anyone&apos; makes your land available to the entire Second Life community, even those not in this region.
 
 The selected [LAND_SIZE] m² land is being set for sale.
-Your selling price will be [CURRENCY][SALE_PRICE] and will be authorized for sale to [NAME].
+Your selling price will be L$[SALE_PRICE] and will be authorized for sale to [NAME].
     <usetemplate
      name="okcancelbuttons"
      notext="Cancel"
@@ -712,7 +712,7 @@ There was a problem uploading a report screenshot due to the following reason: [
    icon="alertmodal.tga"
    name="MustAgreeToLogIn"
    type="alertmodal">
-You must agree to the Terms of Service to continue logging into [GRID].
+You must agree to the Terms of Service to continue logging into [SECOND_LIFE].
   </notification>
 
   <notification
@@ -744,7 +744,7 @@ You can not wear that item because it has not yet loaded. Please try again in a 
 Oops! Something was left blank.
 You need to enter both the First and Last name of your avatar.
 
-You need an account to enter [GRID]. Would you like to create one now?
+You need an account to enter [SECOND_LIFE]. Would you like to create one now?
     <usetemplate
      name="okcancelbuttons"
      notext="Try again"
@@ -756,7 +756,7 @@ You need an account to enter [GRID]. Would you like to create one now?
    name="MustHaveAccountToLogInNoLinks"
    type="alertmodal">
 Oops! Something was left blank.
-You need an account to enter [GRID].
+You need an account to enter the grid.
   </notification>
 
   <notification
@@ -813,7 +813,7 @@ Delete pick [PICK]?
    icon="alertmodal.tga"
    name="PromptGoToEventsPage"
    type="alertmodal">
-Go to the [GRID] events web page?
+Go to the [SECOND_LIFE] events web page?
     <usetemplate
      name="okcancelbuttons"
      notext="Cancel"
@@ -860,14 +860,14 @@ Would you like to disable all popups which can be skipped?
    icon="alertmodal.tga"
    name="CacheWillClear"
    type="alertmodal">
-Cache will be cleared after you restart the viewer.
+Cache will be cleared after you restart [SECOND_LIFE].
   </notification>
 
   <notification
    icon="alertmodal.tga"
    name="CacheWillBeMoved"
    type="alertmodal">
-Cache will be moved after you restart the viewer.
+Cache will be moved after you restart [SECOND_LIFE].
 Note: This will clear the cache.
   </notification>
 
@@ -875,14 +875,14 @@ Note: This will clear the cache.
    icon="alertmodal.tga"
    name="ChangeConnectionPort"
    type="alertmodal">
-Port settings take effect after you restart the viewer.
+Port settings take effect after you restart [SECOND_LIFE].
   </notification>
 
   <notification
    icon="alertmodal.tga"
    name="ProxyNeedRestart"
    type="alertmodal">
-Socks proxy settings will take effect after you restart the viewer.
+Socks proxy settings will take effect after you restart [SECOND_LIFE].
   </notification>
 
   <notification
@@ -938,14 +938,14 @@ Could not connect to Socks5 proxy server "[PROXY]"
    icon="alertmodal.tga"
    name="ChangeSkin"
    type="alertmodal">
-The new skin will appear after you restart the viewer.
+The new skin will appear after you restart [SECOND_LIFE].
   </notification>
 
   <notification
    icon="alertmodal.tga"
    name="GoToAuctionPage"
    type="alertmodal">
-Go to the [GRID] web page to see auction details or make a bid?
+Go to the [SECOND_LIFE] web page to see auction details or make a bid?
     <usetemplate
      name="okcancelbuttons"
      notext="Cancel"
@@ -1103,7 +1103,7 @@ This is often the case with new hardware we haven&apos;t had a chance to test.  
    icon="alertmodal.tga"
    name="DisplaySettingsNoShaders"
    type="alertmodal">
-The viewer crashed while initializing graphics drivers.
+[SECOND_LIFE] crashed while initializing graphics drivers.
 Graphics Quality will be set to low to avoid some common driver errors.
 This will disable some graphics features.
 We recommend updating your graphics card drivers.
@@ -1547,13 +1547,15 @@ Could not teleport.
    icon="alertmodal.tga"
    name="invalid_tport"
    type="alertmodal">
-Problem encountered processing your teleport request. You may need to log back in before you can teleport. If you continue to get this message, please check the FAQ on the web site.
+Problem encountered processing your teleport request. You may need to log back in before you can teleport. If you continue to get this message, please check the Tech Support FAQ at:
+www.secondlife.com/support
   </notification>
   <notification
    icon="alertmodal.tga"
    name="invalid_region_handoff"
    type="alertmodal">
-Problem encountered processing your region crossing. You may need to log back in before you can cross regions. If you continue to get this message, please check the FAQ on the web site.
+Problem encountered processing your region crossing. You may need to log back in before you can cross regions. If you continue to get this message, please check the Tech Support FAQ at:
+www.secondlife.com/support
   </notification>
   <notification
    icon="alertmodal.tga"
@@ -1694,7 +1696,7 @@ Cannot find the region this land is in.
    icon="alertmodal.tga"
    name="CannotCloseFloaterBuyLand"
    type="alertmodal">
-You cannot close the Buy Land window until [GRID] estimates the price of this transaction.
+You cannot close the Buy Land window until Second Life estimates the price of this transaction.
   </notification>
 
   <notification
@@ -1827,7 +1829,7 @@ Select an entire parcel, or divide your parcel first.
    name="ReleaseLandWarning"
    type="alertmodal">
 You are about to release [AREA] m² of land.
-Releasing this parcel will remove it from your land holdings, but will not grant any [CURRENCY].
+Releasing this parcel will remove it from your land holdings, but will not grant any L$.
 
 Release this land?
     <usetemplate
@@ -2010,9 +2012,9 @@ and provide details about your network setup.
    icon="alertmodal.tga"
    name="YouHaveBeenLoggedOut"
    type="alertmodal">
-You have been logged out of [GRID]:
+You have been logged out of [SECOND_LIFE]:
             [MESSAGE]
-You can still look at existing IM and chat by clicking &apos;View IM &amp; Chat&apos;. Otherwise, click &apos;Quit&apos; to exit immediately.
+You can still look at existing IM and chat by clicking &apos;View IM &amp; Chat&apos;. Otherwise, click &apos;Quit&apos; to exit [SECOND_LIFE] immediately.
     <usetemplate
      name="okcancelbuttons"
      notext="Quit"
@@ -2137,7 +2139,7 @@ You must specify a name for your classified.
    icon="alertmodal.tga"
    name="MinClassifiedPrice"
    type="alertmodal">
-Price to pay for listing must be at least [CURRENCY][MIN_PRICE].
+Price to pay for listing must be at least L$[MIN_PRICE].
 
 Please enter a higher price.
   </notification>
@@ -2353,7 +2355,7 @@ You have been moved into a nearby region.
    name="ClothingLoading"
    type="alertmodal">
 Your clothing is still downloading.
-You can use the viewer normally and other users will see you correctly.
+You can use [SECOND_LIFE] normally and other users will see you correctly.
     <form name="form">
       <ignore name="ignore"
        text="When clothing is taking a long time to download"/>
@@ -2364,14 +2366,21 @@ You can use the viewer normally and other users will see you correctly.
    icon="alertmodal.tga"
    name="FirstRun"
    type="alertmodal">
-Installation is complete.
+[SECOND_LIFE] installation is complete.
+
+If this is your first time using [SECOND_LIFE], you will need to create an account before you can log on.
+Return to www.secondlife.com to create a new account?
+    <usetemplate
+     name="okcancelbuttons"
+     notext="Continue"
+     yestext="New Account..."/>
   </notification>
 
   <notification
    icon="alertmodal.tga"
    name="LoginPacketNeverReceived"
    type="alertmodal">
-We&apos;re having trouble connecting. There may be a problem with your internet connection or the [GRID] servers.
+We&apos;re having trouble connecting. There may be a problem with your internet connection or the Second Life servers.
 
 You can either check your internet connection and try again in a few minutes, click Help to connect to our support site, or click Teleport to attempt to teleport home.
     <form name="form">
@@ -2398,7 +2407,7 @@ You can either check your internet connection and try again in a few minutes, cl
 Your character will appear in a moment.
 
 Use arrow keys to walk.
-Press the F1 key at any time for help or to learn more about [GRID].
+Press the F1 key at any time for help or to learn more about [SECOND_LIFE].
 Please choose the male or female avatar. You can change your mind later.
     <usetemplate
      name="okcancelbuttons"
@@ -2410,7 +2419,7 @@ Please choose the male or female avatar. You can change your mind later.
    icon="alertmodal.tga"
    name="NotEnoughCurrency"
    type="alertmodal">
-[NAME] [CURRENCY] [PRICE] You don&apos;t have enough [CURRENCY] to do that.
+[NAME] L$ [PRICE] You don&apos;t have enough L$ to do that.
   </notification>
 
   <notification
@@ -2600,9 +2609,9 @@ Finished download of raw terrain file to:
    icon="alertmodal.tga"
    name="DownloadWindowsMandatory"
    type="alertmodal">
-A new version of the viewer is available.
+A new version of [SECOND_LIFE] is available.
 [MESSAGE]
-You must download this update to connect to [GRID].
+You must download this update to use [SECOND_LIFE].
     <usetemplate
      name="okcancelbuttons"
      notext="Quit"
@@ -2613,7 +2622,7 @@ You must download this update to connect to [GRID].
    icon="alertmodal.tga"
    name="DownloadWindows"
    type="alertmodal">
-An updated version of the viewer is available.
+An updated version of [SECOND_LIFE] is available.
 [MESSAGE]
 This update is not required, but we suggest you install it to improve performance and stability.
     <usetemplate
@@ -2626,7 +2635,7 @@ This update is not required, but we suggest you install it to improve performanc
    icon="alertmodal.tga"
    name="DownloadWindowsReleaseForDownload"
    type="alertmodal">
-An updated version of the viewer is available.
+An updated version of [SECOND_LIFE] is available.
 [MESSAGE]
 This update is not required, but we suggest you install it to improve performance and stability.
     <usetemplate
@@ -2639,9 +2648,9 @@ This update is not required, but we suggest you install it to improve performanc
    icon="alertmodal.tga"
    name="DownloadMacMandatory"
    type="alertmodal">
-A new version of the viewer is available.
+A new version of [SECOND_LIFE] is available.
 [MESSAGE]
-You must download this update to connect to [GRID].
+You must download this update to use [SECOND_LIFE].
 
 Download to your Applications folder?
     <usetemplate
@@ -2654,7 +2663,7 @@ Download to your Applications folder?
    icon="alertmodal.tga"
    name="DownloadMac"
    type="alertmodal">
-An updated version of the viewer is available.
+An updated version of [SECOND_LIFE] is available.
 [MESSAGE]
 This update is not required, but we suggest you install it to improve performance and stability.
 
@@ -2669,7 +2678,7 @@ Download to your Applications folder?
    icon="alertmodal.tga"
    name="DownloadMacReleaseForDownload"
    type="alertmodal">
-An updated version of the viewer is available.
+An updated version of [SECOND_LIFE] is available.
 [MESSAGE]
 This update is not required, but we suggest you install it to improve performance and stability.
 
@@ -2685,7 +2694,7 @@ Download to your Applications folder?
    name="DeedObjectToGroup"
    type="alertmodal">
 Deeding this object will cause the group to:
-* Receive [CURRENCY] paid into the object
+* Receive L$ paid into the object
     <usetemplate
      ignoretext="When deeding objects to groups"
      name="okcancelignore"
@@ -2709,7 +2718,7 @@ Open your system Web browser to view this content?
    icon="alertmodal.tga"
    name="WebLaunchJoinNow"
    type="alertmodal">
-Go to the web site to manage your account?
+Go to www.secondlife.com to manage your account?
     <usetemplate
      ignoretext="When launching web browser to manage your account"
      name="okcancelignore"
@@ -2721,7 +2730,7 @@ Go to the web site to manage your account?
    icon="alertmodal.tga"
    name="WebLaunchBugReport101"
    type="alertmodal">
-Visit the [GRID] website and learn how to report bugs correctly.
+Visit the [SECOND_LIFE] Wiki and learn how to report bugs correctly.
     <usetemplate
      ignoretext="When launching web browser to view the Bug Reporting 101 Wiki"
      name="okcancelignore"
@@ -2733,7 +2742,7 @@ Visit the [GRID] website and learn how to report bugs correctly.
    icon="alertmodal.tga"
    name="WebLaunchSecurityIssues"
    type="alertmodal">
-Visit the [GRID] website for details of how to report a security issue.
+Visit the [SECOND_LIFE] Wiki for details of how to report a security issue.
     <usetemplate
      ignoretext="When launching web browser to view Security Issues Wiki"
      name="okcancelignore"
@@ -2745,7 +2754,7 @@ Visit the [GRID] website for details of how to report a security issue.
    icon="alertmodal.tga"
    name="WebLaunchQAWiki"
    type="alertmodal">
-Visit the [GRID] QA web site.
+Visit the [SECOND_LIFE] QA Wiki.
     <usetemplate
      ignoretext="When launching web browser to view the QA Wiki"
      name="okcancelignore"
@@ -2757,7 +2766,7 @@ Visit the [GRID] QA web site.
    icon="alertmodal.tga"
    name="WebLaunchPublicIssue"
    type="alertmodal">
-Visit the [GRID] issue tracker, where you can report bugs and other issues.
+Visit the [SECOND_LIFE] Public Issue Tracker, where you can report bugs and other issues.
     <usetemplate
      ignoretext="When launching web browser to view the Public Issue Tracker"
      name="okcancelignore"
@@ -2769,7 +2778,7 @@ Visit the [GRID] issue tracker, where you can report bugs and other issues.
    icon="alertmodal.tga"
    name="WebLaunchPublicIssueHelp"
    type="alertmodal">
-Visit the [GRID] web site for info on how to use the issue tracker.
+Visit the [SECOND_LIFE] Wiki for info on how to use the Public Issue Tracker.
     <usetemplate
      ignoretext="When launching web browser to view Public Issue Tracker Wiki"
      name="okcancelignore"
@@ -3116,7 +3125,7 @@ Proceed?
    type="alert">
 You are about to change the access list for a Linden owned estate (mainland, teen grid, orientation, etc.).
 
-This is DANGEROUS and should only be done to invoke the hack allowing objects/[CURRENCY] to be transfered in/out of a grid.
+This is DANGEROUS and should only be done to invoke the hack allowing objects/L$ to be transfered in/out of a grid.
 It will change thousands of regions and make the spaceserver hiccup.
     <usetemplate
      name="okcancelbuttons"
@@ -3478,7 +3487,7 @@ Asset ID for notecard is missing from database.
    type="alert">
 Remember: Classified ad fees are non-refundable.
 
-Publish this classified now for [CURRENCY][AMOUNT]?
+Publish this classified now for L$[AMOUNT]?
     <usetemplate
      name="okcancelbuttons"
      notext="Cancel"
@@ -3974,7 +3983,7 @@ Please select only one object and try again.
    icon="alertmodal.tga"
    name="BuyOriginal"
    type="alertmodal">
-Buy original object from [OWNER] for [CURRENCY][PRICE]?
+Buy original object from [OWNER] for L$[PRICE]?
 You will become the owner of this object.
 You will be able to:
  Modify: [MODIFYPERM]
@@ -3990,7 +3999,7 @@ You will be able to:
    icon="alertmodal.tga"
    name="BuyOriginalNoOwner"
    type="alertmodal">
-Buy original object for [CURRENCY][PRICE]?
+Buy original object for L$[PRICE]?
 You will become the owner of this object.
 You will be able to:
  Modify: [MODIFYPERM]
@@ -4006,7 +4015,7 @@ You will be able to:
    icon="alertmodal.tga"
    name="BuyCopy"
    type="alertmodal">
-Buy a copy from [OWNER] for [CURRENCY][PRICE]?
+Buy a copy from [OWNER] for L$[PRICE]?
 The object will be copied to your inventory.
 You will be able to:
  Modify: [MODIFYPERM]
@@ -4022,7 +4031,7 @@ You will be able to:
    icon="alertmodal.tga"
    name="BuyCopyNoOwner"
    type="alertmodal">
-Buy a copy for [CURRENCY][PRICE]?
+Buy a copy for L$[PRICE]?
 The object will be copied to your inventory.
 You will be able to:
  Modify: [MODIFYPERM]
@@ -4038,7 +4047,7 @@ You will be able to:
    icon="alertmodal.tga"
    name="BuyContents"
    type="alertmodal">
-Buy contents from [OWNER] for [CURRENCY][PRICE]?
+Buy contents from [OWNER] for L$[PRICE]?
 They will be copied to your inventory.
     <usetemplate
      name="okcancelbuttons"
@@ -4050,7 +4059,7 @@ They will be copied to your inventory.
    icon="alertmodal.tga"
    name="BuyContentsNoOwner"
    type="alertmodal">
-Buy contents for [CURRENCY][PRICE]?
+Buy contents for L$[PRICE]?
 They will be copied to your inventory.
     <usetemplate
      name="okcancelbuttons"
@@ -4160,7 +4169,7 @@ There are no items in this object that you are allowed to copy.
    icon="alertmodal.tga"
    name="WebLaunchAccountHistory"
    type="alertmodal">
-Go to the [GRID] web site to see your account history?
+Go to the Second Life web site to see your account history?
     <usetemplate
      ignoretext="When loading account history web page"
      name="okcancelignore"
@@ -4172,9 +4181,9 @@ Go to the [GRID] web site to see your account history?
    icon="alertmodal.tga"
    name="ClickOpenF1Help"
    type="alertmodal">
-Visit the [GRID] Support Web site?
+Visit the Second Life Support Web site?
     <usetemplate
-     ignoretext="When visiting the Support Website."
+     ignoretext="When visiting the Second Life Support Website."
      name="okcancelignore"
      notext="Cancel"
      yestext="Go"/>
@@ -4184,7 +4193,7 @@ Visit the [GRID] Support Web site?
    icon="alertmodal.tga"
    name="NoSupportUrl"
    type="alertmodal">
-[GRID] has no link for support.
+This grid has no link for support.
   </notification>
 
   <notification
@@ -4569,7 +4578,7 @@ Click &quot;Advanced Water&quot; to bring up an editor with more advanced settin
    icon="alertmodal.tga"
    name="HelpDayCycle"
    type="alertmodal">
-The Day Cycle Editor gives you control over the sky during [GRID]&apos;s day/night cycle. This is the cycle that is used by the Basic Environment Editor&apos;s Time of Day slider.
+The Day Cycle Editor gives you control over the sky during Second Life&apos;s day/night cycle. This is the cycle that is used by the Basic Environment Editor&apos;s Time of Day slider.
 
 The Day Cycle Editor works by setting keyframes. These are nodes (represented by the gray blips on the time graph) that have Sky Presets associated with them. As the Time of Day progresses, the WindLight sky &quot;animates&quot; as it interpolates between these keyframes.
 
@@ -4736,7 +4745,7 @@ Controls the speed of the clouds as they move in the Y direction.
    icon="alertmodal.tga"
    name="HelpClassicClouds"
    type="alertmodal">
-Check this box to enable rendering of the older classic clouds in addition to WindLight&apos;s clouds.
+Check this box to enable rendering of Second Life&apos;s older classic clouds in addition to WindLight&apos;s clouds.
   </notification>
 
   <notification
@@ -4905,9 +4914,9 @@ Unable to start a new chat session with [RECIPIENT].
   </notification>
 
   <notification
-   icon="alertmodal.tga"
+   icon="notifytip.tga"
    name="ChatterBoxSessionEventError"
-   type="alertmodal">
+   type="notifytip">
 [EVENT]
 [REASON]
     <usetemplate
@@ -4938,7 +4947,7 @@ Items may not be purchased while they are part of an attachment.
    label="About Requests for the Debit Permission"
    name="DebitPermissionDetails"
    type="alertmodal">
-Granting this request gives a script ongoing permission to take [CURRENCY] from your account. To revoke this permission, the object owner must delete the object or reset the scripts in the object.
+Granting this request gives a script ongoing permission to take Linden dollars (L$) from your account. To revoke this permission, the object owner must delete the object or reset the scripts in the object.
     <usetemplate
      name="okbutton"
      yestext="OK"/>
@@ -4961,7 +4970,7 @@ Would you like to automatically wear the clothing item you create?
    name="NotAgeVerified"
    type="alertmodal">
 You need to be age-verified in order to access this parcel.
-Would you like to visit the [GRID] website to verify your age?
+Would you like to visit the Second Life website to verify your age?
 
 [_URL]
     <url option="0" name="url">
@@ -4980,7 +4989,7 @@ Would you like to visit the [GRID] website to verify your age?
    name="Cannot enter parcel: no payment info on file"
    type="alertmodal">
 This parcel requires that you have payment information on file before you can access it.
-Would you like to visit the [GRID] website to set this up?
+Would you like to visit the Second Life website to set this up?
 
 [_URL]
     <url option="0" name="url">
@@ -5044,8 +5053,6 @@ Cannot retrieve grid info from server.
    name="HelpRenderCompat"
    type="alertmodal">
 Builds with extended hollow or extended hole size do not render properly on other viewers. Please keep this option checked, if you want your builds looking properly in other viewers.
-
-More details can be found on the Hippo OpenSim Viewer web site.
   </notification>
 
   <notification
@@ -5144,7 +5151,7 @@ Uploading in-world and web site snapshots...
    icon="notify.tga"
    name="UploadPayment"
    type="notify">
-You paid [CURRENCY][AMOUNT] to upload.
+You paid L$[AMOUNT] to upload.
   </notification>
 
   <notification
@@ -6190,8 +6197,8 @@ Grant this request?
    icon="notify.tga"
    name="FirstBalanceIncrease"
    type="notify">
-You just received [CURRENCY][AMOUNT].
-Objects and other users may give you [CURRENCY].
+You just received L$[AMOUNT].
+Objects and other users may give you L$.
 Your balance is shown in the upper-right corner of the screen.
   </notification>
 
@@ -6199,7 +6206,7 @@ Your balance is shown in the upper-right corner of the screen.
    icon="notify.tga"
    name="FirstBalanceDecrease"
    type="notify">
-You just paid [CURRENCY][AMOUNT].
+You just paid L$[AMOUNT].
 Your balance is shown in the upper-right corner of the screen.
   </notification>
 
@@ -6225,7 +6232,7 @@ Use the controls on the right to find things and display different backgrounds.
    icon="notify.tga"
    name="FirstBuild"
    type="notify">
-You can build new objects in some areas of [GRID].
+You can build new objects in some areas of [SECOND_LIFE].
 Use the tools in the upper left to build, and try holding down Ctrl or Alt to rapidly switch tools.
 Press Esc to stop building.
   </notification>

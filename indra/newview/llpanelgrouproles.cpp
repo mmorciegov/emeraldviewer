@@ -716,13 +716,11 @@ void LLPanelGroupSubTab::buildActionCategory(LLScrollListCtrl* ctrl,
 			row["columns"][0]["type"] = "icon";
 			row["columns"][0]["value"] = (*iter).second;
 		}
-		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
 
 
 		row["columns"][1]["column"] = "action";
 		row["columns"][1]["value"] = action_set->mActionSetData->mName;
 		row["columns"][1]["font-style"] = "BOLD";
-		row["columns"][1]["color"] = (*sDefaultListText).getValue();
 
 		LLScrollListItem* title_row = ctrl->addElement(row, ADD_BOTTOM, action_set->mActionSetData);
 
@@ -804,7 +802,6 @@ void LLPanelGroupSubTab::buildActionCategory(LLScrollListCtrl* ctrl,
 			row["columns"][column_index]["column"] = "action";
 			row["columns"][column_index]["value"] = (*ra_it)->mDescription;
 			row["columns"][column_index]["font"] = "SANSSERIFSMALL";
-			row["columns"][column_index]["color"] = (*sDefaultListText).getValue();
 
 			LLScrollListItem* item = ctrl->addElement(row, ADD_BOTTOM, (*ra_it));
 
@@ -1071,8 +1068,6 @@ void LLPanelGroupMembersSubTab::handleMemberSelect()
 				}
 			}
 
-			static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 
 			LLRoleData rd;
 			if (gdatap->getRoleData(role_id,rd))
@@ -1093,7 +1088,6 @@ void LLPanelGroupMembersSubTab::handleMemberSelect()
 
 				row["columns"][1]["column"] = "role";
 				row["columns"][1]["value"] = label.str();
-				row["columns"][1]["color"] = (*sDefaultListText).getValue();
 
 				if (row["id"].asUUID().isNull())
 				{
@@ -1692,21 +1686,16 @@ void LLPanelGroupMembersSubTab::updateMembers()
 			LLSD row;
 			row["id"] = (*mMemberProgress).first;
 
-			static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 
 			row["columns"][0]["column"] = "name";
-			row["columns"][0]["color"] = (*sDefaultListText).getValue();
 			// value is filled in by name list control
 
 			row["columns"][1]["column"] = "donated";
 			row["columns"][1]["value"] = donated.str();
-			row["columns"][1]["color"] = (*sDefaultListText).getValue();
 
 			row["columns"][2]["column"] = "online";
 			row["columns"][2]["value"] = mMemberProgress->second->getOnlineStatus();
 			row["columns"][2]["font"] = "SANSSERIFSMALL";
-			row["columns"][2]["color"] = (*sDefaultListText).getValue();
 
 			mMembersList->addElement(row);//, ADD_SORTED);
 			mHasMatch = TRUE;
@@ -1914,20 +1903,15 @@ LLSD LLPanelGroupRolesSubTab::createRoleItem(const LLUUID& role_id,
 	LLSD row;
 	row["id"] = role_id;
 
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 
 	row["columns"][0]["column"] = "name";
 	row["columns"][0]["value"] = name;
-	row["columns"][0]["color"] = (*sDefaultListText).getValue();
 
 	row["columns"][1]["column"] = "title";
 	row["columns"][1]["value"] = title;
-	row["columns"][1]["color"] = (*sDefaultListText).getValue();
 
 	row["columns"][2]["column"] = "members";
 	row["columns"][2]["value"] = members;
-	row["columns"][2]["color"] = (*sDefaultListText).getValue();
 	
 	return row;
 }
@@ -2400,10 +2384,6 @@ void LLPanelGroupRolesSubTab::handleCreateRole()
 	row["columns"][0]["column"] = "name";
 	row["columns"][0]["value"] = rd.mRoleName;
 
-	static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
-
-	row["columns"][0]["color"] = (*sDefaultListText).getValue();
 	mRolesList->addElement(row, ADD_BOTTOM, this);
 	mRolesList->selectByID(new_role_id);
 

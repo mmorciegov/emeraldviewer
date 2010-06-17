@@ -16,21 +16,21 @@
             <key>md5sum</key>
             <string></string>
             <key>url</key>
-            <uri>http://lawlinter.net/data/somepkg.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/somepkg.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
             <key>md5sum</key>
             <string></string>
             <key>url</key>
-            <uri>http://lawlinter.net/data/somepkg.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/somepkg.tar.bz2</uri>
           </map>
           <key>windows</key>
           <map>
             <key>md5sum</key>
             <string>a9542712094cec557506a200da9ab953</string>
             <key>url</key>
-            <uri>http://lawlinter.net/data/emkdu.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/emkdu.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -49,21 +49,21 @@
             <key>md5sum</key>
             <string>1eb49bf9bcce30f5fe0dddaed2a3c628</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/windows_hunspell.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/windows_hunspell.tar.bz2</uri>
             </map>
             <key>linux</key>
             <map>
             <key>md5sum</key>
             <string>406d74f98a40a4c63dcf2611acda5b96</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/hunspell-1.2-linux-20100503.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/hunspell-1.2-linux-20100503.tar.bz2</uri>
             </map>
             <key>darwin</key>
             <map>
             <key>md5sum</key>
             <string>9b970abfc9df40ad6d183a4b1f732fb2</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/hunspell-1.2-darwin.tar.gz</uri>
+            <uri>http://modularsystems.sl/libraries/hunspell-1.2-darwin.tar.gz</uri>
             </map>
           </map>
       </map>
@@ -82,21 +82,21 @@
             <key>md5sum</key>
             <string>cc567619eadca8be4db2accc5c8c5acb</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/otrwindowslibraries.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/otrwindowslibraries.tar.bz2</uri>
             </map>
             <key>linux</key>
             <map>
             <key>md5sum</key>
             <string>f51e2295cc1f88700d79f618be4b5c22</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/libotr-2.2.0-linux-20100522.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/libotr-2.2.0-linux-20100522.tar.bz2</uri>
             </map>
             <key>darwin</key>
             <map>
             <key>md5sum</key>
             <string>6e68314811d65a2e0ef3e338e1084f39</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/libotr-darwin.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/libotr-darwin.tar.bz2</uri>
             </map>
           </map>
       </map>
@@ -115,21 +115,21 @@
             <key>md5sum</key>
             <string>333023a47a79b6b70f28f2cb98bc7b53</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/growl-1.2.1-darwin.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/growl-1.2.1-darwin.bz2</uri>
           </map>
           <key>windows</key>
           <map>
             <key>md5sum</key>
             <string>b017cc5f759eaeb862a8b94d43a39c04</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/lggemwingrowllibraries.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/lggemwingrowllibraries.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
             <key>md5sum</key>
             <string>dc389633048895349aea262cacf02e0a</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/libnotify-1.1.2-linux-20100522.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/libnotify-1.1.2-linux-20100522.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -148,14 +148,14 @@
             <key>md5sum</key>
             <string>92ab118495ae7b959c714294c1e36d8f</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/7zip-9.1.3-darwin.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/7zip-9.1.3-darwin.tar.bz2</uri>
           </map>
 	  <key>linux</key>
 	  <map>
             <key>md5sum</key>
 	    <string>01a9b00d2052deae0c5914f1dfede38a</string>
 	    <key>url</key>
-	    <uri>http://modularsystems.sl/box/p7zip-standalone-linux.tar.bz2</uri>
+	    <uri>http://modularsystems.sl/libraries/p7zip-standalone-linux.tar.bz2</uri>
 	  </map>
         </map>
       </map>
@@ -365,21 +365,21 @@
             <key>md5sum</key>
             <string>51c98844053b718c40456bbe90d4fc51</string>
             <key>url</key>
-            <uri>http://lawlinter.net/data/boost-1.41.0-darwin-20091229.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/boost-1.41.0-darwin-20091229.tar.bz2</uri>
           </map>
           <key>linux</key>
           <map>
             <key>md5sum</key>
             <string>74ac724e8197d85928604757c4a28ca1</string>
             <key>url</key>
-            <uri>http://lawlinter.net/data/boost-1.39.0-linux-20100405.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/boost-1.39.0-linux-20100405.tar.bz2</uri>
           </map>
           <key>windows</key>
           <map>
             <key>md5sum</key>
             <string>eb4a503020a0573e7303f9066109fdcc</string>
             <key>url</key>
-            <uri>http://lawlinter.net/data/boost-1.39.0-windows-20100318.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/boost-1.39.0-windows-20100318.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -457,7 +457,7 @@
             <key>md5sum</key>
             <string>c2e2c2aa40bbd92f4d3b939ebd963aa2</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/dbus-glib-2.1.0-linux-20100523.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/dbus-glib-2.1.0-linux-20100523.tar.bz2</uri>
           </map>
         </map>
       </map>
@@ -764,7 +764,7 @@
             <key>md5sum</key>
             <string>5286e04c3fbc7c11b5e9390131e63a46</string>
             <key>url</key>
-            <uri>http://modularsystems.sl/box/gtk-build-libs-linux-20100523.tar.bz2</uri>
+            <uri>http://modularsystems.sl/libraries/gtk-build-libs-linux-20100523.tar.bz2</uri>
           </map>
           <key>windows</key>
           <map>
@@ -891,7 +891,7 @@
  	        <key>md5sum</key> 
  	        <string>6912b5137a8533096a731f77fb1363b4</string> 
  	        <key>url</key> 
- 	        <uri>http://modularsystems.sl/box/json-windows.tar.bz2</uri> 
+ 	        <uri>http://modularsystems.sl/libraries/json-windows.tar.bz2</uri> 
 	      </map> 
         </map>
       </map>

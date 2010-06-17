@@ -586,6 +586,7 @@ LLScrollListCtrl::LLScrollListCtrl(const std::string& name, const LLRect& rect,
 	mFgUnselectedColor( LLUI::sColorsGroup->getColor("ScrollUnselectedColor") ),
 	mFgDisabledColor( LLUI::sColorsGroup->getColor("ScrollDisabledColor") ),
 	mHighlightedColor( LLUI::sColorsGroup->getColor("ScrollHighlightedColor") ),
+	mDefaultListTextColor( LLUI::sColorsGroup->getColor("DefaultListText") ),
 	mBorderThickness( 2 ),
 	mOnDoubleClickCallback( NULL ),
 	mOnMaximumSelectCallback( NULL ),
@@ -2025,9 +2026,25 @@ BOOL LLScrollListCtrl::handleMouseDown(S32 x, S32 y, MASK mask)
 		// clear selection changed flag because user is starting a selection operation
 		mSelectionChanged = FALSE;
 
-		handleClick(x, y, mask);
+		handleClick(x, y, mask, FALSE);
 	}
+	return TRUE;
+}
 
+BOOL LLScrollListCtrl::handleRightMouseDown(S32 x, S32 y, MASK mask)
+{
+	BOOL handled = childrenHandleMouseDown(x, y, mask) != NULL;
+
+	if( !handled )
+	{
+		// set keyboard focus first, in case click action wants to move focus elsewhere
+		setFocus(TRUE);
+
+		// clear selection changed flag because user is starting a selection operation
+		mSelectionChanged = FALSE;
+
+		handleClick(x, y, mask, TRUE);
+	}
 	return TRUE;
 }
 
@@ -2056,10 +2073,15 @@ BOOL LLScrollListCtrl::handleMouseUp(S32 x, S32 y, MASK mask)
 	return LLUICtrl::handleMouseUp(x, y, mask);
 }
 
+BOOL LLScrollListCtrl::handleRightMouseUp(S32 x, S32 y, MASK mask)
+{
+	return handleMouseUp(x, y, mask);
+}
+
 BOOL LLScrollListCtrl::handleDoubleClick(S32 x, S32 y, MASK mask)
 {
 	//BOOL handled = FALSE;
-	BOOL handled = handleClick(x, y, mask);
+	BOOL handled = handleClick(x, y, mask, FALSE);
 
 	if (!handled)
 	{
@@ -2077,7 +2099,7 @@ BOOL LLScrollListCtrl::handleDoubleClick(S32 x, S32 y, MASK mask)
 	return TRUE;
 }
 
-BOOL LLScrollListCtrl::handleClick(S32 x, S32 y, MASK mask)
+BOOL LLScrollListCtrl::handleClick(S32 x, S32 y, MASK mask, BOOL rightmouse)
 {
 	// which row was clicked on?
 	LLScrollListItem* hit_item = hitItem(x, y);
@@ -2088,46 +2110,59 @@ BOOL LLScrollListCtrl::handleClick(S32 x, S32 y, MASK mask)
 	LLScrollListCell* hit_cell = hit_item->getColumn(column_index);
 	if (!hit_cell) return FALSE;
 
-	// if cell handled click directly (i.e. clicked on an embedded checkbox)
-	if (hit_cell->handleClick())
+	// no o.o
+	if (rightmouse)
 	{
-		// if item not currently selected, select it
 		if (!hit_item->getSelected())
 		{
 			selectItemAt(x, y, mask);
 			gFocusMgr.setMouseCapture(this);
 			mNeedsScroll = TRUE;
 		}
-		
-		// propagate state of cell to rest of selected column
-		{
-			// propagate value of this cell to other selected items
-			// and commit the respective widgets
-			LLSD item_value = hit_cell->getValue();
-			for (item_list::iterator iter = mItemList.begin(); iter != mItemList.end(); iter++)
-			{
-				LLScrollListItem* item = *iter;
-				if (item->getSelected())
-				{
-					LLScrollListCell* cellp = item->getColumn(column_index);
-					cellp->setValue(item_value);
-					cellp->onCommit();
-				}
-			}
-			//FIXME: find a better way to signal cell changes
-			onCommit();
-		}
-		// eat click (e.g. do not trigger double click callback)
-		return TRUE;
-	}
-	else
-	{
-		// treat this as a normal single item selection
-		selectItemAt(x, y, mask);
-		gFocusMgr.setMouseCapture(this);
-		mNeedsScroll = TRUE;
-		// do not eat click (allow double click callback)
 		return FALSE;
+	}
+	else // if cell handled click directly (i.e. clicked on an embedded checkbox)
+	{
+		if (hit_cell->handleClick())
+		{
+			// if item not currently selected, select it
+			if (!hit_item->getSelected())
+			{
+				selectItemAt(x, y, mask);
+				gFocusMgr.setMouseCapture(this);
+				mNeedsScroll = TRUE;
+			}
+			
+			// propagate state of cell to rest of selected column
+			{
+				// propagate value of this cell to other selected items
+				// and commit the respective widgets
+				LLSD item_value = hit_cell->getValue();
+				for (item_list::iterator iter = mItemList.begin(); iter != mItemList.end(); iter++)
+				{
+					LLScrollListItem* item = *iter;
+					if (item->getSelected())
+					{
+						LLScrollListCell* cellp = item->getColumn(column_index);
+						cellp->setValue(item_value);
+						cellp->onCommit();
+					}
+				}
+				//FIXME: find a better way to signal cell changes
+				onCommit();
+			}
+			// eat click (e.g. do not trigger double click callback)
+			return TRUE;
+		}
+		else
+		{
+			// treat this as a normal single item selection
+			selectItemAt(x, y, mask);
+			gFocusMgr.setMouseCapture(this);
+			mNeedsScroll = TRUE;
+			// do not eat click (allow double click callback)
+			return FALSE;
+		}
 	}
 }
 
@@ -3404,6 +3439,10 @@ LLScrollListItem* LLScrollListCtrl::addElement(const LLSD& value, EAddPosition p
 			if (has_color)
 			{
 				cell->setColor(color);
+			}
+			else
+			{
+				cell->setColor(mDefaultListTextColor);
 			}
 			new_item->setColumn(index, cell);
 			if (columnp->mHeader && !value.asString().empty())

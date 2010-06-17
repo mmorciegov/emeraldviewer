@@ -202,8 +202,6 @@ void LLFloaterTopObjects::handleReply(LLMessageSystem *msg, void** data)
 
 		LLSD element;
 
-		static LLColor4* sDefaultListText = rebind_llcontrol<LLColor4>("DefaultListText", &gColors, true);
-
 
 		element["id"] = task_id;
 		element["object_name"] = name_buf;
@@ -211,8 +209,6 @@ void LLFloaterTopObjects::handleReply(LLMessageSystem *msg, void** data)
 		element["columns"][0]["column"] = "score";
 		element["columns"][0]["value"] = llformat("%0.3f", score);
 		element["columns"][0]["font"] = "SANSSERIF";
-		element["columns"][0]["color"] = (*sDefaultListText).getValue();
-		
 		
 		element["columns"][1]["column"] = "name";
 		element["columns"][1]["value"] = name_buf;
@@ -221,34 +217,25 @@ void LLFloaterTopObjects::handleReply(LLMessageSystem *msg, void** data)
 		{
 			element["columns"][1]["color"] = LLColor4::red.getValue();
 		}
-		else
-		{
-		element["columns"][1]["color"] = (*sDefaultListText).getValue();
-		}
 		
 		element["columns"][2]["column"] = "owner";
 		element["columns"][2]["value"] = owner_buf;
 		element["columns"][2]["font"] = "SANSSERIF";
-		element["columns"][2]["color"] = (*sDefaultListText).getValue();
 		element["columns"][3]["column"] = "location";
 		element["columns"][3]["value"] = llformat("<%0.1f,%0.1f,%0.1f>", location_x, location_y, location_z);
 		element["columns"][3]["font"] = "SANSSERIF";
-		element["columns"][3]["color"] = (*sDefaultListText).getValue();
 		element["columns"][4]["column"] = "time";
 		element["columns"][4]["value"] = formatted_time((time_t)time_stamp);
 		element["columns"][4]["font"] = "SANSSERIF";
-		element["columns"][4]["color"] = (*sDefaultListText).getValue();
 
 		if (mCurrentMode == STAT_REPORT_TOP_SCRIPTS
 			&& have_extended_data)
 		{
 			element["columns"][5]["column"] = "mono_time";
-			element["columns"][5]["color"] = (*sDefaultListText).getValue();
 			element["columns"][5]["value"] = llformat("%0.3f", mono_score);
 			element["columns"][5]["font"] = "SANSSERIF";
 
 			element["columns"][6]["column"] = "URLs";
-			element["columns"][6]["color"] = (*sDefaultListText).getValue();
 			element["columns"][6]["value"] = llformat("%d", public_urls);
 			element["columns"][6]["font"] = "SANSSERIF";
 		}

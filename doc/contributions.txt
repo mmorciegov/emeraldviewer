@@ -128,6 +128,8 @@ Ardy Lay
 	SNOW-205
 	SNOW-322
 	SNOW-364
+	SNOW-384
+	SNOW-629
 Argent Stonecutter
 	VWR-68
 Armin Weatherwax
@@ -166,6 +168,7 @@ blino Nakamura
 Boroondas Gupte
 	SNOW-201
 	SNOW-396
+	SNOW-624
 	VWR-233
 	WEB-262
 Bulli Schumann
@@ -657,6 +660,7 @@ Techwolf Lupindo
 	SNOW-237
 	SNOW-333
 	SNOW-334
+	SNOW-592
 	VWR-12385
 tenebrous pau
 	VWR-247
@@ -686,6 +690,8 @@ Thickbrick Sleaford
 	SNOW-390
 	SNOW-421
 	SNOW-462
+	SNOW-586
+	SNOW-592
 Thraxis Epsilon
 	SVC-371
 	VWR-383

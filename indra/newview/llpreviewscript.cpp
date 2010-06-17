@@ -188,6 +188,7 @@ LLScriptEdCore::LLScriptEdCore(
 	mLastHelpToken(NULL),
 	mLiveHelpHistorySize(0),
 	mEnableSave(FALSE),
+	mEnableXEd(FALSE),
 	mHasScriptData(FALSE),
 	mErrorListResizer(NULL),
 	// We need to check for a new file every five seconds, or autosave every 60.
@@ -394,7 +395,7 @@ LLScriptEdCore::LLScriptEdCore(
  
 	childSetCommitCallback("lsl errors", &LLScriptEdCore::onErrorList, this);
 	childSetAction("Save_btn", onBtnSave,this);
-
+	childSetAction("XEd_btn", onBtnXEd,this);
 	initMenu();
 
 	if(preproc)updateResizer(this);
@@ -560,7 +561,7 @@ void LLScriptEdCore::setScriptText(const std::string& text, BOOL is_valid)
 		mHasScriptData = is_valid;
 		if (gSavedSettings.getString("EmeraldLSLExternalEditor").length() > 3)
 		{
-		this->xedLaunch();
+		childSetEnabled("XEd_btn", true);
 		}
 	}
 }
@@ -1126,7 +1127,13 @@ void LLScriptEdCore::onBtnSave(void* data)
 	// do the save, but don't close afterwards
 	doSave(data, FALSE);
 }
-
+//static
+void LLScriptEdCore::onBtnXEd(void* data)
+{
+		LLScriptEdCore* self = (LLScriptEdCore*)data;
+		self->xedLaunch();
+	
+}
 // static
 void LLScriptEdCore::onBtnUndoChanges( void* userdata )
 {
