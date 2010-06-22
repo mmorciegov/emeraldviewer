@@ -401,51 +401,10 @@ void LLEmbeddedItems::bindEmbeddedChars( const LLFontGL* font ) const
 		{
 			continue;
 		}
-		const char* img_name;
-		switch( item->getType() )
-		{
-		  case LLAssetType::AT_TEXTURE:
-			if(item->getInventoryType() == LLInventoryType::IT_SNAPSHOT)
-			{
-				img_name = "inv_item_snapshot.tga";
-			}
-			else
-			{
-				img_name = "inv_item_texture.tga";
-			}
-
-			break;
-		  case LLAssetType::AT_SOUND:			img_name = "inv_item_sound.tga";	break;
-		  case LLAssetType::AT_LANDMARK:		
-			if (item->getFlags() & LLInventoryItem::II_FLAGS_LANDMARK_VISITED)
-			{
-				img_name = "inv_item_landmark_visited.tga";	
-			}
-			else
-			{
-				img_name = "inv_item_landmark.tga";	
-			}
-			break;
-		  case LLAssetType::AT_CLOTHING:		img_name = "inv_item_clothing.tga";	break;
-		  case LLAssetType::AT_OBJECT:			
-			if (item->getFlags() & LLInventoryItem::II_FLAGS_OBJECT_HAS_MULTIPLE_ITEMS)
-			{
-				img_name = "inv_item_object_multi.tga";	
-			}
-			else
-			{
-				img_name = "inv_item_object.tga";	
-			}
-			break;
-		  case LLAssetType::AT_NOTECARD:		img_name = "inv_item_notecard.tga";	break;
-		  case LLAssetType::AT_LSL_TEXT:		img_name = "inv_item_script.tga";	break;
-		  case LLAssetType::AT_BODYPART:		img_name = "inv_item_skin.tga";	break;
-		  case LLAssetType::AT_ANIMATION:		img_name = "inv_item_animation.tga";break;
-		  case LLAssetType::AT_GESTURE:			img_name = "inv_item_gesture.tga";	break;
-		  default: llassert(0); continue;
-		}
-
-		LLUIImagePtr image = LLUI::getUIImage(img_name);
+		LLUIImagePtr image = get_item_icon(item->getType(),
+					item->getInventoryType(),
+					0, 
+					item->getFlags() & LLInventoryItem::II_FLAGS_OBJECT_HAS_MULTIPLE_ITEMS);//LLUI::getUIImage(img_name);
 
 		font->addEmbeddedChar( wch, image->getImage(), item->getName() );
 	}

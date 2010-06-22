@@ -6178,9 +6178,7 @@ Grant this request?
     [FIRST] [LAST]&apos;s &apos;[TITLE]&apos;
     [MESSAGE]
     <form name="form">
-      <input name="message">
-        [DEFAULT]
-      </input>
+      <input name="message" />
       <button
        index="-1"
        name="Ignore"
@@ -6332,10 +6330,10 @@ You have begun playing media.  Media can set to play automatically in the prefer
    icon="notify.tga"
    name="FirstRLVDetach"
    type="notify">
-One of your attachments was made nondetachable using Restrained Life.
+One of your attachments was made nondetachable using Restrained Love.
 Please note that this also disables the &apos;Wear&apos; option on all prim attachments in your inventory unless they are properly named.
 
-For more information search for &apos;Restrained Life&apos; on the SL wiki.
+For more information search for &apos;Restrained Love&apos; on the SL wiki.
   </notification>
 
   <notification

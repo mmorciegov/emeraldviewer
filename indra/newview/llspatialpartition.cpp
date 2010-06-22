@@ -387,7 +387,6 @@ public:
 
 	LLOctreeStateCheck(): mInheritedMask(0) { }
 
-	using LLTreeTraveler<LLDrawable>::traverse;
 	virtual void traverse(const LLSpatialGroup::OctreeNode* node)
 	{
 		LLSpatialGroup* group = (LLSpatialGroup*) node->getListener(0);
@@ -406,7 +405,6 @@ public:
 		mInheritedMask = temp;
 	}
 
-	using LLTreeTraveler<LLDrawable>::visit;
 	virtual void visit(const LLOctreeNode<LLDrawable>* state)
 	{
 		LLSpatialGroup* group = (LLSpatialGroup*) state->getListener(0);
@@ -820,7 +818,6 @@ class LLSpatialSetState : public LLSpatialGroup::OctreeTraveler
 public:
 	U32 mState;
 	LLSpatialSetState(U32 state) : mState(state) { }
-	using LLTreeTraveler<LLDrawable>::visit;
 	virtual void visit(const LLSpatialGroup::OctreeNode* branch) { ((LLSpatialGroup*) branch->getListener(0))->setState(mState); }	
 };
 
@@ -880,7 +877,6 @@ class LLSpatialClearState : public LLSpatialGroup::OctreeTraveler
 public:
 	U32 mState;
 	LLSpatialClearState(U32 state) : mState(state) { }
-	using LLTreeTraveler<LLDrawable>::visit;
 	virtual void visit(const LLSpatialGroup::OctreeNode* branch) { ((LLSpatialGroup*) branch->getListener(0))->clearState(mState); }
 };
 
@@ -1275,16 +1271,7 @@ void LLSpatialGroup::checkOcclusion()
 			GLuint res = 1;
 			if (!isState(DISCARD_QUERY) && mOcclusionQuery)
 			{
-				glGetQueryObjectuivARB(mOcclusionQuery, GL_QUERY_RESULT_AVAILABLE_ARB, &res);
-				if(res)
-				{
-					glGetQueryObjectuivARB(mOcclusionQuery, GL_QUERY_RESULT_ARB, &res);	
-					clearState(QUERY_PENDING | DISCARD_QUERY);
-				}
-				else
-				{
-					return;
-				}
+				glGetQueryObjectuivARB(mOcclusionQuery, GL_QUERY_RESULT_ARB, &res);	
 			}
 
 			if (res > 0)
@@ -1299,6 +1286,8 @@ void LLSpatialGroup::checkOcclusion()
 				setState(LLSpatialGroup::OCCLUDED, LLSpatialGroup::STATE_MODE_DIFF);
 				assert_states_valid(this);
 			}
+
+			clearState(QUERY_PENDING | DISCARD_QUERY);
 		}
 		else if (mSpatialPartition->isOcclusionEnabled() && isState(LLSpatialGroup::OCCLUDED))
 		{	//check occlusion has been issued for occluded node that has not had a query issued
@@ -1351,20 +1340,19 @@ void LLSpatialGroup::doOcclusion(LLCamera* camera)
 					glEnable(GL_DEPTH_CLAMP);
 				}
 
-				glBeginQueryARB(GL_SAMPLES_PASSED_ARB, mOcclusionQuery);					
-				glVertexPointer(3, GL_FLOAT, 0, mOcclusionVerts);
-				glDrawRangeElements(GL_TRIANGLE_FAN, 0, 7, 8,
-							GL_UNSIGNED_BYTE, get_box_fan_indices(camera, mBounds[0]));
-				glEndQueryARB(GL_SAMPLES_PASSED_ARB);
-
-				if (use_depth_clamp)
+				//Zwagoth: Don't stack queries if we already have one but are waiting.
+				if(!isState(QUERY_PENDING))
 				{
-					glDisable(GL_DEPTH_CLAMP);
+					glBeginQueryARB(GL_SAMPLES_PASSED_ARB, mOcclusionQuery);					
+					glVertexPointer(3, GL_FLOAT, 0, mOcclusionVerts);
+					glDrawRangeElements(GL_TRIANGLE_FAN, 0, 7, 8,
+							GL_UNSIGNED_BYTE, get_box_fan_indices(camera, mBounds[0]));
+					glEndQueryARB(GL_SAMPLES_PASSED_ARB);
+
+					setState(LLSpatialGroup::QUERY_PENDING);
+					clearState(LLSpatialGroup::DISCARD_QUERY);
 				}
 			}
-
-			setState(LLSpatialGroup::QUERY_PENDING);
-			clearState(LLSpatialGroup::DISCARD_QUERY);
 		}
 	}
 }
@@ -1494,7 +1482,6 @@ class LLSpatialShift : public LLSpatialGroup::OctreeTraveler
 {
 public:
 	LLSpatialShift(LLVector3 offset) : mOffset(offset) { }
-	using LLTreeTraveler<LLDrawable>::visit;
 	virtual void visit(const LLSpatialGroup::OctreeNode* branch) 
 	{ 
 		((LLSpatialGroup*) branch->getListener(0))->shift(mOffset); 
@@ -1611,7 +1598,6 @@ public:
 		gPipeline.markNotCulled(group, *mCamera);
 	}
 	
-	using LLTreeTraveler<LLDrawable>::visit;
 	virtual void visit(const LLSpatialGroup::OctreeNode* branch) 
 	{	
 		LLSpatialGroup* group = (LLSpatialGroup*) branch->getListener(0);
@@ -1846,7 +1832,6 @@ void drawBoxOutline(const LLVector3& pos, const LLVector3& size)
 class LLOctreeDirty : public LLOctreeTraveler<LLDrawable>
 {
 public:
-	using LLTreeTraveler<LLDrawable>::visit;
 	virtual void visit(const LLOctreeNode<LLDrawable>* state)
 	{
 		LLSpatialGroup* group = (LLSpatialGroup*) state->getListener(0);
@@ -2583,7 +2568,6 @@ public:
 	LLCamera* mCamera;
 	LLOctreeRenderNonOccluded(LLCamera* camera): mCamera(camera) {}
 	
-	using LLTreeTraveler<LLDrawable>::traverse;
 	virtual void traverse(const LLSpatialGroup::OctreeNode* node)
 	{
 		LLSpatialGroup* group = (LLSpatialGroup*) node->getListener(0);
@@ -2622,7 +2606,6 @@ public:
 		}
 	}
 
-	using LLTreeTraveler<LLDrawable>::visit;
 	virtual void visit(const LLSpatialGroup::OctreeNode* branch)
 	{
 		LLSpatialGroup* group = (LLSpatialGroup*) branch->getListener(0);
@@ -2703,7 +2686,6 @@ public:
 	LLCamera* mCamera;
 	LLOctreePushBBoxVerts(LLCamera* camera): mCamera(camera) {}
 	
-	using LLTreeTraveler<LLDrawable>::traverse;
 	virtual void traverse(const LLSpatialGroup::OctreeNode* node)
 	{
 		LLSpatialGroup* group = (LLSpatialGroup*) node->getListener(0);
@@ -2718,7 +2700,7 @@ public:
 			}
 		}
 	}
-	using LLTreeTraveler<LLDrawable>::visit;
+
 	virtual void visit(const LLSpatialGroup::OctreeNode* branch)
 	{
 		LLSpatialGroup* group = (LLSpatialGroup*) branch->getListener(0);
@@ -2827,7 +2809,7 @@ public:
 		  mPickTransparent(pick_transparent)
 	{
 	}
-	using LLTreeTraveler<LLDrawable>::visit;
+	
 	virtual void visit(const LLSpatialGroup::OctreeNode* branch) 
 	{	
 		for (LLSpatialGroup::OctreeNode::const_element_iter i = branch->getData().begin(); i != branch->getData().end(); ++i)

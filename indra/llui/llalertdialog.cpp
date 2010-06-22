@@ -462,7 +462,7 @@ void LLAlertDialog::draw()
 		setDefaultBtn(mButtonData[mDefaultOption].mButton);
 	}
 
-	static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
+	/*static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
 
 	LLColor4 shadow_color = (*sColorDropShadow);
 
@@ -472,7 +472,7 @@ void LLAlertDialog::draw()
 	S32 shadow_lines = (*sDropShadowFloater);
 
 	gl_drop_shadow( 0, getRect().getHeight(), getRect().getWidth(), 0,
-		shadow_color, shadow_lines);
+		shadow_color, shadow_lines);*/
 
 	LLModalDialog::draw();
 }

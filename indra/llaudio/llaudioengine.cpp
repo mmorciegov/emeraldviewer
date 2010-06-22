@@ -550,12 +550,12 @@ bool LLAudioEngine::updateBufferForData(LLAudioData *adp, const LLUUID &audio_uu
 
 void LLAudioEngine::enableWind(bool enable)
 {
-	enable = enable & !mWindMuted; // disable wind /ez
-	if (enable && (!mEnableWind))
+	// disable wind /ez
+	if (enable && (!mEnableWind) && (!mWindMuted))
 	{
 		mEnableWind = initWind();
 	}
-	else if (mEnableWind && (!enable))
+	else if (mEnableWind && (!enable || mWindMuted))
 	{
 		mEnableWind = false;
 		cleanupWind();

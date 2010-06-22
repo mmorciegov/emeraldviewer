@@ -139,6 +139,7 @@
 #include "llfloaterteleporthistory.h"
 #include "jc_lslviewerbridge.h"
 
+#include "llfloaterstats.h"
 #include "floaterao.h"
 #include "llworldmapmessage.h"
 // [RLVa:KB]
@@ -608,7 +609,7 @@ void LLAgent::resetView(BOOL reset_camera, BOOL change_camera)
 //-----------------------------------------------------------------------------
 void LLAgent::onAppFocusGained()
 {
-	if (CAMERA_MODE_MOUSELOOK == mCameraMode)
+	if (CAMERA_MODE_MOUSELOOK == mCameraMode && gSavedSettings.getBOOL("EmeraldLeaveMouselookOnFocus"))
 	{
 		changeCameraToDefault();
 		LLToolMgr::getInstance()->clearSavedTool();
@@ -2936,6 +2937,11 @@ static const LLFloaterView::skip_list_t& get_skip_list()
 {
 	static LLFloaterView::skip_list_t skip_list;
 	skip_list.insert(LLFloaterMap::getInstance());
+	static BOOL *sEmeraldShowStatusBarInMouselook = rebind_llcontrol<BOOL>("EmeraldShowStatusBarInMouselook", &gSavedSettings, true);
+	if(*sEmeraldShowStatusBarInMouselook)
+	{
+		skip_list.insert(LLFloaterStats::getInstance());
+	}
 	return skip_list;
 }
 
@@ -7638,9 +7644,9 @@ void LLAgent::sendAgentSetAppearance()
 	// to compensate for the COLLISION_TOLERANCE ugliness we will have 
 	// to tweak this number again
 	LLVector3 body_size = mAvatarObject->mBodySize;
-        body_size.mV[VX] = body_size.mV[VX] + gSavedSettings.getF32("EmeraldAvatarXModifier");
-        body_size.mV[VY] = body_size.mV[VY] + gSavedSettings.getF32("EmeraldAvatarYModifier");
-        body_size.mV[VZ] = body_size.mV[VZ] + gSavedSettings.getF32("EmeraldAvatarZModifier");
+        body_size.mV[VX] = body_size.mV[VX] + gSavedPerAccountSettings.getF32("EmeraldAvatarXModifier");
+        body_size.mV[VY] = body_size.mV[VY] + gSavedPerAccountSettings.getF32("EmeraldAvatarYModifier");
+        body_size.mV[VZ] = body_size.mV[VZ] + gSavedPerAccountSettings.getF32("EmeraldAvatarZModifier");
 	msg->addVector3Fast(_PREHASH_Size, body_size);	
 
 	// To guard against out of order packets

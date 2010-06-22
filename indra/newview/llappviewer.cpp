@@ -628,9 +628,16 @@ bool LLAppViewer::init()
 	// we run the "program crashed last time" error handler below.
 	//
 
-	// Need to do this initialization before we do anything else, since anything
-	// that touches files should really go through the lldir API
-	gDirUtilp->initAppDirs("SecondLife");
+	if(gDebugInfo.has("EmeraldPortableMode"))
+	{
+		gDirUtilp->initAppDirs("*Portable*"); // *HACK: Special magic string for portable mode
+		mPurgeOnExit = true;
+	}else
+	{
+		// Need to do this initialization before we do anything else, since anything
+		// that touches files should really go through the lldir API
+		gDirUtilp->initAppDirs("SecondLife");
+	}
 	// set skin search path to default, will be overridden later
 	// this allows simple skinned file lookups to work
 	gDirUtilp->setSkinFolder("default");
@@ -2981,21 +2988,25 @@ bool LLAppViewer::initCache()
 	// We have moved the location of the cache directory over time.
 	migrateCacheDirectory();
 
-	// Setup and verify the cache location
-	std::string cache_location = gSavedSettings.getString("CacheLocation");
-	std::string new_cache_location = gSavedSettings.getString("NewCacheLocation");
-	gDirUtilp->mm_setsnddir(gSavedSettings.getString("Emeraldmm_sndcacheloc"));
-	if (new_cache_location != cache_location)
+	if(!gSavedSettings.getBOOL("EmeraldPortableMode"))
 	{
-		gDirUtilp->setCacheDir(gSavedSettings.getString("CacheLocation"));
-		purgeCache(); // purge old cache
-		gSavedSettings.setString("CacheLocation", new_cache_location);
-	}
 
-	if (!gDirUtilp->setCacheDir(gSavedSettings.getString("CacheLocation")))
-	{
-		LL_WARNS("AppCache") << "Unable to set cache location" << LL_ENDL;
-		gSavedSettings.setString("CacheLocation", "");
+		// Setup and verify the cache location
+		std::string cache_location = gSavedSettings.getString("CacheLocation");
+		std::string new_cache_location = gSavedSettings.getString("NewCacheLocation");
+		gDirUtilp->mm_setsnddir(gSavedSettings.getString("Emeraldmm_sndcacheloc"));
+		if (new_cache_location != cache_location)
+		{
+			gDirUtilp->setCacheDir(gSavedSettings.getString("CacheLocation"));
+			purgeCache(); // purge old cache
+			gSavedSettings.setString("CacheLocation", new_cache_location);
+		}
+
+		if (!gDirUtilp->setCacheDir(gSavedSettings.getString("CacheLocation")))
+		{
+			LL_WARNS("AppCache") << "Unable to set cache location" << LL_ENDL;
+			gSavedSettings.setString("CacheLocation", "");
+		}
 	}
 
 	if (mPurgeCache)
@@ -3545,12 +3556,12 @@ void LLAppViewer::idle()
 		gIdleCallbacks.callFunctions();
 	}
 
+	gViewerWindow->handlePerFrameHover();
+
 	if (gDisconnected)
     {
 		return;
     }
-
-	gViewerWindow->handlePerFrameHover();
 
 	///////////////////////////////////////
 	// Agent and camera movement

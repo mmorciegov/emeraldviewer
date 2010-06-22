@@ -217,6 +217,9 @@ public:
 
 	virtual void	saveAs() {}
 
+	// <edit>
+	virtual LLUUID  getItemID() { return LLUUID::null; }
+	// </edit>
 	void			setSnapTarget(LLHandle<LLFloater> handle) { mSnappedTo = handle; }
 	void			clearSnapTarget() { mSnappedTo.markDead(); }
 	LLHandle<LLFloater>	getSnapTarget() const { return mSnappedTo; }
@@ -364,6 +367,9 @@ public:
 	// attempt to close all floaters
 	void			closeAllChildren(bool app_quitting);
 	BOOL			allChildrenClosed();
+	// <edit>
+	void			minimizeAllChildren();
+	// </edit>
 
 	LLFloater* getFrontmost();
 	LLFloater* getBackmost();

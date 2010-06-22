@@ -75,7 +75,7 @@ private:
 	static void onBeamDelete(void* data);
 	static void onBeamColorDelete(void* data);
 	static void onCommitApplyControl(LLUICtrl* caller, void* user_data);
-	static void onCommitSendAppearance(LLUICtrl* ctrl, void* userdata);	
+	static void onCommitAvatarModifier(LLUICtrl* ctrl, void* userdata);
 	static void onTexturePickerCommit(LLUICtrl* ctrl, void* userdata);
 	static void onComboBoxCommit(LLUICtrl* ctrl, void* userdata);
 	static void onSpellBaseComboBoxCommit(LLUICtrl* ctrl, void* userdata);	

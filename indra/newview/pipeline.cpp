@@ -4210,6 +4210,9 @@ void LLPipeline::enableLightsAvatar()
 
 void LLPipeline::enableLightsAvatarEdit(const LLColor4& color)
 {
+	//Danny: Turn off local lights for appearance if they're disabled.
+	if(mLightingDetail < 1)
+		return;
 	U32 mask = 0x2002; // Avatar backlight only, set ambient
 	setupAvatarLights(TRUE);
 	enableLights(mask);

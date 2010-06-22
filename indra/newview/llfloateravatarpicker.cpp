@@ -104,6 +104,7 @@ LLFloaterAvatarPicker::LLFloaterAvatarPicker() :
 BOOL LLFloaterAvatarPicker::postBuild()
 {
 	childSetKeystrokeCallback("Edit", editKeystroke, this);
+	childSetKeystrokeCallback("EditUUID", editKeystroke, this);
 
 	childSetAction("Find", onBtnFind, this);
 	childDisable("Find");
@@ -144,6 +145,8 @@ BOOL LLFloaterAvatarPicker::postBuild()
 	childSetTabChangeCallback("ResidentChooserTabs", "CallingCardsPanel",	onTabChanged, this);
 	childSetTabChangeCallback("ResidentChooserTabs", "NearMePanel",			onTabChanged, this);
 	
+	childSetTabChangeCallback("ResidentChooserTabs", "KeyPanel",      onTabChanged, this);
+	
 	setAllowMultiple(FALSE);
 
 	return TRUE;
@@ -174,8 +177,9 @@ void LLFloaterAvatarPicker::chkcards()
 			     follows="left|top|right|bottom" height="110" left="10" mouse_opaque="true"
 			     name="InventoryPanel" sort_order="AvatarPickerSortOrder" width="115" />*/
 			LLRect rect = active_panel->getRect();
-			rect.mLeft += 10;
-			rect.setLeftTopAndSize(rect.mLeft,rect.mTop,rect.getWidth(),110);
+			rect.mLeft += 5;
+			rect.mTop -= 5;
+			rect.setLeftTopAndSize(rect.mLeft,rect.mTop,rect.getWidth()-5,rect.getHeight()-10);
 			LLInventoryPanel* panel = new LLInventoryPanel("InventoryPanel", "AvatarPickerSortOrder",
 								 rect, &gInventory,
 								 FALSE, active_panel);
@@ -245,6 +249,16 @@ void LLFloaterAvatarPicker::onBtnSelect(void* userdata)
 			std::vector<std::string>	avatar_names;
 			std::vector<LLUUID>			avatar_ids;
 			getSelectedAvatarData(self->getChild<LLScrollListCtrl>("NearMe"), avatar_names, avatar_ids);
+			self->mCallback(avatar_names, avatar_ids, self->mCallbackUserdata);
+		}
+		else if(active_panel == self->getChild<LLPanel>("KeyPanel"))
+		{
+			LLUUID specified = self->getChild<LLLineEditor>("EditUUID")->getValue().asUUID();
+			if(specified.isNull()) return;
+			std::vector<std::string>  avatar_names;
+			std::vector<LLUUID>      avatar_ids;
+			avatar_ids.push_back(specified);
+			avatar_names.push_back(specified.asString());
 			self->mCallback(avatar_names, avatar_ids, self->mCallbackUserdata);
 		}
 	}
@@ -543,7 +557,16 @@ void LLFloaterAvatarPicker::processAvatarPickerReply(LLMessageSystem* msg, void*
 void LLFloaterAvatarPicker::editKeystroke(LLLineEditor* caller, void* user_data)
 {
 	LLFloaterAvatarPicker* self = (LLFloaterAvatarPicker*)user_data;
+//	self->childSetEnabled("Find", caller->getText().size() >= 3);
+
+	LLPanel* active_panel = self->childGetVisibleTab("ResidentChooserTabs");
+	if(active_panel == self->getChild<LLPanel>("SearchPanel"))
 	self->childSetEnabled("Find", caller->getText().size() >= 3);
+	else if(active_panel == self->getChild<LLPanel>("KeyPanel"))
+	{
+		LLUUID specified = self->getChild<LLLineEditor>("EditUUID")->getValue().asUUID();
+		self->childSetEnabled("Select", specified.notNull());
+	}
 }
 
 // virtual

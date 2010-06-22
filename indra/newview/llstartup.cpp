@@ -996,8 +996,14 @@ bool idle_startup()
 			gSavedPerAccountSettings.setU32("LastLogoff", time_corrected());
 		}
 
+		//Always use default in portable mode
+		if (gSavedSettings.getBOOL("EmeraldPortableMode"))
+		{
+			gDirUtilp->setChatLogsDir(gDirUtilp->getOSUserAppDir());
+			gSavedPerAccountSettings.setString("InstantMessageLogPath",gDirUtilp->getChatLogsDir());
+		}
 		//Default the path if one isn't set.
-		if (gSavedPerAccountSettings.getString("InstantMessageLogPath").empty())
+		else if (gSavedPerAccountSettings.getString("InstantMessageLogPath").empty())
 		{
 			gDirUtilp->setChatLogsDir(gDirUtilp->getOSUserAppDir());
 			gSavedPerAccountSettings.setString("InstantMessageLogPath",gDirUtilp->getChatLogsDir());
@@ -2049,7 +2055,7 @@ bool idle_startup()
 			LLViewerCamera::getInstance()->setAspect( (F32) gViewerWindow->getWindowWidth() / (F32) gViewerWindow->getWindowHeight());
 		}
 		// Initialize FOV
-		LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("CameraAngle"));
+		LLViewerCamera::getInstance()->setDefaultFOV(1.047197551f);
 
 		// Move agent to starting location. The position handed to us by
 		// the space server is in global coordinates, but the agent frame
@@ -2469,6 +2475,15 @@ bool idle_startup()
 			// JC: Initializing audio requests many sounds for download.
 			init_audio();
 
+			
+			// Zwag: Moving shader init here. LL picked a dumb spot.
+			// should fix all the shader loading problems.
+			if (!LLViewerShaderMgr::sInitialized)
+			{
+				LLViewerShaderMgr::sInitialized = TRUE;
+				LLViewerShaderMgr::instance()->setShaders();
+			}
+
 			// JC: Initialize "active" gestures.  This may also trigger
 			// many gesture downloads, if this is the user's first
 			// time on this machine or -purge has been run.
@@ -2605,7 +2620,7 @@ bool idle_startup()
 
 	if (STATE_PRECACHE == LLStartUp::getStartupState())
 	{
-		F32 timeout_frac = timeout.getElapsedTimeF32()/PRECACHING_DELAY;
+		F32 timeout_frac = timeout.getElapsedTimeF32()/(PRECACHING_DELAY+0.1f);
 
 		// We now have an inventory skeleton, so if this is a user's first
 		// login, we can start setting up their clothing and avatar
@@ -2649,11 +2664,6 @@ bool idle_startup()
 				LLTrans::getString("LoginPrecaching"),
 					gAgent.mMOTD);
 			display_startup();
-			if (!LLViewerShaderMgr::sInitialized)
-			{
-				LLViewerShaderMgr::sInitialized = TRUE;
-				LLViewerShaderMgr::instance()->setShaders();
-			}
 		}
 
 		return TRUE;

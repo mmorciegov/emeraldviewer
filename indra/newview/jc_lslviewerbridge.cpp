@@ -433,10 +433,10 @@ void callbackBridgeCleanup(const LLSD &notification, const LLSD &response, LLVie
 				if(item)
 				{
 					move_inventory_item(gAgent.getID(),gAgent.getSessionID(),item->getUUID(),trash_cat,item->getName(), NULL);
-					cmdline_printchat("Moved item "+item->getName());
+					//cmdline_printchat("Moved item "+item->getName());
 				}
 			}
-			cmdline_printchat("Items moved.");
+			//cmdline_printchat("Items moved.");
 		}
 	}
 }

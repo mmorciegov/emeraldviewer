@@ -113,6 +113,7 @@ BOOL LLFloaterTopObjects::postBuild()
 	childSetAction("lagwarning", onLagWarningBtn, this);	
 	childSetAction("profile", onProfileBtn, this);	
 	childSetAction("kick", onKickBtn, this);	
+	childSetAction("tpto", onTPBtn, this);	
 
 
 	childSetAction("filter_object_btn", onGetByObjectNameClicked, this);
@@ -224,25 +225,40 @@ void LLFloaterTopObjects::handleReply(LLMessageSystem *msg, void** data)
 		element["columns"][3]["column"] = "location";
 		element["columns"][3]["value"] = llformat("<%0.1f,%0.1f,%0.1f>", location_x, location_y, location_z);
 		element["columns"][3]["font"] = "SANSSERIF";
-		element["columns"][4]["column"] = "time";
-		element["columns"][4]["value"] = formatted_time((time_t)time_stamp);
+
+		element["columns"][4]["column"] = "X location";
+		element["columns"][4]["value"] = llformat("%0.1f", location_x);
 		element["columns"][4]["font"] = "SANSSERIF";
+
+		element["columns"][5]["column"] = "Y location";
+		element["columns"][5]["value"] = llformat("%0.1f", location_y);
+			element["columns"][5]["font"] = "SANSSERIF";
+
+		element["columns"][6]["column"] = "Z location";
+		element["columns"][6]["value"] = llformat("%0.1f", location_z);
+			element["columns"][6]["font"] = "SANSSERIF";
+
+		element["columns"][7]["column"] = "time";
+		element["columns"][7]["value"] = formatted_time((time_t)time_stamp);
+		element["columns"][7]["font"] = "SANSSERIF";
 
 		if (mCurrentMode == STAT_REPORT_TOP_SCRIPTS
 			&& have_extended_data)
 		{
-			element["columns"][5]["column"] = "mono_time";
-			element["columns"][5]["value"] = llformat("%0.3f", mono_score);
-			element["columns"][5]["font"] = "SANSSERIF";
+			element["columns"][8]["column"] = "mono_time";
+			element["columns"][8]["value"] = llformat("%0.3f", mono_score);
+			element["columns"][8]["font"] = "SANSSERIF";
 
-			element["columns"][6]["column"] = "URLs";
-			element["columns"][6]["value"] = llformat("%d", public_urls);
-			element["columns"][6]["font"] = "SANSSERIF";
+			element["columns"][9]["column"] = "URLs";
+			element["columns"][9]["value"] = llformat("%d", public_urls);
+			element["columns"][9]["font"] = "SANSSERIF";
 		}
 		
 		//for storing ids etc
-		element["columns"][7]["value"] = task_id;
-		element["columns"][8]["value"] = score;
+		element["columns"][10]["column"] = "hiddentaskid";
+		element["columns"][10]["value"] = task_id;
+		element["columns"][11]["column"] = "hiddenscore";
+		element["columns"][11]["value"] = score;
 
 		list->addElement(element);
 		
@@ -328,7 +344,7 @@ void LLFloaterTopObjects::lookAtAvatar()
 	if (!list) return;
 	LLScrollListItem* first_selected = list->getFirstSelected();
 	if (!first_selected) return;
-	LLUUID taskid = first_selected->getColumn(7)->getValue();
+	LLUUID taskid = first_selected->getColumn(10)->getValue();
 
     LLViewerObject* voavatar = gObjectList.findObject(taskid);
     if(voavatar && voavatar->isAvatar())
@@ -443,11 +459,11 @@ void LLFloaterTopObjects::onLagWarning(void* data)
 		if (!list) return;
 	LLScrollListItem* first_selected = list->getFirstSelected();
 	if (!first_selected) return;
-	LLUUID taskid = first_selected->getColumn(7)->getValue();
+	LLUUID taskid = first_selected->getColumn(10)->getValue();
 	
 //	LLUUID taskid = LLUUID(first_selected->getColumn(7)->getValue());
 	std::string name = first_selected->getColumn(1)->getValue().asString();
-	std::string score = first_selected->getColumn(8)->getValue().asString();
+	std::string score = first_selected->getColumn(11)->getValue().asString();
 
 	std::istringstream stm;
 	stm.str(score);
@@ -492,7 +508,7 @@ void LLFloaterTopObjects::onProfile(void* data)
 		if (!list) return;
 	LLScrollListItem* first_selected = list->getFirstSelected();
 	if (!first_selected) return;
-	LLUUID taskid = first_selected->getColumn(7)->getValue();
+	LLUUID taskid = first_selected->getColumn(10)->getValue();
 	LLFloaterAvatarInfo::showFromDirectory(taskid);
 }
 
@@ -508,7 +524,7 @@ void LLFloaterTopObjects::onKick(void* data)
 		if (!list) return;
 	LLScrollListItem* first_selected = list->getFirstSelected();
 	if (!first_selected) return;
-	LLUUID taskid = first_selected->getColumn(7)->getValue();
+	LLUUID taskid = first_selected->getColumn(10)->getValue();
 
 	LLMessageSystem* msg = gMessageSystem;
 	msg->newMessage("EstateOwnerMessage");
@@ -523,6 +539,33 @@ void LLFloaterTopObjects::onKick(void* data)
 	msg->addString("Parameter", taskid.asString().c_str());
 	msg->sendReliable(gAgent.getRegionHost());
 }
+
+void LLFloaterTopObjects::onTPBtn(void* data)
+{
+	LLFloaterTopObjects* self = (LLFloaterTopObjects*)data;
+	self->onTP(data);
+}
+
+void LLFloaterTopObjects::onTP(void* data)
+{
+	LLScrollListCtrl* list = getChild<LLScrollListCtrl>("objects_list");
+		if (!list) return;
+	LLScrollListItem* first_selected = list->getFirstSelected();
+	if (!first_selected) return;
+
+	std::string name = first_selected->getColumn(1)->getValue().asString();
+	std::string pos_string =  first_selected->getColumn(3)->getValue().asString();
+
+	F32 x, y, z;
+	S32 matched = sscanf(pos_string.c_str(), "<%g,%g,%g>", &x, &y, &z);
+	if (matched != 3) return;
+
+	LLVector3 pos_agent(x, y, z);
+	LLVector3d pos_global = gAgent.getPosGlobalFromAgent(pos_agent);
+
+	gAgent.teleportViaLocation( pos_global );
+}
+
 
 
 //static

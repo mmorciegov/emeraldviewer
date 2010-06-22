@@ -231,11 +231,10 @@ class LLMessageSystem : public LLMessageSenderInterface
 	typedef std::map<const char *, LLMessageTemplate*> message_template_name_map_t;
 	typedef std::map<U32, LLMessageTemplate*> message_template_number_map_t;
 
-private:
 	message_template_name_map_t		mMessageTemplates;
 	message_template_number_map_t		mMessageNumbers;
 
-public:
+
 	S32					mSystemVersionMajor;
 	S32					mSystemVersionMinor;
 	S32					mSystemVersionPatch;
@@ -569,6 +568,9 @@ public:
 
 	void	showCircuitInfo();
 	void getCircuitInfo(LLSD& info) const;
+
+	LLCircuit* getCircuit();
+
 
 	U32 getOurCircuitCode();
 	

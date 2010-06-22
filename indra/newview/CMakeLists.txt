@@ -110,6 +110,7 @@ set(viewer_SOURCE_FILES
 	jc_lslviewerbridge.cpp
 	jcfloater_animation_list.cpp
 	jcfloater_areasearch.cpp
+	llfloatermessagelog.cpp
 	mfdkeywordfloater.cpp
 	otr_wrapper.cpp
     otr_floater_smp_dialog.cpp
@@ -566,6 +567,7 @@ set(viewer_HEADER_FILES
 	lggbeammaps.h
 	lggdicdownload.h
 	lgghunspell_wrapper.h
+	llfloatermessagelog.h
 	mfdkeywordfloater.h
 	otr_wrapper.h
     otr_floater_smp_dialog.h
@@ -1578,6 +1580,8 @@ endif (INSTALL)
 # Add tests
 if (NOT STANDALONE)
 	#ADD_VIEWER_BUILD_TEST(llagentaccess viewer)
+	#ADD_VIEWER_BUILD_TEST(llworldmap viewer)
+	#ADD_VIEWER_BUILD_TEST(llworldmipmap viewer)
 	#ADD_VIEWER_BUILD_TEST(llworldmap viewer)
 	#ADD_VIEWER_BUILD_TEST(llworldmipmap viewer)
 	#ADD_VIEWER_BUILD_TEST(lltextureinfo viewer)

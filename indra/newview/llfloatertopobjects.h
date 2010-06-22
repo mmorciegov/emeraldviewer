@@ -58,6 +58,7 @@ public:
 
 	void onProfile(void* data);
 	void onKick(void* data);
+	void onTP(void* data);
 	void onLagWarning(void* data);
 
 private:
@@ -80,6 +81,7 @@ private:
 
 	static void onProfileBtn(void* data);
 	static void onKickBtn(void* data);
+	static void onTPBtn(void* data);
 	static void onLagWarningBtn(void* data);
 	
 	static bool callbackReturnAll(const LLSD& notification, const LLSD& response);

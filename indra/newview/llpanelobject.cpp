@@ -653,7 +653,8 @@ void LLPanelObject::getState( )
 				mComboMaterial->remove(LEGACY_FULLBRIGHT_DESC);
 			}
 			// *TODO:Translate
-			mComboMaterial->setSimple(std::string(LLMaterialTable::basic.getName(material_code)));
+			if(material_code <= 8)
+				mComboMaterial->setSimple(std::string(LLMaterialTable::basic.getName(material_code)));
 		}
 	}
 	else

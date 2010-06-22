@@ -1408,7 +1408,7 @@ void LLFloater::draw()
 		S32 right = getRect().getWidth() - LLPANEL_BORDER_WIDTH;
 		S32 bottom = LLPANEL_BORDER_WIDTH;
 
-		static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
+		/*static LLColor4* sColorDropShadow = rebind_llcontrol<LLColor4>("ColorDropShadow", LLUI::sColorsGroup, true);
 
 		LLColor4 shadow_color = (*sColorDropShadow);
 		static S32* sDropShadowFloater = rebind_llcontrol<S32>("DropShadowFloater", LLUI::sConfigGroup, true);
@@ -1421,7 +1421,7 @@ void LLFloater::draw()
 		}
 		gl_drop_shadow(left, top, right, bottom, 
 			shadow_color, 
-			llround(shadow_offset));
+			llround(shadow_offset));*/
 
 		// No transparent windows in simple UI
 		if (isBackgroundOpaque())
@@ -2194,6 +2194,32 @@ void LLFloaterView::closeAllChildren(bool app_quitting)
 	}
 }
 
+// <edit>
+void LLFloaterView::minimizeAllChildren()
+{
+	// iterate over a copy of the list, because closing windows will destroy
+	// some windows on the list.
+	child_list_t child_list = *(getChildList());
+
+	for (child_list_const_iter_t it = child_list.begin(); it != child_list.end(); ++it)
+	{
+		LLView* viewp = *it;
+		child_list_const_iter_t exists = std::find(getChildList()->begin(), getChildList()->end(), viewp);
+		if (exists == getChildList()->end())
+		{
+			// this floater has already been removed
+			continue;
+		}
+
+		LLFloater* floaterp = (LLFloater*)viewp;
+
+		if (!floaterp->isDead())
+		{
+			floaterp->setMinimized(TRUE);
+		}
+	}
+}
+// </edit>
 
 BOOL LLFloaterView::allChildrenClosed()
 {

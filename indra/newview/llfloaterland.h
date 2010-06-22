@@ -146,6 +146,7 @@ public:
 	void setGroup(const LLUUID& group_id);
 	static void onClickProfile(void*);
 	static void onClickSetGroup(void*);
+	static void onClickInfoGroup(void*);
 	static void cbGroupID(LLUUID group_id, void* userdata);
 	static BOOL enableDeedToGroup(void*);
 	static void onClickDeed(void*);

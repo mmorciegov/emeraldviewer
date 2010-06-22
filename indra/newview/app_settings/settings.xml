@@ -54,7 +54,7 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>1</integer>
+      <integer>0</integer>
     </map>
     <key>EmeraldTemporaryUpload</key>
     <map>
@@ -73,6 +73,83 @@
       <string>If true, prevents the inventory folders from changing on new items</string>
       <key>Persist</key>
       <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldEnableInvMirror</key>
+    <map>
+      <key>Comment</key>
+      <string>lolu</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldInvMirrorLocation</key>
+    <map>
+      <key>Comment</key>
+      <string>toast</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string></string>
+    </map>
+    <key>EmeraldEnableHDDInclude</key>
+    <map>
+      <key>Comment</key>
+      <string>orly</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldHDDIncludeLocation</key>
+    <map>
+      <key>Comment</key>
+      <string>toast</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>String</string>
+      <key>Value</key>
+      <string></string>
+    </map>
+    <key>EmeraldInvMirrorGestures</key>
+    <map>
+      <key>Comment</key>
+      <string>lolu</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldInvMirrorNotecards</key>
+    <map>
+      <key>Comment</key>
+      <string>lolu</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>EmeraldInvMirrorScripts</key>
+    <map>
+      <key>Comment</key>
+      <string>lolu</string>
+      <key>Persist</key>
+      <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
@@ -816,39 +893,6 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-    <key>EmeraldAvatarXModifier</key>
-    <map>
-      <key>Comment</key>
-      <string>wat</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>F32</string>
-      <key>Value</key>
-      <real>0.0</real>
-    </map>
-    <key>EmeraldAvatarYModifier</key>
-    <map>
-      <key>Comment</key>
-      <string>wat</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>F32</string>
-      <key>Value</key>
-      <real>0.0</real>
-    </map>
-    <key>EmeraldAvatarZModifier</key>
-    <map>
-      <key>Comment</key>
-      <string>wat</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>F32</string>
-      <key>Value</key>
-      <real>0.0</real>
-    </map>
 		<key>EmeraldBoobFriction</key>
 		<map>
 			<key>Comment</key>
@@ -1162,6 +1206,17 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
+    <key>EmeraldShowStatusBarInMouselook</key>
+    <map>
+      <key>Comment</key>
+      <string>Makes it so that the statistics bar stays visable when entering mouselook if it was open already.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
 		<key>EmeraldShowStreamMetadata</key>
 		<map>
 			<key>Comment</key>
@@ -1525,6 +1580,17 @@
 			<key>Value</key>
 			<integer>0</integer>
 		</map>
+    <key>EmeraldPortableMode</key>
+    <map>
+      <key>Comment</key>
+      <string>Client is running in portable mode</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
 		<key>ShowAvatarList</key>
 		<map>
 			<key>Comment</key>
@@ -10344,7 +10410,7 @@
 			<key>Type</key>
 			<string>F32</string>
 			<key>Value</key>
-			<real>1.0</real>
+			<real>2.25</real>
 		</map>
 		<key>RenderWater</key>
 		<map>
@@ -14521,6 +14587,17 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
+    <key>EmeraldLeaveMouselookOnFocus</key>
+    <map>
+      <key>Comment</key>
+      <string>Leave mouselook when the application gains focus</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
 	    <key>FloaterTeleportHistoryRect</key>
 	    <map>
 	      <key>Comment</key>

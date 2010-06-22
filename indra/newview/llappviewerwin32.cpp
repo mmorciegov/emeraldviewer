@@ -199,6 +199,20 @@ int APIENTRY WINMAIN(HINSTANCE hInstance,
 	bool found_other_instance = !create_app_mutex();
 	gDebugInfo["FoundOtherInstanceAtStartup"] = LLSD::Boolean(found_other_instance);
 
+	// do early parsing of command line to check for --portable or --appname parameter
+	{
+		std::string cmdline(lpCmdLine);
+		std::string::size_type pos;
+
+		pos = cmdline.find("--portable");
+
+		if(pos != std::string::npos)
+		{
+			gDebugInfo["EmeraldPortableMode"] = LLSD::Boolean(true);
+		}
+	}
+
+
 	bool ok = viewer_app_ptr->init();
 	if(!ok)
 	{

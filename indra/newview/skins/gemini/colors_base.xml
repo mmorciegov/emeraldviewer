@@ -6,7 +6,7 @@
 <FloaterFocusBorderColor value="0, 0, 0, 50" />
 <FloaterUnfocusBorderColor value="0, 0, 0, 80" />
 <FocusBackgroundColor value="33, 33, 33, 255" />	<!-- Background color of focused floaters -->
-<DefaultBackgroundColor value="33, 33, 33, 128" />	<!-- Background color for unfocused floaters -->
+<DefaultBackgroundColor value="33, 33, 33, 192" />	<!-- Background color for unfocused floaters -->
 <ColorDropShadow value="0, 0, 0, 180" />		<!-- The drop shadow behind windows and menus -->
 <DefaultHighlightDark value="26, 26, 26, 255" />
 <DefaultHighlightLight value="66, 66, 66, 255" />

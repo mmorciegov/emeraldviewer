@@ -1554,6 +1554,20 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 	msg->getU32Fast( _PREHASH_MessageBlock, _PREHASH_Timestamp, timestamp);
 	//msg->getData("MessageBlock", "Count",		&count);
 	msg->getStringFast(_PREHASH_MessageBlock, _PREHASH_FromAgentName, name);
+
+	name = utf8str_trim(name);
+	while(name.length() >= 7 && name.substr(0,7) == "http://")
+	{
+		name = name.substr(7);
+		name = utf8str_trim(name);
+	}
+	while(name.length() >= 13 && name.substr(0,13) == "secondlife://")
+	{
+		name = name.substr(13);
+		name = utf8str_trim(name);
+	}
+	if(name == "")name = "(empty)";
+
 	msg->getStringFast(_PREHASH_MessageBlock, _PREHASH_Message,		message);
 	msg->getU32Fast(_PREHASH_MessageBlock, _PREHASH_ParentEstateID, parent_estate_id);
 	msg->getUUIDFast(_PREHASH_MessageBlock, _PREHASH_RegionID, region_id);

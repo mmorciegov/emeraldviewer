@@ -226,6 +226,7 @@
 #include "floaterao.h"
 #include "scriptcounter.h"
 
+#include "llfloatermessagelog.h"
 using namespace LLVOAvatarDefines;
 void init_client_menu(LLMenuGL* menu);
 void init_server_menu(LLMenuGL* menu);
@@ -1014,7 +1015,7 @@ void init_client_menu(LLMenuGL* menu)
 // [RLVa:KB] - Checked: 2009-07-08 (RLVa-1.0.0e) | Modified: RLVa-1.0.0e
 	#ifdef RLV_ADVANCED_TOGGLE_RLVA
 		if (gSavedSettings.controlExists(RLV_SETTING_MAIN))
-			menu->append(new LLMenuItemCheckGL("Restrained Life API", &rlvToggleEnabled, NULL, &rlvGetEnabled, NULL));
+			menu->append(new LLMenuItemCheckGL("Restrained Love API", &rlvToggleEnabled, NULL, &rlvGetEnabled, NULL));
 	#endif // RLV_ADVANCED_TOGGLE_RLVA
 // [/RLVa:KB]
 
@@ -5936,6 +5937,10 @@ class LLShowFloater : public view_listener_t
 			gFloaterTeleportHistory->setVisible(!gFloaterTeleportHistory->getVisible());
 			gFloaterTeleportHistory->setFocus(TRUE);
 		}
+		else if (floater_name == "message log")
+		{
+			LLFloaterMessageLog::show();
+		}
 		else if (floater_name == "im")
 		{
 			LLFloaterChatterBox::toggleInstance(LLSD());
@@ -6098,6 +6103,12 @@ class LLFloaterVisible : public view_listener_t
 		else if (floater_name == "teleport history")
 		{
 			new_value = gFloaterTeleportHistory->getVisible();
+		}
+		else if (floater_name == "message log")
+		{
+			LLFloaterMessageLog* messageLogInstance = LLFloaterMessageLog::getInstance();
+			if(messageLogInstance)
+			new_value = messageLogInstance->getVisible();
 		}
 		else if (floater_name == "im")
 		{
@@ -8955,6 +8966,26 @@ class LLWorldWaterSettings : public view_listener_t
 	}
 };
 
+/// Sky Menu callbacks added by Kirstenlee ^^
+class LLWorldSkySettings : public view_listener_t
+{	
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		// if not there or is hidden, show it
+		if(	!LLFloaterWindLight::isOpen() || 
+			!LLFloaterWindLight::instance()->getVisible()) {
+			LLFloaterWindLight::show();
+				
+		// otherwise, close it button acts like a toggle
+		} 
+		else 
+		{
+			LLFloaterWindLight::instance()->close();
+		}
+		return true;
+	}
+};
+
 /// Post-Process callbacks
 class LLWorldPostProcess : public view_listener_t
 {
@@ -9169,6 +9200,7 @@ void initialize_menus()
 	(new LLWorldWaterSettings())->registerListener(gMenuHolder, "World.WaterSettings");
 	(new LLWorldPostProcess())->registerListener(gMenuHolder, "World.PostProcess");
 	(new LLWorldDayCycle())->registerListener(gMenuHolder, "World.DayCycle");
+	(new LLWorldSkySettings())->registerListener(gMenuHolder, "World.SkySettings");  // KL
 
 	// Tools menu
 	addMenu(new LLToolsSelectTool(), "Tools.SelectTool");

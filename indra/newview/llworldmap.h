@@ -117,6 +117,9 @@ public:
 	const S32 getAgentCount() const;				// Compute the total agents count
 	LLPointer<LLViewerImage> getLandForSaleImage();	// Get the overlay image, fetch it if necessary
 
+	//for map images on opensim.
+	const LLUUID getMapImageID() const { return mMapImageID; }
+
 	bool isName(const std::string& name) const;
 	bool isDown() { return (mAccess == SIM_ACCESS_DOWN); }
 	bool isPG() { return (mAccess <= SIM_ACCESS_PG); }

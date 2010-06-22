@@ -7909,7 +7909,7 @@ void LLVOAvatar::setCachedBakedTexture( ETextureIndex te, const LLUUID& uuid )
 // release any component texture UUIDs for which we have a baked texture
 //-----------------------------------------------------------------------------
 void LLVOAvatar::releaseUnnecessaryTextures()
-{/*
+{
 	// Backwards Compat: detect if the baked hair texture actually wasn't sent, and if so set to default
 	if (isTextureDefined(TEX_HAIR_BAKED) && getTEImage(TEX_HAIR_BAKED)->getID() == getTEImage(TEX_SKIRT_BAKED)->getID())
 	{
@@ -7924,6 +7924,10 @@ void LLVOAvatar::releaseUnnecessaryTextures()
 	{
 		const LLVOAvatarDictionary::BakedDictionaryEntry * bakedDicEntry = LLVOAvatarDictionary::getInstance()->getBakedTexture((EBakedTextureIndex)baked_index);
 		// skip if this is a skirt and av is not wearing one, or if we don't have a baked texture UUID
+		if(baked_index == BAKED_HEAD)
+                continue;
+		if(baked_index == BAKED_EYES)
+                continue;
 		if (!isTextureDefined(bakedDicEntry->mTextureIndex)
 			&& ( (baked_index != BAKED_SKIRT) || isWearingWearableType(WT_SKIRT) ))
 		{
@@ -7935,7 +7939,7 @@ void LLVOAvatar::releaseUnnecessaryTextures()
 			const U8 te = (ETextureIndex)bakedDicEntry->mLocalTextures[texture];
 			setTETexture(te, IMG_DEFAULT_AVATAR);
 		}
-	}*/
+	}
 }
 
 //-----------------------------------------------------------------------------

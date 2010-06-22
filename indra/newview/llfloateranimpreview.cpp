@@ -164,6 +164,7 @@ BOOL LLFloaterAnimPreview::postBuild()
 
 	childSetLabelArg("ok_btn", "[AMOUNT]", llformat("%d",sUploadAmount));
 	childSetAction("ok_btn", onBtnOK, this);
+	childSetAction("cancel_btn", onBtnCancel, this);
 	setDefaultBtn();
 
 	mPreviewRect.set(PREVIEW_HPAD, 
@@ -268,12 +269,12 @@ BOOL LLFloaterAnimPreview::postBuild()
 		mTransactionID.generate();
 		mMotionID = mTransactionID.makeAssetID(gAgent.getSecureSessionID());
 
-		mAnimPreview = new LLPreviewAnimation(256, 256);
+		//mAnimPreview = new LLPreviewAnimation(256, 256);
 
 		// motion will be returned, but it will be in a load-pending state, as this is a new motion
 		// this motion will not request an asset transfer until next update, so we have a chance to 
 		// load the keyframe data locally
-		motionp = (LLKeyframeMotion*)mAnimPreview->getDummyAvatar()->createMotion(mMotionID);
+		motionp = (LLKeyframeMotion*)gAgent.getAvatarObject()->createMotion(mMotionID);//mAnimPreview->getDummyAvatar()->createMotion(mMotionID);
 
 		// create data buffer for keyframe initialization
 		S32 buffer_size = loaderp->getOutputSize();
@@ -292,6 +293,7 @@ BOOL LLFloaterAnimPreview::postBuild()
 		{
 			setAnimCallbacks() ;
 			
+			/*
 			const LLBBoxLocal &pelvis_bbox = motionp->getPelvisBBox();
 
 			LLVector3 temp = pelvis_bbox.getCenter();
@@ -306,9 +308,10 @@ BOOL LLFloaterAnimPreview::postBuild()
 			F32 camera_zoom = LLViewerCamera::getInstance()->getDefaultFOV() / (2.f * atan(pelvis_max_displacement / PREVIEW_CAMERA_DISTANCE));
 		
 			mAnimPreview->setZoom(camera_zoom);
+			*/
 
 			motionp->setName(childGetValue("name_form").asString());
-			mAnimPreview->getDummyAvatar()->startMotion(mMotionID);
+			//mAnimPreview->getDummyAvatar()->startMotion(mMotionID);
 			childSetMinValue("playback_slider", 0.0);
 			childSetMaxValue("playback_slider", 1.0);
 
@@ -327,8 +330,8 @@ BOOL LLFloaterAnimPreview::postBuild()
 		}
 		else
 		{
-			delete mAnimPreview;
-			mAnimPreview = NULL;
+			//delete mAnimPreview;
+			//mAnimPreview = NULL;
 			mMotionID.setNull();
 			childSetValue("bad_animation_text", getString("failed_to_initialize"));
 		}
@@ -354,7 +357,7 @@ BOOL LLFloaterAnimPreview::postBuild()
 
 		//setEnabled(FALSE);
 		mMotionID.setNull();
-		mAnimPreview = NULL;
+		//mAnimPreview = NULL;
 	}
 
 	refresh();
@@ -369,8 +372,8 @@ BOOL LLFloaterAnimPreview::postBuild()
 //-----------------------------------------------------------------------------
 LLFloaterAnimPreview::~LLFloaterAnimPreview()
 {
-	delete mAnimPreview;
-	mAnimPreview = NULL;
+	//delete mAnimPreview;
+	//mAnimPreview = NULL;
 
 	setEnabled(FALSE);
 }
@@ -378,6 +381,7 @@ LLFloaterAnimPreview::~LLFloaterAnimPreview()
 //-----------------------------------------------------------------------------
 // draw()
 //-----------------------------------------------------------------------------
+/*
 void LLFloaterAnimPreview::draw()
 {
 	LLFloater::draw();
@@ -414,12 +418,14 @@ void LLFloaterAnimPreview::draw()
 	}
 }
 
+*/
+
 //-----------------------------------------------------------------------------
 // resetMotion()
 //-----------------------------------------------------------------------------
 void LLFloaterAnimPreview::resetMotion()
 {
-	LLVOAvatar* avatarp = mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//mAnimPreview->getDummyAvatar();
 	BOOL paused = avatarp->areAnimationsPaused();
 
 	// *TODO: Fix awful casting hack
@@ -455,6 +461,7 @@ void LLFloaterAnimPreview::resetMotion()
 //-----------------------------------------------------------------------------
 BOOL LLFloaterAnimPreview::handleMouseDown(S32 x, S32 y, MASK mask)
 {
+	/*
 	if (mPreviewRect.pointInRect(x, y))
 	{
 		bringToFront( x, y );
@@ -464,6 +471,7 @@ BOOL LLFloaterAnimPreview::handleMouseDown(S32 x, S32 y, MASK mask)
 		mLastMouseY = y;
 		return TRUE;
 	}
+	*/
 
 	return LLFloater::handleMouseDown(x, y, mask);
 }
@@ -473,8 +481,10 @@ BOOL LLFloaterAnimPreview::handleMouseDown(S32 x, S32 y, MASK mask)
 //-----------------------------------------------------------------------------
 BOOL LLFloaterAnimPreview::handleMouseUp(S32 x, S32 y, MASK mask)
 {
+	/*
 	gFocusMgr.setMouseCapture(FALSE);
 	gViewerWindow->showCursor();
+	*/
 	return LLFloater::handleMouseUp(x, y, mask);
 }
 
@@ -483,6 +493,7 @@ BOOL LLFloaterAnimPreview::handleMouseUp(S32 x, S32 y, MASK mask)
 //-----------------------------------------------------------------------------
 BOOL LLFloaterAnimPreview::handleHover(S32 x, S32 y, MASK mask)
 {
+	/*
 	MASK local_mask = mask & ~MASK_ALT;
 
 	if (mAnimPreview && hasMouseCapture())
@@ -529,7 +540,7 @@ BOOL LLFloaterAnimPreview::handleHover(S32 x, S32 y, MASK mask)
 	{
 		gViewerWindow->setCursor(UI_CURSOR_TOOLZOOMIN);
 	}
-
+	*/
 	return TRUE;
 }
 
@@ -538,9 +549,10 @@ BOOL LLFloaterAnimPreview::handleHover(S32 x, S32 y, MASK mask)
 //-----------------------------------------------------------------------------
 BOOL LLFloaterAnimPreview::handleScrollWheel(S32 x, S32 y, S32 clicks)
 {
+	/*
 	mAnimPreview->zoom((F32)clicks * -0.2f);
 	mAnimPreview->requestUpdate();
-
+	*/
 	return TRUE;
 }
 
@@ -549,7 +561,9 @@ BOOL LLFloaterAnimPreview::handleScrollWheel(S32 x, S32 y, S32 clicks)
 //-----------------------------------------------------------------------------
 void LLFloaterAnimPreview::onMouseCaptureLost()
 {
+	/*
 	gViewerWindow->showCursor();
+	*/
 }
 
 //-----------------------------------------------------------------------------
@@ -561,9 +575,9 @@ void LLFloaterAnimPreview::onBtnPlay(void* user_data)
 	if (!previewp->getEnabled())
 		return;
 
-	if (previewp->mMotionID.notNull() && previewp->mAnimPreview)
+	if (previewp->mMotionID.notNull())//&& previewp->mAnimPreview)
 	{
-		LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+		LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 
 		if(!avatarp->isMotionActive(previewp->mMotionID))
 		{
@@ -593,9 +607,9 @@ void LLFloaterAnimPreview::onBtnStop(void* user_data)
 	if (!previewp->getEnabled())
 		return;
 
-	if (previewp->mMotionID.notNull() && previewp->mAnimPreview)
+	if (previewp->mMotionID.notNull())// && previewp->mAnimPreview)
 	{
-		LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+		LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 		previewp->resetMotion();
 		previewp->mPauseRequest = avatarp->requestPause();
 	}
@@ -610,9 +624,9 @@ void LLFloaterAnimPreview::onSliderMove(LLUICtrl* ctrl, void*user_data)
 	if (!previewp->getEnabled())
 		return;
 
-	if (previewp->mAnimPreview)
+	if (gAgent.getAvatarObject())//previewp->mAnimPreview)
 	{
-		LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+		LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 		F32 slider_value = (F32)previewp->childGetValue("playback_slider").asReal();
 		LLUUID base_id = previewp->mIDList[previewp->childGetValue("preview_base_anim").asString()];
 		LLMotion* motionp = avatarp->findMotion(previewp->mMotionID);
@@ -636,9 +650,9 @@ void LLFloaterAnimPreview::onCommitBaseAnim(LLUICtrl* ctrl, void* data)
 	if (!previewp->getEnabled())
 		return;
 
-	if (previewp->mAnimPreview)
+	if (gAgent.getAvatarObject())//previewp->mAnimPreview)
 	{
-		LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+		LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 
 		BOOL paused = avatarp->areAnimationsPaused();
 
@@ -666,7 +680,7 @@ void LLFloaterAnimPreview::onCommitLoop(LLUICtrl* ctrl, void* data)
 	if (!previewp->getEnabled())
 		return;
 	
-	LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 	LLKeyframeMotion* motionp = (LLKeyframeMotion*)avatarp->findMotion(previewp->mMotionID);
 
 	if (motionp)
@@ -686,7 +700,7 @@ void LLFloaterAnimPreview::onCommitLoopIn(LLUICtrl* ctrl, void* data)
 	if (!previewp->getEnabled())
 		return;
 
-	LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 	LLKeyframeMotion* motionp = (LLKeyframeMotion*)avatarp->findMotion(previewp->mMotionID);
 
 	if (motionp)
@@ -707,7 +721,7 @@ void LLFloaterAnimPreview::onCommitLoopOut(LLUICtrl* ctrl, void* data)
 	if (!previewp->getEnabled())
 		return;
 
-	LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 	LLKeyframeMotion* motionp = (LLKeyframeMotion*)avatarp->findMotion(previewp->mMotionID);
 
 	if (motionp)
@@ -728,7 +742,7 @@ void LLFloaterAnimPreview::onCommitName(LLUICtrl* ctrl, void* data)
 	if (!previewp->getEnabled())
 		return;
 
-	LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 	LLKeyframeMotion* motionp = (LLKeyframeMotion*)avatarp->findMotion(previewp->mMotionID);
 
 	if (motionp)
@@ -772,7 +786,7 @@ void LLFloaterAnimPreview::onCommitPriority(LLUICtrl* ctrl, void* data)
 	if (!previewp->getEnabled())
 		return;
 
-	LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 	LLKeyframeMotion* motionp = (LLKeyframeMotion*)avatarp->findMotion(previewp->mMotionID);
 
 	motionp->setPriority(llfloor((F32)previewp->childGetValue("priority").asReal()));
@@ -787,7 +801,7 @@ void LLFloaterAnimPreview::onCommitEaseIn(LLUICtrl* ctrl, void* data)
 	if (!previewp->getEnabled())
 		return;
 
-	LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 	LLKeyframeMotion* motionp = (LLKeyframeMotion*)avatarp->findMotion(previewp->mMotionID);
 
 	motionp->setEaseIn((F32)previewp->childGetValue("ease_in_time").asReal());
@@ -803,7 +817,7 @@ void LLFloaterAnimPreview::onCommitEaseOut(LLUICtrl* ctrl, void* data)
 	if (!previewp->getEnabled())
 		return;
 
-	LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 	LLKeyframeMotion* motionp = (LLKeyframeMotion*)avatarp->findMotion(previewp->mMotionID);
 
 	motionp->setEaseOut((F32)previewp->childGetValue("ease_out_time").asReal());
@@ -819,7 +833,7 @@ BOOL LLFloaterAnimPreview::validateEaseIn(LLUICtrl* spin, void* data)
 	if (!previewp->getEnabled())
 		return FALSE;
 
-	LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 	LLKeyframeMotion* motionp = (LLKeyframeMotion*)avatarp->findMotion(previewp->mMotionID);
 	
 	if (!motionp->getLoop())
@@ -841,7 +855,7 @@ BOOL LLFloaterAnimPreview::validateEaseOut(LLUICtrl* spin, void* data)
 	if (!previewp->getEnabled())
 		return FALSE;
 
-	LLVOAvatar* avatarp = previewp->mAnimPreview->getDummyAvatar();
+	LLVOAvatar* avatarp = gAgent.getAvatarObject();//previewp->mAnimPreview->getDummyAvatar();
 	LLKeyframeMotion* motionp = (LLKeyframeMotion*)avatarp->findMotion(previewp->mMotionID);
 	
 	if (!motionp->getLoop())
@@ -917,6 +931,7 @@ BOOL LLFloaterAnimPreview::validateLoopOut(LLUICtrl* spin, void* data)
 //-----------------------------------------------------------------------------
 void LLFloaterAnimPreview::refresh()
 {
+	/*
 	if (!mAnimPreview)
 	{
 		childShow("bad_animation_text");
@@ -925,10 +940,11 @@ void LLFloaterAnimPreview::refresh()
 		childDisable("ok_btn");
 	}
 	else
+	*/
 	{
 		childHide("bad_animation_text");
 		mPlayButton->setEnabled(TRUE);
-		LLVOAvatar* avatarp = mAnimPreview->getDummyAvatar();
+		LLVOAvatar* avatarp = gAgent.getAvatarObject();//mAnimPreview->getDummyAvatar();
 		if (avatarp->isMotionActive(mMotionID))
 		{
 			mStopButton->setEnabled(TRUE);
@@ -961,10 +977,25 @@ void LLFloaterAnimPreview::refresh()
 			mStopButton->setEnabled(TRUE); // stop also resets, leave enabled.
 		}
 		childEnable("ok_btn");
-		mAnimPreview->requestUpdate();
+		//mAnimPreview->requestUpdate();
 	}
 }
 
+//-----------------------------------------------------------------------------
+// onBtnCancel()
+//-----------------------------------------------------------------------------
+void LLFloaterAnimPreview::onBtnCancel(void* userdata)
+{
+	LLFloaterAnimPreview* floaterp = (LLFloaterAnimPreview*)userdata;
+	if (!floaterp->getEnabled()) return;
+
+	if (floaterp->mMotionID.notNull())//floaterp->mAnimPreview)
+	{
+		gAgent.getAvatarObject()->removeMotion(floaterp->mMotionID);
+		LLKeyframeDataCache::removeKeyframeData(floaterp->mMotionID);
+	}
+	floaterp->close(false);
+}
 //-----------------------------------------------------------------------------
 // onBtnOK()
 //-----------------------------------------------------------------------------
@@ -973,9 +1004,9 @@ void LLFloaterAnimPreview::onBtnOK(void* userdata)
 	LLFloaterAnimPreview* floaterp = (LLFloaterAnimPreview*)userdata;
 	if (!floaterp->getEnabled()) return;
 
-	if (floaterp->mAnimPreview)
+	if (floaterp->mMotionID.notNull())//floaterp->mAnimPreview)
 	{
-		LLKeyframeMotion* motionp = (LLKeyframeMotion*)floaterp->mAnimPreview->getDummyAvatar()->findMotion(floaterp->mMotionID);
+		LLKeyframeMotion* motionp = (LLKeyframeMotion*)gAgent.getAvatarObject()->findMotion(floaterp->mMotionID);//floaterp->mAnimPreview->getDummyAvatar()->findMotion(floaterp->mMotionID);
 
 		S32 file_size = motionp->getFileSize();
 		U8* buffer = new U8[file_size];
@@ -1014,7 +1045,8 @@ void LLFloaterAnimPreview::onBtnOK(void* userdata)
 
 		delete [] buffer;
 		// clear out cache for motion data
-		floaterp->mAnimPreview->getDummyAvatar()->removeMotion(floaterp->mMotionID);
+		//floaterp->mAnimPreview->getDummyAvatar()->removeMotion(floaterp->mMotionID);
+		gAgent.getAvatarObject()->removeMotion(floaterp->mMotionID);
 		LLKeyframeDataCache::removeKeyframeData(floaterp->mMotionID);
 	}
 

@@ -368,7 +368,15 @@
       <string>Disables the crash logger and lets the OS handle crashes</string>
       <key>map-to</key>
       <string>DisableCrashLogger</string>
-	</map>
+	  </map>
+    
+    <key>portable</key>
+    <map>
+      <key>desc</key>
+      <string>Start emerald in portable mode</string>
+      <key>map-to</key>
+      <string>EmeraldPortableMode</string>
+    </map>
 
   </map>
 </llsd>

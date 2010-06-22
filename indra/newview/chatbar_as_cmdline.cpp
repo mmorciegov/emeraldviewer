@@ -33,7 +33,7 @@
 
 #include "chatbar_as_cmdline.h"
 
-//#include "llcalc.h"
+#include "llcalc.h"
 
 #include "llchatbar.h"
 #include "llagent.h"
@@ -481,7 +481,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 				return false;
 			}else if(command == *sEmeraldCmdLineCalc)//Cryogenic Blitz
 			{
-				/*bool success;
+				bool success;
 				F32 result = 0.f;
 				if(revised_text.length() > command.length() + 1)
 				{
@@ -507,7 +507,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					}
 					cmdline_printchat(out);
 					return false;
-				}*/
+				}
 			}else if(command == *sEmeraldCmdLineTP2)
 			{
 				if (revised_text.length() > command.length() + 1) //Typing this command with no argument was causing a crash. -Madgeek

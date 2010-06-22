@@ -37,7 +37,7 @@ const S32 LL_VERSION_MINOR = @VERSION_VIEWER_MINOR@;
 const S32 LL_VERSION_PATCH = @VERSION_VIEWER_PATCH@;
 const S32 LL_VERSION_BUILD = @VERSION_BUILD@;
 
-const char * const LL_CHANNEL = "Emerald Viewer Community ";
+const char * const LL_CHANNEL = "Emerald Viewer Internal";
 
 #if LL_DARWIN
 const char * const LL_VERSION_BUNDLE_ID = "com.secondlife.emerald.viewer";

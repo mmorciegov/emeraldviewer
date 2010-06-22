@@ -357,6 +357,8 @@ Kitty Barnett
 Kunnis Basiat
 	VWR-82
 	VWR-102
+Lance Corrimal
+	SNOW-717
 Latif Khalifa
 	VWR-5370
 Lisa Lowe
@@ -551,6 +553,7 @@ Ringo Tuxing
 Robin Cornelius
 	SNOW-108
 	SNOW-122
+	SNOW-169
 	SNOW-196
 	SNOW-204
 	SNOW-238
@@ -692,6 +695,7 @@ Thickbrick Sleaford
 	SNOW-462
 	SNOW-586
 	SNOW-592
+	SNOW-712
 Thraxis Epsilon
 	SVC-371
 	VWR-383

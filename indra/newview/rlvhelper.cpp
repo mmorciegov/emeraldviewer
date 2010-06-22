@@ -1114,12 +1114,12 @@ S32 rlvGetDirectDescendentsCount(const LLInventoryCategory* pFolder, LLAssetType
 
 		#if RLV_TARGET < RLV_MAKE_TARGET(1, 23, 0)			// Version: 1.22.11
 			LLStringUtil::format_map_t args;
-			args["[MESSAGE]"] = llformat("Restrained Life Support will be %s after you restart", 
+			args["[MESSAGE]"] = llformat("Restrained Love Support will be %s after you restart", 
 				(rlv_handler_t::isEnabled()) ? "disabled" : "enabled" );
 			gViewerWindow->alertXml("GenericAlert", args);
 		#else												// Version: 1.23.4
 			LLSD args;
-			args["MESSAGE"] = llformat("Restrained Life Support will be %s after you restart", 
+			args["MESSAGE"] = llformat("Restrained Love Support will be %s after you restart", 
 				(rlv_handler_t::isEnabled()) ? "disabled" : "enabled" );
 			LLNotifications::instance().add("GenericAlert", args);
 		#endif

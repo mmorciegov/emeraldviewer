@@ -2467,7 +2467,10 @@ void LLFloaterIMPanel::showOtrStatus()
                 combo->add(getString("otr_help"),    ADD_BOTTOM, TRUE);
                 combo->add(getString("otr_levels"),  ADD_BOTTOM, TRUE);
                 combo->setLabel(getString("otr_finished"));
-            }
+				//this shouldn't be done here but there are multiple ways we can end up at this point and this is the easiest way to deal with them all.
+				//If the state is finished we can't send message, so lets just stop it, this will fix the online status bug where you get stuck in an OTR loop
+				doOtrStop();
+			}
             else // OTRL_MSGSTATE_PLAINTEXT, or no context yet
             {
                 combo->removeall();

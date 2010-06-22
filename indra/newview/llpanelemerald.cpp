@@ -68,6 +68,7 @@
 #include "llsliderctrl.h"
 #include "mfdkeywordfloater.h"
 #include "lgghunspell_wrapper.h"
+#include "llspinctrl.h"
 
 ////////begin drop utility/////////////
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -258,9 +259,22 @@ BOOL LLPanelEmerald::postBuild()
 	childSetCommitCallback("EmeraldCmdLineAO", onCommitApplyControl);
 	childSetCommitCallback("EmeraldCmdLineClearChat", onCommitApplyControl);
 
-	childSetCommitCallback("X Modifier", onCommitSendAppearance);
-	childSetCommitCallback("Y Modifier", onCommitSendAppearance);
-	childSetCommitCallback("Z Modifier", onCommitSendAppearance);
+	childSetCommitCallback("X Modifier", onCommitAvatarModifier);
+	childSetCommitCallback("Y Modifier", onCommitAvatarModifier);
+	childSetCommitCallback("Z Modifier", onCommitAvatarModifier);
+	if(gAgent.getID() != LLUUID::null)
+	{
+		getChild<LLSpinCtrl>("X Modifier")->set(gSavedPerAccountSettings.getF32("EmeraldAvatarXModifier"));
+		getChild<LLSpinCtrl>("Y Modifier")->set(gSavedPerAccountSettings.getF32("EmeraldAvatarYModifier"));
+		getChild<LLSpinCtrl>("Z Modifier")->set(gSavedPerAccountSettings.getF32("EmeraldAvatarZModifier"));
+	}else
+	{
+		getChild<LLSpinCtrl>("X Modifier")->setEnabled(FALSE);
+		getChild<LLSpinCtrl>("Y Modifier")->setEnabled(FALSE);
+		getChild<LLSpinCtrl>("Z Modifier")->setEnabled(FALSE);
+	}
+
+
 	childSetValue("EmeraldUseOTR", LLSD((S32)gSavedSettings.getU32("EmeraldUseOTR"))); // [$PLOTR$]
 	getChild<LLButton>("otr_help_btn")->setClickedCallback(onClickOtrHelp, this);      // [/$PLOTR$]
 
@@ -691,10 +705,12 @@ void LLPanelEmerald::onCommitApplyControl(LLUICtrl* caller, void* user_data)
 	}
 }
 
-void LLPanelEmerald::onCommitSendAppearance(LLUICtrl* ctrl, void* userdata)
+void LLPanelEmerald::onCommitAvatarModifier(LLUICtrl* ctrl, void* userdata)
 {
+	gSavedPerAccountSettings.setF32("EmeraldAvatarXModifier", sInstance->getChild<LLSpinCtrl>("X Modifier")->get());
+	gSavedPerAccountSettings.setF32("EmeraldAvatarYModifier", sInstance->getChild<LLSpinCtrl>("Y Modifier")->get());
+	gSavedPerAccountSettings.setF32("EmeraldAvatarZModifier", sInstance->getChild<LLSpinCtrl>("Z Modifier")->get());
 	gAgent.sendAgentSetAppearance();
-	//llinfos << llformat("%d,%d,%d",gSavedSettings.getF32("EmeraldAvatarXModifier"),gSavedSettings.getF32("EmeraldAvatarYModifier"),gSavedSettings.getF32("EmeraldAvatarZModifier")) << llendl;
 }
 
 void LLPanelEmerald::onClickSetMirror(void* user_data)

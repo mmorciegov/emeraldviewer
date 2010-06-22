@@ -309,8 +309,9 @@ protected:
 	S32				getLength() const { return mWText.length(); }
 	void			getSegmentAndOffset( S32 startpos, S32* segidxp, S32* offsetp ) const;
 	void			drawPreeditMarker();
-
+public:
 	void			updateLineStartList(S32 startpos = 0);
+protected:
 	void			updateScrollFromCursor();
 	void			updateTextRect();
 	const LLRect&	getTextRect() const { return mTextRect; }
@@ -337,8 +338,13 @@ protected:
 	BOOL			handleSelectionKey(const KEY key, const MASK mask);
 	BOOL			handleControlKey(const KEY key, const MASK mask);
 	BOOL			handleEditKey(const KEY key, const MASK mask);
-
+	// <edit>
+public:
+	// </edit>
 	BOOL			hasSelection() const		{ return (mSelectionStart !=mSelectionEnd); }
+	// <edit>
+	protected:
+	// </edit>
 	BOOL			selectionContainsLineBreaks();
 	void			startSelection();
 	void			endSelection();
@@ -436,8 +442,9 @@ protected:
 	//
 
 	// I-beam is just after the mCursorPos-th character.
+public:
 	S32				mCursorPos;
-
+protected:
 	// Use these to determine if a click on an embedded item is a drag or not.
 	S32				mMouseDownX;
 	S32				mMouseDownY;

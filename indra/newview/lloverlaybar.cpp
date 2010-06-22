@@ -469,12 +469,10 @@ void LLOverlayBar::toggleMediaPlay(void*)
 	
 	if (LLViewerParcelMedia::getStatus() == LLViewerMediaImpl::MEDIA_PAUSED)
 	{
-		LLViewerParcelMedia::sManuallyAllowedScriptedMedia=TRUE;
 		LLViewerParcelMedia::start();
 	}
 	else if(LLViewerParcelMedia::getStatus() == LLViewerMediaImpl::MEDIA_PLAYING)
 	{
-		LLViewerParcelMedia::sManuallyAllowedScriptedMedia=FALSE;
 		LLViewerParcelMedia::pause();
 	}
 	else
@@ -482,7 +480,6 @@ void LLOverlayBar::toggleMediaPlay(void*)
 		LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
 		if (parcel)
 		{
-			LLViewerParcelMedia::sManuallyAllowedScriptedMedia=TRUE;
 			LLViewerParcelMedia::play(parcel);
 		}
 	}

@@ -2493,7 +2493,7 @@ void LLVolumeGeometryManager::rebuildMesh(LLSpatialGroup* group)
 		//if not all buffers are unmapped
 		if(num_mapped_veretx_buffer != LLVertexBuffer::sMappedCount) 
 		{
-			llwarns << "Not all mapped vertex buffers are unmapped!" << llendl ; 
+			//llwarns << "Not all mapped vertex buffers are unmapped!" << llendl ; 
 			for (LLSpatialGroup::element_iter drawable_iter = group->getData().begin(); drawable_iter != group->getData().end(); ++drawable_iter)
 			{
 				LLDrawable* drawablep = *drawable_iter;
