@@ -77,6 +77,7 @@ class LLFloaterLand
 	friend class LLUISingleton<LLFloaterLand, VisibilityPolicy<LLFloater> >;
 public:
 	static void refreshAll();
+	static BOOL isOpen();
 
 	static LLPanelLandObjects* getCurrentPanelLandObjects();
 	static LLPanelLandCovenant* getCurrentPanelLandCovenant();

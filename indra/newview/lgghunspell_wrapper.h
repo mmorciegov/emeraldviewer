@@ -58,6 +58,8 @@ public:
 	std::string VEC2CSV(std::vector<std::string> vec);
 
 private:
+	void createCustomDic();
+	std::string getCorrectPath(std::string file);
 	lggHunSpell_Wrapper();
 	~lggHunSpell_Wrapper();
 

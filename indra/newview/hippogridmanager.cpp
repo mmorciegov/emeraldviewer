@@ -3,6 +3,9 @@
 #include "hippogridmanager.h"
 
 #include <cctype>
+#include <climits>
+#include <cstring>
+#include <algorithm>
 
 #include <stdtypes.h>
 #include "lldir.h"

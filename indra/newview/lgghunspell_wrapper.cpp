@@ -474,7 +474,15 @@ lggHunSpell_Wrapper::lggHunSpell_Wrapper()
 	//languageCodes(begin(languageCodesraw), end(languageCodesraw));    
 }
 lggHunSpell_Wrapper::~lggHunSpell_Wrapper(){}
+std::string lggHunSpell_Wrapper::getCorrectPath(std::string file)
+{
+	//finds out if it is in user dir, if not, takes it from app dir
+	std::string dicpath1(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "dictionaries", file).c_str());
+	if(!gDirUtilp->fileExists(dicpath1))
+		dicpath1=gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries", file).c_str();
 
+	return dicpath1;
+}
 void lggHunSpell_Wrapper::setNewDictionary(std::string newDict)
 {
 
@@ -487,14 +495,14 @@ void lggHunSpell_Wrapper::setNewDictionary(std::string newDict)
 
 	if(myHunspell)delete myHunspell;
 
-	std::string dicaffpath(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries", std::string(newDict+".aff")).c_str());
-	std::string dicdicpath(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries", std::string(newDict+".dic")).c_str());
+	std::string dicaffpath=getCorrectPath(newDict+".aff");
+	std::string dicdicpath=getCorrectPath(newDict+".dic");
 	
 	llinfos << "Setting new base dictionary -> " << dicaffpath.c_str() << llendl;
 
 	myHunspell = new Hunspell(dicaffpath.c_str(),dicdicpath.c_str());
 	llinfos << "Adding custom dictionary " << llendl;
-
+	createCustomDic();
 	addDictionary("emerald_custom");
 	std::vector<std::string> toInstall = getInstalledDicts();
 	for(int i =0;i<(int)toInstall.size();i++)
@@ -502,19 +510,34 @@ void lggHunSpell_Wrapper::setNewDictionary(std::string newDict)
 
 
 }
+void lggHunSpell_Wrapper::createCustomDic()
+{
+	std::string filename(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS,
+		"dictionaries", "emerald_custom.dic"));
+	if(!gDirUtilp->fileExists(filename))
+	{
+		llofstream export_file;	
+		export_file.open(filename);
+		std::string sizePart("1\nLordGregGreg\n");
+		export_file.write(sizePart.c_str(),sizePart.length());
+		export_file.close();
+	}
+}
 void lggHunSpell_Wrapper::addWordToCustomDictionary(std::string wordToAdd)
 {
 	if(!myHunspell)return;
 	myHunspell->add(wordToAdd.c_str());
-	std::string filename(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries", "emerald_custom.dic"));
+	std::string filename(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "dictionaries", "emerald_custom.dic"));
 	std::vector<std::string> lines;
 	if(gDirUtilp->fileExists(filename))
 	{
 		//get words already there..
 		llifstream importer(filename);
 		std::string line;
-		getline( importer, line );//ignored the size
-		while( getline( importer, line ) ) lines.push_back(line);
+		if(getline( importer, line ))//ignored the size
+		{
+			while( getline( importer, line ) ) lines.push_back(line);
+		}
 		importer.close();
 	}
 	llofstream export_file;	
@@ -592,10 +615,7 @@ void lggHunSpell_Wrapper::addDictionary(std::string additionalDictionary)
 	if(!myHunspell)return;
 	if(additionalDictionary=="")return;
 	//expecting a full name here
-	std::string dicpath(
-		gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries",
-		std::string(fullName2DictName(additionalDictionary)+".dic")
-		).c_str());
+	std::string dicpath=getCorrectPath(fullName2DictName(additionalDictionary)+".dic");
 	if(gDirUtilp->fileExists(dicpath))
 	{
 		llinfos << "Adding additional dictionary -> " << dicpath.c_str() << llendl;
@@ -704,6 +724,18 @@ std::vector <std::string> lggHunSpell_Wrapper::getDicts()
 			names.push_back(dictName2FullName(name));
 		}
 	}
+	path_name=gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "dictionaries", "");
+	found=true;
+	while(found) 
+	{
+		std::string name;
+		found = gDirUtilp->getNextFileInDir(path_name, "*.aff", name, false);
+		if(found)
+		{
+			names.push_back(dictName2FullName(name));
+		}
+	}
+
 	return names;
 }
 std::vector <std::string> lggHunSpell_Wrapper::getExtraDicts()
@@ -711,6 +743,17 @@ std::vector <std::string> lggHunSpell_Wrapper::getExtraDicts()
 	std::vector<std::string> names;	
 	std::string path_name(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries", ""));
 	bool found = true;			
+	while(found) 
+	{
+		std::string name;
+		found = gDirUtilp->getNextFileInDir(path_name, "*.dic", name, false);
+		if(found)
+		{
+			names.push_back(dictName2FullName(name));
+		}
+	}
+	path_name=gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "dictionaries", "");
+	found=true;
 	while(found) 
 	{
 		std::string name;
@@ -823,7 +866,7 @@ void lggHunSpell_Wrapper::getMoreButton(void * data)
 }
 void lggHunSpell_Wrapper::editCustomButton()
 {
-	std::string dicdicpath(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries", std::string("emerald_custom.dic")).c_str());
+	std::string dicdicpath(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "dictionaries", std::string("emerald_custom.dic")).c_str());
 	gViewerWindow->getWindow()->openFile(dicdicpath);
 }
 

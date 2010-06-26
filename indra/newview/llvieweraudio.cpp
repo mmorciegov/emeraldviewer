@@ -68,6 +68,7 @@ void init_audio()
 	if (!mute_audio && FALSE == gSavedSettings.getBOOL("NoPreload"))
 	{
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndAlert")));
+		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("EmeraldAvatarAgeAlertSoundUUID")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndBadKeystroke")));
 		//gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndChatFromObject")));
 		gAudiop->preloadSound(LLUUID(gSavedSettings.getString("UISndClick")));
@@ -134,6 +135,7 @@ void audio_update_volume(bool force_update)
 		gAudiop->setDopplerFactor(gSavedSettings.getF32("AudioLevelDoppler"));
 		gAudiop->setRolloffFactor(gSavedSettings.getF32("AudioLevelRolloff"));
 		gAudiop->setMuted(mute_audio);
+		gAudiop->setWindMuted(gSavedSettings.getBOOL("MuteAmbient")); // disable wind /ez
 		
 		if (force_update)
 		{
@@ -205,14 +207,11 @@ void audio_update_listener()
 
 void audio_update_wind(bool force_update)
 {
-/* TOO WINDY
-
-#ifdef kAUDIO_ENABLE_WIND
 	//
 	//  Extract height above water to modulate filter by whether above/below water 
 	// 
 	LLViewerRegion* region = gAgent.getRegion();
-	if (region)
+	if (!gAudiop->getWindMuted() && region) // disable wind /ez
 	{
 		static F32 last_camera_water_height = -1000.f;
 		LLVector3 camera_pos = gAgent.getCameraPositionAgent();
@@ -250,6 +249,4 @@ void audio_update_wind(bool force_update)
 		last_camera_water_height = camera_water_height;
 		gAudiop->updateWind(gRelativeWindVec, camera_water_height);
 	}
-#endif
-*/
 }

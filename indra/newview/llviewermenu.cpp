@@ -227,7 +227,9 @@
 #include "scriptcounter.h"
 
 #include "llfloatermessagelog.h"
+
 using namespace LLVOAvatarDefines;
+
 void init_client_menu(LLMenuGL* menu);
 void init_server_menu(LLMenuGL* menu);
 
@@ -1995,7 +1997,10 @@ class LLObjectEdit : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
-		LLViewerParcelMgr::getInstance()->deselectLand();
+		if (!LLFloaterLand::isOpen())
+		{
+			LLViewerParcelMgr::getInstance()->deselectLand();
+		}
 
 // [RLVa:KB] - Checked: 2009-07-10 (RLVa-1.0.0g) | Modified: RLVa-0.2.0f
 		if (rlv_handler_t::isEnabled())
@@ -2567,7 +2572,10 @@ bool handle_go_to()
 	strings.push_back(val);
 	send_generic_message("autopilot", strings);
 
-	LLViewerParcelMgr::getInstance()->deselectLand();
+	if (!LLFloaterLand::isOpen())
+	{
+		LLViewerParcelMgr::getInstance()->deselectLand();
+	}
 
 	if (gAgent.getAvatarObject() && !gSavedSettings.getBOOL("AutoPilotLocksCamera"))
 	{
@@ -8335,7 +8343,10 @@ BOOL LLViewerMenuHolderGL::hideMenus()
 	BOOL handled = LLMenuHolderGL::hideMenus();
 
 	// drop pie menu selection
-	mParcelSelection = NULL;
+	if (!LLFloaterLand::isOpen())
+	{
+		mParcelSelection = NULL;
+	}
 	mObjectSelection = NULL;
 
 	gMenuBarView->clearHoverItem();
@@ -8826,6 +8837,19 @@ class EmeraldCheckBlockSpam : public view_listener_t
     }
 };
 
+class EmeraldMarkAllDead : public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		LLChat chat;
+		chat.mSourceType = CHAT_SOURCE_SYSTEM;
+		chat.mText = "Clearing ViewerEffects...";
+		LLFloaterChat::addChat(chat);
+		LLHUDObject::markViewerEffectsDead();
+		return true;
+	}
+};
+
 class LLToolsSelectTool : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
@@ -9169,7 +9193,7 @@ void initialize_menus()
 	//addMenu(new LLEmeraldCheckRadar(), "Emerald.CheckAvatarList");
 	//addMenu(new LLEmeraldDisable(), "Emerald.Disable");
 	addMenu(new LLToggleDebugMenus(), "ToggleDebugMenus");
-	//addMenu(new EmeraldMarkAllDead(), "Emerald.ClearEffects");
+	addMenu(new EmeraldMarkAllDead(), "Emerald.ClearEffects");
 	//addMenu(new LLPhoxToggleAssetBrowser(),"Phox.ToggleAssetBrowser");
 	//addMenu(new LLPhoxCheckAssetBrowser(),"Phox.CheckAssetBrowser");
 	//addMenu(new LLAO(), "AO");

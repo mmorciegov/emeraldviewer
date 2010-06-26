@@ -166,7 +166,10 @@ BOOL LLToolPie::pickAndShowMenu(BOOL always_show)
 
 	if (mPick.mPickType != LLPickInfo::PICK_LAND)
 	{
-		LLViewerParcelMgr::getInstance()->deselectLand();
+		if (!LLFloaterLand::isOpen())
+		{
+			LLViewerParcelMgr::getInstance()->deselectLand();
+		}
 	}
 	
 	if (object)
@@ -756,25 +759,6 @@ BOOL LLToolPie::handleDoubleClick(S32 x, S32 y, MASK mask)
 	{
 		llinfos << "LLToolPie handleDoubleClick (becoming mouseDown)" << llendl;
 	}
-
-	if (gSavedSettings.getBOOL("DoubleClickAutoPilot"))
-	{
-		if (mPick.mPickType == LLPickInfo::PICK_LAND
-			&& !mPick.mPosGlobal.isExactlyZero())
-		{
-			handle_go_to();
-			return TRUE;
-		}
-		else if (mPick.mObjectID.notNull()
-				 && !mPick.mPosGlobal.isExactlyZero())
-		{
-			// Hit an object
-			// HACK: Call the last hit position the point we hit on the object
-			//gLastHitPosGlobal += gLastHitObjectOffset;
-			handle_go_to();
-			return TRUE;
-		}
-	} else
 	/* code added to support double click teleports */
 	if (gSavedSettings.getBOOL("EmeraldDoubleClickTeleport"))
 	{
@@ -795,7 +779,7 @@ BOOL LLToolPie::handleDoubleClick(S32 x, S32 y, MASK mask)
 			bool calc = gSavedSettings.getBOOL("EmeraldDoubleClickTeleportAvCalc");
 			bool vel = gSavedSettings.getBOOL("EmeraldVelocityDoubleClickTeleport");
 
-			
+
 			LLVector3 offset = LLVector3(0.f,0.f,gSavedSettings.getF32("EmeraldDoubleClickZOffset"));
 			if(vel)offset += gAgent.getVelocity() * 0.25;
 			if(calc)offset += LLVector3(0.f,0.f,gAgent.getAvatarObject()->getPelvisToFoot());//LLVector3(0.f,0.f,gAgent.getAvatarObject()->getScale().mV[2] / 2);
@@ -805,7 +789,26 @@ BOOL LLToolPie::handleDoubleClick(S32 x, S32 y, MASK mask)
 			gAgent.teleportViaLocation(pos);
 			return TRUE;
 		}
-	}
+	}else
+	if (gSavedSettings.getBOOL("DoubleClickAutoPilot"))
+	{
+		if (mPick.mPickType == LLPickInfo::PICK_LAND
+			&& !mPick.mPosGlobal.isExactlyZero())
+		{
+			handle_go_to();
+			return TRUE;
+		}
+		else if (mPick.mObjectID.notNull()
+				 && !mPick.mPosGlobal.isExactlyZero())
+		{
+			// Hit an object
+			// HACK: Call the last hit position the point we hit on the object
+			//gLastHitPosGlobal += gLastHitObjectOffset;
+			handle_go_to();
+			return TRUE;
+		}
+	} 
+	
 
 	return FALSE;
 

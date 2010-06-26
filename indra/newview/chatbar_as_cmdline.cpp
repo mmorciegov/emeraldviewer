@@ -72,6 +72,8 @@
 #include "llaudioengine.h"
 #include "llviewerparcelmediaautoplay.h"
 #include "lloverlaybar.h"
+#include "lggautocorrectfloater.h"
+#include "lggautocorrect.h"
 
 //#define JC_PROFILE_GSAVED
 
@@ -526,7 +528,38 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 				//Thanks to the pimp's horrible code for shutting down the site...
 				cmdline_printchat("Pimps can't code.");
 				return true;//dont block chat
-			}else if(command == *sEmeraldCmdLineClearChat)
+			}else if(revised_text == "/ac")
+			{
+				lggAutoCorrectFloaterStart::show(TRUE,NULL);
+				cmdline_printchat("Displaying AutoCorrection Floater.");
+				return false;
+			}else if(command=="/addac")
+			{
+				std::string listName;
+				std::string wrong;
+				std::string right;
+				if(i >> listName)if(i>>wrong)if(i>>right)
+				{
+					if(LGGAutoCorrect::getInstance()->addEntryToList(wrong,right,listName))
+					{
+						cmdline_printchat("Added "+wrong+"=>"+right+" to the "+listName+" list.");
+						LGGAutoCorrect::getInstance()->save();
+						return false;
+					}
+					
+				}
+				
+ 			}
+//			else if (revised_text=="/reform")
+// 			{
+// 				cmdline_printchat("Reforming avatar.");
+// 
+// 				gAgent.getAvatarObject()->initClass();
+// 				gAgent.getAvatarObject()->buildCharacter();
+// 				//gAgent.getAvatarObject()->loadAvatar();
+// 				return false;
+// 			}
+			else if(command == *sEmeraldCmdLineClearChat)
 			{
 				LLFloaterChat* chat = LLFloaterChat::getInstance(LLSD());
 				if(chat)

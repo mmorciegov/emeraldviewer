@@ -155,10 +155,6 @@
 					 initial_value="false" label="Broadcast pointer target" left_delta="0" mouse_opaque="true"
 					 name="EmBroadcastPointers-toggle2" control_name="EmeraldBroadcastPointers2" radio_style="false"
 					 width="270" tool_tip="Similar to camera focus point, this prevents users from seeing what you are editing."/>
-
-        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 label="Enable the active CryoLife detection code" left_delta="0" mouse_opaque="true"
-					 name="EmCryo-toggle" control_name="EmeraldCryoDetection" width="270" tool_tip="Helps detect CryoLife Viewers"/>
       </panel>
       <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="IM"
 				 left="1" mouse_opaque="true" name="Misc" width="418">
@@ -228,8 +224,8 @@
 					 bottom_delta="-40" drop_shadow_visible="true" enabled="true" follows="left|top" font="SansSerifSmall"
 					 h_pad="0" halign="left" height="30" left_delta="-10" mouse_opaque="false"
 					 name="text_box1" v_pad="0" width="430">
-          Response Text: (Use #f for recipient's first name, #l for last name, #t for timestamp, 
-		  #r for SLURL of your location, #i for your idle time. (e.g. "5 mins")):
+          Response Text: (Use #f for recipient's first name, #l for last name, #t for timestamp,
+          #r for SLURL of your location, #i for your idle time. (e.g. "5 mins")):
         </text>
         <text_editor type="string" length="1" bottom_delta="-85" embedded_items="false" enabled="true"
 					 follows="left|top" font="SansSerifSmall" height="75" left_delta="0" max_length="1100"
@@ -302,6 +298,8 @@
 					 name="EmeraldUseYou" radio_style="false" width="270" control_name="EmeraldUseYou"/>
         <button name="keyword_allert" label="Edit Key Word Alerts" halign="center" tool_tip="Edit what messages stand out" left_delta="0"
        bottom_delta="-24" width="270" height="20" font="SansSerifSmall" follows="left|top"/>
+        <button name="ac_button" label="Edit Auto Correct Settings" halign="center" tool_tip="Edit settings to autocorrect words" left_delta="0"
+          bottom_delta="-24" width="270" height="20" font="SansSerifSmall" follows="left|top"/>
       </panel>
       <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="Misc"
 				 left="1" mouse_opaque="true" name="AvatarEffects" width="418">
@@ -473,17 +471,17 @@
         <line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-20" follows="left|top"
 					 font="SansSerifSmall" height="20" left_delta="0" max_length="256" mouse_opaque="true"
 					 tool_tip="Clears the Chat History to prevent lag effects from chat spammers." name="EmeraldCmdLineClearChat" control_name="EmeraldCmdLineClearChat" width="200"/>
-		<text bottom_delta="-18" follows="left|top" font="SansSerifSmall" height="16" left_delta="0"
-					name="loltxt15" width="512">        Set the media url (usage: cmd url type)</text>
-		<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-20" follows="left|top"
-					font="SansSerifSmall" height="20" left_delta="0" max_length="256" mouse_opaque="true"
-					tool_tip="Sets and plays your media stream to the entered url" name="EmeraldCmdLineMedia" control_name="EmeraldCmdLineMedia" width="200"/>
-		<text bottom_delta="-18" follows="left|top" font="SansSerifSmall" height="16" left_delta="0"
-					name="loltxt15" width="512">        Set the music stream url (usage: cmd url)</text>
-		<line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-20" follows="left|top"
-					font="SansSerifSmall" height="20" left_delta="0" max_length="256" mouse_opaque="true"
-					tool_tip="sets and plays your music stream to the entered url" name="EmeraldCmdLineMusic" control_name="EmeraldCmdLineMusic" width="200"/>
-	</panel>
+        <text bottom_delta="-18" follows="left|top" font="SansSerifSmall" height="16" left_delta="0"
+              name="loltxt15" width="512">        Set the media url (usage: cmd url type)</text>
+        <line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-20" follows="left|top"
+              font="SansSerifSmall" height="20" left_delta="0" max_length="256" mouse_opaque="true"
+              tool_tip="Sets and plays your media stream to the entered url" name="EmeraldCmdLineMedia" control_name="EmeraldCmdLineMedia" width="200"/>
+        <text bottom_delta="-18" follows="left|top" font="SansSerifSmall" height="16" left_delta="0"
+              name="loltxt15" width="512">        Set the music stream url (usage: cmd url)</text>
+        <line_editor bevel_style="in" border_style="line" border_thickness="1" bottom_delta="-20" follows="left|top"
+              font="SansSerifSmall" height="20" left_delta="0" max_length="256" mouse_opaque="true"
+              tool_tip="sets and plays your music stream to the entered url" name="EmeraldCmdLineMusic" control_name="EmeraldCmdLineMusic" width="200"/>
+      </panel>
       <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="Avatar"
 				 left="1" mouse_opaque="true" name="wat!" width="418">
         <button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?"
@@ -808,8 +806,8 @@
               left="120" width="100" />
 -->
       </panel>
-        <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525"
-           label="Advanced Graphics" left="1" mouse_opaque="true" name="Graphics" width="418">
+      <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525"
+         label="Advanced Graphics" left="1" mouse_opaque="true" name="Graphics" width="418">
         <text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
              bottom="-20" drop_shadow_visible="true" enabled="true" follows="left|top"
              font="SansSerifSmall" h_pad="0" halign="left" height="12" left="10"
@@ -875,7 +873,7 @@
              increment="1" initial_val="160" label="Strength:"
              label_width="50" left_delta="10" max_val="3" min_val="1" mouse_opaque="true"
              name="Strength" show_text="true" width="120" />
-          
+
         <text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
              bottom="-20" drop_shadow_visible="true" enabled="true" follows="left|top"
              font="SansSerifSmall" h_pad="0" halign="left" height="12" left="200"
@@ -914,115 +912,115 @@
           name="BackgroundYieldTime"
           width="262" />
 
-          <text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
-               bottom="-150" drop_shadow_visible="true" enabled="true" follows="left|top"
-               font="SansSerifSmall" h_pad="0" halign="left" height="12" left="200"
-               mouse_opaque="true" name="ShadowsText" v_pad="0" width="128">
-            Shadows
-          </text>
-          <check_box bottom_delta="-25" control_name="RenderDeferredBlurLight" enabled="true"
-               follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
-               label="Blur Shadows" left_delta="0" mouse_opaque="true"
-               name="BlurShadows" radio_style="false" width="256" />
-          <slider bottom_delta="-23" can_edit_text="false" control_name="RenderDeferredNoise"
-               decimal_digits="0" enabled="true" follows="left|top" height="16"
-               increment="10" initial_val="160" label="Deferred Noise:"
-               label_width="150" left_delta="0" max_val="50" min_val="0" mouse_opaque="true"
-               name="Noise" show_text="true" width="250" />
-          <slider bottom_delta="-17" can_edit_text="false" control_name="RenderShadowBlurDistFactor"
-               decimal_digits="1" enabled="true" follows="left|top" height="16"
-               increment="0.1" initial_val="160" label="Shadow Blur Distance:"
-               label_width="150" left_delta="0" max_val="10" min_val="0" mouse_opaque="true"
-               name="BlurDist" show_text="true" width="261" />
-          <slider
-          control_name="RenderShadowBlurSize"
-          decimal_digits="1"
-          follows="left|top"
-          height="16"
-          increment="0.1"
-          initial_value="1"
-          label="Shadow Blur Size:"
-          label_width="140"
-          left_delta="0"
-          max_val="4"
-          min_val="0"
-          name="BlurSize"
-          width="262" />
-          <slider
-          control_name="RenderShadowBlurDistFactor"
-          decimal_digits="1"
-          follows="left|top"
-          height="16"
-          increment="0.05"
-          initial_value="1"
-          label="Blur on Distance:"
-          label_width="140"
-          left_delta="0"
-          max_val="1"
-          min_val="0"
-          name="BlurSize"
-          width="262" />
-          <spinner
-              control_name="RenderShadowBlurSamples" enabled="true"
-              decimal_digits="0"
-              follows="left|top"
-              height="16"
-              increment="1"
-              initial_value="4"
-              label="Blur Samples"
-              label_width="80"
-              left_delta="0"
-              max_val="10"
-              min_val="0"
-              name="Samples"
-              top_pad="2"
-              width="110" />
-          <slider
-          control_name="RenderSSAOScale"
-          decimal_digits="0"
-          follows="left|top"
-          height="16"
-          increment="1"
-          initial_value="40"
-          label="SSAO Scale:"
-          label_width="140"
-          left_delta="0"
-          max_val="1000"
-          min_val="0"
-          name="SSAOScale"
-          top_pad="15"
-          width="262" />
-          <slider
-          control_name="RenderSSAOMaxScale"
-          decimal_digits="0"
-          follows="left|top"
-          height="16"
-          increment="1"
-          initial_value="40"
-          label="SSAO Max Scale:"
-          label_width="140"
-          left_delta="0"
-          max_val="200"
-          min_val="0"
-          name="SSAOMaxScale"
-          top_pad="5"
-          width="262" />
-          <slider
-          control_name="RenderSSAOFactor"
-          decimal_digits="0"
-          follows="left|top"
-          height="16"
-          increment="0.5"
-          initial_value="40"
-          label="SSAO Factor:"
-          label_width="140"
-          left_delta="0"
-          max_val="40"
-          min_val="0"
-          name="SSAOFactor"
-          top_pad="5"
-          width="262" />
-          
+        <text type="string" length="1" bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
+             bottom="-150" drop_shadow_visible="true" enabled="true" follows="left|top"
+             font="SansSerifSmall" h_pad="0" halign="left" height="12" left="200"
+             mouse_opaque="true" name="ShadowsText" v_pad="0" width="128">
+          Shadows
+        </text>
+        <check_box bottom_delta="-25" control_name="RenderDeferredBlurLight" enabled="true"
+             follows="left|top" font="SansSerifSmall" height="16" initial_value="true"
+             label="Blur Shadows" left_delta="0" mouse_opaque="true"
+             name="BlurShadows" radio_style="false" width="256" />
+        <slider bottom_delta="-23" can_edit_text="false" control_name="RenderDeferredNoise"
+             decimal_digits="0" enabled="true" follows="left|top" height="16"
+             increment="10" initial_val="160" label="Deferred Noise:"
+             label_width="150" left_delta="0" max_val="50" min_val="0" mouse_opaque="true"
+             name="Noise" show_text="true" width="250" />
+        <slider bottom_delta="-17" can_edit_text="false" control_name="RenderShadowBlurDistFactor"
+             decimal_digits="1" enabled="true" follows="left|top" height="16"
+             increment="0.1" initial_val="160" label="Shadow Blur Distance:"
+             label_width="150" left_delta="0" max_val="10" min_val="0" mouse_opaque="true"
+             name="BlurDist" show_text="true" width="261" />
+        <slider
+        control_name="RenderShadowBlurSize"
+        decimal_digits="1"
+        follows="left|top"
+        height="16"
+        increment="0.1"
+        initial_value="1"
+        label="Shadow Blur Size:"
+        label_width="140"
+        left_delta="0"
+        max_val="4"
+        min_val="0"
+        name="BlurSize"
+        width="262" />
+        <slider
+        control_name="RenderShadowBlurDistFactor"
+        decimal_digits="1"
+        follows="left|top"
+        height="16"
+        increment="0.05"
+        initial_value="1"
+        label="Blur on Distance:"
+        label_width="140"
+        left_delta="0"
+        max_val="1"
+        min_val="0"
+        name="BlurSize"
+        width="262" />
+        <spinner
+            control_name="RenderShadowBlurSamples" enabled="true"
+            decimal_digits="0"
+            follows="left|top"
+            height="16"
+            increment="1"
+            initial_value="4"
+            label="Blur Samples"
+            label_width="80"
+            left_delta="0"
+            max_val="10"
+            min_val="0"
+            name="Samples"
+            top_pad="2"
+            width="110" />
+        <slider
+        control_name="RenderSSAOScale"
+        decimal_digits="0"
+        follows="left|top"
+        height="16"
+        increment="1"
+        initial_value="40"
+        label="SSAO Scale:"
+        label_width="140"
+        left_delta="0"
+        max_val="1000"
+        min_val="0"
+        name="SSAOScale"
+        top_pad="15"
+        width="262" />
+        <slider
+        control_name="RenderSSAOMaxScale"
+        decimal_digits="0"
+        follows="left|top"
+        height="16"
+        increment="1"
+        initial_value="40"
+        label="SSAO Max Scale:"
+        label_width="140"
+        left_delta="0"
+        max_val="200"
+        min_val="0"
+        name="SSAOMaxScale"
+        top_pad="5"
+        width="262" />
+        <slider
+        control_name="RenderSSAOFactor"
+        decimal_digits="0"
+        follows="left|top"
+        height="16"
+        increment="0.5"
+        initial_value="40"
+        label="SSAO Factor:"
+        label_width="140"
+        left_delta="0"
+        max_val="40"
+        min_val="0"
+        name="SSAOFactor"
+        top_pad="5"
+        width="262" />
+
       </panel>
       <panel border="true" bottom="-580" follows="left|top|right|bottom" height="525" label="SpellCheck"
 				 left="1" mouse_opaque="true" name="SpellCheck" width="418">

@@ -164,7 +164,7 @@ void EmeraldDicDownloader::completedRaw(U32 status, const std::string& reason, c
 		return;
 	}
 	LLBufferStream istr(channels, buffer.get());
-	std::string dicpath(gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "dictionaries", 
+	std::string dicpath(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "dictionaries", 
 		name.c_str()));
 	
 	

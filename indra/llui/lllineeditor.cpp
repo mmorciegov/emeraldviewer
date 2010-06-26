@@ -59,6 +59,7 @@
 #include "../newview/lgghunspell_wrapper.h"
 #include "../newview/lltranslate.h"
 #include "../newview/llviewercontrol.h"
+#include "../newview/lggautocorrect.h"
 
 //
 // Imported globals
@@ -561,7 +562,7 @@ void LLLineEditor::spell_show(void * data)
 std::vector<S32> LLLineEditor::getMisspelledWordsPositions()
 {
 	std::vector<S32> thePosesOfBadWords;
-	const LLWString& text = mText.getWString();
+    const LLWString& text = mText.getWString();
 
 	//llinfos << "end of box is at " << cursorloc << " and end of text is at " << text.length() << llendl;
 	S32 wordStart=0;
@@ -585,6 +586,21 @@ std::vector<S32> LLLineEditor::getMisspelledWordsPositions()
 			//got a word :D
 			std::string selectedWord(std::string(text.begin(), 
 				text.end()).substr(wordStart,wordEnd-wordStart));
+			if(wordEnd!=mEndSpellHere)
+			{
+				std::string correctedWord(LGGAutoCorrect::getInstance()->replaceWord(selectedWord));
+				if(correctedWord!=selectedWord)
+				{
+					int dif = correctedWord.length()-selectedWord.length();
+					std::string regText(mText);
+					int wordStart = regText.find(selectedWord);
+					regText.replace(wordStart,selectedWord.length(),correctedWord);
+					mText=regText;
+					selectedWord=correctedWord;
+					mCursorPos+=dif;
+				}
+			}
+
 			if(!glggHunSpell->isSpelledRight(selectedWord))
 			{	
 				//misspelled word here, and you have just right clicked on it!

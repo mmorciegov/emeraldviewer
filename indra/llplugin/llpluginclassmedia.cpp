@@ -2,9 +2,10 @@
  * @file llpluginclassmedia.cpp
  * @brief LLPluginClassMedia handles a plugin which knows about the "media" message class.
  *
+ * @cond
  * $LicenseInfo:firstyear=2008&license=viewergpl$
  * 
- * Copyright (c) 2008-2009, Linden Research, Inc.
+ * Copyright (c) 2008-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -12,13 +13,13 @@
  * ("GPL"), unless you have obtained a separate licensing agreement
  * ("Other License"), formally executed by you and Linden Lab.  Terms of
  * the GPL can be found in doc/GPL-license.txt in this distribution, or
- * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
+ * online at http://secondlife.com/developers/opensource/gplv2
  * 
  * There are special exceptions to the terms and conditions of the GPL as
  * it is applied to this Source Code. View the full text of the exception
  * in the file doc/FLOSS-exception.txt in this software distribution, or
  * online at
- * http://secondlifegrid.net/programs/open_source/licensing/flossexception
+ * http://secondlife.com/developers/opensource/flossexception
  * 
  * By copying, modifying or distributing this software, you acknowledge
  * that you have read and understood your obligations described above,
@@ -28,6 +29,8 @@
  * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
  * COMPLETENESS OR PERFORMANCE.
  * $/LicenseInfo$
+ * 
+ * @endcond
  */
 
 #include "linden_common.h"
@@ -35,6 +38,8 @@
 
 #include "llpluginclassmedia.h"
 #include "llpluginmessageclasses.h"
+
+#include "llqtwebkit.h"
 
 static int LOW_PRIORITY_TEXTURE_SIZE_DEFAULT = 256;
 
@@ -70,6 +75,11 @@ bool LLPluginClassMedia::init(const std::string &launcher_filename, const std::s
 	
 	mPlugin = new LLPluginProcessParent(this);
 	mPlugin->setSleepTime(mSleepTime);
+
+	// Queue up the media init message -- it will be sent after all the currently queued messages.
+	LLPluginMessage message(LLPLUGIN_MESSAGE_CLASS_MEDIA, "init");
+	sendMessage(message);
+
 	mPlugin->init(launcher_filename, plugin_filename, debug, user_data_path);
 
 	return true;
@@ -101,6 +111,8 @@ void LLPluginClassMedia::reset()
 	mSetMediaHeight = -1;
 	mRequestedMediaWidth = 0;
 	mRequestedMediaHeight = 0;
+	mRequestedTextureWidth = 0;
+	mRequestedTextureHeight = 0;
 	mFullMediaWidth = 0;
 	mFullMediaHeight = 0;
 	mTextureWidth = 0;
@@ -123,6 +135,7 @@ void LLPluginClassMedia::reset()
 	mCanPaste = false;
 	mMediaName.clear();
 	mMediaDescription.clear();
+	mBackgroundColor = LLColor4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// media_browser class
 	mNavigateURI.clear();
@@ -132,6 +145,9 @@ void LLPluginClassMedia::reset()
 	mHistoryForwardAvailable = false;
 	mStatusText.clear();
 	mProgressPercent = 0;	
+	mClickURL.clear();
+	mClickTarget.clear();
+	mClickTargetType = TARGET_NONE;
 	
 	// media_time class
 	mCurrentTime = 0.0f;
@@ -233,6 +249,10 @@ void LLPluginClassMedia::idle(void)
 			message.setValueS32("height", mRequestedMediaHeight);
 			message.setValueS32("texture_width", mRequestedTextureWidth);
 			message.setValueS32("texture_height", mRequestedTextureHeight);
+			message.setValueReal("background_r", mBackgroundColor.mV[VX]);
+			message.setValueReal("background_g", mBackgroundColor.mV[VY]);
+			message.setValueReal("background_b", mBackgroundColor.mV[VZ]);
+			message.setValueReal("background_a", mBackgroundColor.mV[VW]);
 			mPlugin->sendMessage(message);	// DO NOT just use sendMessage() here -- we want this to jump ahead of the queue.
 			
 			LL_DEBUGS("Plugin") << "Sending size_change" << LL_ENDL;
@@ -663,6 +683,28 @@ void LLPluginClassMedia::paste()
 	sendMessage(message);
 }
 
+
+LLPluginClassMedia::ETargetType getTargetTypeFromLLQtWebkit(int target_type)
+{
+	// convert a LinkTargetType value from llqtwebkit to an ETargetType
+	// so that we don't expose the llqtwebkit header in viewer code
+/*	switch (target_type)
+	{
+	case LLQtWebKit::LTT_TARGET_NONE:
+		return LLPluginClassMedia::TARGET_NONE;
+
+	case LLQtWebKit::LTT_TARGET_BLANK:
+		return LLPluginClassMedia::TARGET_BLANK;
+
+	case LLQtWebKit::LTT_TARGET_EXTERNAL:
+		return LLPluginClassMedia::TARGET_EXTERNAL;
+
+	default:
+		return LLPluginClassMedia::TARGET_OTHER;
+	}*/
+	return LLPluginClassMedia::TARGET_BLANK;
+}
+
 /* virtual */ 
 void LLPluginClassMedia::receivePluginMessage(const LLPluginMessage &message)
 {
@@ -915,12 +957,15 @@ void LLPluginClassMedia::receivePluginMessage(const LLPluginMessage &message)
 		{
 			mClickURL = message.getValue("uri");
 			mClickTarget = message.getValue("target");
+			U32 target_type = message.getValueU32("target_type");
+			mClickTargetType = ::getTargetTypeFromLLQtWebkit(target_type);
 			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_CLICK_LINK_HREF);
 		}
 		else if(message_name == "click_nofollow")
 		{
 			mClickURL = message.getValue("uri");
 			mClickTarget.clear();
+			mClickTargetType = TARGET_NONE;
 			mediaEvent(LLPluginClassMediaOwner::MEDIA_EVENT_CLICK_LINK_NOFOLLOW);
 		}
 		else

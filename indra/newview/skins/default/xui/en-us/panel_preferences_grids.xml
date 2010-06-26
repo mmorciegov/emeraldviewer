@@ -108,22 +108,6 @@
 		font="SansSerifSmall"
 		follows="left|top|right" border_visible="false" mouse_opaque="false"
 		drop_shadow_visible="true" border_drop_shadow_visible="false" />
-	<!-- Login Page -->
-	<text type="string" length="1" enabled="true" name="loginpage_label" 
-		height="10" width="100" left="12" bottom_delta="-20"
-		h_pad="0" v_pad="0" halign="left" 
-		font="SansSerifSmall" 
-		follows="left|top" bg_visible="false" border_visible="false" mouse_opaque="true"
-	    drop_shadow_visible="true" border_drop_shadow_visible="false">
-		Login Page:
-	</text>
-	<line_editor max_length="254" enabled="true" name="loginpage" 
-		handle_edit_keys_directly="true" 
-		height="18" left="120" right="-12" bottom_delta="-4"
-		halign="right"
-		font="SansSerifSmall"
-		follows="left|top|right" border_visible="false" mouse_opaque="false"
-		drop_shadow_visible="true" border_drop_shadow_visible="false" />
 	<!-- Helper URI -->
 	<text type="string" length="1" enabled="true" name="helperuri_label" 
 		height="10" width="100" left="12" bottom_delta="-20"

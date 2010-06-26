@@ -6291,9 +6291,13 @@ bool LLAgent::teleportCore(bool is_local)
 	LLFloaterDirectory::hide(NULL);
 
 	// hide land floater too - it'll be out of date
-	LLFloaterLand::hideInstance();
-	
-	LLViewerParcelMgr::getInstance()->deselectLand();
+	// NO
+	// LLFloaterLand::hideInstance();
+	if (!LLFloaterLand::isOpen())
+	{
+		LLViewerParcelMgr::getInstance()->deselectLand();
+	}
+
 	LLViewerMediaFocus::getInstance()->setFocusFace(false, NULL, 0, NULL);
 
 	// Close all pie menus, deselect land, etc.

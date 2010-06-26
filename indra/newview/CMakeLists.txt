@@ -86,6 +86,8 @@ endif (WINDOWS)
 
 
 set(viewer_SOURCE_FILES
+	lggautocorrectfloater.cpp
+	lggautocorrect.cpp
 	lgghunspell_wrapper.cpp
 	lggdicdownload.cpp
 	lggbeamscolors.cpp
@@ -561,6 +563,8 @@ set(viewer_HEADER_FILES
 	jc_lslviewerbridge.h
 	jcfloater_animation_list.h
 	jcfloater_areasearch.h
+	lggautocorrectfloater.h
+	lggautocorrect.h
 	lggbeamcolormapfloater.h
 	lggbeamscolors.h
 	lggbeammapfloater.h

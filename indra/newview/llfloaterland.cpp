@@ -167,6 +167,16 @@ void LLFloaterLand::refreshAll()
 	LLFloaterLand::getInstance()->refresh();
 }
 
+BOOL LLFloaterLand::isOpen()
+{
+	LLFloaterLand* floater = LLFloaterLand::getInstance();
+	if (floater)
+	{
+		return floater->getVisible();
+	}
+	return FALSE;
+}
+
 void LLFloaterLand::onOpen()
 {
 	// Done automatically when the selected parcel's properties arrive
@@ -184,6 +194,7 @@ void LLFloaterLand::onOpen()
 // virtual
 void LLFloaterLand::onClose(bool app_quitting)
 {
+	LLViewerParcelMgr::getInstance()->deselectLand();
 	LLViewerParcelMgr::getInstance()->removeObserver( sObserver );
 	delete sObserver;
 	sObserver = NULL;

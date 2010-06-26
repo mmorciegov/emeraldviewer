@@ -25,7 +25,6 @@ public:
 	std::string getFull(BOOL show_header = TRUE);
 	BOOL isOutgoing();
 private:
-	static U8 sDecodeBuffer[8192];
 	static LLTemplateMessageReader* sTemplateMessageReader;
 	static std::string getString(LLTemplateMessageReader* readerp, const char* block_name, S32 block_num, const char* var_name, e_message_variable_type var_type, BOOL &returned_hex, BOOL summary_mode = FALSE);
 };
@@ -47,6 +46,7 @@ public:
 	S32 mProgress;
 	BOOL mFinished;
 private:
+	std::deque<LLMessageLogEntry> mQueuedMessages;
 	std::deque<LLMessageLogEntry>::iterator mIter;
 };
 class LLFloaterMessageLog : public LLFloater, public LLEventTimer

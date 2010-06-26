@@ -401,9 +401,9 @@ bool LLViewerMediaImpl::initializeMedia(const std::string& mime_type)
 		if(! initializePlugin(mime_type))
 		{
 			LL_WARNS("Plugin") << "plugin intialization failed for mime type: " << mime_type << LL_ENDL;
-			LLSD args;
+			/*LLSD args;
 			args["MIME_TYPE"] = mime_type;
-			LLNotifications::instance().add("NoPlugin", args);
+			LLNotifications::instance().add("NoPlugin", args);*/
 
 			return false;
 		}

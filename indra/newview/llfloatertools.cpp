@@ -81,6 +81,7 @@
 #include "llviewerjoystick.h"
 #include "lluictrlfactory.h"
 
+#include "llfloaterland.h"
 // Globals
 LLFloaterTools *gFloaterTools = NULL;
 
@@ -759,7 +760,10 @@ BOOL LLFloaterTools::canClose()
 // virtual
 void LLFloaterTools::onOpen()
 {
+	if (!LLFloaterLand::isOpen())
+	{
 	mParcelSelection = LLViewerParcelMgr::getInstance()->getFloatingParcelSelection();
+	}
 	mObjectSelection = LLSelectMgr::getInstance()->getEditSelection();
 	
 	// gMenuBarView->setItemVisible(std::string("Tools"), TRUE);
@@ -787,7 +791,10 @@ void LLFloaterTools::onClose(bool app_quitting)
 
 	resetToolState();
 
+	if (!LLFloaterLand::isOpen())
+	{
 	mParcelSelection = NULL;
+	}
 	mObjectSelection = NULL;
 
 	if (!gAgent.cameraMouselook())

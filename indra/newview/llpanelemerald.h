@@ -38,7 +38,24 @@
 
 #include "llviewerinventory.h"
 
-class JCInvDropTarget;
+class JCInvDropTarget : public LLView
+{
+public:
+	JCInvDropTarget(const std::string& name, const LLRect& rect, void (*callback)(LLViewerInventoryItem*));
+	~JCInvDropTarget();
+
+	void doDrop(EDragAndDropType cargo_type, void* cargo_data);
+
+	//
+	// LLView functionality
+	virtual BOOL handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
+		EDragAndDropType cargo_type,
+		void* cargo_data,
+		EAcceptance* accept,
+		std::string& tooltip_msg);
+protected:
+	void	(*mDownCallback)(LLViewerInventoryItem*);
+};
 
 class LLPanelEmerald : public LLPanel
 {
@@ -72,6 +89,7 @@ private:
 	static void onClickVoiceRevertDebug(void* data);
 	static void onRefresh(void* data);
 	static void onKeywordAllertButton(void * data);
+	static void onAutoCorrectButton(void * data);
 	static void onBeamDelete(void* data);
 	static void onBeamColorDelete(void* data);
 	static void onCommitApplyControl(LLUICtrl* caller, void* user_data);

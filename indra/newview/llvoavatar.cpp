@@ -7909,7 +7909,7 @@ void LLVOAvatar::setCachedBakedTexture( ETextureIndex te, const LLUUID& uuid )
 // release any component texture UUIDs for which we have a baked texture
 //-----------------------------------------------------------------------------
 void LLVOAvatar::releaseUnnecessaryTextures()
-{
+{/*
 	// Backwards Compat: detect if the baked hair texture actually wasn't sent, and if so set to default
 	if (isTextureDefined(TEX_HAIR_BAKED) && getTEImage(TEX_HAIR_BAKED)->getID() == getTEImage(TEX_SKIRT_BAKED)->getID())
 	{
@@ -7940,6 +7940,7 @@ void LLVOAvatar::releaseUnnecessaryTextures()
 			setTETexture(te, IMG_DEFAULT_AVATAR);
 		}
 	}
+	*/
 }
 
 //-----------------------------------------------------------------------------

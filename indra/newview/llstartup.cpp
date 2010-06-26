@@ -218,6 +218,7 @@
 
 #include "growlmanager.h"
 #include "streamtitledisplay.h"
+#include "lggautocorrect.h"
 //
 // exported globals
 //
@@ -411,6 +412,29 @@ bool idle_startup()
 		gViewerWindow->showCursor();
 		gViewerWindow->getWindow()->setCursor(UI_CURSOR_WAIT);
 
+		//good as place as any to create user windlight directories
+		std::string user_windlight_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "windlight", ""));
+		LLFile::mkdir(user_windlight_path_name.c_str());
+
+		std::string user_windlight_skies_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "windlight/skies", ""));
+		LLFile::mkdir(user_windlight_skies_path_name.c_str());
+
+		std::string user_windlight_water_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "windlight/water", ""));
+		LLFile::mkdir(user_windlight_water_path_name.c_str());
+
+		std::string user_windlight_days_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "windlight/days", ""));
+		LLFile::mkdir(user_windlight_days_path_name.c_str());
+
+		std::string dictionariesFolder(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "dictionaries",""));
+		LLFile::mkdir(dictionariesFolder.c_str());
+
+		std::string beamsFolder(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "beams",""));
+		LLFile::mkdir(beamsFolder.c_str());
+		
+		std::string beamsColorsFolder(gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "beamsColors",""));
+		LLFile::mkdir(beamsColorsFolder.c_str());
+		
+
 
 		/////////////////////////////////////////////////
 		//
@@ -424,6 +448,8 @@ bool idle_startup()
 		GrowlManager::InitiateManager();
 
 		ModularSystemsLink::getInstance()->start_download();
+
+		LGGAutoCorrect::getInstance()->loadFromDisk();
 
 // [RLVa:KB] - Version: 1.23.4 | Checked: 2009-07-10 (RLVa-1.0.0g) | Modified: RLVa-0.2.1d
 		if ( (gSavedSettings.controlExists(RLV_SETTING_MAIN)) && (gSavedSettings.getBOOL(RLV_SETTING_MAIN)) )
@@ -1015,22 +1041,9 @@ bool idle_startup()
 
 		gDirUtilp->setPerAccountChatLogsDir(firstname, lastname);
 
+		
 		LLFile::mkdir(gDirUtilp->getChatLogsDir());
 		LLFile::mkdir(gDirUtilp->getPerAccountChatLogsDir());
-
-		//good as place as any to create user windlight directories
-		std::string user_windlight_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "windlight", ""));
-		LLFile::mkdir(user_windlight_path_name.c_str());
-
-		std::string user_windlight_skies_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "windlight/skies", ""));
-		LLFile::mkdir(user_windlight_skies_path_name.c_str());
-
-		std::string user_windlight_water_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "windlight/water", ""));
-		LLFile::mkdir(user_windlight_water_path_name.c_str());
-
-		std::string user_windlight_days_path_name(gDirUtilp->getExpandedFilename( LL_PATH_USER_SETTINGS , "windlight/days", ""));
-		LLFile::mkdir(user_windlight_days_path_name.c_str());
-
 
 		gWindowTitle = gSecondLife;
 		gWindowTitle += llformat(" %d.%d.%d.%d - %s %s", LL_VERSION_MAJOR, LL_VERSION_MINOR, LL_VERSION_PATCH, LL_VERSION_BUILD, firstname.c_str(), lastname.c_str());

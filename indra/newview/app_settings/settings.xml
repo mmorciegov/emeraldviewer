@@ -89,6 +89,17 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>EmeraldEnableAutoComplete</key>
+    <map>
+      <key>Comment</key>
+      <string>whether to enable autocompletion or not</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>EmeraldInvMirrorLocation</key>
     <map>
       <key>Comment</key>
@@ -275,6 +286,17 @@
       <string>Boolean</string>
       <key>Value</key>
       <integer>1</integer>
+    </map>
+    <key>EmeraldAutoCorrectCount</key>
+    <map>
+      <key>Comment</key>
+      <string>How many words have been auto replaced.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>EmeraldAppearanceForceStand</key>
     <map>
@@ -837,6 +859,17 @@
       <string>String</string>
       <key>Value</key>
       <string>English (United States of America)</string>
+    </map>
+    <key>EmeraldAutoReplace</key>
+    <map>
+      <key>Comment</key>
+      <string>Whether or not to auto replace words based on settings</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
 		<key>EmeraldAvatarAgeAlert</key>
 		<map>
@@ -14613,6 +14646,17 @@
 	        <integer>470</integer>
 	        <integer>200</integer>
 	      </array>
+	    </map>
+	    <key>FloaterAreaSearchRect</key>
+	    <map>
+	      <key>Comment</key>
+	      <string>Rectangle for teleport history window</string>
+	      <key>Persist</key>
+	      <integer>1</integer>
+	      <key>Type</key>
+	      <string>Rect</string>
+	      <key>Value</key>
+	      <undef />
 	    </map>
 	</map>
 </llsd>

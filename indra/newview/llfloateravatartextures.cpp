@@ -78,6 +78,7 @@ BOOL LLFloaterAvatarTextures::postBuild()
 	mTitle = getTitle();
 
 	childSetAction("Dump", onClickDump, this);
+	childSetEnabled("Dump",FALSE);
 
 	refresh();
 	return TRUE;
@@ -89,7 +90,6 @@ void LLFloaterAvatarTextures::draw()
 	LLFloater::draw();
 }
 
-#if !LL_RELEASE_FOR_DOWNLOAD
 static void update_texture_ctrl(LLVOAvatar* avatarp,
 								 LLTextureCtrl* ctrl,
 								 ETextureIndex te)
@@ -145,14 +145,6 @@ void LLFloaterAvatarTextures::refresh()
 		setTitle(mTitle + ": INVALID AVATAR (" + mID.asString() + ")");
 	}
 }
-
-#else
-
-void LLFloaterAvatarTextures::refresh()
-{
-}
-
-#endif
 
 // static
 void LLFloaterAvatarTextures::onClickDump(void* data)

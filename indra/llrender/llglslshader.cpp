@@ -265,7 +265,7 @@ void LLGLSLShader::mapUniform(GLint index, const vector<string> * uniforms)
 		}
 
 		mUniformMap[name] = location;
-		LL_DEBUGS("ShaderLoading") << "Uniform " << name << " is at location " << location << LL_ENDL;
+		//LL_DEBUGS("ShaderLoading") << "Uniform " << name << " is at location " << location << LL_ENDL;
 	
 		//find the index of this uniform
 		for (S32 i = 0; i < (S32) LLShaderMgr::instance()->mReservedUniforms.size(); i++)

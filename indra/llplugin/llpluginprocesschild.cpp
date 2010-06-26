@@ -2,9 +2,10 @@
  * @file llpluginprocesschild.cpp
  * @brief LLPluginProcessChild handles the child side of the external-process plugin API. 
  *
+ * @cond
  * $LicenseInfo:firstyear=2008&license=viewergpl$
  * 
- * Copyright (c) 2008-2009, Linden Research, Inc.
+ * Copyright (c) 2008-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -12,13 +13,13 @@
  * ("GPL"), unless you have obtained a separate licensing agreement
  * ("Other License"), formally executed by you and Linden Lab.  Terms of
  * the GPL can be found in doc/GPL-license.txt in this distribution, or
- * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
+ * online at http://secondlife.com/developers/opensource/gplv2
  * 
  * There are special exceptions to the terms and conditions of the GPL as
  * it is applied to this Source Code. View the full text of the exception
  * in the file doc/FLOSS-exception.txt in this software distribution, or
  * online at
- * http://secondlifegrid.net/programs/open_source/licensing/flossexception
+ * http://secondlife.com/developers/opensource/flossexception
  * 
  * By copying, modifying or distributing this software, you acknowledge
  * that you have read and understood your obligations described above,
@@ -28,6 +29,8 @@
  * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
  * COMPLETENESS OR PERFORMANCE.
  * $/LicenseInfo$
+ * 
+ * @endcond
  */
 
 #include "linden_common.h"
@@ -42,6 +45,7 @@ static const F32 PLUGIN_IDLE_SECONDS = 1.0f / 100.0f;  // Each call to idle will
 
 LLPluginProcessChild::LLPluginProcessChild()
 {
+	mState = STATE_UNINITIALIZED;
 	mInstance = NULL;
 	mSocket = LLSocket::create(gAPRPoolp, LLSocket::STREAM_TCP);
 	mSleepTime = PLUGIN_IDLE_SECONDS;	// default: send idle messages at 100Hz
@@ -53,8 +57,11 @@ LLPluginProcessChild::~LLPluginProcessChild()
 	if(mInstance != NULL)
 	{
 		sendMessageToPlugin(LLPluginMessage("base", "cleanup"));
-//		delete mInstance;
-//		mInstance = NULL;
+
+		// IMPORTANT: under some (unknown) circumstances the apr_dso_unload() triggered when mInstance is deleted 
+		// appears to fail and lock up which means that a given instance of the slplugin process never exits. 
+		// This is bad, especially when users try to update their version of SL - it fails because the slplugin 
+		// process as well as a bunch of plugin specific files are locked and cannot be overwritten.
         exit( 0 );
         //delete mInstance;
         //mInstance = NULL;
@@ -273,6 +280,8 @@ bool LLPluginProcessChild::isDone(void)
 
 void LLPluginProcessChild::sendMessageToPlugin(const LLPluginMessage &message)
 {
+	if (mInstance)
+	{
 	std::string buffer = message.generate();
 
 	LL_DEBUGS("Plugin") << "Sending to plugin: " << buffer << LL_ENDL;
@@ -281,6 +290,11 @@ void LLPluginProcessChild::sendMessageToPlugin(const LLPluginMessage &message)
 	mInstance->sendMessage(buffer);
 
 	mCPUElapsed += elapsed.getElapsedTimeF64();
+}
+	else
+	{
+		LL_WARNS("Plugin") << "mInstance == NULL" << LL_ENDL;
+	}
 }
 
 void LLPluginProcessChild::sendMessageToParent(const LLPluginMessage &message)
@@ -355,6 +369,7 @@ void LLPluginProcessChild::receiveMessageRaw(const std::string &message)
 					else
 					{
 						LL_WARNS("Plugin") << "Couldn't create a shared memory segment!" << LL_ENDL;
+						delete region;
 					}
 				}
 				

@@ -49,6 +49,7 @@
 
 BOOL firstBuildDone;
 void* fixPointer;
+std::string ButtonState;
 wlfPanel_AdvSettings::wlfPanel_AdvSettings()
 {
 	setIsChrome(TRUE);
@@ -61,10 +62,12 @@ void wlfPanel_AdvSettings::build()
 	if (!gSavedSettings.getBOOL("wlfAdvSettingsPopup"))
 	{
 		LLUICtrlFactory::getInstance()->buildPanel(this, "wlfPanel_AdvSettings_expanded.xml", &getFactoryMap());
+		ButtonState = "arrow_up.tga";
 	}
 	else
 	{
 		LLUICtrlFactory::getInstance()->buildPanel(this, "wlfPanel_AdvSettings.xml", &getFactoryMap());
+		ButtonState = "arrow_down.tga";
 	}
 }
 
@@ -109,7 +112,7 @@ BOOL wlfPanel_AdvSettings::postBuild()
 void wlfPanel_AdvSettings::draw()
 {
 	LLButton* expand_button = getChild<LLButton>("expand");
-	if (expand_button)
+/*	if (expand_button)
 	{
 		if (expand_button->getToggleState())
 		{
@@ -119,7 +122,8 @@ void wlfPanel_AdvSettings::draw()
 		{
 			expand_button->setImageOverlay("arrow_up.tga");
 		}
-	}
+	} */
+			expand_button->setImageOverlay(ButtonState);
 	refresh();
 	LLPanel::draw();
 }

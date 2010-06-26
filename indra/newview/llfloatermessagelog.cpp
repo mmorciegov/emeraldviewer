@@ -27,7 +27,7 @@ LLNetListItem::LLNetListItem(LLUUID id)
 ////////////////////////////////
 // LLFloaterMessageLogItem
 ////////////////////////////////
-U8 LLFloaterMessageLogItem::sDecodeBuffer[8192];
+#define MAX_PACKET_LEN (0x2000)
 LLTemplateMessageReader* LLFloaterMessageLogItem::sTemplateMessageReader = NULL;
 LLFloaterMessageLogItem::LLFloaterMessageLogItem(LLMessageLogEntry entry)
 :	LLMessageLogEntry(entry.mType, entry.mFromHost, entry.mToHost, entry.mData, entry.mDataSize)
@@ -42,9 +42,10 @@ LLFloaterMessageLogItem::LLFloaterMessageLogItem(LLMessageLogEntry entry)
 	{
 		BOOL decode_invalid = FALSE;
 		S32 decode_len = mDataSize;
-		memcpy(sDecodeBuffer, mData, decode_len);
-		mFlags = sDecodeBuffer[0];
-		U8* decodep = &(sDecodeBuffer[0]);
+		std::vector<U8> DecodeBuffer(MAX_PACKET_LEN,0);
+		memcpy(&(DecodeBuffer[0]),&(mData[0]),decode_len);
+		U8* decodep = &(DecodeBuffer[0]);
+		mFlags = DecodeBuffer[0];
 		gMessageSystem->zeroCodeExpand(&decodep, &decode_len);
 		if(decode_len < 7)
 			decode_invalid = TRUE;
@@ -121,8 +122,6 @@ LLFloaterMessageLogItem::LLFloaterMessageLogItem(LLMessageLogEntry entry)
 			for(S32 i = 0; i < mDataSize; i++)
 				mSummary.append(llformat("%02X ", mData[i]));
 		}
-		//lets play cleanup
-		memset(sDecodeBuffer, 0, mDataSize);
 	}
 	else // not template
 	{
@@ -144,8 +143,9 @@ std::string LLFloaterMessageLogItem::getFull(BOOL show_header)
 	{
 		BOOL decode_invalid = FALSE;
 		S32 decode_len = mDataSize;
-		memcpy(sDecodeBuffer, mData, decode_len);
-		U8* decodep = &(sDecodeBuffer[0]);
+		std::vector<U8> DecodeBuffer(MAX_PACKET_LEN,0);
+		memcpy(&(DecodeBuffer[0]),&(mData[0]),decode_len);
+		U8* decodep = &(DecodeBuffer[0]);
 		gMessageSystem->zeroCodeExpand(&decodep, &decode_len);
 		if(decode_len < 7)
 			decode_invalid = TRUE;
@@ -359,6 +359,8 @@ std::string LLFloaterMessageLogItem::getString(LLTemplateMessageReader* readerp,
 					value[63] = '\0';
 				}
 				stream << value;
+				
+				delete[] value;
 			}
 			else
 			{
@@ -423,12 +425,15 @@ BOOL LLMessageLogFilterApply::tick()
 {
 	std::deque<LLMessageLogEntry>::iterator end = LLFloaterMessageLog::sMessageLogEntries.end();
 	if(mIter == end || !LLFloaterMessageLog::sInstance)
-		mFinished = TRUE;
-	if(mFinished)
 		{
+		mFinished = TRUE;
 		if(LLFloaterMessageLog::sInstance)
+		{
 			if(LLFloaterMessageLog::sInstance->mMessageLogFilterApply == this)
+			{
 				LLFloaterMessageLog::sInstance->stopApplyingFilter();
+			}
+		}
 		return TRUE;
 	}
 	for(S32 i = 0; i < 256; i++)
@@ -437,8 +442,25 @@ BOOL LLMessageLogFilterApply::tick()
 		{
 			mFinished = TRUE;
 			if(LLFloaterMessageLog::sInstance)
+			{
 				if(LLFloaterMessageLog::sInstance->mMessageLogFilterApply == this)
+				{
 					LLFloaterMessageLog::sInstance->stopApplyingFilter();
+
+					//we're done messing with the deque, push all queued items to the main deque
+					std::deque<LLMessageLogEntry>::iterator queueIter = mQueuedMessages.begin();
+					std::deque<LLMessageLogEntry>::iterator queueEnd = mQueuedMessages.end();
+
+					while(queueIter != queueEnd)
+					{
+						LLFloaterMessageLog::sInstance->conditionalLog(LLFloaterMessageLogItem((*queueIter)));
+						++queueIter;
+					}
+
+					mQueuedMessages.clear();
+				}
+			}
+
 			return TRUE;
 		}
 		
@@ -596,7 +618,7 @@ void LLFloaterMessageLog::refreshNetList()
 		LLSD& text_column = element["columns"][0];
 		text_column["column"] = "text";
 		text_column["value"] = itemp->mName + (itemp->mCircuitData->getHost() == gAgent.getRegionHost() ? " (main)" : "");
-		for(int i = 0; i < 3; i++)
+		for(int i = 0; i < 2; i++)
 		{
 			LLSD& icon_column = element["columns"][i + 1];
 			icon_column["column"] = llformat("icon%d", i);
@@ -607,18 +629,18 @@ void LLFloaterMessageLog::refreshNetList()
 		BOOL has_live_circuit = itemp->mCircuitData && itemp->mCircuitData->isAlive();
 		if(has_live_circuit)
 		{
-			LLScrollListIcon* icon = (LLScrollListIcon*)scroll_itemp->getColumn(2);
+			LLScrollListIcon* icon = (LLScrollListIcon*)scroll_itemp->getColumn(1);
 			icon->setValue("icon_net_close_circuit.tga");
 			icon->setClickCallback(onClickCloseCircuit, itemp);
 		}
 		else
 		{
-			LLScrollListIcon* icon = (LLScrollListIcon*)scroll_itemp->getColumn(2);
+			LLScrollListIcon* icon = (LLScrollListIcon*)scroll_itemp->getColumn(1);
 			icon->setValue("icon_net_close_circuit_gray.tga");
 			icon->setClickCallback(NULL, NULL);
 		}
 		// Event queue isn't even supported yet... FIXME
-		LLScrollListIcon* icon = (LLScrollListIcon*)scroll_itemp->getColumn(3);
+		LLScrollListIcon* icon = (LLScrollListIcon*)scroll_itemp->getColumn(2);
 		icon->setValue("icon_net_close_eventpoll_gray.tga");
 		icon->setClickCallback(NULL, NULL);
 	}
@@ -677,9 +699,12 @@ void LLFloaterMessageLog::setNetInfoMode(ENetInfoMode mode)
 // static
 void LLFloaterMessageLog::onLog(LLMessageLogEntry entry)
 {
-	sMessageLogEntries.push_back(entry);
+	//don't mess with the queue while a filter's being applied, or face invalid iterators
 	if(!sBusyApplyingFilter)
+	{
+		sMessageLogEntries.push_back(entry);
 		conditionalLog(LLFloaterMessageLogItem(entry));
+}
 }
 // static
 void LLFloaterMessageLog::conditionalLog(LLFloaterMessageLogItem item)
@@ -844,6 +869,7 @@ void LLFloaterMessageLog::startApplyingFilter(std::string filter, BOOL force)
 	LLMessageLogFilter new_filter = LLMessageLogFilter();
 	sMessageLogFilterString = filter;
 	new_filter.set(sMessageLogFilterString);
+	if(!filter.length() || filter.at(filter.length()-1) != ' ')
 	childSetText("filter_edit", filter + " ");
 	if(force
 		|| (new_filter.mNegativeNames != sMessageLogFilter.mNegativeNames)
@@ -905,6 +931,7 @@ void LLFloaterMessageLog::onClickFilterChoice(void* user_data)
 	menu->append(new LLMenuItemCallGL("Sounds", onClickFilterMenu, NULL, (void*)"SoundTrigger"));
 	menu->append(new LLMenuItemCallGL("Default",onClickFilterMenu, NULL, (void*)"!StartPingCheck !CompletePingCheck !PacketAck !SimulatorViewerTimeMessage !SimStats !AgentUpdate !AgentAnimation !AvatarAnimation !ViewerEffect !CoarseLocationUpdate !LayerData !CameraConstraint !ObjectUpdateCached !RequestMultipleObjects !ObjectUpdate !ObjectUpdateCompressed !ImprovedTerseObjectUpdate !KillObject !ImagePacket !SendXferPacket !ConfirmXferPacket !TransferPacket"));
 	menu->append(new LLMenuItemCallGL("Fewer spammy messages", onClickFilterMenu, NULL, (void*)"!StartPingCheck !CompletePingCheck !PacketAck !SimulatorViewerTimeMessage !SimStats !AgentUpdate !AgentAnimation !AvatarAnimation !ViewerEffect !CoarseLocationUpdate !LayerData !CameraConstraint !ObjectUpdateCached !RequestMultipleObjects !ObjectUpdate !ObjectUpdateCompressed !ImprovedTerseObjectUpdate !KillObject !ImagePacket !SendXferPacket !ConfirmXferPacket !TransferPacket"));
+	menu->append(new LLMenuItemCallGL("Fewer spammy messages (minus sound crap)", onClickFilterMenu, NULL, (void*)"!StartPingCheck !CompletePingCheck !PacketAck !SimulatorViewerTimeMessage !SimStats !AgentUpdate !AgentAnimation !AvatarAnimation !ViewerEffect !CoarseLocationUpdate !LayerData !CameraConstraint !ObjectUpdateCached !RequestMultipleObjects !ObjectUpdate !ObjectUpdateCompressed !ImprovedTerseObjectUpdate !KillObject !ImagePacket !SendXferPacket !ConfirmXferPacket !TransferPacket !SoundTrigger !AttachedSound !PreloadSound"));
 	menu->append(new LLMenuItemCallGL("Object updates", onClickFilterMenu, NULL, (void*)"ObjectUpdateCached ObjectUpdate ObjectUpdateCompressed ImprovedTerseObjectUpdate KillObject RequestMultipleObjects"));
 	menu->append(new LLMenuItemCallGL("Abnormal", onClickFilterMenu, NULL, (void*)"Invalid TestMessage AddCircuitCode NeighborList AvatarTextureUpdate SimulatorMapUpdate SimulatorSetMap SubscribeLoad UnsubscribeLoad SimulatorReady SimulatorPresentAtLocation SimulatorLoad SimulatorShutdownRequest RegionPresenceRequestByRegionID RegionPresenceRequestByHandle RegionPresenceResponse UpdateSimulator LogDwellTime FeatureDisabled LogFailedMoneyTransaction UserReportInternal SetSimStatusInDatabase SetSimPresenceInDatabase OpenCircuit CloseCircuit DirFindQueryBackend DirPlacesQueryBackend DirClassifiedQueryBackend DirLandQueryBackend DirPopularQueryBackend GroupNoticeAdd DataHomeLocationRequest DataHomeLocationReply DerezContainer ObjectCategory ObjectExportSelected StateSave ReportAutosaveCrash AgentAlertMessage NearestLandingRegionRequest NearestLandingRegionReply NearestLandingRegionUpdated TeleportLandingStatusChanged ConfirmEnableSimulator KickUserAck SystemKickUser AvatarPropertiesRequestBackend UpdateParcel RemoveParcel MergeParcel LogParcelChanges CheckParcelSales ParcelSales StartAuction ConfirmAuctionStart CompleteAuction CancelAuction CheckParcelAuctions ParcelAuctions ChatPass EdgeDataPacket SimStatus ChildAgentUpdate ChildAgentAlive ChildAgentPositionUpdate ChildAgentDying ChildAgentUnknown AtomicPassObject KillChildAgents ScriptSensorRequest ScriptSensorReply DataServerLogout RequestInventoryAsset InventoryAssetResponse TransferInventory TransferInventoryAck EventLocationRequest EventLocationReply MoneyTransferBackend RoutedMoneyBalanceReply SetStartLocation NetTest SetCPURatio SimCrashed NameValuePair RemoveNameValuePair UpdateAttachment RemoveAttachment EmailMessageRequest EmailMessageReply InternalScriptMail ScriptDataRequest ScriptDataReply InviteGroupResponse TallyVotes LiveHelpGroupRequest LiveHelpGroupReply GroupDataUpdate LogTextMessage CreateTrustedCircuit ParcelRename SystemMessage RpcChannelRequest RpcChannelReply RpcScriptRequestInbound RpcScriptRequestInboundForward RpcScriptReplyInbound ScriptMailRegistration Error"));
 	menu->updateParent(LLMenuGL::sMenuContainer);

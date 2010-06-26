@@ -59,6 +59,7 @@
 #include "llinventoryview.h"
 #include "lllineeditor.h"
 #include "llnameeditor.h"
+#include "llmd5.h"
 #include "llmutelist.h"
 #include "llpanelclassified.h"
 #include "llpanelpick.h"
@@ -86,6 +87,8 @@
 #include "a_modularsystemslink.h"
 
 #include "llfloatergroups.h"
+#include "llbufferstream.h"
+#include "llsdserialize.h"
 
 // [RLVa:KB]
 #include "rlvhandler.h"
@@ -1883,7 +1886,52 @@ void LLPanelAvatar::sendAvatarPropertiesRequest()
 	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
 	msg->addUUIDFast(   _PREHASH_AvatarID, mAvatarID);
 	gAgent.sendReliableMessage();
+	
+	sendAvatarRatingsRequest();
 }
+
+// NOTE: This is here as a sort of load indicator if we decide to reimplement the long gone
+// Ratings feature. Should remove before release.
+// We hash the key to pacify paranoid people.
+// We also use POST so that the logs show nothing.
+// (if you think we're going to log every single profile view, even if we wanted to, you're insane.
+// 85k users * how many profiles a day?)
+#if 1
+void LLPanelAvatar::sendAvatarRatingsRequest()
+{
+	LLMD5 hashed_key = LLMD5((unsigned char*)mAvatarID.asString().c_str());
+	// Have to take this slightly obtuse approach because LLHTTPClient::postRaw will delete the data when it's finished.
+	char *hex_cstr;
+	hex_cstr = new char[MD5HEX_STR_SIZE];
+	hashed_key.hex_digest(hex_cstr);
+	LLHTTPClient::postRaw("http://emeraldratings.appspot.com/profile", (U8*)hex_cstr, MD5HEX_STR_SIZE - 1, new LLPanelAvatarRatingsDownloader(this));
+	hex_cstr = NULL;
+}
+
+LLPanelAvatarRatingsDownloader::LLPanelAvatarRatingsDownloader(LLPanelAvatar *panel) : mPanelAvatar(panel)
+{
+	
+}
+
+void LLPanelAvatarRatingsDownloader::error(U32 status, const std::string &reason)
+{
+	LL_WARNS("NewRatings") << "Rating lookup failed (error " << status << "): " << reason << LL_ENDL;
+}
+
+void LLPanelAvatarRatingsDownloader::completedRaw(U32 status, const std::string& reason, const LLChannelDescriptors& channels, const LLIOPipe::buffer_ptr_t& buffer)
+{
+	LLBufferStream istr(channels, buffer.get());
+	LLSD stuff = LLSDSerialize::fromBinary(istr, LLSDSerialize::SIZE_UNLIMITED);
+	std::ostringstream pretty;
+	LLSDSerialize::toPrettyXML(stuff, pretty);
+	LL_INFOS("NewRatings") << "Got some ratings!\n\n" << pretty.str() << LL_ENDL;
+}
+#else
+void LLPanelAvatar::sendAvatarRatingsRequest() { }
+LLPanelAvatarRatingsDownloader::LLPanelAvatarRatingsDownloader(LLPanelAvatar *panel) { }
+void LLPanelAvatarRatingsDownloader::error(U32, const std::string&) { }
+void LLPanelAvatarRatingsDownloader::completedRaw(U32, const std::string&, const LLChannelDescriptors&, const LLIOPipe::buffer_ptr_t&) { }
+#endif
 
 void LLPanelAvatar::sendAvatarNotesUpdate()
 {

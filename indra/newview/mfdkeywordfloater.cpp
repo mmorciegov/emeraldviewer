@@ -51,6 +51,7 @@
 #include "llsliderctrl.h"
 #include "llfocusmgr.h"
 #include <boost/regex.hpp>
+#include "llstartup.h"
 
 
 class mfdKeywordFloater;
@@ -152,22 +153,31 @@ mfdKeywordFloater::mfdKeywordFloater(const LLSD& seed):mContextConeOpacity(0.0f)
 BOOL mfdKeywordFloater::postBuild(void)
 {
 	setCanMinimize(false);
-	childSetAction("EmeraldKeywords_save",onClickSave,this);
+
 	childSetAction("EmeraldKeywords_cancel",onClickCancel,this);
+	if(LLStartUp::getStartupState() >= STATE_INVENTORY_SEND)
+	{
+		childSetAction("EmeraldKeywords_save",onClickSave,this);\
 
-	childSetValue("EmeraldKeywords_Alert",gSavedPerAccountSettings.getBOOL("EmeraldKeywordOn"));
-	childSetValue("EmeraldKeywords_Entries",gSavedPerAccountSettings.getString("EmeraldKeywords"));
-	childSetValue("EmeraldKeywords_IM",gSavedPerAccountSettings.getBOOL("EmeraldKeywordInIM"));
-	childSetValue("EmeraldKeywords_GroupChat",gSavedPerAccountSettings.getBOOL("EmeraldKeywordInGroup"));
-	childSetValue("EmeraldKeywords_LocalChat",gSavedPerAccountSettings.getBOOL("EmeraldKeywordInChat"));
-	childSetValue("EmeraldKeywords_IRC",gSavedPerAccountSettings.getBOOL("EmeraldKeywordInIRC"));
-	childSetValue("EmeraldKeywords_Highlight",gSavedPerAccountSettings.getBOOL("EmeraldKeywordChangeColor"));
-	//childSetValue("EmeraldKeywords_Color",gSavedPerAccountSettings.getLLSD("EmeraldKeywordColor"));
-	childSetValue("EmeraldKeywords_PlaySound",gSavedPerAccountSettings.getBOOL("EmeraldKeywordPlaySound"));
-	childSetValue("EmeraldKeywords_SoundUUID",gSavedPerAccountSettings.getString("EmeraldKeywordSound"));
+		childSetValue("EmeraldKeywords_Alert",gSavedPerAccountSettings.getBOOL("EmeraldKeywordOn"));
+		childSetValue("EmeraldKeywords_Entries",gSavedPerAccountSettings.getString("EmeraldKeywords"));
+		childSetValue("EmeraldKeywords_IM",gSavedPerAccountSettings.getBOOL("EmeraldKeywordInIM"));
+		childSetValue("EmeraldKeywords_GroupChat",gSavedPerAccountSettings.getBOOL("EmeraldKeywordInGroup"));
+		childSetValue("EmeraldKeywords_LocalChat",gSavedPerAccountSettings.getBOOL("EmeraldKeywordInChat"));
+		childSetValue("EmeraldKeywords_IRC",gSavedPerAccountSettings.getBOOL("EmeraldKeywordInIRC"));
+		childSetValue("EmeraldKeywords_Highlight",gSavedPerAccountSettings.getBOOL("EmeraldKeywordChangeColor"));
+		//childSetValue("EmeraldKeywords_Color",gSavedPerAccountSettings.getLLSD("EmeraldKeywordColor"));
+		childSetValue("EmeraldKeywords_PlaySound",gSavedPerAccountSettings.getBOOL("EmeraldKeywordPlaySound"));
+		childSetValue("EmeraldKeywords_SoundUUID",gSavedPerAccountSettings.getString("EmeraldKeywordSound"));
 
-	LLColorSwatchCtrl* colorctrl = getChild<LLColorSwatchCtrl>("EmeraldKeywords_Color");
-	colorctrl->set(LLColor4(gSavedPerAccountSettings.getColor4("EmeraldKeywordColor")),TRUE);
+		LLColorSwatchCtrl* colorctrl = getChild<LLColorSwatchCtrl>("EmeraldKeywords_Color");
+		colorctrl->set(LLColor4(gSavedPerAccountSettings.getColor4("EmeraldKeywordColor")),TRUE);
+	}else
+	{
+		childSetEnabled("EmeraldKeywords_save",FALSE);
+		childSetValue("EmeraldKeywords_Entries","You must login to change these settings");
+
+	}
 
 	return true;
 }

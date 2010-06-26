@@ -69,6 +69,7 @@
 #include "mfdkeywordfloater.h"
 #include "lgghunspell_wrapper.h"
 #include "llspinctrl.h"
+#include "lggautocorrectfloater.h"
 
 ////////begin drop utility/////////////
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -81,24 +82,7 @@
 // altered to support a callback so i can slap it in things and it just return the item to a func of my choice
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class JCInvDropTarget : public LLView
-{
-public:
-	JCInvDropTarget(const std::string& name, const LLRect& rect, void (*callback)(LLViewerInventoryItem*));
-	~JCInvDropTarget();
 
-	void doDrop(EDragAndDropType cargo_type, void* cargo_data);
-
-	//
-	// LLView functionality
-	virtual BOOL handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
-								   EDragAndDropType cargo_type,
-								   void* cargo_data,
-								   EAcceptance* accept,
-								   std::string& tooltip_msg);
-protected:
-	void	(*mDownCallback)(LLViewerInventoryItem*);
-};
 
 
 JCInvDropTarget::JCInvDropTarget(const std::string& name, const LLRect& rect,
@@ -219,6 +203,8 @@ BOOL LLPanelEmerald::postBuild()
 
 
 	getChild<LLButton>("keyword_allert")->setClickedCallback(onKeywordAllertButton,this);
+	getChild<LLButton>("ac_button")->setClickedCallback(onAutoCorrectButton,this);
+	
 	
 	getChild<LLButton>("EmSpell_EditCustom")->setClickedCallback(onSpellEditCustom, this);
 	getChild<LLButton>("EmSpell_GetMore")->setClickedCallback(onSpellGetMore, this);
@@ -552,6 +538,10 @@ void LLPanelEmerald::onCustomBeam(void* data)
 void LLPanelEmerald::onKeywordAllertButton(void * data)
 {
 	MfdKeywordFloaterStart::show(true,data);
+}
+void LLPanelEmerald::onAutoCorrectButton(void * data)
+{
+	lggAutoCorrectFloaterStart::show(TRUE,data);
 }
 void LLPanelEmerald::onCustomBeamColor(void* data)
 {

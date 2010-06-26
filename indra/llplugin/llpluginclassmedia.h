@@ -2,9 +2,10 @@
  * @file llpluginclassmedia.h
  * @brief LLPluginClassMedia handles interaction with a plugin which knows about the "media" message class.
  *
+ * @cond
  * $LicenseInfo:firstyear=2008&license=viewergpl$
  * 
- * Copyright (c) 2008-2009, Linden Research, Inc.
+ * Copyright (c) 2008-2010, Linden Research, Inc.
  * 
  * Second Life Viewer Source Code
  * The source code in this file ("Source Code") is provided by Linden Lab
@@ -12,13 +13,13 @@
  * ("GPL"), unless you have obtained a separate licensing agreement
  * ("Other License"), formally executed by you and Linden Lab.  Terms of
  * the GPL can be found in doc/GPL-license.txt in this distribution, or
- * online at http://secondlifegrid.net/programs/open_source/licensing/gplv2
+ * online at http://secondlife.com/developers/opensource/gplv2
  * 
  * There are special exceptions to the terms and conditions of the GPL as
  * it is applied to this Source Code. View the full text of the exception
  * in the file doc/FLOSS-exception.txt in this software distribution, or
  * online at
- * http://secondlifegrid.net/programs/open_source/licensing/flossexception
+ * http://secondlife.com/developers/opensource/flossexception
  * 
  * By copying, modifying or distributing this software, you acknowledge
  * that you have read and understood your obligations described above,
@@ -28,6 +29,8 @@
  * WARRANTIES, EXPRESS, IMPLIED OR OTHERWISE, REGARDING ITS ACCURACY,
  * COMPLETENESS OR PERFORMANCE.
  * $/LicenseInfo$
+ * 
+ * @endcond
  */
 
 #ifndef LL_LLPLUGINCLASSMEDIA_H
@@ -38,7 +41,7 @@
 #include "llrect.h"
 #include "llpluginclassmediaowner.h"
 #include <queue>
-
+#include "v4color.h"
 
 class LLPluginClassMedia : public LLPluginProcessParentOwner
 {
@@ -84,6 +87,8 @@ public:
 
 	void setSize(int width, int height);
 	void setAutoScale(bool auto_scale);
+	
+	void setBackgroundColor(LLColor4 color) { mBackgroundColor = color; };
 	
 	// Returns true if all of the texture parameters (depth, format, size, and texture size) are set up and consistent.
 	// This will initially be false, and will also be false for some time after setSize while the resize is processed.
@@ -211,6 +216,17 @@ public:
 	// This is valid after MEDIA_EVENT_CLICK_LINK_HREF
 	std::string getClickTarget() const { return mClickTarget; };
 
+	typedef enum 
+	{
+		TARGET_NONE,        // empty href target string
+		TARGET_BLANK,       // target to open link in user's preferred browser
+		TARGET_EXTERNAL,    // target to open link in external browser
+		TARGET_OTHER        // nonempty and unsupported target type
+	}ETargetType;
+
+	// This is valid after MEDIA_EVENT_CLICK_LINK_HREF
+	ETargetType getClickTargetType() const { return mClickTargetType; };
+
 	std::string getMediaName() const { return mMediaName; };
 	std::string getMediaDescription() const { return mMediaDescription; };
 
@@ -327,6 +343,8 @@ protected:
 	std::string		mMediaName;
 	std::string		mMediaDescription;
 	
+	LLColor4		mBackgroundColor;
+	
 	/////////////////////////////////////////
 	// media_browser class
 	std::string		mNavigateURI;
@@ -339,6 +357,7 @@ protected:
 	std::string		mLocation;
 	std::string		mClickURL;
 	std::string		mClickTarget;
+	ETargetType     mClickTargetType;
 	
 	/////////////////////////////////////////
 	// media_time class
