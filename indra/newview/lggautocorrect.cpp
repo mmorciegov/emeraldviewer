@@ -55,7 +55,7 @@ std::string LGGAutoCorrect::getFileName()
 
 	if (!path.empty())
 	{
-		path = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "auto_correct_settings.xml");
+		path = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "settings_autocorrect.xml");
 	}
 	return path;  
 }
@@ -65,7 +65,7 @@ std::string LGGAutoCorrect::getDefaultFileName()
 
 	if (!path.empty())
 	{
-		path = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "auto_correct_settings.xml");
+		path = gDirUtilp->getExpandedFilename(LL_PATH_APP_SETTINGS, "settings_autocorrect.xml");
 	}
 	return path;  
 }
@@ -233,14 +233,12 @@ LLSD LGGAutoCorrect::getAutoCorrectEntries(std::string listName)
 }
 std::string LGGAutoCorrect::replaceWord(std::string currentWord)
 {
-	static BOOL *doAnything = rebind_llcontrol<BOOL>("EmeraldAutoReplace", &gSavedSettings, true);
+	static BOOL *doAnything = rebind_llcontrol<BOOL>("EmeraldEnableAutoCorrect", &gSavedSettings, true);
 	if(!(*doAnything))return currentWord;
 
 	//loop through priorities
 	for(int currentPriority = 10;currentPriority>=0;currentPriority--)
 	{
-
-
 		LLSD::map_const_iterator loc_it = mAutoCorrects.beginMap();
 		LLSD::map_const_iterator loc_end = mAutoCorrects.endMap();
 		for ( ; loc_it != loc_end; ++loc_it)
@@ -250,7 +248,6 @@ std::string LGGAutoCorrect::replaceWord(std::string currentWord)
 			const LLSD& loc_map = (*loc_it).second;
 			if(loc_map["priority"].asInteger()==currentPriority)
 			{
-
 				if(!loc_map["wordStyle"].asBoolean())
 				{
 					//this means look for partial matches instead of a full word
@@ -295,7 +292,7 @@ std::string LGGAutoCorrect::replaceWord(std::string currentWord)
 }
 std::string LGGAutoCorrect::replaceWords(std::string words)
 {
-	static BOOL *doAnything = rebind_llcontrol<BOOL>("EmeraldAutoReplace", &gSavedSettings, true);
+	static BOOL *doAnything = rebind_llcontrol<BOOL>("EmeraldEnableAutoCorrect", &gSavedSettings, true);
 	if(!(*doAnything))return words;
 	//TODO update this function to use the "wordStyle" thing,
 	//but so far this function is never used, so later
@@ -335,11 +332,24 @@ std::string LGGAutoCorrect::replaceWords(std::string words)
 }
 BOOL LGGAutoCorrect::addEntryToList(std::string wrong, std::string right, std::string listName)
 {
+	// *HACK: Make sure the "Custom" list exists, because the design of this
+	// system prevents us from updating it by changing the original file...
 	if(mAutoCorrects.has(listName))
 	{
 		mAutoCorrects[listName]["data"][wrong]=right;
 		return TRUE;
 	}
+	else if(listName == "Custom")
+	{
+		mAutoCorrects[listName]["announce"] = 0;
+		mAutoCorrects[listName]["author"] = "You";
+		mAutoCorrects[listName]["data"][wrong] = right;
+		mAutoCorrects[listName]["enabled"] = 1;
+		mAutoCorrects[listName]["priority"] = 10;
+		mAutoCorrects[listName]["wordStyle"] = 1;
+		return TRUE;
+	}
+		
 	return FALSE;
 }
 BOOL LGGAutoCorrect::removeEntryFromList(std::string wrong, std::string listName)

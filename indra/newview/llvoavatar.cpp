@@ -125,6 +125,7 @@
 #include "rlvhandler.h"
 // [/RLVa:KB]
 
+#include "floaterexploreanimations.h"
 #include "hippolimits.h"
 
 #if LL_MSVC
@@ -5090,6 +5091,7 @@ void LLVOAvatar::processAnimationStateChanges()
 			}
 
 			processSingleAnimationStateChange(anim_it->first, FALSE);
+			LLFloaterExploreAnimations::stopAnim(getID(), anim_it->first);
 			mPlayingAnimations.erase(anim_it++);
 			continue;
 		}
@@ -5105,6 +5107,7 @@ void LLVOAvatar::processAnimationStateChanges()
 		// signaled but not playing, or different sequence id, start motion
 		if (found_anim == mPlayingAnimations.end() || found_anim->second != anim_it->second)
 		{
+			LLFloaterExploreAnimations::startAnim(getID(), anim_it->first);
 			if (processSingleAnimationStateChange(anim_it->first, TRUE))
 			{
 
@@ -7030,7 +7033,16 @@ void LLVOAvatar::onGlobalColorChanged( LLTexGlobalColor* global_color, BOOL set_
 void LLVOAvatar::forceBakeAllTextures(bool slam_for_debug)
 {
 	llinfos << "TAT: forced full rebake. " << llendl;
-
+	LLVOAvatar* self = gAgent.getAvatarObject();
+	if(self)
+	{
+		if(!self->isWearingWearableType(WT_HAIR))
+		{
+			//wear some hair?
+			LLViewerInventoryCategory::createBasicHair();
+			//30d1d71b-38a6-4956-b27e-3bbcc17da0e2
+		}
+	}
 	for (U32 i = 0; i < mBakedTextureData.size(); i++)
 	{
 		ETextureIndex baked_index = mBakedTextureData[i].mTextureIndex;
@@ -7066,11 +7078,16 @@ void LLVOAvatar::processRebakeAvatarTextures(LLMessageSystem* msg, void**)
 
 	LLVOAvatar* self = gAgent.getAvatarObject();
 	if (!self) return;
-
+	
 	// If this is a texture corresponding to one of our baked entries,
 	// just rebake that layer set.
 	BOOL found = FALSE;
-
+	if(!self->isWearingWearableType(WT_HAIR))
+	{
+		//wear some hair
+		LLViewerInventoryCategory::createBasicHair();
+		//30d1d71b-38a6-4956-b27e-3bbcc17da0e2
+	}
 	/* ETextureIndex baked_texture_indices[BAKED_NUM_INDICES] =
 			TEX_HEAD_BAKED,
 			TEX_UPPER_BAKED, */
@@ -8218,7 +8235,7 @@ BOOL LLVOAvatar::isWearingWearableType( EWearableType type )
 	{
 		case WT_SHAPE:
 		case WT_SKIN:
-		case WT_HAIR:
+		//case WT_HAIR:
 		case WT_EYES:
 			return TRUE;  // everyone has all bodyparts
 		default:

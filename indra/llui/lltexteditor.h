@@ -372,7 +372,7 @@ public:
 	virtual void	unbindEmbeddedChars(const LLFontGL* font) const {}
 	
 	S32				findHTMLToken(const std::string &line, S32 pos, BOOL reverse) const;
-	BOOL			findHTML(const std::string &line, S32 *begin, S32 *end) const;
+	BOOL			findHTML(const std::string &line, S32 *begin, S32 *end, std::string& url) const;
 
 	// Abstract inner base class representing an undoable editor command.
 	// Concrete sub-classes can be defined for operations such as insert, remove, etc.
@@ -490,6 +490,7 @@ private:
 	void			drawBackground();
 	void			drawSelectionBackground();
 	void			drawCursor();
+	void			autoCorrectText();
 	void			drawMisspelled();
 	void			drawText();
 	void			drawClippedSegment(const LLWString &wtext, S32 seg_start, S32 seg_end, F32 x, F32 y, S32 selection_left, S32 selection_right, const LLStyleSP& color, F32* right_x);

@@ -146,9 +146,9 @@
 					<key>darwin</key>
 					<map>
 						<key>md5sum</key>
-						<string>92ab118495ae7b959c714294c1e36d8f</string>
+						<string>aa767999e0d405bdaed01fe3f7442dd9</string>
 						<key>url</key>
-						<uri>http://modularsystems.sl/libraries/7zip-9.1.3-darwin.tar.bz2</uri>
+						<uri>http://modularsystems.sl/libraries/7zip-4.57-20100630.tar.bz2</uri>
 					</map>
 					<key>linux</key>
 					<map>

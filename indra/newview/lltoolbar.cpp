@@ -322,6 +322,9 @@ void LLToolBar::refresh()
 		childSetEnabled("map_btn", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWWORLDMAP) );
 		childSetEnabled("radar_btn", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWMINIMAP) );
 		childSetEnabled("inventory_btn", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWINV) );
+
+		// Emerald-specific
+		childSetEnabled("avatar_list_btn", !gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES));
 	}
 // [/RLVa:KB]
 

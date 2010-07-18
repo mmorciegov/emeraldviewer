@@ -353,6 +353,7 @@ public:
 	void setCanSelect(BOOL canSelect);
 
 	void setDebugText(const std::string &utf8text);
+	std::string getDebugText();
 	void setIcon(LLViewerImage* icon_image);
 	void clearIcon();
 

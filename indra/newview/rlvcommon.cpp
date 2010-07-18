@@ -1,3 +1,19 @@
+/** 
+ *
+ * Copyright (c) 2009-2010, Kitty Barnett
+ * 
+ * The source code in this file is provided to you under the terms of the 
+ * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. Terms of the GPL can be found in doc/GPL-license.txt 
+ * in this distribution, or online at http://www.gnu.org/licenses/gpl-2.0.txt
+ * 
+ * By copying, modifying or distributing this software, you acknowledge that
+ * you have read and understood your obligations described above, and agree to 
+ * abide by those obligations.
+ * 
+ */
+
 #include "llviewerprecompiledheaders.h"
 #include "llagent.h"
 #include "llappviewer.h"
@@ -289,13 +305,22 @@ const char* RlvStrings::getStringFromReturnCode(ERlvCmdRet eRet)
 	return NULL;
 }
 
-// Checked: 2009-11-11 (RLVa-1.1.0a) | Modified: RLVa-1.1.0a
-std::string RlvStrings::getVersion() 
+// Checked: 2010-03-27 (RLVa-1.2.0b) | Modified: RLVa-1.2.0b
+std::string RlvStrings::getVersion(bool fLegacy /*=false*/) 
 {
-	return llformat("RestrainedLife viewer v%d.%d.%d (%s %d.%d.%d.%d - RLVa %d.%d.%d)",
+	return llformat("%s viewer v%d.%d.%d (%s %d.%d.%d.%d - RLVa %d.%d.%d)",
+		( (!fLegacy) ? "RestrainedLove" : "RestrainedLife" ),
 		RLV_VERSION_MAJOR, RLV_VERSION_MINOR, RLV_VERSION_PATCH,
 		LLAppViewer::instance()->getSecondLifeTitle().c_str(), LL_VERSION_MAJOR, LL_VERSION_MINOR, LL_VERSION_PATCH, LL_VERSION_BUILD,
 		RLVa_VERSION_MAJOR, RLVa_VERSION_MINOR, RLVa_VERSION_PATCH);
+}
+
+// Checked: 2010-04-18 (RLVa-1.2.0e) | Added: RLVa-1.2.0e
+std::string RlvStrings::getVersionAbout()
+{
+	return llformat("RLV v%d.%d.%d / RLVa v%d.%d.%d%c" , 
+		RLV_VERSION_MAJOR, RLV_VERSION_MINOR, RLV_VERSION_PATCH,
+		RLVa_VERSION_MAJOR, RLVa_VERSION_MINOR, RLVa_VERSION_PATCH, 'a' + RLVa_VERSION_BUILD);
 }
 
 // Checked: 2009-11-11 (RLVa-1.1.0a) | Modified: RLVa-1.1.0a

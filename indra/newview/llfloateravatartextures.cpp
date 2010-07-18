@@ -79,6 +79,7 @@ BOOL LLFloaterAvatarTextures::postBuild()
 
 	childSetAction("Dump", onClickDump, this);
 	childSetEnabled("Dump",FALSE);
+	childSetVisible("Dump",FALSE);
 
 	refresh();
 	return TRUE;
@@ -104,6 +105,7 @@ static void update_texture_ctrl(LLVOAvatar* avatarp,
 	{
 		ctrl->setImageAssetID(id);
 		ctrl->setToolTip(id.asString());
+		ctrl->setEnabled(FALSE);
 	}
 }
 

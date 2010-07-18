@@ -102,6 +102,7 @@ set(viewer_SOURCE_FILES
 	floaterlocalassetbrowse.cpp
 	floateravatarlist.cpp
 	floaterao.cpp
+	floaterexploresounds.cpp
 	hippogridmanager.cpp
 	hippolimits.cpp
 	hipporestrequest.cpp
@@ -110,7 +111,6 @@ set(viewer_SOURCE_FILES
 	jclslpreproc.cpp
     hbfloatergrouptitles.cpp
 	jc_lslviewerbridge.cpp
-	jcfloater_animation_list.cpp
 	jcfloater_areasearch.cpp
 	llfloatermessagelog.cpp
 	mfdkeywordfloater.cpp
@@ -522,6 +522,8 @@ set(viewer_SOURCE_FILES
     rlvextensions.cpp
     rlvfloaterbehaviour.cpp
     wlfPanel_AdvSettings.cpp
+    floaterexploreanimations.cpp
+	floaterblacklist.cpp
     )
 
 # This gets renamed in the packaging step
@@ -553,6 +555,7 @@ set(viewer_HEADER_FILES
 	floaterlocalassetbrowse.h
 	floateravatarlist.h
 	floaterao.h
+	floaterexploresounds.h
 	hippogridmanager.h
 	hippolimits.h
 	hipporestrequest.h
@@ -561,7 +564,6 @@ set(viewer_HEADER_FILES
 	jclslpreproc.h
 	hbfloatergrouptitles.h
 	jc_lslviewerbridge.h
-	jcfloater_animation_list.h
 	jcfloater_areasearch.h
 	lggautocorrectfloater.h
 	lggautocorrect.h
@@ -992,6 +994,8 @@ set(viewer_HEADER_FILES
     VertexCache.h
     VorbisFramework.h
     wlfPanel_AdvSettings.h
+	floaterblacklist.h
+    floaterexploreanimations.h
     )
 
 source_group("CMake Rules" FILES ViewerInstall.cmake)
@@ -1015,12 +1019,18 @@ if (DARWIN)
     ${IOKIT_LIBRARY}
     )
 
+  # Fix the version numbers!
+  configure_files(viewer_GENERATED_PLISTS
+    Info-${VIEWER_BRANDING_NAME_CAMELCASE}.plist
+    English.lproj/InfoPlist.strings
+  )
+
   # Add resource files to the project.
   set(viewer_RESOURCE_FILES
     ${VIEWER_BRANDING_ID}.icns
     macview.r
     gpu_table.txt
-    Info-${VIEWER_BRANDING_NAME_CAMELCASE}.plist
+    ${viewer_GENERATED_PLISTS}
     SecondLife.nib/
     # CMake doesn't seem to support Xcode language variants well just yet
     English.lproj/InfoPlist.strings

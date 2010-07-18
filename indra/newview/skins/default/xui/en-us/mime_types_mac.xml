@@ -146,6 +146,9 @@
 		<widgettype>
 			movie
 		</widgettype>
+		<impl>
+			media_plugin_quicktime
+		</impl>
 	</mimetype>
 	<mimetype name="image/*">
 		<label name="image2_label">

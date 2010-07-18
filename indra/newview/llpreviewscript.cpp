@@ -422,8 +422,14 @@ void menu_toggle_gsaved(void* userdata)
 	LLMenuItemCheckGL* self = (LLMenuItemCheckGL*)userdata;
 	std::string cntrl = self->getControlName();
 	if(cntrl != "")
-	{
+	{	if (cntrl == "EmeraldLSLPreprocessor")
+		{
 		gSavedSettings.setBOOL(cntrl,!gSavedSettings.getBOOL(cntrl));
+		LLSD args;	
+		LLNotifications::instance().add("PreprocEnabled", args);
+		} else {
+		gSavedSettings.setBOOL(cntrl,!gSavedSettings.getBOOL(cntrl));
+		}
 	}
 }
 
@@ -514,8 +520,8 @@ void LLScriptEdCore::initMenu()
 	menuItem->setMenuCallback(onBtnDynamicHelp, this);
 	menuItem->setEnabledCallback(NULL);
 
-	// This doesn't work as long as the menu item is missing.
-#if 0
+	// fixed dim.
+
 	LLMenuItemCheckGL* check = getChild<LLMenuItemCheckGL>("preproc_on");
 	check->setControlName("EmeraldLSLPreprocessor",NULL);
 	check->setMenuCallback(menu_toggle_gsaved,check);
@@ -534,10 +540,11 @@ void LLScriptEdCore::initMenu()
 		check->setControlName("EmeraldLSLSwitch",NULL);
 		check->setMenuCallback(menu_toggle_gsaved,check);
 	}
-#endif
+
 }
 
-
+ //this should not be needed
+//TODO: Remove
 void LLScriptEdCore::onToggleProc(void* userdata)
 {
 	LLScriptEdCore* corep = (LLScriptEdCore*)userdata;
@@ -705,7 +712,6 @@ void LLScriptEdCore::xedLaunch()
 	//record the stat
 	stat(mXfname.c_str(), &mXstbuf);
 	//launch
-	llinfos << std::string(gSavedSettings.getString("EmeraldLSLExternalEditor") + " " + mXfname).c_str() << llendl;		
 #if LL_WINDOWS
 	//just to get rid of the pesky black window
 	std::string exe = gSavedSettings.getString("EmeraldLSLExternalEditor");
@@ -724,13 +730,7 @@ void LLScriptEdCore::xedLaunch()
 
 	std::system(theCMD.c_str());
 #elif LL_DARWIN
-	// Use Launch Services for this.
-	// Using LSOpenURLsWithRole will probably not work properly with non-native text editors,
-	// as instead of passing the file as aparameter, it sends it as an Apple Event after launch,
-	// but it works correctly with any decent OS X editor. (Tested: TextMate, TextWrangler, TextEdit).
-	// By contrast, passing as a parameter does *not* work in the case that the app is already open,
-	// so this is probably better.
-	// The alternative approach is seen in revision 1886.
+	// Use Launch Services for this - launching another instance is fail (and incorrect on OS X)
 	CFStringRef strPath = CFStringCreateWithCString(kCFAllocatorDefault, mXfname.c_str(), kCFStringEncodingUTF8);
 	CFURLRef tempPath = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, strPath, kCFURLPOSIXPathStyle, false);
 	CFURLRef tempPathArray[1] = { tempPath };
@@ -747,8 +747,21 @@ void LLScriptEdCore::xedLaunch()
 	CFRelease(strPath);
 #else
 	//std::system(std::string(gSavedSettings.getString("EmeraldLSLExternalEditor") + " " + mXfname).c_str());
+	
+	// Any approach involving std::system will fail because SL eats signals.
+	// This was stolen from floaterskinfinder.cpp.
+	std::string exe = gSavedSettings.getString("EmeraldLSLExternalEditor");
+	const char *zargv[] = {exe.c_str(), mXfname.c_str(), NULL};
+	fflush(NULL);
+	pid_t id = vfork();
+	if(id == 0)
+	{
+		execv(exe.c_str(), (char **)zargv);
+		_exit(0); // This shouldn't ever be reached.
+	}
 #endif
 }
+
 void LLScriptEdCore::XedUpd()
 {
    struct stat stbuf;
@@ -1095,14 +1108,18 @@ void LLScriptEdCore::onBtnInsertFunction(LLUICtrl *ui, void* userdata)
 
 // static 
 void LLScriptEdCore::doSave( void* userdata, BOOL close_after_save )
-{
+{	
+	
+	llinfos << "Saving!" << llendl;
+	LLScriptEdCore* self = (LLScriptEdCore*)userdata;
+	self->mErrorList->deleteAllItems();	// Clear the data so it shows our messages WTF!
 	if(gSavedSettings.getBOOL("EmeraldLSLPreprocessor"))
 	{
-		LLScriptEdCore* self = (LLScriptEdCore*)userdata;
-		//self->mLSLProc->mClose = close_after_save;
+		llinfos << "passing to preproc" << llendl;
 		self->mLSLProc->preprocess_script(close_after_save);
 	}else
 	{
+		llinfos << "Bypassing preproc" << llendl;
 		doSaveComplete(userdata, FALSE);
 	}
 }
@@ -1115,7 +1132,9 @@ void LLScriptEdCore::doSaveComplete( void* userdata, BOOL close_after_save )
 
 	if( self->mSaveCallback )
 	{
-		self->mSaveCallback( self->mUserdata, close_after_save );
+		
+			self->mSaveCallback( self->mUserdata, close_after_save );
+	
 	}
 }
 
@@ -1362,7 +1381,15 @@ BOOL LLScriptEdCore::handleKeyHere(KEY key, MASK mask)
 		if(mSaveCallback)
 		{
 			// don't close after saving
-			mSaveCallback(mUserdata, FALSE);
+			if (!hasChanged(this))
+			{
+				llinfos << "Save Not Needed" << llendl;
+				return TRUE;
+			}
+			doSave(this, FALSE);
+			
+			//mSaveCallback(mUserdata, FALSE);
+
 		}
 
 		return TRUE;
@@ -2473,7 +2500,7 @@ void LLLiveLSLEditor::saveIfNeeded()
 	// save the script
 	mScriptEd->enableSave(FALSE);
 	mScriptEd->mEditor->makePristine();
-	mScriptEd->mErrorList->deleteAllItems();
+	//mScriptEd->mErrorList->deleteAllItems();
 
 	// set up the save on the local machine.
 	mScriptEd->mEditor->makePristine();

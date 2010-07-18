@@ -199,7 +199,7 @@ viewer_media_t LLViewerMedia::newMediaImpl(const std::string& media_url,
 		media_impl->mMediaAutoScale = media_auto_scale;
 		media_impl->mMediaLoop = media_loop;
 		if(! media_url.empty())
-			media_impl->navigateTo(media_url, mime_type, true);
+			media_impl->navigateTo(media_url, mime_type, false);
 	}
 	return media_impl;
 }
@@ -418,7 +418,7 @@ void LLViewerMediaImpl::createMediaSource()
 {
 	if(! mMediaURL.empty())
 	{
-		navigateTo(mMediaURL, mMimeType, true);
+		navigateTo(mMediaURL, mMimeType, false);
 	}
 	else if(! mMimeType.empty())
 	{

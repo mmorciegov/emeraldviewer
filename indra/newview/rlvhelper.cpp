@@ -121,10 +121,10 @@ void RlvCommand::initLookupTable()
 				"showhovertextworld", "showhovertextall", "tplm", "tploc", "tplure", "viewnote", "viewscript", "viewtexture", 
 				"acceptpermission", "accepttp", "defaultwear", "allowidle", "edit", "rez", "fartouch", "interact", "touch", 
 				"touchattach", "touchhud", "touchworld", "fly", "unsit", "sit", "sittp", "setdebug", "setenv", "detachme", "detachthis", 
-				"detachall", "detachallthis", "attachthis", "attachall", "attachallthis", "tpto", "version", "versionnum", "getattach", 
-				"getattachnames", "getaddattachnames", "getremattachnames", "getoutfit", "getoutfitnames", "getaddoutfitnames", 
-				"getremoutfitnames", "findfolder", "findfolders", "getpath", "getinv", "getinvworn", "getsitid", "getstatus", 
-				"getstatusall"
+				"detachall", "detachallthis", "attachthis", "attachall", "attachallthis", "tpto", "version", "versionnew", "versionnum", 
+				"getattach", "getattachnames", "getaddattachnames", "getremattachnames", "getoutfit", "getoutfitnames", 
+				"getaddoutfitnames", "getremoutfitnames", "findfolder", "findfolders", "getpath", "getinv", "getinvworn", "getsitid", 
+				"getstatus", "getstatusall"
 			};
 
 		for (int idxBvhr = 0; idxBvhr < RLV_BHVR_COUNT; idxBvhr++)
@@ -1114,12 +1114,12 @@ S32 rlvGetDirectDescendentsCount(const LLInventoryCategory* pFolder, LLAssetType
 
 		#if RLV_TARGET < RLV_MAKE_TARGET(1, 23, 0)			// Version: 1.22.11
 			LLStringUtil::format_map_t args;
-			args["[MESSAGE]"] = llformat("Restrained Love Support will be %s after you restart", 
+			args["[MESSAGE]"] = llformat("RestrainedLove Support will be %s after you restart", 
 				(rlv_handler_t::isEnabled()) ? "disabled" : "enabled" );
 			gViewerWindow->alertXml("GenericAlert", args);
 		#else												// Version: 1.23.4
 			LLSD args;
-			args["MESSAGE"] = llformat("Restrained Love Support will be %s after you restart", 
+			args["MESSAGE"] = llformat("RestrainedLove Support will be %s after you restart", 
 				(rlv_handler_t::isEnabled()) ? "disabled" : "enabled" );
 			LLNotifications::instance().add("GenericAlert", args);
 		#endif

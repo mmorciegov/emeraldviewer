@@ -303,7 +303,7 @@ public:
 						signal->connect(boost::bind(&jc_rebind::rebind_callback<RBTYPE>, _1, type));
 						if(init)jc_rebind::rebind_callback<RBTYPE>(control->getValue(),type);
 					}else llerrs << "no signal!" << llendl;
-				}else llerrs << "no control!" << llendl;
+				}else llerrs << "no control for " << name << "!" << llendl;
 			}
 		}
 		return type;

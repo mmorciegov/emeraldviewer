@@ -194,12 +194,12 @@
 #include "llsocks5.h"
 #include "floateravatarlist.h"
 #include "scriptcounter.h"
-#include "jcfloater_animation_list.h"
 #include "jcfloater_areasearch.h"
 #include "lgghunspell_wrapper.h"
 #include "llfloaterteleporthistory.h"
 #include "exporttracker.h"
 #include "wlfPanel_AdvSettings.h"
+#include "floaterblacklist.h"
 
 // [RLVa:KB]
 #include "rlvhandler.h"
@@ -1052,6 +1052,7 @@ bool idle_startup()
 		LLStringUtil::truncate(gWindowTitle, 255);
 		gViewerWindow->getWindow()->setWindowTitle(gWindowTitle);
 
+		LLFloaterBlacklist::loadFromSave();
 
 		if (show_connect_box)
 		{
@@ -3292,7 +3293,6 @@ void pass_processObjectPropertiesFamily(LLMessageSystem *msg, void**)
 {
 	// send it to 'observers'
 	LLSelectMgr::processObjectPropertiesFamily(msg,0);
-	JCFloaterAnimList::processObjectPropertiesFamily(msg,0);
 	JCFloaterAreaSearch::processObjectPropertiesFamily(msg,0);
 	ScriptCounter::processObjectPropertiesFamily(msg,0);
 }

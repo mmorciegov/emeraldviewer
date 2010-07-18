@@ -1769,6 +1769,13 @@ The region [REGION] does not allow transfer of land.
 
   <notification
    icon="alertmodal.tga"
+   name="DeedToGroupFail"
+   type="alertmodal">
+Unable to deed land for some reason. Maybe because the region does not allow transfer of land?
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="CannotReleaseLandWatingForServer"
    type="alertmodal">
 Unable to abandon land:
@@ -4169,9 +4176,21 @@ There are no items in this object that you are allowed to copy.
    icon="alertmodal.tga"
    name="WebLaunchAccountHistory"
    type="alertmodal">
-Go to the Second Life web site to see your account history?
+    Go to the Second Life web site to see your account history?
     <usetemplate
      ignoretext="When loading account history web page"
+     name="okcancelignore"
+     notext="Cancel"
+     yestext="Go to page"/>
+  </notification>
+  
+  <notification
+   icon="alertmodal.tga"
+   name="WebLaunchMS"
+   type="alertmodal">
+    Visit the Modular Systems Web site?
+    <usetemplate
+     ignoretext="why not o.o"
      name="okcancelignore"
      notext="Cancel"
      yestext="Go to page"/>
@@ -6606,7 +6625,12 @@ An error has occurred while trying to connect to voice chat for [VOICE_CHANNEL_N
       <context key="VOICE_CHANNEL_NAME"/>
     </unique>
   </notification>
-
+  <notification
+   icon="alertmodal.tga"
+   name="PreprocEnabled"
+   type="alertmodal">
+    Toggling the preprocessor will not take full effect unless you close and reopen this editor.
+  </notification>
   <notification
    duration="10"
    icon="notifytip.tga"
@@ -7134,6 +7158,14 @@ Shadows can't be enabled due to your graphics settings being set to low. Please 
     name="EmeraldResetAllSettingsComplete"
     type="alertmodal">
 All client settings, as well as all user-specific settings for this user, have been reset. You should relog to ensure this takes full effect.
+  </notification>
+
+  <notification
+    icon="alertmodal.tga"
+    label="All settings reset"
+    name="EmeraldResetAllSettingsCompleteNoUser"
+    type="alertmodal">
+All client settings (though no per-user settings) have been reset. You should relog to ensure this takes full effect.
   </notification>
   
   <notification

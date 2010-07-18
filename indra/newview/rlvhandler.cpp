@@ -1,3 +1,19 @@
+/** 
+ *
+ * Copyright (c) 2009-2010, Kitty Barnett
+ * 
+ * The source code in this file is provided to you under the terms of the 
+ * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. Terms of the GPL can be found in doc/GPL-license.txt 
+ * in this distribution, or online at http://www.gnu.org/licenses/gpl-2.0.txt
+ * 
+ * By copying, modifying or distributing this software, you acknowledge that
+ * you have read and understood your obligations described above, and agree to 
+ * abide by those obligations.
+ * 
+ */
+
 #include "llviewerprecompiledheaders.h"
 #include "llcallbacklist.h"
 #include "lldrawpoolalpha.h"
@@ -2262,9 +2278,10 @@ ERlvCmdRet RlvHandler::processReplyCommand(const LLUUID& idObj, const RlvCommand
 	ERlvCmdRet eRet = RLV_RET_SUCCESS; std::string strReply;
 	switch (rlvCmd.getBehaviourType())
 	{
-		case RLV_BHVR_VERSION:			// @version=<channel>					- Checked: 2009-11-26 (RLVa-1.1.0f)
+		case RLV_BHVR_VERSION:			// @version=<channel>					- Checked: 2010-03-27 (RLVa-1.2.0b)
+		case RLV_BHVR_VERSIONNEW:		// @versionnew=<channel>				- Checked: 2010-03-27 (RLVa-1.2.0b) | Added: RLVa-1.2.0b
 			// NOTE: RLV will respond even if there's an option
-			strReply = RlvStrings::getVersion();
+			strReply = RlvStrings::getVersion(RLV_BHVR_VERSION == rlvCmd.getBehaviourType());
 			break;
 		case RLV_BHVR_VERSIONNUM:		// @versionnum=<channel>				- Checked: 2009-11-26 (RLVa-1.1.0f) | Added: RLVa-1.0.4b
 			// NOTE: RLV will respond even if there's an option

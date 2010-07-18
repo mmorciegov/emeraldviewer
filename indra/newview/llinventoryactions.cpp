@@ -501,6 +501,7 @@ class SetSearchType : public inventory_listener_t
 			mPtr->getControl("Inventory.SearchByName")->setValue(TRUE);
 			mPtr->getControl("Inventory.SearchByCreator")->setValue(FALSE);	
 			mPtr->getControl("Inventory.SearchByDesc")->setValue(FALSE);
+			mPtr->getControl("Inventory.SearchByUUID")->setValue(FALSE);
 			mPtr->getControl("Inventory.SearchByAll")->setValue(FALSE);
 		}
 		else if(search_type == "creator")
@@ -512,6 +513,7 @@ class SetSearchType : public inventory_listener_t
 			mPtr->getControl("Inventory.SearchByName")->setValue(FALSE);
 			mPtr->getControl("Inventory.SearchByCreator")->setValue(TRUE);
 			mPtr->getControl("Inventory.SearchByDesc")->setValue(FALSE);
+			mPtr->getControl("Inventory.SearchByUUID")->setValue(FALSE);
 			mPtr->getControl("Inventory.SearchByAll")->setValue(FALSE);
 		}
 		else if(search_type == "desc")
@@ -523,6 +525,19 @@ class SetSearchType : public inventory_listener_t
 			mPtr->getControl("Inventory.SearchByName")->setValue(FALSE);
 			mPtr->getControl("Inventory.SearchByCreator")->setValue(FALSE);
 			mPtr->getControl("Inventory.SearchByDesc")->setValue(TRUE);
+			mPtr->getControl("Inventory.SearchByUUID")->setValue(FALSE);
+			mPtr->getControl("Inventory.SearchByAll")->setValue(FALSE);
+		}
+		else if(search_type == "uuid")
+		{
+			mPtr->getActivePanel()->setSearchType(4);
+
+			gSavedPerAccountSettings.setU32("EmeraldInventorySearchType",4);
+
+			mPtr->getControl("Inventory.SearchByName")->setValue(FALSE);
+			mPtr->getControl("Inventory.SearchByCreator")->setValue(FALSE);
+			mPtr->getControl("Inventory.SearchByDesc")->setValue(FALSE);
+			mPtr->getControl("Inventory.SearchByUUID")->setValue(TRUE);
 			mPtr->getControl("Inventory.SearchByAll")->setValue(FALSE);
 		}
 		else if(search_type == "all")
@@ -534,6 +549,7 @@ class SetSearchType : public inventory_listener_t
 			mPtr->getControl("Inventory.SearchByName")->setValue(FALSE);
 			mPtr->getControl("Inventory.SearchByCreator")->setValue(FALSE);
 			mPtr->getControl("Inventory.SearchByDesc")->setValue(FALSE);
+			mPtr->getControl("Inventory.SearchByUUID")->setValue(FALSE);
 			mPtr->getControl("Inventory.SearchByAll")->setValue(TRUE);
 		}
 		

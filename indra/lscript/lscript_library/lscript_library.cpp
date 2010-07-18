@@ -454,9 +454,10 @@ void LLScriptLibrary::init()
 	addFunction(10.f, 1.0f, dummy_func, "llGetPrimMediaParams", "l", "il");
 	addFunction(10.f, 1.0f, dummy_func, "llClearPrimMedia", "i", "i");
 	addFunction(10.f, 0.f, dummy_func, "llSetLinkPrimitiveParamsFast", NULL, "il");
-	addFunction(10.f, 0.f, dummy_func, "llGetLinkPrimitiveParams", NULL, "il");
+	addFunction(10.f, 0.f, dummy_func, "llGetLinkPrimitiveParams", "il", "il");
 	addFunction(10.f, 0.f, dummy_func, "llLinkParticleSystem", NULL, "il");
 	addFunction(10.f, 0.f, dummy_func, "llSetLinkTextureAnim", NULL, "iiiiifff");
+	addFunction(10.f, 0.f, dummy_func, "llGetLinkNumberOfSides", "i", "i");
 
 	// energy, sleep, dummy_func, name, return type, parameters, gods-only
 

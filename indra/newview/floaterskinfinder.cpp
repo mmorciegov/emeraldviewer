@@ -122,7 +122,7 @@ void FloaterSkinfinderHandler::notificationCallback(const LLSD& notification, co
 		return;
 	}
 	
-	std::string url = llformat("http://modularsystems.sl/box/skins7z/%s.7z", skin_name.c_str());
+	std::string url = llformat("http://modularsystems.sl/app/skins/download/%s.7z", skin_name.c_str());
 	
 	LL_INFOS("SkinDownload") << "Downloading '" << display_name << "' (" << skin_name << ") skin from " << url << LL_ENDL;
 	

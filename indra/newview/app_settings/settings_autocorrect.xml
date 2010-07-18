@@ -1,5 +1,20 @@
 <llsd>
     <map>
+    <key>Custom</key>
+        <map>
+        <key>announce</key>
+            <integer>0</integer>
+        <key>author</key>
+            <string>You</string>
+        <key>data</key>
+            <map></map>
+        <key>enabled</key>
+            <integer>1</integer>
+        <key>priority</key>
+            <integer>10</integer>
+        <key>wordStyle</key>
+            <integer>1</integer>
+        </map>
     <key>Abbreviations</key>
         <map>
         <key>announce</key>
@@ -14,6 +29,8 @@
                 <string>at the moment</string>
             <key>bbl</key>
                 <string>(Be back later)</string>
+            <key>brb</key>
+                <string>(Be Right Back)</string>
             <key>gtg</key>
                 <string>Got to go</string>
             <key>nm</key>
@@ -44,10 +61,10 @@
         <key>wordStyle</key>
             <integer>1</integer>
         </map>
-    <key>Spelling Corrections</key>
+    <key>SpellingCorrections</key>
         <map>
         <key>announce</key>
-            <integer>1</integer>
+            <integer>0</integer>
         <key>author</key>
             <string>LordGregGreg / Wikipedia</string>
         <key>data</key>

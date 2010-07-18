@@ -308,11 +308,23 @@ void LLFolderViewItem::refreshFromListener()
 		}
 		mLabelDesc = desc;
 
+		//Label for UUID search
+		
+		std::string searchuuid;
+		if(item)
+		{
+			if(!item->getAssetUUID().isNull())
+			{
+				searchuuid = item->getAssetUUID().asString().c_str();
+			}
+		}
+		mLabelUUID = searchuuid;
+		
 		//Label for name search
 		mLabel = mListener->getDisplayName();
 
 		//Build label for combined search - RK
-		mLabelAll = mLabel + " " + mLabelCreator + " " + mLabelDesc;
+		mLabelAll = mLabel + " " + mLabelCreator + " " + mLabelDesc + " " + mLabelUUID;
 
 		setIcon(mListener->getIcon());
 		time_t creation_date = mListener->getCreationDate();
@@ -333,28 +345,33 @@ void LLFolderViewItem::refresh()
 	std::string searchable_label(mLabel);
 	std::string searchable_label_creator(mLabelCreator);
 	std::string searchable_label_desc(mLabelDesc);
+	std::string searchable_label_uuid(mLabelUUID);
 	std::string searchable_label_all(mLabelAll);
 
 	//add the (no modify), (no transfer) etc stuff to each label.
 	searchable_label.append(mLabelSuffix);
 	searchable_label_creator.append(mLabelSuffix);
 	searchable_label_desc.append(mLabelSuffix);
+	searchable_label_uuid.append(mLabelSuffix);
 	searchable_label_all.append(mLabelSuffix);
 
 	//all labels need to be uppercase.
 	LLStringUtil::toUpper(searchable_label);
 	LLStringUtil::toUpper(searchable_label_creator);
 	LLStringUtil::toUpper(searchable_label_desc);
+	LLStringUtil::toUpper(searchable_label_uuid);
 	LLStringUtil::toUpper(searchable_label_all);
 
 	if (mSearchableLabel.compare(searchable_label) ||
 		mSearchableLabelCreator.compare(searchable_label_creator) ||
 		mSearchableLabelDesc.compare(searchable_label_desc) || 
+		mSearchableLabelUUID.compare(searchable_label_uuid) || 
 		mSearchableLabelAll.compare(searchable_label_all))
 	{
 		mSearchableLabel.assign(searchable_label);
 		mSearchableLabelCreator.assign(searchable_label_creator);
 		mSearchableLabelDesc.assign(searchable_label_desc);
+		mSearchableLabelUUID.assign(searchable_label_uuid);
 		mSearchableLabelAll.assign(searchable_label_all);
 
 		dirtyFilter();
@@ -675,6 +692,8 @@ const std::string& LLFolderViewItem::getSearchableLabel() const
 		return mSearchableLabelDesc;
 	case 3:
 		return mSearchableLabelAll;
+	case 4:
+		return mSearchableLabelUUID;
 	default:
 		return mSearchableLabel;
 	}

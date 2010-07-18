@@ -1896,7 +1896,9 @@ void LLPanelAvatar::sendAvatarPropertiesRequest()
 // We also use POST so that the logs show nothing.
 // (if you think we're going to log every single profile view, even if we wanted to, you're insane.
 // 85k users * how many profiles a day?)
-#if 1
+
+// (Disabled now anyway)
+#if 0
 void LLPanelAvatar::sendAvatarRatingsRequest()
 {
 	LLMD5 hashed_key = LLMD5((unsigned char*)mAvatarID.asString().c_str());
@@ -2266,7 +2268,7 @@ void LLPanelAvatar::processAvatarGroupsReply(LLMessageSystem *msg, void**)
 					}
 				}
 				// Set unselected color if found and group is not visible in profile
-				if (group_data && group_data->mListInProfile)
+				if (group_data && !group_data->mListInProfile)
 				{
 					static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
 

@@ -109,7 +109,7 @@ void chat_avatar_status(std::string name, LLUUID key, ERadarAlertType type, bool
 	{
 // [RLVa:KB] - Alternate: Emerald-370
 		if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
-	{
+		{
 			name = RlvStrings::getAnonym(name);
 		}
 // [/RLVa:KB]
@@ -131,11 +131,11 @@ void chat_avatar_status(std::string name, LLUUID key, ERadarAlertType type, bool
 				chat.mFromName = name;
 				chat.mURL = llformat("secondlife:///app/agent/%s/about",key.asString().c_str());
 				chat.mText = name+" has "+(entering ? "entered" : "left")+" draw distance.";// ("+key.asString()+")";
-}
+			}
 			break;
 		case ALERT_TYPE_CHATRANGE:
 			if(gSavedSettings.getBOOL("EmeraldRadarAlertChatRange"))
-{
+			{
 				chat.mFromName = name;
 				chat.mURL = llformat("secondlife:///app/agent/%s/about",key.asString().c_str());
 				chat.mText = name+" has "+(entering ? "entered" : "left")+" chat range.";// ("+key.asString()+")";
@@ -143,19 +143,19 @@ void chat_avatar_status(std::string name, LLUUID key, ERadarAlertType type, bool
 			break;
 		case ALERT_TYPE_AGE:
 			if(gSavedSettings.getBOOL("EmeraldAvatarAgeAlert"))
-	{
+			{
 				chat.mFromName = name;
 				chat.mURL = llformat("secondlife:///app/agent/%s/about",key.asString().c_str());
 
 				make_ui_sound("EmeraldAvatarAgeAlertSoundUUID");
 				chat.mText = name+" has triggered your avatar age alert.";
-		}
+			}
 			break;
-	}
+		}
 		if(chat.mText != "")
-	{
-			chat.mSourceType = CHAT_SOURCE_SYSTEM;
-			LLFloaterChat::addChat(chat);
+		{
+				chat.mSourceType = CHAT_SOURCE_SYSTEM;
+				LLFloaterChat::addChat(chat);
 		}
 	}
 }
@@ -415,6 +415,37 @@ BOOL LLFloaterAvatarList::handleRightMouseDown(S32 x, S32 y, MASK mask)
 		LLMenuGL::showPopup(this, menu, x, y);
 	}
 	return TRUE;
+}
+
+BOOL LLFloaterAvatarList::handleKeyHere(KEY key, MASK mask)
+{
+	if (( KEY_RETURN == key ) && (MASK_NONE == mask))
+	{
+		LLFloaterAvatarList* self = getInstance();
+ 		LLScrollListItem *item =   self->mAvatarList->getFirstSelected();
+		LLUUID agent_id = item->getUUID();
+		lookAtAvatar(agent_id);
+		return TRUE;
+	}
+
+	if (( KEY_RETURN == key ) && (MASK_CONTROL == mask))
+	{
+		LLFloaterAvatarList* avlist = getInstance();
+		LLScrollListItem *item = avlist->mAvatarList->getFirstSelected();
+
+		if ( item )
+		{
+			LLUUID agent_id = item->getUUID();
+			LLAvatarListEntry *ent = avlist->getAvatarEntry(agent_id);
+			if ( ent )
+			{
+				gAgent.teleportViaLocation( ent->getPosition() );
+			}
+		}
+
+		return TRUE;
+	}
+	return LLPanel::handleKeyHere(key, mask);
 }
 
 static void cmd_profile(const LLUUID& avatar, const std::string &name)
@@ -1061,7 +1092,7 @@ void LLFloaterAvatarList::updateAvatarList()
 		{
 			LLVOAvatar* avatarp = dynamic_cast<LLVOAvatar*>(obj);
 			if (avatarp == NULL) continue;
-			if (avatarp->isDead() || avatarp->isSelf()) continue;
+			if (avatarp->isDead() || avatarp->isSelf() || avatarp->mIsDummy) continue;
 
 			// Get avatar data
 			position = gAgent.getPosGlobalFromAgent(avatarp->getCharacterPosition());
@@ -1157,7 +1188,10 @@ void LLFloaterAvatarList::updateAvatarListVoice()
 
 			llinfos << "voice participant not in list: " << participant_id.asString().c_str() << " - " << name << llendl;
 
-			if (name.empty() || (name.compare(" ") == 0))// || (name.compare(gCacheName->getDefaultName()) == 0))
+			// The check against "==" is to check that we don't get a voice ID (which is in the form of base64 data)
+			// Voice IDs are of constant length, and thus always have "==" padding at the end. "=" is otherwise illegal in
+			// a name (for now).
+			if (name.empty() || (name.compare(" ") == 0) || name.substr(name.length() - 2, 2) == "==")// || (name.compare(gCacheName->getDefaultName()) == 0))
 			{
 				if(gCacheName->getName(participant_id, first, last)) name = first + " " + last;
 				else continue;
@@ -1254,6 +1288,7 @@ void LLFloaterAvatarList::refreshAvatarList()
 		if ( av_id.isNull() ) continue;
 
 		BOOL av_isvoice = ent->getIsVoice();
+		LLVOAvatar *av = (LLVOAvatar*)gObjectList.findObject(av_id);
 		BOOL flagForFedUpDistance = false;
 		LLVector3d position = LLVector3d::zero;
 		F32 distance = 0.0f;
@@ -1387,7 +1422,14 @@ void LLFloaterAvatarList::refreshAvatarList()
 		element["columns"][LIST_SIM]["type"] = "text";
 
 		icon = "";
-		if(gAgent.getRegion()->pointInRegionGlobal(position)) icon = "account_id_green.tga";
+		if(av && av->isAvatar() && av->isTyping())
+		{
+			icon = "avatar_typing.tga";
+		}
+		else if(gAgent.getRegion()->pointInRegionGlobal(position))
+		{
+			icon = "account_id_green.tga";
+		}
 		if (!icon.empty() )
 		{
 			element["columns"][LIST_SIM].erase("color");
@@ -1453,7 +1495,6 @@ void LLFloaterAvatarList::refreshAvatarList()
 	
 		LLColor4 avatar_name_color = (*sAvatarNameColor);
 		std::string client;
-		LLVOAvatar *av = (LLVOAvatar*)gObjectList.findObject(av_id);
 
 		static LLColor4 *sScrollUnselectedColor = rebind_llcontrol<LLColor4>("ScrollUnselectedColor", LLUI::sColorsGroup, true);
 

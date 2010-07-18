@@ -949,20 +949,33 @@ void open_offer(const std::vector<LLUUID>& items, const std::string& from_name)
 		}
 		//highlight item, if it's not in the trash or lost+found
 
-		// Don't auto-open the inventory floater
+		// Don't auto-open the inventory floater if we don't want to.
 		LLInventoryView* view = LLInventoryView::getActiveInventory();
+		// No point opening an inventory window if we're then not going to actually do anything with it.
+		bool show_inventory = gSavedSettings.getBOOL("ShowInInventory") && !gSavedSettings.getBOOL("EmeraldFreezeInventoryArangement");
 		if(!view)
 		{
-			return;
+			if(show_inventory)
+			{
+				view = LLInventoryView::showAgentInventory(TRUE);
+				if(!view)
+				{
+					// Give up.
+					LL_WARNS("Messaging") << "Unable to open inventory panel." << LL_ENDL;
+					return;
+				}
+			}
+			else
+			{
+				return;
+			}
 		}
-
-		if(gSavedSettings.getBOOL("ShowInInventory") &&
-		   asset_type != LLAssetType::AT_CALLINGCARD &&
-		   item->getInventoryType() != LLInventoryType::IT_ATTACHMENT &&
-		   !from_name.empty())
+		else if(show_inventory)
 		{
-			LLInventoryView::showAgentInventory(TRUE);
+			view->open();
+			view->setFrontmost(TRUE);
 		}
+	
 		//Trash Check
 		LLUUID trash_id;
 		trash_id = gInventory.findCategoryUUIDForType(LLAssetType::AT_TRASH);
@@ -1226,7 +1239,7 @@ bool LLOfferInfo::inventory_offer_callback(const LLSD& notification, const LLSD&
 				if (pOffer->isEverythingComplete())
 					pOffer->done();
 				else
-					opener = pOffer;
+					gInventory.addObserver(pOffer);
 			}
 #endif // RLV_EXTENSION_GIVETORLV_A2A
 // [/RLVa:KB]
@@ -1610,12 +1623,15 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
                         {
                                 if((*itr).second > spamCount)
                                 {
+									if(from_id != gAgent.getID())
+									{
                                         blacklisted_objects.put(from_id.asString());
                                         LL_INFOS("process_script_dialog") << "blocked and muted " << from_id.asString() << LL_ENDL;
                                         LLSD args;
                                         args["KEY"] = from_id;
                                         LLNotifications::getInstance()->add("BlockedGeneral",args);
                                         return;
+									}
                                 }
                                 else
                                 {
@@ -1829,7 +1845,11 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 		to_id.isNull() )
 		do_auto_response = false;
 
-	if (do_auto_response)
+//	if( do_auto_response )
+// [RLVa:KB] - Alternate: Emerald-370
+	// Emerald specific: auto-response should be blocked if the avie is RLV @sendim=n restricted and the recipient is not an exception
+	if ( (do_auto_response) && ( (!gRlvHandler.hasBehaviour(RLV_BHVR_SENDIM)) || (gRlvHandler.isException(RLV_BHVR_SENDIM, from_id)) ) )
+// [/RLVa:KB]
 	{
 		if((dialog == IM_NOTHING_SPECIAL && !is_auto_response) ||
 			(dialog == IM_TYPING_START && gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageShowOnTyping"))
@@ -4443,6 +4463,8 @@ void process_sound_trigger(LLMessageSystem *msg, void **)
 	msg->getU64Fast(_PREHASH_SoundData, _PREHASH_Handle, region_handle);
 	msg->getVector3Fast(_PREHASH_SoundData, _PREHASH_Position, pos_local);
 	msg->getF32Fast(_PREHASH_SoundData, _PREHASH_Gain, gain);
+        if(owner_id != gAgent.getID())
+	if((object_id == owner_id) && gSavedSettings.getBOOL("EmeraldMuteGestures")) return;
 
 	// adjust sound location to true global coords
 	LLVector3d	pos_global = from_region_handle(region_handle);
@@ -4473,7 +4495,7 @@ void process_sound_trigger(LLMessageSystem *msg, void **)
 		return;
 	}
 
-	gAudiop->triggerSound(sound_id, owner_id, gain, LLAudioEngine::AUDIO_TYPE_SFX, pos_global);
+	gAudiop->triggerSound(sound_id, owner_id, gain, LLAudioEngine::AUDIO_TYPE_SFX, pos_global, object_id);
 }
 
 void process_preload_sound(LLMessageSystem *msg, void **user_data)

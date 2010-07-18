@@ -183,6 +183,14 @@ LLComboBox* mcomboBox_lands;
 LLComboBox* mcomboBox_standups;
 LLComboBox* mcomboBox_prejumps;
 
+LLComboBox* mcomboBox_turnleft;
+LLComboBox* mcomboBox_turnright;
+LLComboBox* mcomboBox_typing;
+LLComboBox* mcomboBox_floating;
+LLComboBox* mcomboBox_swimmingforward;
+LLComboBox* mcomboBox_swimmingup;
+LLComboBox* mcomboBox_swimmingdown;
+
 struct struct_overrides
 {
 	LLUUID orig_id;
@@ -236,6 +244,15 @@ LLFloaterAO::~LLFloaterAO()
 	mcomboBox_lands = 0;
 	mcomboBox_standups = 0;
 	mcomboBox_prejumps = 0;
+
+	mcomboBox_turnleft = 0;
+	mcomboBox_turnright = 0;
+	mcomboBox_typing = 0;
+	mcomboBox_floating = 0;
+	mcomboBox_swimmingforward = 0;
+	mcomboBox_swimmingup = 0;
+	mcomboBox_swimmingdown = 0;
+
 	delete mAOItemDropTarget;
 	mAOItemDropTarget = NULL;
 //	llinfos << "floater destroyed" << llendl;
@@ -313,6 +330,15 @@ BOOL LLFloaterAO::postBuild()
 	mcomboBox_lands = getChild<LLComboBox>("lands");
 	mcomboBox_standups = getChild<LLComboBox>("standups");
 	mcomboBox_prejumps = getChild<LLComboBox>("prejumps");
+
+	mcomboBox_turnleft = getChild<LLComboBox>("turnleft");
+	mcomboBox_turnright = getChild<LLComboBox>("turnright");
+	mcomboBox_typing = getChild<LLComboBox>("typing");
+	mcomboBox_floating = getChild<LLComboBox>("floating");
+	mcomboBox_swimmingforward = getChild<LLComboBox>("swimmingforward");
+	mcomboBox_swimmingup = getChild<LLComboBox>("swimmingup");
+	mcomboBox_swimmingdown = getChild<LLComboBox>("swimmingdown");
+
 	getChild<LLComboBox>("stands")->setCommitCallback(onComboBoxCommit);
 	getChild<LLComboBox>("walks")->setCommitCallback(onComboBoxCommit);
 	getChild<LLComboBox>("runs")->setCommitCallback(onComboBoxCommit);
@@ -330,6 +356,14 @@ BOOL LLFloaterAO::postBuild()
 	getChild<LLComboBox>("lands")->setCommitCallback(onComboBoxCommit);
 	getChild<LLComboBox>("standups")->setCommitCallback(onComboBoxCommit);
 	getChild<LLComboBox>("prejumps")->setCommitCallback(onComboBoxCommit);
+
+	getChild<LLComboBox>("turnleft")->setCommitCallback(onComboBoxCommit);
+	getChild<LLComboBox>("turnright")->setCommitCallback(onComboBoxCommit);
+	getChild<LLComboBox>("typing")->setCommitCallback(onComboBoxCommit);
+	getChild<LLComboBox>("floating")->setCommitCallback(onComboBoxCommit);
+	getChild<LLComboBox>("swimmingforward")->setCommitCallback(onComboBoxCommit);
+	getChild<LLComboBox>("swimmingup")->setCommitCallback(onComboBoxCommit);
+	getChild<LLComboBox>("swimmingdown")->setCommitCallback(onComboBoxCommit);
 	
 	// Set relevant per-account stuff.
 	childSetValue("EmeraldAOEnabled", gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"));
@@ -483,6 +517,50 @@ void LLFloaterAO::onComboBoxCommit(LLUICtrl* ctrl, void* userdata)
 				gSavedPerAccountSettings.setString("EmeraldAODefaultPreJump",stranim);
 				state = STATE_AGENT_PRE_JUMP;
 			}
+			else if (box->getName() == "turnleft")
+			{
+				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_TURNLEFT), ANIM_REQUEST_STOP);
+				gSavedPerAccountSettings.setString("EmeraldAODefaultTurnLeft",stranim);
+				state = STATE_AGENT_TURNLEFT;
+			}
+			else if (box->getName() == "turnright")
+			{
+				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_TURNRIGHT), ANIM_REQUEST_STOP);
+				gSavedPerAccountSettings.setString("EmeraldAODefaultTurnRight",stranim);
+				state = STATE_AGENT_TURNRIGHT;
+			}
+			else if (box->getName() == "typing")
+			{
+				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_TYPE), ANIM_REQUEST_STOP);
+				gSavedPerAccountSettings.setString("EmeraldAODefaultTyping",stranim);
+				state = STATE_AGENT_TYPING;
+			}
+			/*
+			else if (box->getName() == "floating")
+			{
+				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_FLOATING), ANIM_REQUEST_STOP);
+				gSavedPerAccountSettings.setString("EmeraldAODefaultFloating",stranim);
+				state = STATE_AGENT_FLOATING;
+			}
+			else if (box->getName() == "swimmingforward")
+			{
+				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SWIMMINGFORWARD), ANIM_REQUEST_STOP);
+				gSavedPerAccountSettings.setString("EmeraldAODefaultSwimmingForward",stranim);
+				state = STATE_AGENT_SWIMMINGFORWARD;
+			}
+			else if (box->getName() == "swimmingup")
+			{
+				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SWIMMINGUP), ANIM_REQUEST_STOP);
+				gSavedPerAccountSettings.setString("EmeraldAODefaultSwimmingUp",stranim);
+				state = STATE_AGENT_SWIMMINGUP;
+			}
+			else if (box->getName() == "swimmingdown")
+			{
+				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SWIMMINGDOWN), ANIM_REQUEST_STOP);
+				gSavedPerAccountSettings.setString("EmeraldAODefaultSwimmingDown",stranim);
+				state = STATE_AGENT_SWIMMINGDOWN;
+			}
+			*/
 			for (std::vector<struct_overrides>::iterator iter = mAOOverrides.begin(); iter != mAOOverrides.end(); ++iter)
 			{
 				if (state == iter->state)
@@ -505,7 +583,7 @@ void LLFloaterAO::updateLayout(LLFloaterAO* floater)
 		}
 		else
 		{
-			floater->reshape(200,380); //view->getRect().getWidth(), view->getUIWinHeightShort());
+			floater->reshape(200,300); //view->getRect().getWidth(), view->getUIWinHeightShort());
 		}
 		
 		floater->childSetVisible("more_btn", !advanced);
@@ -530,6 +608,13 @@ void LLFloaterAO::updateLayout(LLFloaterAO* floater)
 		floater->childSetVisible("textdefaultland", advanced);
 		floater->childSetVisible("textdefaultstandup", advanced);
 		floater->childSetVisible("textdefaultprejump", advanced);
+		floater->childSetVisible("textdefaultturnleft", advanced);
+		floater->childSetVisible("textdefaultturnright", advanced);
+		floater->childSetVisible("textdefaulttyping", advanced);
+		floater->childSetVisible("textdefaultfloating", advanced);
+		floater->childSetVisible("textdefaultswimmingforward", advanced);
+		floater->childSetVisible("textdefaultswimmingup", advanced);
+		floater->childSetVisible("textdefaultswimmingdown", advanced);
 
 
 		floater->childSetVisible("walks", advanced);
@@ -548,6 +633,13 @@ void LLFloaterAO::updateLayout(LLFloaterAO* floater)
 		floater->childSetVisible("lands", advanced);
 		floater->childSetVisible("standups", advanced);
 		floater->childSetVisible("prejumps", advanced);
+		floater->childSetVisible("turnleft", advanced);
+		floater->childSetVisible("turnright", advanced);
+		floater->childSetVisible("typing", advanced);
+		floater->childSetVisible("floating", advanced);
+		floater->childSetVisible("swimmingforward", advanced);
+		floater->childSetVisible("swimmingup", advanced);
+		floater->childSetVisible("swimmingdown", advanced);
 	}
 }
 BOOL LLFloaterAO::fullfetch = FALSE;
@@ -630,11 +722,12 @@ BOOL LLFloaterAO::init()
 							tokenloader.token = "[ Walking ]";				tokenloader.state = STATE_AGENT_WALK; mAOTokens.push_back(tokenloader);              // 18
 							tokenloader.token = "[ Landing ]";				tokenloader.state = STATE_AGENT_LAND; mAOTokens.push_back(tokenloader);              // 19
 							tokenloader.token = "[ Standing ]";				tokenloader.state = STATE_AGENT_STAND; mAOTokens.push_back(tokenloader);             // 20
-							tokenloader.token = "[ Swimming Down ]";		tokenloader.state = 999; mAOTokens.push_back(tokenloader);        // 21
-							tokenloader.token = "[ Swimming Up ]";			tokenloader.state = 999; mAOTokens.push_back(tokenloader);          // 22
-							tokenloader.token = "[ Swimming Forward ]";		tokenloader.state = 999; mAOTokens.push_back(tokenloader);     // 23
-							tokenloader.token = "[ Floating ]";				tokenloader.state = 999; mAOTokens.push_back(tokenloader);             // 24
-
+							tokenloader.token = "[ Swimming Down ]";		tokenloader.state = STATE_AGENT_SWIMMINGDOWN; mAOTokens.push_back(tokenloader);        // 21
+							tokenloader.token = "[ Swimming Up ]";			tokenloader.state = STATE_AGENT_SWIMMINGUP; mAOTokens.push_back(tokenloader);          // 22
+							tokenloader.token = "[ Swimming Forward ]";		tokenloader.state = STATE_AGENT_SWIMMINGFORWARD; mAOTokens.push_back(tokenloader);     // 23
+							tokenloader.token = "[ Floating ]";				tokenloader.state = STATE_AGENT_FLOATING; mAOTokens.push_back(tokenloader);             // 24
+							tokenloader.token = "[ Typing ]";				tokenloader.state = STATE_AGENT_TYPING; mAOTokens.push_back(tokenloader); //25
+ 
 							struct_overrides overrideloader;
 							overrideloader.orig_id = ANIM_AGENT_WALK;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_WALK;			mAOOverrides.push_back(overrideloader);
 							overrideloader.orig_id = ANIM_AGENT_RUN;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_RUN;			mAOOverrides.push_back(overrideloader);
@@ -662,6 +755,13 @@ BOOL LLFloaterAO::init()
 
 							overrideloader.orig_id = ANIM_AGENT_FLY;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_FLY;			mAOOverrides.push_back(overrideloader);
 							overrideloader.orig_id = ANIM_AGENT_FLYSLOW;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_FLYSLOW;		mAOOverrides.push_back(overrideloader);
+
+							overrideloader.orig_id = ANIM_AGENT_TYPE;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_TYPING;			mAOOverrides.push_back(overrideloader);
+							overrideloader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_FLOATING;		mAOOverrides.push_back(overrideloader);
+
+							overrideloader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_SWIMMINGFORWARD;		mAOOverrides.push_back(overrideloader);
+							overrideloader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_SWIMMINGUP;		mAOOverrides.push_back(overrideloader);
+							overrideloader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_SWIMMINGDOWN;	mAOOverrides.push_back(overrideloader);
 							///////////////////////////
 							LLUUID* new_uuid = new LLUUID(configncitem);
 							LLHost source_sim = LLHost::invalid;
@@ -1047,6 +1147,13 @@ void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLA
 				if (mcomboBox_standups) mcomboBox_standups->clear();
 				if (mcomboBox_prejumps) mcomboBox_prejumps->clear();
 
+				if (mcomboBox_typing) mcomboBox_typing->clear();
+				if (mcomboBox_floating) mcomboBox_floating->clear();
+				if (mcomboBox_turnleft) mcomboBox_turnleft->clear();
+				if (mcomboBox_turnright) mcomboBox_turnright->clear();
+				if (mcomboBox_swimmingforward) mcomboBox_swimmingforward->clear();
+				if (mcomboBox_swimmingup) mcomboBox_swimmingup->clear();
+				if (mcomboBox_swimmingdown) mcomboBox_swimmingdown->clear();
 
 				struct_stands loader;
 
@@ -1219,6 +1326,62 @@ void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLA
 											}
 										 }
 										 break;
+								case STATE_AGENT_TURNLEFT:
+										 {
+											if (sInstance && (mcomboBox_turnleft != NULL))
+											{
+												if (!(mcomboBox_turnleft->selectByValue(stranim.c_str()))) mcomboBox_turnleft->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
+											}
+										 }
+										 break;
+								case STATE_AGENT_TURNRIGHT:
+										 {
+											if (sInstance && (mcomboBox_turnright != NULL))
+											{
+												if (!(mcomboBox_turnright->selectByValue(stranim.c_str()))) mcomboBox_turnright->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
+											}
+										 }
+										 break;
+								case STATE_AGENT_TYPING:
+										 {
+											if (sInstance && (mcomboBox_typing != NULL))
+											{
+												if (!(mcomboBox_typing->selectByValue(stranim.c_str()))) mcomboBox_typing->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
+											}
+										 }
+										 break;
+								case STATE_AGENT_FLOATING:
+										 {
+											if (sInstance && (mcomboBox_floating != NULL))
+											{
+												if (!(mcomboBox_floating->selectByValue(stranim.c_str()))) mcomboBox_floating->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
+											}
+										 }
+										 break;
+								case STATE_AGENT_SWIMMINGFORWARD:
+										 {
+											if (sInstance && (mcomboBox_swimmingforward != NULL))
+											{
+												if (!(mcomboBox_swimmingforward->selectByValue(stranim.c_str()))) mcomboBox_swimmingforward->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
+											}
+										 }
+										 break;
+								case STATE_AGENT_SWIMMINGUP:
+										 {
+											if (sInstance && (mcomboBox_swimmingup != NULL))
+											{
+												if (!(mcomboBox_swimmingup->selectByValue(stranim.c_str()))) mcomboBox_swimmingup->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
+											}
+										 }
+										 break;
+								case STATE_AGENT_SWIMMINGDOWN:
+										 {
+											if (sInstance && (mcomboBox_swimmingdown != NULL))
+											{
+												if (!(mcomboBox_swimmingdown->selectByValue(stranim.c_str()))) mcomboBox_swimmingdown->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
+											}
+										 }
+										 break;
 								}
 								for (std::vector<struct_overrides>::iterator iter = mAOOverrides.begin(); iter != mAOOverrides.end(); ++iter)
 								{
@@ -1347,6 +1510,55 @@ void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLA
 						{
 							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultPreJump");
 							SetDefault(mcomboBox_prejumps,iter->ao_id,defaultanim);
+							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
+						}
+						 break;
+					case STATE_AGENT_TURNLEFT:
+						{
+							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultTurnLeft");
+							SetDefault(mcomboBox_turnleft,iter->ao_id,defaultanim);
+							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
+						}
+						 break;
+					case STATE_AGENT_TURNRIGHT:
+						{
+							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultTurnRight");
+							SetDefault(mcomboBox_turnright,iter->ao_id,defaultanim);
+							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
+						}
+						 break;
+					case STATE_AGENT_TYPING:
+						{
+							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultTyping");
+							SetDefault(mcomboBox_typing,iter->ao_id,defaultanim);
+							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
+						}
+						 break;
+					case STATE_AGENT_FLOATING:
+						{
+							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultFloating");
+							SetDefault(mcomboBox_floating,iter->ao_id,defaultanim);
+							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
+						}
+						 break;
+					case STATE_AGENT_SWIMMINGFORWARD:
+						{
+							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultSwimmingForward");
+							SetDefault(mcomboBox_swimmingforward,iter->ao_id,defaultanim);
+							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
+						}
+						 break;
+					case STATE_AGENT_SWIMMINGUP:
+						{
+							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultSwimmingUp");
+							SetDefault(mcomboBox_swimmingup,iter->ao_id,defaultanim);
+							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
+						}
+						 break;
+					case STATE_AGENT_SWIMMINGDOWN:
+						{
+							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultSwimmingDown");
+							SetDefault(mcomboBox_swimmingdown,iter->ao_id,defaultanim);
 							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
 						}
 						 break;

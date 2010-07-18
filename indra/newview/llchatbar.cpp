@@ -89,6 +89,7 @@ void toggleChanSelect(void* user_data);
 // [RLVa:KB] - Checked: 2009-07-07 (RLVa-1.0.0d) | Modified: RLVa-0.2.2a
 void send_chat_from_viewer(std::string utf8_out_text, EChatType type, S32 channel);
 // [/RLVa:KB]
+void really_send_chat_from_viewer(const std::string& utf8_out_text, EChatType type, S32 channel);
 
 
 class LLChatBarGestureObserver : public LLGestureManagerObserver
@@ -829,6 +830,13 @@ void send_chat_from_viewer(std::string utf8_out_text, EChatType type, S32 channe
 	U32 split = MAX_MSG_BUF_SIZE - 1;
 	U32 pos = 0;
 	U32 total = utf8_out_text.length();
+	
+	// Don't break null messages
+	if(total == 0)
+	{
+		really_send_chat_from_viewer(utf8_out_text, type, channel);
+	}
+	
 	while(pos < total)
 	{
 		U32 next_split = split;
@@ -852,36 +860,41 @@ void send_chat_from_viewer(std::string utf8_out_text, EChatType type, S32 channe
 		pos += next_split;
 		
 		// *FIXME: Queue messages and wait for server
-		LLMessageSystem* msg = gMessageSystem;
-		if(channel >= 0)
-		{
-			msg->newMessageFast(_PREHASH_ChatFromViewer);
-			msg->nextBlockFast(_PREHASH_AgentData);
-			msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-			msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-			msg->nextBlockFast(_PREHASH_ChatData);
-			msg->addStringFast(_PREHASH_Message, send);
-			msg->addU8Fast(_PREHASH_Type, type);
-			msg->addS32("Channel", channel);
-		}
-		else
-		{
-			msg->newMessage("ScriptDialogReply");
-			msg->nextBlock("AgentData");
-			msg->addUUID("AgentID", gAgent.getID());
-			msg->addUUID("SessionID", gAgent.getSessionID());
-			msg->nextBlock("Data");
-			msg->addUUID("ObjectID", gAgent.getID());
-			msg->addS32("ChatChannel", channel);
-			msg->addS32("ButtonIndex", 0);
-			msg->addString("ButtonLabel", utf8_out_text);
-		}
-		gAgent.sendReliableMessage();
+		really_send_chat_from_viewer(send, type, channel);
 		
 		LLViewerStats::getInstance()->incStat(LLViewerStats::ST_CHAT_COUNT);
 	}
 }
 
+// This should do nothing other than send chat, with no other processing.
+void really_send_chat_from_viewer(const std::string& message, EChatType type, S32 channel)
+{
+	LLMessageSystem* msg = gMessageSystem;
+	if(channel >= 0)
+	{
+		msg->newMessageFast(_PREHASH_ChatFromViewer);
+		msg->nextBlockFast(_PREHASH_AgentData);
+		msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+		msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+		msg->nextBlockFast(_PREHASH_ChatData);
+		msg->addStringFast(_PREHASH_Message, message);
+		msg->addU8Fast(_PREHASH_Type, type);
+		msg->addS32("Channel", channel);
+	}
+	else
+	{
+		msg->newMessage("ScriptDialogReply");
+		msg->nextBlock("AgentData");
+		msg->addUUID("AgentID", gAgent.getID());
+		msg->addUUID("SessionID", gAgent.getSessionID());
+		msg->nextBlock("Data");
+		msg->addUUID("ObjectID", gAgent.getID());
+		msg->addS32("ChatChannel", channel);
+		msg->addS32("ButtonIndex", 0);
+		msg->addString("ButtonLabel", message);
+	}
+	gAgent.sendReliableMessage();
+}
 
 // static
 void LLChatBar::onCommitGesture(LLUICtrl* ctrl, void* data)

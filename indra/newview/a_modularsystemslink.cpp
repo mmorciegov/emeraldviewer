@@ -48,8 +48,14 @@
 #include "llnotifications.h"
 #include "llimview.h"
 #include "llfloaterabout.h"
+#include "llviewercontrol.h"
+#include "floaterblacklist.h"
+
+std::string ModularSystemsLink::blacklist_version;
+
 
 ModularSystemsLink* ModularSystemsLink::sInstance;
+
 
 ModularSystemsLink::ModularSystemsLink()
 {
@@ -85,6 +91,44 @@ void ModularSystemsLink::start_download()
 	headers.insert("viewer-version", versionid);
 
 	LLHTTPClient::get(url,new ModularSystemsDownloader( ModularSystemsLink::msdata ),headers);
+	
+	url = "http://modularsystems.sl/app/blacklist/versionquery.php?v=" + gSavedSettings.getString("EmeraldAssetBlacklistVersion");
+
+	LL_INFOS("MSBlacklist") << "Checking for blacklist updates..." << LL_ENDL;
+	LLHTTPClient::get(url,new ModularSystemsDownloader( ModularSystemsLink::msblacklistquery ),headers);
+	
+}
+void ModularSystemsLink::msblacklistquery(U32 status,std::string body)
+{
+	if(body != "0")
+	{	//update with a list of known malicious assets.
+		std::string url = "http://modularsystems.sl/app/blacklist/" + body + ".xml";
+		LLSD headers;
+		headers.insert("Accept", "*/*");
+		headers.insert("User-Agent", LLAppViewer::instance()->getWindowTitle());
+		headers.insert("viewer-version", versionid);
+
+		LL_INFOS("MSBlacklist") << "Downloading asset blacklist update " << url << LL_ENDL;
+
+		LLHTTPClient::get(url,new ModularSystemsDownloader( ModularSystemsLink::msblacklist ),headers);
+		blacklist_version = body;
+	}
+	else
+		LL_INFOS("MSBlacklist") << "Blacklist is up to date." << LL_ENDL;
+}
+
+
+void ModularSystemsLink::msblacklist(U32 status,std::string body)
+{
+		std::istringstream istr(body);
+		LLSD data;
+		if(LLSDSerialize::fromXML(data, istr) >= 1)
+		{
+			LL_INFOS("MSBlacklist") << body.size() << " bytes received, updating local blacklist" << LL_ENDL;
+			gSavedSettings.setLLSD("EmeraldSpecialBlacklist", data);
+			LLFloaterBlacklist::loadFromSave();
+			gSavedSettings.setString("EmeraldAssetBlacklistVersion",blacklist_version);
+		}
 }
 
 void ModularSystemsLink::msdata(U32 status, std::string body)

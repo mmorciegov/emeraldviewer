@@ -91,6 +91,8 @@ public:
 	// available.  There is no garuntee the callback will ever be called.
 	void get(const LLUUID& id, BOOL is_group, LLCacheNameCallback callback, void* user_data = NULL);
 	
+	BOOL getIfThere(const LLUUID& id, std::string& fullname, BOOL& is_group);
+
 	// LEGACY
 	void getName(const LLUUID& id, LLCacheNameCallback callback, void* user_data = NULL)
 			{ get(id, FALSE, callback, user_data); }

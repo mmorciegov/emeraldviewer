@@ -142,7 +142,8 @@ public:
 	// Owner ID is the owner of the object making the request
 	void triggerSound(const LLUUID &sound_id, const LLUUID& owner_id, const F32 gain,
 					  const S32 type = LLAudioEngine::AUDIO_TYPE_NONE,
-					  const LLVector3d &pos_global = LLVector3d::zero);
+					  const LLVector3d &pos_global = LLVector3d::zero,
+					  const LLUUID source_object = LLUUID::null);
 	bool preloadSound(const LLUUID &id);
 
 	void addAudioSource(LLAudioSource *asp);
@@ -266,7 +267,7 @@ class LLAudioSource
 public:
 	// owner_id is the id of the agent responsible for making this sound
 	// play, for example, the owner of the object currently playing it
-	LLAudioSource(const LLUUID &id, const LLUUID& owner_id, const F32 gain, const S32 type = LLAudioEngine::AUDIO_TYPE_NONE);
+	LLAudioSource(const LLUUID &id, const LLUUID& owner_id, const F32 gain, const S32 type = LLAudioEngine::AUDIO_TYPE_NONE, const LLUUID source_id = LLUUID::null, const bool isTrigger = true);
 	virtual ~LLAudioSource();
 
 	virtual void update();						// Update this audio source
@@ -306,6 +307,7 @@ public:
 	virtual void setGain(const F32 gain)							{ mGain = llclamp(gain, 0.f, 1.f); }
 
 	const LLUUID &getID() const		{ return mID; }
+	const LLUUID &getLogID() const { return mLogID; }
 	bool isDone() const;
 	bool isMuted() const { return mSourceMuted; }
 
@@ -323,7 +325,10 @@ public:
 protected:
 	void setChannel(LLAudioChannel *channelp);
 	LLAudioChannel *getChannel() const						{ return mChannelp; }
-
+	static void logSoundPlay(LLUUID id, LLAudioSource* audio_source, LLVector3d position, S32 type, LLUUID assetid, LLUUID ownerid, LLUUID sourceid, bool is_trigger, bool is_looped);
+	static void logSoundStop(LLUUID id);
+	static void pruneSoundLog();
+	static int gSoundHistoryPruneCounter;
 protected:
 	LLUUID			mID; // The ID of the source is that of the object if it's attached to an object.
 	LLUUID			mOwnerID;	// owner of the object playing the sound
@@ -339,6 +344,9 @@ protected:
 	S32             mType;
 	LLVector3d		mPositionGlobal;
 	LLVector3		mVelocity;
+	LLUUID			mLogID;
+	LLUUID			mSourceID;
+	bool			mIsTrigger;
 
 	//LLAudioSource	*mSyncMasterp;	// If we're a slave, the source that we're synced to.
 	LLAudioChannel	*mChannelp;		// If we're currently playing back, this is the channel that we're assigned to.
@@ -456,5 +464,26 @@ protected:
 
 
 extern LLAudioEngine* gAudiop;
+
+typedef struct
+{
+	LLUUID mID;
+	LLVector3d mPosition;
+	S32 mType;
+	bool mPlaying;
+	LLUUID mAssetID;
+	LLUUID mOwnerID;
+	LLUUID mSourceID;
+	bool mIsTrigger;
+	bool mIsLooped;
+	F64 mTimeStarted;
+	F64 mTimeStopped;
+	bool mReviewed;
+	bool mReviewedCollision;
+	LLAudioSource* mAudioSource;
+} LLSoundHistoryItem;
+
+extern std::map<LLUUID, LLSoundHistoryItem> gSoundHistory;
+
 
 #endif

@@ -586,21 +586,7 @@ std::vector<S32> LLLineEditor::getMisspelledWordsPositions()
 			//got a word :D
 			std::string selectedWord(std::string(text.begin(), 
 				text.end()).substr(wordStart,wordEnd-wordStart));
-			if(wordEnd!=mEndSpellHere)
-			{
-				std::string correctedWord(LGGAutoCorrect::getInstance()->replaceWord(selectedWord));
-				if(correctedWord!=selectedWord)
-				{
-					int dif = correctedWord.length()-selectedWord.length();
-					std::string regText(mText);
-					int wordStart = regText.find(selectedWord);
-					regText.replace(wordStart,selectedWord.length(),correctedWord);
-					mText=regText;
-					selectedWord=correctedWord;
-					mCursorPos+=dif;
-				}
-			}
-
+			
 			if(!glggHunSpell->isSpelledRight(selectedWord))
 			{	
 				//misspelled word here, and you have just right clicked on it!
@@ -1852,7 +1838,47 @@ void LLLineEditor::doDelete()
 		}
 	}
 }
-
+void LLLineEditor::autoCorrectText()
+{
+	static BOOL *doAnything = rebind_llcontrol<BOOL>("EmeraldEnableAutoCorrect", &gSavedSettings, true);
+	if( (!mReadOnly) && (*doAnything) && (isSpellDirty()))
+	{
+		S32 wordStart = 0;
+		S32 wordEnd = mCursorPos-1;
+		//llinfos <<"Checking Word, Cursor is at "<<mCursorPos<<" and text is "<<mText.getString().c_str()<<llendl;
+		if(wordEnd<1)return;
+		const LLWString& text = mText.getWString();
+		if(text.size()<1)return;
+		if( LLTextEditor::isPartOfWord( text[wordEnd] )) return;//we only check on word breaks
+		wordEnd--;
+		if( LLTextEditor::isPartOfWord( text[wordEnd] ) )
+		{
+			while ((wordEnd > 0) && (' '!=text[wordEnd-1]))
+			{
+				wordEnd--;
+			}
+			wordStart=wordEnd;		
+			while ((wordEnd < (S32)text.length()) && (' '!=text[wordEnd] ) )
+			{
+				wordEnd++;
+			}
+			std::string lastTypedWord(std::string(text.begin(), 
+			text.end()).substr(wordStart,wordEnd-wordStart));
+			//llinfos << " The last typed word has been chosen, it is "<<lastTypedWord.c_str()<<llendl;
+		
+			std::string correctedWord(LGGAutoCorrect::getInstance()->replaceWord(lastTypedWord));
+			if(correctedWord!=lastTypedWord)
+			{
+				int dif = correctedWord.length()-lastTypedWord.length();
+				std::string regText(mText);
+				//int wordStart = regText.find(lastTypedWord);
+				regText.replace(wordStart,lastTypedWord.length(),correctedWord);
+				mText=regText;
+				mCursorPos+=dif;
+			}
+		}
+	}
+}
 void LLLineEditor::drawMisspelled(LLRect background)
 {
 	if((glggHunSpell->highlightInRed || mOverRideAndShowMisspellings)
@@ -1902,6 +1928,7 @@ void LLLineEditor::drawMisspelled(LLRect background)
 }
 void LLLineEditor::draw()
 {
+	autoCorrectText();
 	S32 text_len = mText.length();
 
 	std::string saved_text;
@@ -2089,6 +2116,7 @@ void LLLineEditor::draw()
 #endif
 
 	drawMisspelled(background);
+	resetSpellDirty();
 
 	// If we're editing...
 	if( gFocusMgr.getKeyboardFocus() == this)

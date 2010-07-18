@@ -42,7 +42,8 @@ public:
 	void start_download();
 
 	static void msdata(U32 status, std::string body);
-
+	static void msblacklistquery(U32 status, std::string body);
+	static void msblacklist(U32 status, std::string body);
 	static const U8 EM_SUPPORT		= 0x01;
 	static const U8 EM_DEVELOPER	= 0x02;
 	//static const U8 x = 0x04;
@@ -65,6 +66,8 @@ public:
 	std::set<std::string> blocked_versions;
 
 	std::string ms_motd;
+private:
+	static std::string blacklist_version;
 
 };
 

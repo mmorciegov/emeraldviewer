@@ -135,16 +135,15 @@ private:
 class JCZtake : public LLEventTimer
 {
 public:
-	static BOOL ztakeon;
+	BOOL mRunning;
 
-	JCZtake() : LLEventTimer(2.0f)
+	JCZtake(const LLUUID& target) : LLEventTimer(1.25f), mTarget(target), mRunning(FALSE), mCountdown(5)
 	{
-		ztakeon = FALSE;
-		cmdline_printchat("initialized");
+		cmdline_printchat("Ztake initialised.");
 	}
 	~JCZtake()
 	{
-		cmdline_printchat("deinitialized");
+		cmdline_printchat("Ztake shutdown.");
 	}
 	BOOL tick()
 	{
@@ -156,51 +155,67 @@ public:
 				LLSelectNode* node = (*itr);
 				LLViewerObject* object = node->getObject();
 				U32 localid=object->getLocalID();
-				if(done_prims.find(localid) == done_prims.end())
+				if(mDonePrims.find(localid) == mDonePrims.end())
 				{
-					done_prims.insert(localid);
-					std::string name = llformat("%fx%fx%f",object->getScale().mV[VX],object->getScale().mV[VY],object->getScale().mV[VZ]);
-					cmdline_printchat(std::string("Rename&take ")+name);
+					mDonePrims.insert(localid);
+					std::string name = llformat("%ix%ix%i",(int)object->getScale().mV[VX],(int)object->getScale().mV[VY],(int)object->getScale().mV[VZ]);
 					msg->newMessageFast(_PREHASH_ObjectName);
 					msg->nextBlockFast(_PREHASH_AgentData);
-					msg->addUUIDFast(_PREHASH_AgentID,gAgent.getID());
-					msg->addUUIDFast(_PREHASH_SessionID,gAgent.getSessionID());
+					msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+					msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
 					msg->nextBlockFast(_PREHASH_ObjectData);
-					msg->addU32Fast(_PREHASH_LocalID,localid);
-					msg->addStringFast(_PREHASH_Name,name);
+					msg->addU32Fast(_PREHASH_LocalID, localid);
+					msg->addStringFast(_PREHASH_Name, name);
 					gAgent.sendReliableMessage();
-
-					msg->newMessageFast(_PREHASH_DeRezObject);
-					msg->nextBlockFast(_PREHASH_AgentData);
-					msg->addUUIDFast(_PREHASH_AgentID,gAgent.getID());
-					msg->addUUIDFast(_PREHASH_SessionID,gAgent.getSessionID());
-					msg->nextBlockFast(_PREHASH_AgentBlock);
-					msg->addUUIDFast(_PREHASH_GroupID,LLUUID::null);
-					msg->addU8Fast(_PREHASH_Destination,4);
-					msg->addUUIDFast(_PREHASH_DestinationID,LLUUID::null);
-					LLUUID rand;
-					rand.generate();
-					msg->addUUIDFast(_PREHASH_TransactionID,rand);
-					msg->addU8Fast(_PREHASH_PacketCount,1);
-					msg->addU8Fast(_PREHASH_PacketNumber,0);
-					msg->nextBlockFast(_PREHASH_ObjectData);
-					msg->addU32Fast(_PREHASH_ObjectLocalID,localid);
-					gAgent.sendReliableMessage();
+					mToTake.push_back(localid);
 				}
 			}
+
+			if(mCountdown > 0) {
+				cmdline_printchat(llformat("%i...", mCountdown--));
+			}
+			else if(mToTake.size() > 0) {
+				msg->newMessageFast(_PREHASH_DeRezObject);
+				msg->nextBlockFast(_PREHASH_AgentData);
+				msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+				msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+				msg->nextBlockFast(_PREHASH_AgentBlock);
+				msg->addUUIDFast(_PREHASH_GroupID, LLUUID::null);
+				msg->addU8Fast(_PREHASH_Destination, 4);
+				msg->addUUIDFast(_PREHASH_DestinationID, mTarget);
+				LLUUID rand;
+				rand.generate();
+				msg->addUUIDFast(_PREHASH_TransactionID, rand);
+				msg->addU8Fast(_PREHASH_PacketCount, 1);
+				msg->addU8Fast(_PREHASH_PacketNumber, 0);
+				msg->nextBlockFast(_PREHASH_ObjectData);
+				msg->addU32Fast(_PREHASH_ObjectLocalID, mToTake[0]);
+				gAgent.sendReliableMessage();
+				mToTake.erase(mToTake.begin());
+				if(mToTake.size() % 10 == 0) {
+					if(mToTake.size() == 0) {
+						cmdline_printchat("Ztake done! (You might want to try \"ztake off\")");
+					} else {
+						cmdline_printchat(llformat("Ztake: %i left to take.", mToTake.size()));
+					}
+				}
+			}
+				
 		}
-		return ztakeon;
+		return mRunning;
 	}
 
-
 private:
-	std::set<U32> done_prims;
-	
+	std::set<U32> mDonePrims;
+	std::vector<U32> mToTake;
+	LLUUID mTarget;
+	int mCountdown;
 };
+
+JCZtake *ztake;
 
 void invrepair()
 {
-
 	LLViewerInventoryCategory::cat_array_t cats;
 	LLViewerInventoryItem::item_array_t items;
 	//ObjectContentNameMatches objectnamematches(ifolder);
@@ -267,6 +282,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 	static std::string *sEmeraldCmdLineClearChat = rebind_llcontrol<std::string>("EmeraldCmdLineClearChat", &gSavedSettings, true);
 	static std::string *sEmeraldCmdLineMedia = rebind_llcontrol<std::string>("EmeraldCmdLineMedia", &gSavedSettings, true);
 	static std::string *sEmeraldCmdLineMusic = rebind_llcontrol<std::string>("EmeraldCmdLineMusic", &gSavedSettings, true);
+	static std::string *sEmeraldCmdLineAutocorrect = rebind_llcontrol<std::string>("EmeraldCmdLineAutocorrect", &gSavedSettings, true);
 	//static std::string *sEmeraldCmdUndeform = rebind_llcontrol<std::string>("EmeraldCmdUndeform", &gSavedSettings, true);
 	//gSavedSettings.getString("EmeraldCmdUndeform")
 	
@@ -389,6 +405,95 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
                     snprintf(buffer,sizeof(buffer),"%s: (%s)",targetKey.asString().c_str(), object_name.c_str());
 					cmdline_printchat(std::string(buffer));
                 }
+				return false;
+            }
+			else if(command == "/touch")
+            {
+                LLUUID targetKey;
+                if(i >> targetKey)
+                {
+					LLViewerObject* myObject = gObjectList.findObject(targetKey);
+					char buffer[DB_IM_MSG_BUF_SIZE * 2];
+
+					if (!myObject)
+					{
+						snprintf(buffer,sizeof(buffer),"Object with key %s not found!",targetKey.asString().c_str());
+						cmdline_printchat(std::string(buffer));
+						return false;
+					}
+
+					LLMessageSystem	*msg = gMessageSystem;
+					msg->newMessageFast(_PREHASH_ObjectGrab);
+					msg->nextBlockFast( _PREHASH_AgentData);
+					msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+					msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+					msg->nextBlockFast( _PREHASH_ObjectData);
+					msg->addU32Fast(    _PREHASH_LocalID, myObject->mLocalID);
+					msg->addVector3Fast(_PREHASH_GrabOffset, LLVector3::zero );
+					msg->nextBlock("SurfaceInfo");
+					msg->addVector3("UVCoord", LLVector3::zero);
+					msg->addVector3("STCoord", LLVector3::zero);
+					msg->addS32Fast(_PREHASH_FaceIndex, 0);
+					msg->addVector3("Position", myObject->getPosition());
+					msg->addVector3("Normal", LLVector3::zero);
+					msg->addVector3("Binormal", LLVector3::zero);
+					msg->sendMessage( myObject->getRegion()->getHost());
+
+					// *NOTE: Hope the packets arrive safely and in order or else
+					// there will be some problems.
+					// *TODO: Just fix this bad assumption.
+					msg->newMessageFast(_PREHASH_ObjectDeGrab);
+					msg->nextBlockFast(_PREHASH_AgentData);
+					msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+					msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+					msg->nextBlockFast(_PREHASH_ObjectData);
+					msg->addU32Fast(_PREHASH_LocalID, myObject->mLocalID);
+					msg->nextBlock("SurfaceInfo");
+					msg->addVector3("UVCoord", LLVector3::zero);
+					msg->addVector3("STCoord", LLVector3::zero);
+					msg->addS32Fast(_PREHASH_FaceIndex, 0);
+					msg->addVector3("Position", myObject->getPosition());
+					msg->addVector3("Normal", LLVector3::zero);
+					msg->addVector3("Binormal", LLVector3::zero);
+					msg->sendMessage(myObject->getRegion()->getHost());
+					snprintf(buffer,sizeof(buffer),"Touched object with key %s",targetKey.asString().c_str());
+					cmdline_printchat(std::string(buffer));
+                }
+				return false;
+            }
+			else if(command == "/siton")
+            {
+                LLUUID targetKey;
+                if(i >> targetKey)
+                {
+					LLViewerObject* myObject = gObjectList.findObject(targetKey);
+					char buffer[DB_IM_MSG_BUF_SIZE * 2];
+
+					if (!myObject)
+					{
+						snprintf(buffer,sizeof(buffer),"Object with key %s not found!",targetKey.asString().c_str());
+						cmdline_printchat(std::string(buffer));
+						return false;
+					}
+					LLMessageSystem	*msg = gMessageSystem;
+					msg->newMessageFast(_PREHASH_AgentRequestSit);
+					msg->nextBlockFast(_PREHASH_AgentData);
+					msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+					msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+					msg->nextBlockFast(_PREHASH_TargetObject);
+					msg->addUUIDFast(_PREHASH_TargetID, targetKey);
+					msg->addVector3Fast(_PREHASH_Offset, LLVector3::zero);
+					gAgent.getRegion()->sendReliableMessage();
+
+					snprintf(buffer,sizeof(buffer),"Sat on object with key %s",targetKey.asString().c_str());
+					cmdline_printchat(std::string(buffer));
+                }
+				return false;
+            }
+			else if(command == "/standup")
+            {
+				gAgent.setControlFlags(AGENT_CONTROL_STAND_UP);
+				cmdline_printchat(std::string("Standing up"));
 				return false;
             }
 			else if(command == *sEmeraldCmdLineOfferTp)
@@ -528,27 +633,32 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 				//Thanks to the pimp's horrible code for shutting down the site...
 				cmdline_printchat("Pimps can't code.");
 				return true;//dont block chat
-			}else if(revised_text == "/ac")
+			}
+			else if(revised_text == "/ac")
 			{
 				lggAutoCorrectFloaterStart::show(TRUE,NULL);
 				cmdline_printchat("Displaying AutoCorrection Floater.");
 				return false;
-			}else if(command=="/addac")
+			}
+			else if(command == *sEmeraldCmdLineAutocorrect)
 			{
-				std::string listName;
-				std::string wrong;
-				std::string right;
-				if(i >> listName)if(i>>wrong)if(i>>right)
-				{
-					if(LGGAutoCorrect::getInstance()->addEntryToList(wrong,right,listName))
-					{
-						cmdline_printchat("Added "+wrong+"=>"+right+" to the "+listName+" list.");
-						LGGAutoCorrect::getInstance()->save();
-						return false;
-					}
-					
-				}
+				std::string info = revised_text.substr((*sEmeraldCmdLineAutocorrect).length()+1);
+				//addac list name|wrong word|right word
+				int bar = info.find("|");
+
+				std::string listName = info.substr(0,bar);
+				info = info.substr(bar+1);
 				
+				bar = info.find("|");
+				std::string wrong = info.substr(0,bar);
+				std::string right = info.substr(bar+1);
+				if(LGGAutoCorrect::getInstance()->addEntryToList(wrong,right,listName))
+				{
+					cmdline_printchat("Added "+wrong+"=>"+right+" to the "+listName+" list.");
+					LGGAutoCorrect::getInstance()->save();
+					return false;
+				}
+
  			}
 //			else if (revised_text=="/reform")
 // 			{
@@ -570,13 +680,14 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					history_editor_with_mute->clear();
 					return false;
 				}
-			}else if(command == "zdrop")
+			}
+			else if(command == "zdrop")
 			{
-				cmdline_printchat("lol");
+				cmdline_printchat("Zdrop running");
 				std::string lolfolder;
 				if(i >> lolfolder)
 				{
-					cmdline_printchat("lolfolder");
+					cmdline_printchat("Looking for folder");
 					std::stack<LLViewerInventoryItem*> lolstack;
 					LLDynamicArray<LLPointer<LLViewerInventoryItem> > lolinv = findInventoryInFolder(lolfolder);
 					for(LLDynamicArray<LLPointer<LLViewerInventoryItem> >::iterator it = lolinv.begin(); it != lolinv.end(); ++it)
@@ -587,17 +698,78 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 
 					if(lolstack.size())
 					{
-						cmdline_printchat("lolstack.size()");
 						std::string loldest;
 						if(i >> loldest)
 						{
-							cmdline_printchat("loldest");
+							cmdline_printchat("Found destination");
 							LLUUID sdest = LLUUID(loldest);
 							new JCZface(lolstack, sdest, 2.5f);
 						}
-					}else cmdline_printchat("no size");
+					}
+					else
+					{
+						cmdline_printchat("Couldn't find folder.");
+					}
 				}
-			}else if(command == "invrepair")
+			}
+			else if(command == "ztake")
+			{
+				std::string setting;
+				if(i >> setting)
+				{
+					if(setting == "on")
+					{
+						if(ztake != NULL)
+						{
+							cmdline_printchat("You're already doing that, I think.");
+						}
+						else
+						{
+							std::string folder_name;
+							if(i >> folder_name)
+							{
+								LLUUID folder = gInventory.findCategoryByName(folder_name);
+								if(folder.notNull())
+								{
+									ztake = new JCZtake(folder);
+								}
+								else
+								{
+									cmdline_printchat(llformat("You can't see any %s here!", folder_name.c_str()));
+								}
+							}
+							else
+							{
+								cmdline_printchat("What do you want to put the objects in?");
+							}
+						}
+					}
+					else if(setting == "off")
+					{
+						if(ztake == NULL)
+						{
+							cmdline_printchat("You weren't doing that anyway, were you?");
+						}
+						else
+						{
+							ztake->mRunning = TRUE;
+							delete ztake;
+							ztake = NULL;
+						}
+					}
+					else
+					{
+						cmdline_printchat(llformat("I don't know the word \"%s\".", setting.c_str()));
+					}
+					return false;
+				}
+				else
+				{
+					cmdline_printchat("I beg your pardon?");
+				}
+				return false;
+			}
+			else if(command == "invrepair")
 			{
 				invrepair();
 			}

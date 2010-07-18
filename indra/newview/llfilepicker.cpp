@@ -53,6 +53,8 @@ LLFilePicker LLFilePicker::sInstance;
 #if LL_WINDOWS
 #define SOUND_FILTER L"Sounds (*.wav)\0*.wav\0"
 #define IMAGE_FILTER L"Images (*.tga; *.bmp; *.jpg; *.jpeg; *.png)\0*.tga;*.bmp;*.jpg;*.jpeg;*.png\0"
+#define BLACKLIST_FILTER L"Asset Blacklist (*.blacklist)\0*.blacklist;\0"
+
 #define ANIM_FILTER L"Animations (*.bvh)\0*.bvh\0"
 #ifdef _CORY_TESTING
 #define GEOMETRY_FILTER L"SL Geometry (*.slg)\0*.slg\0"
@@ -195,6 +197,10 @@ BOOL LLFilePicker::setupFilter(ELoadFilter filter)
 		break;
 	case FFLOAD_APP:
 		mOFN.lpstrFilter = APP_FILTER \
+			L"\0";
+		break;
+	case FFLOAD_BLACKLIST:
+		mOFN.lpstrFilter = BLACKLIST_FILTER \
 			L"\0";
 		break;
 	default:
@@ -464,6 +470,16 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename)
 		mOFN.lpstrDefExt = L"j2c";
 		mOFN.lpstrFilter =
 			L"Compressed Images (*.j2c)\0*.j2c\0" \
+			L"\0";
+		break;
+	case FFSAVE_BLACKLIST:
+		if(filename.empty())
+		{
+			wcsncpy( mFilesW,L"untitled.blacklist", FILENAME_BUFFER_SIZE);
+		}
+		mOFN.lpstrDefExt = L".blacklist";
+		mOFN.lpstrFilter =
+			L"Asset Blacklists (*.blacklist)\0*.blacklist\0" \
 			L"\0";
 		break;
 	default:

@@ -831,6 +831,9 @@ class Linux_i686Manifest(LinuxManifest):
             self.path("libotr.so.2.2.0", "libotr.so.2")
             self.path("libhunspell-1.2.so.0.0.0", "libhunspell-1.2.so.0")
             self.path("libnotify.so.1.1.2", "libnotify.so.1")
+            self.path("libdirect-1.0.so.0.1.0", "libdirect-1.0.so.0")
+            self.path("libdirectfb-1.0.so.0.1.0", "libdirectfb-1.0.so.0")
+            self.path("libfusion-1.0.so.0.1.0", "libfusion-1.0.so.0")
             
             self.end_prefix("lib")
 

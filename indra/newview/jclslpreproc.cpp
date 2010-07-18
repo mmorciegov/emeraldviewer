@@ -643,7 +643,9 @@ void JCLSLPreprocessor::preprocess_script(BOOL close, BOOL defcache)
 	mClose = close;
 	mDefinitionCaching = defcache;
 	caching_files.clear();
-	mCore->mErrorList->addCommentText(std::string("Starting..."));
+	//this->display_error("PreProc Starting...");
+	mCore->mErrorList->addCommentText(std::string("PreProc Starting..."));
+	
 	LLFile::mkdir(gDirUtilp->getExpandedFilename(LL_PATH_CACHE,"")+gDirUtilp->getDirDelimiter()+"lslpreproc");
 	std::string script = mCore->mEditor->getText();
 	if(mMainScriptName == "")//more sanity
@@ -943,7 +945,32 @@ void JCLSLPreprocessor::start_process()
 	std::string name = mMainScriptName;
 	BOOL lazy_lists = gSavedSettings.getBOOL("EmeraldLSLLazyLists");
 	BOOL use_switch = gSavedSettings.getBOOL("EmeraldLSLSwitch");
-
+	std::string settings;
+	settings = "Settings: preproc ";
+	if (lazy_lists == TRUE)
+	{
+	  settings = settings + " Lazy Lists";
+	} 
+	if (lazy_lists == TRUE)
+	{
+	  settings = settings + " switches";
+	}
+	if(gSavedSettings.getBOOL("EmeraldLSLOptimizer")  == TRUE)
+	{
+		  settings = settings + " Optimize";
+	}
+	if(gSavedSettings.getBOOL("EmeraldEnableHDDInclude") == TRUE)
+	{
+		   settings = settings + " HDDInclude";
+	}
+	if(gSavedSettings.getBOOL("EmeraldLSLTextCompress")== TRUE)
+	{
+			settings = settings + " Compress";
+	}
+	//display the settings
+	 mCore->mErrorList->addCommentText(std::string(settings));
+	 
+	 cmdline_printchat(settings);
 	BOOL errored = FALSE;
 	std::string err;
 	try

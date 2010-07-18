@@ -1911,8 +1911,10 @@ U32 LLViewerObject::processUpdateMessage(LLMessageSystem *mesgsys,
 
 	if ( gShowObjectUpdates )
 	{
-		if (!((mPrimitiveCode == LL_PCODE_LEGACY_AVATAR) && (((LLVOAvatar *) this)->isSelf()))
-			&& mRegionp)
+		// We want to see updates from our own avatar
+		//if (!((mPrimitiveCode == LL_PCODE_LEGACY_AVATAR) && (((LLVOAvatar *) this)->mIsSelf))
+		//	&& mRegionp)
+		if(mRegionp)
 		{
 			LLViewerObject* object = gObjectList.createObjectViewer(LL_PCODE_LEGACY_TEXT_BUBBLE, mRegionp);
 			LLVOTextBubble* bubble = (LLVOTextBubble*) object;
@@ -1963,6 +1965,9 @@ U32 LLViewerObject::processUpdateMessage(LLMessageSystem *mesgsys,
 
 	if (needs_refresh)
 	{
+		if(isChanged(MOVED))	// Update "center" if this or children are selected,
+								// and translate, scale, or rotate occurred on this.
+								// Leave dialog refresh to happen always, as before.
 		LLSelectMgr::getInstance()->updateSelectionCenter();
 		dialog_refresh_all();
 	} 
@@ -4109,6 +4114,12 @@ void LLViewerObject::setDebugText(const std::string &utf8text)
 	mText->setZCompare(FALSE);
 	mText->setDoFade(FALSE);
 	updateText();
+}
+std::string LLViewerObject::getDebugText()
+{
+	if(mText)
+		return mText->getStringUTF8();
+	return "";
 }
 
 void LLViewerObject::setIcon(LLViewerImage* icon_image)

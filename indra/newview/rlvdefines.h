@@ -1,3 +1,19 @@
+/** 
+ *
+ * Copyright (c) 2009-2010, Kitty Barnett
+ * 
+ * The source code in this file is provided to you under the terms of the 
+ * GNU General Public License, version 2.0, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A 
+ * PARTICULAR PURPOSE. Terms of the GPL can be found in doc/GPL-license.txt 
+ * in this distribution, or online at http://www.gnu.org/licenses/gpl-2.0.txt
+ * 
+ * By copying, modifying or distributing this software, you acknowledge that
+ * you have read and understood your obligations described above, and agree to 
+ * abide by those obligations.
+ * 
+ */
+
 #ifndef RLV_DEFINES_H
 #define RLV_DEFINES_H
 
@@ -62,7 +78,7 @@ const S32 RLV_VERSION_BUILD = 0;
 // Implementation version
 const S32 RLVa_VERSION_MAJOR = 1;
 const S32 RLVa_VERSION_MINOR = 1;
-const S32 RLVa_VERSION_PATCH = 1;
+const S32 RLVa_VERSION_PATCH = 2;
 const S32 RLVa_VERSION_BUILD = 0;
 
 // The official viewer version we're patching against
@@ -170,6 +186,7 @@ enum ERlvBehaviour {
 	RLV_BHVR_ATTACHALLTHIS,			// "attachallthis"
 	RLV_BHVR_TPTO,					// "tpto"
 	RLV_BHVR_VERSION,				// "version"
+	RLV_BHVR_VERSIONNEW,			// "versionnew"
 	RLV_BHVR_VERSIONNUM,			// "versionnum"
 	RLV_BHVR_GETATTACH,				// "getattach"
 	RLV_BHVR_GETATTACHNAMES,		// "getattachnames"
@@ -244,10 +261,10 @@ enum ERlvAttachGroupType
 // Settings
 //
 
-#define RLV_SETTING_MAIN				"RestrainedLife"
-#define RLV_SETTING_DEBUG				"RestrainedLifeDebug"
-#define RLV_SETTING_NOSETENV			"RestrainedLifeNoSetEnv"
-#define RLV_SETTING_FORBIDGIVETORLV		"RestrainedLifeForbidGiveToRLV"
+#define RLV_SETTING_MAIN				"RestrainedLove"
+#define RLV_SETTING_DEBUG				"RestrainedLoveDebug"
+#define RLV_SETTING_NOSETENV			"RestrainedLoveNoSetEnv"
+#define RLV_SETTING_FORBIDGIVETORLV		"RestrainedLoveForbidGiveToRLV"
 
 #define RLV_SETTING_ENABLECOMPOSITES    "RLVaEnableCompositeFolders"
 #define RLV_SETTING_ENABLELEGACYNAMING  "RLVaEnableLegacyNaming"

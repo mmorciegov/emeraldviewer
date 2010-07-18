@@ -25,7 +25,7 @@
           follows="left|top|right|bottom"
           draw_heading="true"
           multi_select="true"
-          search_column="1"
+          search_column="0"
           tool_tip="Hold shift or control while clicking to select multiple avatars">
         <column name="avatar_name" label="Name" width="150"/>
         <column name="voice" label="Voice" width="15"/>

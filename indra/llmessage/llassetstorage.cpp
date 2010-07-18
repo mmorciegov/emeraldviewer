@@ -422,6 +422,16 @@ void LLAssetStorage::getAssetData(const LLUUID uuid, LLAssetType::EType type, vo
 		}
 		return;
 	}
+	
+	if(std::find(mBlackListedAsset.begin(),mBlackListedAsset.end(),uuid) != mBlackListedAsset.end())
+	{
+		llinfos << "Blacklisted " << LLAssetType::lookup(type) << " asset " << uuid.asString() << " blocked." << llendl; 
+		if (callback)
+		{
+			callback(mVFS, uuid, type, user_data, LL_ERR_ASSET_REQUEST_NOT_IN_DATABASE, LL_EXSTAT_NULL_UUID);
+		}
+		return;
+	}
 
 	BOOL exists = mVFS->getExists(uuid, type);
 	LLVFile file(mVFS, uuid, type);

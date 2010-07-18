@@ -357,6 +357,9 @@ protected:
 	std::string					mLabelDesc;
 	std::string					mSearchableLabelDesc;
 
+	std::string					mLabelUUID;
+	std::string					mSearchableLabelUUID;
+
 	std::string					mLabelAll;
 	std::string					mSearchableLabelAll;
 

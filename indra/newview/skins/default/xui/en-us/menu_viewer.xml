@@ -346,10 +346,10 @@
 		<menu_item_call bottom="-281" enabled="false" height="19" label="Stop Animating My Avatar" left="0" mouse_opaque="true" name="Stop Animating My Avatar" width="250">
 			<on_click function="Tools.StopAllAnimations" userdata="" />
 		</menu_item_call>
-		<menu_item_check bottom="-281" enabled="false" height="19" label="Animation List" left="0" mouse_opaque="true" name="Animation List" width="250">
-			<on_click function="ShowFloater" userdata="animation list" />
-			<on_check function="FloaterVisible" userdata="animation list" />
-		</menu_item_check>
+	    <menu_item_check bottom="-281" enabled="false" height="19" label="Animation Explorer" left="0" mouse_opaque="true" name="Animation List" width="250">
+	      <on_click function="ShowFloater" userdata="animationexplorer" />
+	      <on_check function="FloaterVisible" userdata="animationexplorer" />
+	    </menu_item_check>
 		<menu_item_call bottom="-213" enabled="false" height="19" label="Release Keys" left="0" mouse_opaque="true" name="Release Keys" width="250">
 			<on_click function="Tools.ReleaseKeys" userdata="" />
 			<on_enable function="Tools.EnableReleaseKeys" userdata="" />
@@ -571,27 +571,31 @@
 		<menu_item_call bottom="-48" enabled="true" height="19" label="Tutorial" left="0" mouse_opaque="true" name="Tutorial" width="166">
 			<on_click function="ShowFloater" userdata="help tutorial" />
 		</menu_item_call>
-		<menu_item_separator bottom="-75" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator" width="166" />
-		<menu_item_call bottom="-94" enabled="true" height="19" label="Official Linden Blog..." left="0" mouse_opaque="true" name="Official Linden Blog..." width="166">
-			<on_click function="PromptShowURL" name="OfficialLindenBlog_url" userdata="WebLaunchSupportWiki,http://blog.secondlife.com/" />
-		</menu_item_call>
-		<menu_item_separator bottom="-102" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator2" width="166" />
-		<menu_item_call bottom="-140" enabled="true" height="19" label="Scripting Portal..." left="0" mouse_opaque="true" name="Scripting Portal..." width="166">
-			<on_click function="PromptShowURL" name="ScriptingPortal_url" userdata="WebLaunchLSLWiki,http://wiki.secondlife.com/wiki/LSL_Portal" />
-		</menu_item_call>
-		<menu_item_separator bottom="-148" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator3" width="166" />
-		<menu_item_call bottom="-194" enabled="true" height="19" label="Report Abuse..." left="0" mouse_opaque="true" name="Report Abuse..." width="166">
-			<on_click function="ShowFloater" userdata="complaint reporter" />
-		</menu_item_call>
-		<menu_item_call bottom="-213" enabled="true" height="19" label="Bumps, Pushes &amp; Hits..." left="0" mouse_opaque="true" name="Bumps, Pushes &amp;amp; Hits..." width="166">
-			<on_click function="ShowFloater" userdata="mean events" />
-		</menu_item_call>
-		<menu_item_call label="Lag Meter" name="Lag Meter">
-			<on_click function="ShowFloater" userdata="lag meter" />
-		</menu_item_call>
+    <menu_item_separator bottom="-102" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator2" width="166" />
+    <menu_item_call bottom="-140" enabled="true" height="19" label="Emerald Viewer Blog..." left="0" mouse_opaque="true" name="Emerald Viewer Blog..." width="166">
+      <on_click function="PromptShowURL" name="ms_url" userdata="WebLaunchMS,http://emerald.modularsystems.sl/index.shtml" />
+    </menu_item_call>
+    <menu_item_call bottom="-140" enabled="true" height="19" label="Emerald Viewer Wiki..." left="0" mouse_opaque="true" name="Emerald Viewer Wiki..." width="166">
+      <on_click function="PromptShowURL" name="ms_url" userdata="WebLaunchMS,http://emerald.modularsystems.sl/wiki.shtml" />
+    </menu_item_call>
+    <menu_item_call bottom="-140" enabled="true" height="19" label="Emerald Viewer Support..." left="0" mouse_opaque="true" name="Emerald Viewer Support..." width="166">
+      <on_click function="PromptShowURL" name="ms_url" userdata="WebLaunchMS,http://emerald.modularsystems.sl/support.shtml" />
+    </menu_item_call>
+    <menu_item_call bottom="-140" enabled="true" height="19" label="Emerald Viewer Bug Reports..." left="0" mouse_opaque="true" name="Emerald Viewer Bug Reports..." width="166">
+      <on_click function="PromptShowURL" name="ms_url" userdata="WebLaunchMS,http://jira.modularsystems.sl:8080" />
+    </menu_item_call>
+
 		<menu_item_separator bottom="-411" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator7" width="250" />
-		<menu bottom="-554" create_jump_keys="true" drop_shadow="true" enabled="true" height="109" label="Bug Reporting" left="0" mouse_opaque="false" name="Bug Reporting" opaque="true" tear_off="true" width="118">
-			<menu_item_call bottom="-94" enabled="true" height="19" label="Public Issue Tracker..." left="0" mouse_opaque="true" name="Public Issue Tracker..." width="166">
+		<menu bottom="-554" create_jump_keys="true" drop_shadow="true" enabled="true" height="109" label="Linden Resources" left="0" mouse_opaque="false" name="LL" opaque="true" tear_off="true" width="118">
+      <menu_item_separator bottom="-75" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator" width="166" />
+      <menu_item_call bottom="-94" enabled="true" height="19" label="Official Linden Blog..." left="0" mouse_opaque="true" name="Official Linden Blog..." width="166">
+        <on_click function="PromptShowURL" name="OfficialLindenBlog_url" userdata="WebLaunchSupportWiki,http://blog.secondlife.com/" />
+      </menu_item_call>
+      <menu_item_separator bottom="-102" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator2" width="166" />
+      <menu_item_call bottom="-140" enabled="true" height="19" label="Scripting Portal..." left="0" mouse_opaque="true" name="Scripting Portal..." width="166">
+        <on_click function="PromptShowURL" name="ScriptingPortal_url" userdata="WebLaunchLSLWiki,http://wiki.secondlife.com/wiki/LSL_Portal" />
+      </menu_item_call>
+      <menu_item_call bottom="-94" enabled="true" height="19" label="Public Issue Tracker..." left="0" mouse_opaque="true" name="Public Issue Tracker..." width="166">
 				<on_click function="PromptShowURL" name="PublicIssueTracker_url" userdata="WebLaunchPublicIssue,http://jira.secondlife.com" />
 			</menu_item_call>
 			<menu_item_call bottom="-94" enabled="true" height="19" label="Public Issue Tracker Help..." left="0" mouse_opaque="true" name="Publc Issue Tracker Help..." width="166">
@@ -612,6 +616,17 @@
 				<on_click function="PromptShowURL" name="ReportBug_url" userdata="WebLaunchPublicIssue,http://jira.secondlife.com" />
 			</menu_item_call>
 		</menu>
+    <menu_item_separator bottom="-148" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator3" width="166" />
+    <menu_item_call bottom="-194" enabled="true" height="19" label="Report Abuse..." left="0" mouse_opaque="true" name="Report Abuse..." width="166">
+      <on_click function="ShowFloater" userdata="complaint reporter" />
+    </menu_item_call>
+    <menu_item_call bottom="-213" enabled="true" height="19" label="Bumps, Pushes &amp; Hits..." left="0" mouse_opaque="true" name="Bumps, Pushes &amp;amp; Hits..." width="166">
+      <on_click function="ShowFloater" userdata="mean events" />
+    </menu_item_call>
+    <menu_item_call label="Lag Meter" name="Lag Meter">
+      <on_click function="ShowFloater" userdata="lag meter" />
+    </menu_item_call>
+    <menu_item_separator bottom="-148" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator3" width="166" />
 		<menu_item_call bottom="-313" enabled="true" height="19" label="About Emerald Viewer..." left="0" mouse_opaque="true" name="About Second Life..." width="166">
 			<on_click function="ShowFloater" userdata="about" />
 		</menu_item_call>
@@ -661,10 +676,20 @@
 			<on_check function="Emerald.CheckBlockSpam" userdata="" />
 		</menu_item_check>
 		<menu_item_separator bottom="-126" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator2" width="155" />
-		<menu_item_check bottom="-146" enabled="false" height="20" label="Animation List" left="0" mouse_opaque="true" name="Animation List" width="155">
-			<on_click function="ShowFloater" userdata="animation list" />
-			<on_check function="FloaterVisible" userdata="animation list" />
-		</menu_item_check>
+
+	    <menu_item_check bottom="-281" enabled="false" height="19" label="Animation Explorer" left="0" mouse_opaque="true" name="Animation List" width="250">
+	      <on_click function="ShowFloater" userdata="animationexplorer" />
+	      <on_check function="FloaterVisible" userdata="animationexplorer" />
+	    </menu_item_check>
+	    <menu_item_check bottom="-281" enabled="false" height="19" label="Sound Explorer" left="0" mouse_opaque="true" name="Animation List" width="250">
+	      <on_click function="ShowFloater" userdata="soundexplorer" />
+	      <on_check function="FloaterVisible" userdata="soundexplorer" />
+	    </menu_item_check>
+	    <menu_item_check bottom="-281" enabled="false" height="19" label="Asset Blacklist" left="0" mouse_opaque="true" name="Animation List" width="250">
+	      <on_click function="ShowFloater" userdata="assetblacklist" />
+	      <on_check function="FloaterVisible" userdata="assetblacklist" />
+	    </menu_item_check>
+
 		<menu_item_check bottom="-166" enabled="false" height="20" label="Area Search" left="0" mouse_opaque="true" name="Area Search" width="155">
 			<on_click function="ShowFloater" userdata="areasearch" />
 			<on_check function="FloaterVisible" userdata="areasearch" />
@@ -677,18 +702,20 @@
 		<menu_item_check bottom="-206" enabled="true" height="20" label="Teleport History" left="0" mouse_opaque="true" name="Teleport History" shortcut="alt|H" width="155">
 			<on_click function="ShowFloater" userdata="teleport history" />
 			<on_check function="FloaterVisible" userdata="teleport history" />
-			</menu_item_check>
-			<menu_item_check bottom="-206" enabled="true" height="20" label="Message Log" left="0" mouse_opaque="true" name="Message Log" shortcut="" width="155">
-				<on_click function="ShowFloater" userdata="message log" />
-				<on_check function="FloaterVisible" userdata="message log" />
-			</menu_item_check>
-			<menu_item_check bottom="-58" enabled="true" height="20" label="AO" left="0" mouse_opaque="true" name="AO" shortcut="control|shift|o" width="155">
-				<on_click function="AO" userdata="" />
-			</menu_item_check>
-			<!-- tag: vaa emerald local_asset_browser [begin] -->
-			<menu_item_call label="Local Bitmap Browser" enabled="true" name="local_bitmap_browser">
-				<on_click function="Emerald.LocalAssetBrowser" userdata="" />
-			</menu_item_call>
-			<!-- tag: vaa emerald local_asset_browser [end] -->
-		</menu>
-	</menu_bar>
+		</menu_item_check>
+		<menu_item_check bottom="-206" enabled="true" height="20" label="Message Log" left="0" mouse_opaque="true" name="Message Log" shortcut="" width="155">
+			<on_click function="ShowFloater" userdata="message log" />
+			<on_check function="FloaterVisible" userdata="message log" />
+		</menu_item_check>
+		<menu_item_check bottom="-58" enabled="true" height="20" label="AO" left="0" mouse_opaque="true" name="AO" shortcut="control|shift|o" width="155">
+			<on_click function="AO" userdata="" />
+		</menu_item_check>
+		<!-- tag: vaa emerald local_asset_browser [begin] -->
+		<menu_item_call label="Local Bitmap Browser" enabled="true" name="local_bitmap_browser">
+			<on_click function="Emerald.LocalAssetBrowser" userdata="" />
+		</menu_item_call>
+		<!-- tag: vaa emerald local_asset_browser [end] -->
+
+
+	</menu>
+</menu_bar>

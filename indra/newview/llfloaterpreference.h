@@ -126,6 +126,10 @@ public:
 	
 	// refresh the skins
 	static void refreshSkinPanel();
+	
+	// *HACK: Close without doing anything.
+	// This is used by the "reset all settings" button.
+	static void closeWithoutSaving();
 
 protected:
 	LLPreferenceCore		*mPreferenceCore;
@@ -136,6 +140,7 @@ protected:
 	LLButton	*mOKBtn;
 	LLButton	*mCancelBtn;
 	LLButton	*mApplyBtn;
+	bool		mExitWithoutSaving;
 
 	static void		onClickAbout(void*);
 	static void		onBtnOK(void*);

@@ -59,6 +59,9 @@
 #include "message.h"
 #include "raytrace.h"
 #include "llsdserialize.h"
+#include "floaterexploreanimations.h"
+#include "floaterexploresounds.h"
+#include "floaterblacklist.h"
 #include "lltimer.h"
 #include "llvfile.h"
 #include "llvolumemgr.h"
@@ -220,7 +223,6 @@
 
 #include "floaterlocalassetbrowse.h" // tag: vaa emerald local_asset_browser
 #include "floateravatarlist.h"
-#include "jcfloater_animation_list.h"
 #include "jcfloater_areasearch.h"
 #include "exporttracker.h"
 #include "floaterao.h"
@@ -420,8 +422,6 @@ void handle_claim_public_land(void*);
 void handle_god_request_havok(void *);
 void handle_god_request_avatar_geometry(void *);	// Hack for easy testing of new avatar geometry
 void reload_personal_settings_overrides(void *);
-void handle_reset_all_settings(void *);
-void callback_reset_all_settings(const LLSD& notification, const LLSD& response);
 void reload_vertex_shader(void *);
 void slow_mo_animations(void *);
 void handle_disconnect_viewer(void *);
@@ -453,7 +453,9 @@ void focus_here(void*);
 void dump_select_mgr(void*);
 void dump_volume_mgr(void*);
 void dump_inventory(void*);
+void handle_hippos(void*);
 void edit_ui(void*);
+void reload_linden_balance(void*);
 void toggle_visibility(void*);
 BOOL get_visibility(void*);
 
@@ -1017,7 +1019,7 @@ void init_client_menu(LLMenuGL* menu)
 // [RLVa:KB] - Checked: 2009-07-08 (RLVa-1.0.0e) | Modified: RLVa-1.0.0e
 	#ifdef RLV_ADVANCED_TOGGLE_RLVA
 		if (gSavedSettings.controlExists(RLV_SETTING_MAIN))
-			menu->append(new LLMenuItemCheckGL("Restrained Love API", &rlvToggleEnabled, NULL, &rlvGetEnabled, NULL));
+			menu->append(new LLMenuItemCheckGL("RestrainedLove API", &rlvToggleEnabled, NULL, &rlvGetEnabled, NULL));
 	#endif // RLV_ADVANCED_TOGGLE_RLVA
 // [/RLVa:KB]
 
@@ -1038,8 +1040,6 @@ void init_client_menu(LLMenuGL* menu)
 		menu->appendMenu(sub);
 	}
 
-	menu->append(new LLMenuItemCallGL("Reset All Settings...", &handle_reset_all_settings));
-	
 	menu->append(new LLMenuItemCheckGL( "Output Debug Minidump", 
 										&menu_toggle_control,
 										NULL, 
@@ -1113,6 +1113,7 @@ void init_debug_ui_menu(LLMenuGL* menu)
 	menu->append(new LLMenuItemCheckGL("Rotate Mini-Map", menu_toggle_control, NULL, menu_check_control, (void*)"MiniMapRotate"));
 	menu->append(new LLMenuItemCheckGL("Use default system color picker", menu_toggle_control, NULL, menu_check_control, (void*)"UseDefaultColorPicker"));
 	menu->append(new LLMenuItemCheckGL("Show search panel in overlay bar", menu_toggle_control, NULL, menu_check_control, (void*)"ShowSearchBar"));
+	menu->append(new LLMenuItemCallGL("Reload L$ balance", &reload_linden_balance, NULL, NULL, 'B', MASK_CONTROL | MASK_ALT));
 	menu->appendSeparator();
 
 	// commented out until work is complete: DEV-32268
@@ -1120,6 +1121,7 @@ void init_debug_ui_menu(LLMenuGL* menu)
 	menu->append(new LLMenuItemCallGL("Editable UI", &edit_ui));
 	menu->append(new LLMenuItemCallGL( "Dump SelectMgr", &dump_select_mgr));
 	menu->append(new LLMenuItemCallGL( "Dump Inventory", &dump_inventory));
+	menu->append(new LLMenuItemCallGL( "Dump Hippos", &handle_hippos, NULL, NULL, 'H', MASK_CONTROL | MASK_ALT | MASK_SHIFT));
 	menu->append(new LLMenuItemCallGL( "Dump Focus Holder", &handle_dump_focus, NULL, NULL, 'F', MASK_ALT | MASK_CONTROL));
 	menu->append(new LLMenuItemCallGL( "Print Selected Object Info",	&print_object_info, NULL, NULL, 'P', MASK_CONTROL|MASK_SHIFT ));
 	menu->append(new LLMenuItemCallGL( "Print Agent Info",			&print_agent_nvpairs, NULL, NULL, 'P', MASK_SHIFT ));
@@ -2090,7 +2092,18 @@ class LLObjectDerender : public view_listener_t
 		if (!(id == gAgentID))
 		{
 			LLViewerObject *objectp = gObjectList.findObject(id);
-			if (objectp)
+//			if (objectp)
+// [RLVa:KB] - Alternate: Emerald-1371 | Checked: 2009-01-17 (RLVa-1.1.0) | Added: RLVa-1.1.0
+			LLVOAvatar* pAvatar = NULL, *pAvatarSelf = gAgent.getAvatarObject();
+			// Don't allow derendering this avie's own attachments when RLV is enabled (or the object the avie is sitting on)
+			if (
+				 (objectp) && 
+				 ( (!rlv_handler_t::isEnabled()) || 
+				   ( ((!pAvatarSelf) || (!pAvatarSelf->mIsSitting) || (pAvatarSelf->getRoot() != objectp)) &&
+				     (((pAvatar = find_avatar_from_object(objectp)) == NULL) || (pAvatar->getID() != gAgent.getID())) )
+				 )
+			   )
+// [/RLVa:KB]
 			{
 				gObjectList.killObject(objectp);
 			}
@@ -2099,16 +2112,44 @@ class LLObjectDerender : public view_listener_t
 	}
 };
 
+// [RLVa:KB] - Alternate: Emerald-1371 | Checked: 2009-01-17 (RLVa-1.1.0) | Added: RLVa-1.1.0
 class LLObjectEnableDerender : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent>, const LLSD& userdata)
 	{
 		bool fEnable = true;
+
+		// Don't allow derendering this avie's own attachments when RLV is enabled
+		if (rlv_handler_t::isEnabled())
+		{
+			LLObjectSelectionHandle hSelect = LLSelectMgr::getInstance()->getSelection();
+			if (hSelect.notNull())
+			{
+				if (hSelect->isAttachment())
+				{
+					LLViewerObject* pObj = hSelect->getFirstRootObject(TRUE);
+					if (pObj)
+					{
+						// Get the attachment's owner
+						while ( (pObj) && (pObj->isAttachment()) )
+							pObj = (LLViewerObject*)pObj->getParent();
+						fEnable = (pObj->getID() != gAgent.getID());
+					}
+				}
+				else if ( (gAgent.getAvatarObject()) && (gAgent.getAvatarObject()->mIsSitting) )
+				{
+					RlvSelectIsSittingOn f(gAgent.getAvatarObject()->getRoot());
+					if (hSelect->getFirstRootNode(&f, TRUE))
+						fEnable = false;
+				}
+			}
+		}
+
 		gMenuHolder->findControl(userdata["control"].asString())->setValue(fEnable);
 		return true;
 	}
 };
-
+// [/RLVa:KB]
 
 //---------------------------------------------------------------------------
 // Land pie menu
@@ -2703,11 +2744,11 @@ class LLAvatarDebug : public view_listener_t
 		if( avatar )
 		{
 			avatar->dumpLocalTextures();
-			llinfos << "Dumping temporary asset data to simulator logs for avatar " << avatar->getID() << llendl;
+			/*llinfos << "Dumping temporary asset data to simulator logs for avatar " << avatar->getID() << llendl;
 			std::vector<std::string> strings;
 			strings.push_back(avatar->getID().asString());
 			LLUUID invoice;
-			send_generic_message("dumptempassetdata", strings, invoice);
+			send_generic_message("dumptempassetdata", strings, invoice);*/
 			LLFloaterAvatarTextures::show( avatar->getID() );
 		}
 		return true;
@@ -5419,32 +5460,6 @@ void handle_reload_settings(void*)
 	gColors.loadFromFileLegacy(color_file, FALSE, TYPE_COL4U);
 }
 
-void callback_reset_all_settings(const LLSD& notification, const LLSD& response)
-{
-	S32 option = LLNotification::getSelectedOption(notification, response);
-	if(option == 0) // OK
-	{
-		// We probably want to avoid altering this setting, so keep it across the reset.
-		std::string client_settings_file = gSavedSettings.getString("ClientSettingsFile");
-		gSavedSettings.resetToDefaults();
-		gSavedSettings.setString("ClientSettingsFile", client_settings_file);
-		gSavedSettings.saveToFile(client_settings_file, TRUE);
-		
-		// Wipe user-specific settings for good measure and consistency.
-		gSavedPerAccountSettings.resetToDefaults();
-		gSavedPerAccountSettings.saveToFile(gSavedSettings.getString("PerAccountSettingsFile"), TRUE);
-		LLNotifications::instance().add("EmeraldResetAllSettingsComplete");
-	}
-}
-
-void handle_reset_all_settings(void*)
-{
-	LLNotifications::instance().add("EmeraldResetAllSettingsPrompt",
-									LLSD(),
-									LLSD(),
-									callback_reset_all_settings);
-}
-
 class LLWorldSetHomeLocation : public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
@@ -5853,6 +5868,11 @@ class LLObjectEnableSitOrStand : public view_listener_t
 	}
 };
 
+void reload_linden_balance(void*)
+{
+	LLStatusBar::sendMoneyBalanceRequest();
+}
+
 void edit_ui(void*)
 {
 	LLFloater::setEditModeEnabled(!LLFloater::getEditModeEnabled());
@@ -5866,6 +5886,14 @@ void dump_select_mgr(void*)
 void dump_inventory(void*)
 {
 	gInventory.dumpInventory();
+}
+
+void handle_hippos(void*)
+{
+	LLChat chat;
+	chat.mText = "hippos!";
+	chat.mSourceType = CHAT_SOURCE_SYSTEM;
+	LLFloaterChat::addChat(chat, FALSE, FALSE);
 }
 
 // forcibly unlock an object
@@ -6073,14 +6101,22 @@ class LLShowFloater : public view_listener_t
 		{
 			LLFloaterPerms::toggleInstance(LLSD());
 		}
-                else if (floater_name == "animation list")
-                {
-                        JCFloaterAnimList::toggleInstance(LLSD());
-                }
-                else if (floater_name == "areasearch")
-                {
-                        JCFloaterAreaSearch::toggle();
-                }
+        else if (floater_name == "animationexplorer")
+        {
+			new LLFloaterExploreAnimations(gAgent.getID());
+        }
+		else if (floater_name == "soundexplorer")
+        {
+			LLFloaterExploreSounds::toggle();
+		}
+        else if (floater_name == "assetblacklist")
+        {
+			LLFloaterBlacklist::show();
+        }
+        else if (floater_name == "areasearch")
+        {
+        	JCFloaterAreaSearch::toggle();
+        }
 		return true;
 	}
 };
@@ -6151,16 +6187,12 @@ class LLFloaterVisible : public view_listener_t
 			LLInventoryView* iv = LLInventoryView::getActiveInventory(); 
 			new_value = (NULL != iv && TRUE == iv->getVisible());
 		}
-                else if (floater_name == "animation list")
-                {
-                        new_value = JCFloaterAnimList::instanceVisible(LLSD());
-                }
-                else if (floater_name == "areasearch")
-                {
-                        JCFloaterAreaSearch* instn = JCFloaterAreaSearch::getInstance();
-                        if(!instn)new_value = false;
-                        else new_value = instn->getVisible();
-                }
+	    else if (floater_name == "areasearch")
+	    {
+	            JCFloaterAreaSearch* instn = JCFloaterAreaSearch::getInstance();
+	            if(!instn)new_value = false;
+	            else new_value = instn->getVisible();
+	    }
 		gMenuHolder->findControl(control_name)->setValue(new_value);
 		return true;
 	}
@@ -8762,10 +8794,10 @@ class LLEmeraldToggleSit: public view_listener_t
 	{
 // [RLVa:KB] - Alternate: Emerald-370
 		// Can't sit on land when @unsit=n restricted
-		//if (gRlvHandler.hasBehaviour(RLV_BHVR_UNSIT))
-		//{
-			//return true;
-		//}
+		if (gRlvHandler.hasBehaviour(RLV_BHVR_UNSIT))
+		{
+			return true;
+		}
 // [/RLVa:KB]
 
 		if(gSavedSettings.getBOOL("EmeraldAllowSitToggle"))
@@ -9309,7 +9341,9 @@ void initialize_menus()
 	addMenu(new LLObjectEdit(), "Object.Edit");
 	addMenu(new LLObjectInspect(), "Object.Inspect");
 	addMenu(new LLObjectDerender(), "Object.DERENDER"); //Phox: Added visible mute here.
+// [RLVa:KB] - Alternate: Emerald-1371 | Checked: 2009-01-17 (RLVa-1.1.0) | Added: RLVa-1.1.0
 	addMenu(new LLObjectEnableDerender(), "Object.EnableDerender");
+// [/RLVa:KB]
 	addMenu(new LLObjectEnableOpen(), "Object.EnableOpen");
 	addMenu(new LLObjectEnableTouch(), "Object.EnableTouch");
 	addMenu(new LLObjectEnableSitOrStand(), "Object.EnableSitOrStand");

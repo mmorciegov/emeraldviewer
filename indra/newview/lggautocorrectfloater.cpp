@@ -118,7 +118,7 @@ lggAutoCorrectFloater::~lggAutoCorrectFloater()
 }
 lggAutoCorrectFloater::lggAutoCorrectFloater(const LLSD& seed)
 {
-	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_autocomplete.xml");
+	LLUICtrlFactory::getInstance()->buildFloater(this, "floater_autocorrect.xml");
 
 	if (getRect().mLeft == 0 
 		&& getRect().mBottom == 0)
@@ -188,7 +188,7 @@ void lggAutoCorrectFloater::ResponseItemDrop(LLViewerInventoryItem* item)
 				&onNotecardLoadComplete,
 				(void*)item,
 				TRUE);
-			gSavedSettings.setBOOL("EmeraldEnableAutoComplete",true);
+			gSavedSettings.setBOOL("EmeraldEnableAutoCorrect",true);
 
 		}
 	}
@@ -287,7 +287,7 @@ void lggAutoCorrectFloater::updateItemsList()
 void lggAutoCorrectFloater::updateNamesList()
 {
 	namesList->deleteAllItems();
-	static BOOL *enabledd = rebind_llcontrol<BOOL>("EmeraldEnableAutoComplete", &gSavedSettings, true);
+	static BOOL *enabledd = rebind_llcontrol<BOOL>("EmeraldEnableAutoCorrect", &gSavedSettings, true);
 	if(!(*enabledd))
 	{
 		updateItemsList();
@@ -337,7 +337,7 @@ void lggAutoCorrectFloater::updateListControlsEnabled(BOOL selected)
 }
 void lggAutoCorrectFloater::updateEnabledStuff()
 {
-	static BOOL *enabledd = rebind_llcontrol<BOOL>("EmeraldEnableAutoComplete", &gSavedSettings, true);
+	static BOOL *enabledd = rebind_llcontrol<BOOL>("EmeraldEnableAutoCorrect", &gSavedSettings, true);
 	if(!(*enabledd))
 	{
 		getChild<LLCheckBoxCtrl>("em_ac_enable")->setEnabledColor(LLColor4(1.0f,0.0f,0.0f,1.0f));		
@@ -400,7 +400,7 @@ void lggAutoCorrectFloater::loadList(void* data)
 		LLSDSerialize::fromXMLDocument(blankllsd, file);
 	}
 	file.close();
-	gSavedSettings.setBOOL("EmeraldEnableAutoComplete",true);
+	gSavedSettings.setBOOL("EmeraldEnableAutoCorrect",true);
 	LGGAutoCorrect::getInstance()->addCorrectionList(blankllsd);
 	sInstance->updateEnabledStuff();
 }
@@ -429,7 +429,7 @@ void lggAutoCorrectFloater::addEntry(void* data)
 {
 	std::string listName= sInstance->namesList->getFirstSelected()->getColumn(0)->getValue().asString();
 	LLChat chat;
-	chat.mText = "To add an entry, please type in chat \"/addac "+listName+" wrongWord rightWord\"";
+	chat.mText = "To add an entry, please type in chat \""+gSavedSettings.getString("EmeraldCmdLineAutocorrect")+" "+listName+"|wrongWord|rightWord\"";
 	chat.mSourceType = CHAT_SOURCE_SYSTEM;
 	LLFloaterChat::addChat(chat, FALSE, FALSE);
 }

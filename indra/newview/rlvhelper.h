@@ -215,8 +215,12 @@ public:
 		std::string strFolderName = pFolder->getName();
 		LLStringUtil::toLower(strFolderName);
 
-		if ( (strFolderName.empty()) ||	(RLV_FOLDER_PREFIX_HIDDEN == strFolderName[0]) )
+		// NOTE: hidden or "give to #RLV" folders can never be a match
+		if ( (strFolderName.empty()) ||	
+			 (RLV_FOLDER_PREFIX_HIDDEN == strFolderName[0]) || (RLV_FOLDER_PREFIX_PUTINV == strFolderName[0]) )
+		{
 			return false;
+		}
 
 		for (std::list<std::string>::const_iterator itCrit = m_Criteria.begin(); itCrit != m_Criteria.end(); ++itCrit)
 			if (std::string::npos == strFolderName.find(*itCrit))	// Return false on the first mismatch

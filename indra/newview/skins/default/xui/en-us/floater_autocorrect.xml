@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <floater border="true" can_close="true" can_minimize="true" bottom="400" left="300" can_resize="false" height="430" width="400"
- name="em_ac_floater" title="AutoCompletion Settings">
+ name="em_ac_floater" title="Autocorrect Settings">
   <check_box bottom_delta="-50" left_delta="5" height="16" width="100" enabled="true" follows="left|top"
-			font="SansSerifSmall" mouse_opaque="true" radio_style="false" label="Enable AutoCompletion"
-			control_name="EmeraldEnableAutoComplete" name="em_ac_enable" tool_tip="You must have this check box enabled to use any of these settings,
+			font="SansSerifSmall" mouse_opaque="true" radio_style="false" label="Enable Autocorrect"
+			control_name="EmeraldEnableAutoCorrect" name="em_ac_enable" tool_tip="You must have this check box enabled to use any of these settings,
 			it will search your writable text entry, and replace any of the search entries with their replacement"/>
   <button bottom_delta="-2" left_delta="150" height="22" width="80" enabled="true" follows="left|top"
 			font="SansSerif" mouse_opaque="true" halign="center" scale_image="true"

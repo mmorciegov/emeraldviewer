@@ -1576,13 +1576,6 @@ LLVector3 LLAgent::calcFocusOffset(LLViewerObject *object, LLVector3 original_fo
 //-----------------------------------------------------------------------------
 BOOL LLAgent::calcCameraMinDistance(F32 &obj_min_distance)
 {
-	obj_min_distance = 0.f;
-	return TRUE;
-	/* Emerald:
-	We don't care about minimum distances in Emerald. No we don't.
-	~Zwag
-	*/
-	/*
 	BOOL soft_limit = FALSE; // is the bounding box to be treated literally (volumes) or as an approximation (avatars)
 
 	if (!mFocusObject || mFocusObject->isDead())
@@ -1755,7 +1748,6 @@ BOOL LLAgent::calcCameraMinDistance(F32 &obj_min_distance)
 	obj_min_distance += LLViewerCamera::getInstance()->getNear() + (soft_limit ? 0.1f : 0.2f);
 	
 	return TRUE;
-	*/
 }
 
 F32 LLAgent::getCameraZoomFraction()
@@ -2646,7 +2638,7 @@ void LLAgent::propagate(const F32 dt)
 
 	// handle rotation based on keyboard levels
 	const F32 YAW_RATE = 90.f * DEG_TO_RAD;				// radians per second
-	yaw( YAW_RATE * mYawKey * dt );
+	yaw(YAW_RATE * mYawKey * dt);
 
 	const F32 PITCH_RATE = 90.f * DEG_TO_RAD;			// radians per second
 	pitch(PITCH_RATE * mPitchKey * dt);
@@ -3295,6 +3287,7 @@ void LLAgent::updateCamera()
 				mFollowCam.copyParams(*current_cam);
 				mFollowCam.setSubjectPositionAndRotation( mAvatarObject->getRenderPosition(), avatarRotationForFollowCam );
 				mFollowCam.update();
+				LLViewerJoystick::getInstance()->setCameraNeedsUpdate(true);
 			}
 			else
 			{
@@ -4432,7 +4425,7 @@ void LLAgent::changeCameraToCustomizeAvatar(BOOL avatar_animate, BOOL camera_ani
 	{
 		if(avatar_animate  && gSavedSettings.getBOOL("EmeraldAppearanceAnimate"))
 		{
-				// Remove any pitch from the avatar
+			// Remove any pitch from the avatar
 			LLVector3 at = mFrameAgent.getAtAxis();
 			at.mV[VZ] = 0.f;
 			at.normalize();
@@ -7661,7 +7654,8 @@ void LLAgent::sendAgentSetAppearance()
 	// is texture data current relative to wearables?
 	// KLW - TAT this will probably need to check the local queue.
 	BOOL textures_current = !mAvatarObject->hasPendingBakedUploads() && mWearablesLoaded;
-
+	std::vector<U8> unavailable;
+	unavailable.clear();
 	for(U8 baked_index = 0; baked_index < BAKED_NUM_INDICES; baked_index++ )
 	{
 		const ETextureIndex texture_index = getTextureIndex((EBakedTextureIndex)baked_index);
@@ -7675,13 +7669,23 @@ void LLAgent::sendAgentSetAppearance()
 		// IMG_DEFAULT_AVATAR means not baked
 		if (!mAvatarObject->isTextureDefined(texture_index))
 		{
-			textures_current = FALSE;
-			break;
+			// TODO: itoa is not a standard function of C.
+			/*
+			char lol[16];
+			itoa(texture_index,lol,10);
+			llinfos << lol << " isn't defined" << llendl;
+			*/
+
+			//FUCK baking problems, we'll just send whatever's available immediately
+			//textures_current = FALSE;
+			unavailable.push_back(texture_index);
+			//break;
 		}
+		
 	}
 
 	// only update cache entries if we have all our baked textures
-	if (textures_current)
+	if(textures_current)
 	{
 		llinfos << "TAT: Sending cached texture data" << llendl;
 		for (U8 baked_index = 0; baked_index < BAKED_NUM_INDICES; baked_index++)
@@ -7702,9 +7706,7 @@ void LLAgent::sendAgentSetAppearance()
 			{
 				hash ^= wearable_dict->mHashID;
 			}
-
 			const ETextureIndex texture_index = getTextureIndex((EBakedTextureIndex)baked_index);
-
 			msg->nextBlockFast(_PREHASH_WearableData);
 			msg->addUUIDFast(_PREHASH_CacheID, hash);
 			msg->addU8Fast(_PREHASH_TextureIndex, (U8)texture_index);
@@ -7713,12 +7715,44 @@ void LLAgent::sendAgentSetAppearance()
 		mAvatarObject->packTEMessage( gMessageSystem, TRUE );
 	}
 	else
-	{
-		// If the textures aren't baked, send NULL for texture IDs
+	{//Do everything anyway because of stupid bakes not working
+		llinfos << "TAT: Sending cached texture data" << llendl;
+		for (U8 baked_index = 0; baked_index < BAKED_NUM_INDICES; baked_index++)
+		{
+			if(std::find(unavailable.begin(),unavailable.end(),baked_index) != unavailable.end())
+			{
+				const LLVOAvatarDictionary::WearableDictionaryEntry *wearable_dict = LLVOAvatarDictionary::getInstance()->getWearable((EBakedTextureIndex)baked_index);
+				LLUUID hash;
+				for (U8 i=0; i < wearable_dict->mWearablesVec.size(); i++)
+				{
+					// EWearableType wearable_type = gBakedWearableMap[baked_index][wearable_num];
+					const EWearableType wearable_type = wearable_dict->mWearablesVec[i];
+					const LLWearable* wearable = getWearable(wearable_type);
+					if (wearable)
+					{
+						hash ^= wearable->getID();
+					}
+				}
+				if (hash.notNull())
+				{
+					hash ^= wearable_dict->mHashID;
+				}
+
+				const ETextureIndex texture_index = getTextureIndex((EBakedTextureIndex)baked_index);
+
+				msg->nextBlockFast(_PREHASH_WearableData);
+				msg->addUUIDFast(_PREHASH_CacheID, hash);
+				msg->addU8Fast(_PREHASH_TextureIndex, (U8)texture_index);
+			}
+		}
+		msg->nextBlockFast(_PREHASH_ObjectData);
+		mAvatarObject->packTEMessage( gMessageSystem, TRUE );
+
+		/*// If the textures aren't baked, send NULL for texture IDs
 		// This means the baked texture IDs on the server will be untouched.
 		// Once all textures are baked, another AvatarAppearance message will be sent to update the TEs
 		msg->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addBinaryDataFast(_PREHASH_TextureEntry, NULL, 0);
+		gMessageSystem->addBinaryDataFast(_PREHASH_TextureEntry, NULL, 0);*/
 	}
 
 

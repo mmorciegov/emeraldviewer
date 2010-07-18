@@ -91,7 +91,8 @@ LLPanelPick::LLPanelPick(BOOL top_pick)
     mSortOrderText(NULL),
     mSortOrderEditor(NULL),
     mEnabledCheck(NULL),
-    mSetBtn(NULL)
+    mSetBtn(NULL),
+	mImporting(0)
 {
     sAllPanels.push_back(this);
 
@@ -198,7 +199,6 @@ void LLPanelPick::initNewPick()
 	sendPickInfoUpdate();
 }
 
-// import && export
 //Imports a new pick from an xml - RK
 bool LLPanelPick::importNewPick()
 {

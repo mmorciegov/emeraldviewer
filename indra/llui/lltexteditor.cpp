@@ -503,7 +503,6 @@ std::vector<S32> LLTextEditor::getMisspelledWordsPositions()
 	resetSpellDirty();
 	std::vector<S32> thePosesOfBadWords;
 	LLWString& text = mWText;
-
 	S32 wordStart=0;
 	S32 wordEnd=spellStart;//start at the scroll start
 	while(wordEnd < spellEnd)
@@ -522,22 +521,10 @@ std::vector<S32> LLTextEditor::getMisspelledWordsPositions()
 				wordEnd++;
 			}	
 			//got a word :D
-			std::string regText(text.begin(),text.end());
 
+			std::string regText(text.begin(),text.end());
 			std::string selectedWord(regText.substr(wordStart,wordEnd-wordStart));
-			if(wordEnd!=spellEnd)//don't check the last word
-			{
-				std::string correctedWord(LGGAutoCorrect::getInstance()->replaceWord(selectedWord));
-				if(correctedWord!=selectedWord)
-				{
-					int dif = correctedWord.length()-selectedWord.length();
-					int wordStart = regText.find(selectedWord);
-					regText.replace(wordStart,selectedWord.length(),correctedWord);
-					mWText=utf8str_to_wstring(regText);
-					selectedWord=correctedWord;
-					mCursorPos+=dif;
-				}
-			}
+			
 			if(!glggHunSpell->isSpelledRight(selectedWord))
 			{	
 				//misspelled word here, and you have just right clicked on it
@@ -3078,7 +3065,47 @@ void LLTextEditor::drawSelectionBackground()
 		}
 	}
 }
+void LLTextEditor::autoCorrectText()
+{
+	
+	static BOOL *doAnything = rebind_llcontrol<BOOL>("EmeraldEnableAutoCorrect", &gSavedSettings, true);
+	if( (!mReadOnly) && (*doAnything) && (isSpellDirty()) )
+	{
+		S32 wordStart = 0;
+		S32 wordEnd = mCursorPos-1;
+		if(wordEnd<1)return;
+		LLWString& text = mWText;
+		if(text.size()<1)return;
+		if( LLTextEditor::isPartOfWord( text[wordEnd] )) return;//we only check on word breaks
+		wordEnd--;
+		if( LLTextEditor::isPartOfWord( text[wordEnd] ) )
+		{
+			while ((wordEnd > 0) && (text[wordEnd-1]!=' '))
+			{
+				wordEnd--;
+			}
+			wordStart=wordEnd;		
+			while ((wordEnd < (S32)text.length()) && (' '!= text[wordEnd] ) )
+			{
+				wordEnd++;
+			}
+			std::string lastTypedWord(std::string(text.begin(), 
+				text.end()).substr(wordStart,wordEnd-wordStart));
 
+			std::string regText(text.begin(),text.end());
+
+			std::string correctedWord(LGGAutoCorrect::getInstance()->replaceWord(lastTypedWord));
+			if(correctedWord!=lastTypedWord)
+			{
+				int dif = correctedWord.length()-lastTypedWord.length();
+				regText.replace(wordStart,lastTypedWord.length(),correctedWord);
+				mWText=utf8str_to_wstring(regText);
+				mCursorPos+=dif;
+				needsReflow();
+			}
+		}
+	}
+}
 void LLTextEditor::drawMisspelled()
 {
 	if(mReadOnly)return;
@@ -3638,6 +3665,8 @@ void LLTextEditor::draw()
 		mReflowNeeded = FALSE;
 	}
 
+	autoCorrectText();
+
 	// then update scroll position, as cursor may have moved
 	if (mScrollNeeded)
 	{
@@ -3659,6 +3688,7 @@ void LLTextEditor::draw()
 			{
 				drawMisspelled();
 			}
+			resetSpellDirty();
 			unbindEmbeddedChars(mGLFont);
 
 		//RN: the decision was made to always show the orange border for keyboard focus but do not put an insertion caret
@@ -4086,7 +4116,8 @@ void LLTextEditor::appendStyledText(const std::string &new_text,
 
 		S32 start=0,end=0;
 		std::string text = new_text;
-		while ( findHTML(text, &start, &end) )
+		std::string url;
+		while ( findHTML(text, &start, &end, url) )
 		{
 			LLStyleSP html(new LLStyle);
 			html->setVisible(true);
@@ -4112,7 +4143,7 @@ void LLTextEditor::appendStyledText(const std::string &new_text,
 				appendHighlightedText(subtext,allow_undo, prepend_newline, part, stylep); 
 			}
 			
-			html->setLinkHREF(text.substr(start,end-start));
+			html->setLinkHREF(url);
 			appendText(text.substr(start, end-start),allow_undo, prepend_newline, html);
 			if (end < (S32)text.length()) 
 			{
@@ -4125,6 +4156,7 @@ void LLTextEditor::appendStyledText(const std::string &new_text,
 				break;
 			}
 		}
+		
 		if (part != (S32)LLTextParser::WHOLE) part=(S32)LLTextParser::END;
 		if (end < (S32)text.length()) appendHighlightedText(text,allow_undo, prepend_newline, part, stylep);		
 	}
@@ -4916,7 +4948,7 @@ S32 LLTextEditor::findHTMLToken(const std::string &line, S32 pos, BOOL reverse) 
 	}		
 }
 
-BOOL LLTextEditor::findHTML(const std::string &line, S32 *begin, S32 *end) const
+BOOL LLTextEditor::findHTML(const std::string &line, S32 *begin, S32 *end, std::string& url) const
 {
 	  
 	S32 m1,m2,m3;
@@ -4975,7 +5007,7 @@ BOOL LLTextEditor::findHTML(const std::string &line, S32 *begin, S32 *end) const
 	{
 		S32 strpos, strpos2;
 
-		std::string url     = line.substr(*begin,*end - *begin);
+		url = line.substr(*begin,*end - *begin);
 		std::string slurlID = "slurl.com/secondlife/";
 		strpos = url.find(slurlID);
 		
@@ -5010,6 +5042,56 @@ BOOL LLTextEditor::findHTML(const std::string &line, S32 *begin, S32 *end) const
 			}
 		}
 
+	}
+	
+	// In-client JIRA linking.
+	// This check helpfully ensures that any full-form links aren't double-linked.
+	if(m1 < 0)
+	{
+		// jiras[] contains the project keys.
+		// jira_count contains the number of entries in jiras[].
+		// jurls[] contains the URL templates
+		// jurl_types[] maps jiras to urls.
+		// We DO NOT sanity check jurl_types. Make sure there is an entry in jurls for any given type.
+		// (yes, it would be easier to use a map. No, there is no really good reason we don't.)
+		const int jira_count = 4;
+		const char* jiras[] = { "SVC-", "VWR-", "SNOW-", "EMLD-" };
+		int jurl_types[] = { 0, 0, 0, 1 };
+		const char* jurls[] = { "https://jira.secondlife.com/browse/%s", "http://jira.modularsystems.sl/browse/%s" };
+		for(int j = 0; j < jira_count; ++j)
+		{
+			std::string jira(jiras[j]);
+			S32 m1 = line.find(jira);
+			if(m1 > 0)
+			{
+				// Get the length of our key.
+				size_t ending = line.substr(m1 + jira.length()).find_first_not_of("0123456789");
+				if(ending == std::string::npos)
+				{
+					ending = line.length() - m1 - jira.length();
+				}
+				// We can't break the loop, because if there's a match later than the first one we find,
+				// (e.g. "EMLD-12 VWR-15" will match VWR-15 first due to the order of jiras[])
+				// the loop calling this function will truncate to the end of the last match we found.
+				// Therefore, we must return the first link of *any* type, which means we must check all jiras,
+				// and return whichever is first (assuming any are found at all). Ew.
+				if(!matched || m1 < *begin)
+				{
+					*begin = m1;
+					*end = m1 + jira.length() + ending;
+					// If no key is provided (e.g. EMLD-), use the summary page instead of a specific issue.
+					if(ending <= 0)
+					{
+						url = llformat(jurls[jurl_types[j]], line.substr(*begin, *end - m1 - 1).c_str());
+					}
+					else
+					{
+						url = llformat(jurls[jurl_types[j]], line.substr(*begin, *end - m1).c_str());
+					}
+					matched = TRUE;
+				}
+			}
+		}
 	}
 	
 	if (!matched)
