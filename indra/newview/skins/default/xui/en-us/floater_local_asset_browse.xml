@@ -13,6 +13,7 @@
 	height="260"
 	min_width="415"
 	min_height="260"
+  rect_control="FloaterLocalbitmapbrowserRect"
 	>
 
   <!-- floater definition end, left side begin -->

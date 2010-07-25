@@ -1162,7 +1162,8 @@ void LLPanelLogin::onClickConnect(void *)
 			}
 		}else
 		{
-			LLNotifications::instance().add("BlockLoginInfo", LLSD(), LLSD());
+			LLSD args = ModularSystemsLink::blocked_login_info;
+			LLNotifications::instance().add("BlockLoginInfo", args, LLSD());
 		}
 	}
 }

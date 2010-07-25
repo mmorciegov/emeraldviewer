@@ -39,20 +39,23 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include "llsdserialize.h"
 
 #include "llversionviewer.h"
-
+#include "llprimitive.h"
 #include "llagent.h"
 #include "llnotifications.h"
 #include "llimview.h"
 #include "llfloaterabout.h"
 #include "llviewercontrol.h"
 #include "floaterblacklist.h"
+#include "llsys.h"
 
 std::string ModularSystemsLink::blacklist_version;
-
+LLSD ModularSystemsLink::blocked_login_info = 0;
+LLSD ModularSystemsLink::emerald_tags = 0;
 
 ModularSystemsLink* ModularSystemsLink::sInstance;
 
@@ -96,15 +99,18 @@ void ModularSystemsLink::start_download()
 
 	LL_INFOS("MSBlacklist") << "Checking for blacklist updates..." << LL_ENDL;
 	LLHTTPClient::get(url,new ModularSystemsDownloader( ModularSystemsLink::msblacklistquery ),headers);
+
+	url = "http://modularsystems.sl/app/client_tags/client_list.xml";
+	LLHTTPClient::get(url,new ModularSystemsDownloader( ModularSystemsLink::updateClientTags ),headers);
 	
 }
 void ModularSystemsLink::msblacklistquery(U32 status,std::string body)
 {
 	if(body != "0")
 	{	//update with a list of known malicious assets.
-		std::string url = "http://modularsystems.sl/app/blacklist/" + body + ".xml";
+		std::string url = "http://modularsystems.sl/app/blacklist/" + body + ".xml.gz";
 		LLSD headers;
-		headers.insert("Accept", "*/*");
+		headers.insert("Accept", "application/octet-stream");
 		headers.insert("User-Agent", LLAppViewer::instance()->getWindowTitle());
 		headers.insert("viewer-version", versionid);
 
@@ -113,6 +119,38 @@ void ModularSystemsLink::msblacklistquery(U32 status,std::string body)
 		LLHTTPClient::get(url,new ModularSystemsDownloader( ModularSystemsLink::msblacklist ),headers);
 		blacklist_version = body;
 	}
+	/*if(body != "0")
+	{	//update with a list of known malicious assets.
+		std::string url = "http://modularsystems.sl/app/blacklist/" + body + ".xml.gz";
+
+		LL_INFOS("MSBlacklist") << "Downloading asset blacklist update " << url << LL_ENDL;
+		std::string temp_filea = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS,boost::lexical_cast<std::string,S32>(rand()) + ".xml.gz");
+		LLHTTPClient::downloadFile(url,temp_filea);
+
+		blacklist_version = body; //set version
+
+		std::string temp_fileb;
+		temp_fileb = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS,blacklist_version + ".xml" );
+
+		BOOL unzipped = gunzip_file(temp_filea, temp_fileb);
+		if(unzipped)
+		{
+			LL_INFOS("MSBlacklist") << "Unzipped blacklist file" << LL_ENDL;
+
+			std::istringstream istr(temp_fileb);
+			LLSD data;
+			if(LLSDSerialize::fromXML(data,istr) >= 1)
+			{
+				LL_INFOS("MSBlacklist") << "Updating local blacklist" << LL_ENDL;
+				for(LLSD::map_iterator itr = data.beginMap(); itr != data.endMap(); ++itr)
+				{
+					LLFloaterBlacklist::addEntry(LLUUID(itr->first),itr->second);
+				}
+			}
+			else
+				LL_INFOS("MsBlacklist") << "Failed to parse:" << istr << LL_ENDL;
+		}
+	}*/
 	else
 		LL_INFOS("MSBlacklist") << "Blacklist is up to date." << LL_ENDL;
 }
@@ -120,15 +158,60 @@ void ModularSystemsLink::msblacklistquery(U32 status,std::string body)
 
 void ModularSystemsLink::msblacklist(U32 status,std::string body)
 {
-		std::istringstream istr(body);
-		LLSD data;
-		if(LLSDSerialize::fromXML(data, istr) >= 1)
+	if(status != 200)
+	{
+		LL_WARNS("MSBlacklist") << "Something went wrong with the blacklist download status code " << status << LL_ENDL;
+	}
+	llofstream some_filea; 
+	std::string temp_filea = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS,boost::lexical_cast<std::string,S32>(rand()) + ".xml.gz");
+	some_filea.open(temp_filea,std::ios_base::binary);
+	some_filea.clear();
+	some_filea.write(body.c_str(),body.size());
+	some_filea.close();
+
+	std::string temp_fileb = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS,blacklist_version + ".xml" );
+
+	if(gunzip_file(temp_filea, temp_fileb))
+		LL_INFOS("MSBlacklist") << "Unzipped blacklist file" << LL_ENDL;
+	else
+		LL_INFOS("MSBlacklist") << "Failed to unzip file." << LL_ENDL;
+
+	llifstream istr(temp_fileb);
+	LLSD data;
+	if(LLSDSerialize::fromXML(data,istr) >= 1)
+	{
+		LL_INFOS("MSBlacklist") << body.size() << " bytes received, updating local blacklist" << LL_ENDL;
+		for(LLSD::map_iterator itr = data.beginMap(); itr != data.endMap(); ++itr)
 		{
-			LL_INFOS("MSBlacklist") << body.size() << " bytes received, updating local blacklist" << LL_ENDL;
-			gSavedSettings.setLLSD("EmeraldSpecialBlacklist", data);
-			LLFloaterBlacklist::loadFromSave();
-			gSavedSettings.setString("EmeraldAssetBlacklistVersion",blacklist_version);
+			LLFloaterBlacklist::addEntry(LLUUID(itr->first),itr->second);
 		}
+	}
+	else
+		LL_INFOS("MsBlacklist") << "Failed to parse:" << istr << LL_ENDL;
+	
+	LLFile::remove(temp_filea);
+	LLFile::remove(temp_fileb);
+}
+
+void ModularSystemsLink::updateClientTags(U32 status,std::string body)
+{
+	std::string client_list_filename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "client_list.xml");
+
+	std::istringstream istr(body);
+	LLSD data;
+	if(LLSDSerialize::fromXML(data, istr) >= 1)
+	{
+		if(data.has("emeraldTags"))
+		{
+			emerald_tags = data["emeraldTags"];
+			LLPrimitive::tagstring = ModularSystemsLink::emerald_tags[gSavedSettings.getString("EmeraldTagColor")].asString();
+		}
+
+		llofstream export_file;
+		export_file.open(client_list_filename);
+		LLSDSerialize::toPrettyXML(data, export_file);
+		export_file.close();
+	}
 }
 
 void ModularSystemsLink::msdata(U32 status, std::string body)
@@ -170,6 +253,10 @@ void ModularSystemsLink::msdata(U32 status, std::string body)
 		}else
 		{
 			self->ms_motd = "";
+		}
+		if(data.has("BlockedReason"))
+		{
+			blocked_login_info = data["BlockedReason"]; 
 		}
 	}
 

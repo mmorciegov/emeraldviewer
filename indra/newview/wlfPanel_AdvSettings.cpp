@@ -43,9 +43,9 @@
 #include "llwlparammanager.h"
 #include "llstartup.h"
 
-/*// [RLVa:KB]
+// [RLVa:KB]
 #include "rlvhandler.h"
-// [/RLVa:KB] */
+// [/RLVa:KB]
 
 BOOL firstBuildDone;
 void* fixPointer;
@@ -73,12 +73,12 @@ void wlfPanel_AdvSettings::build()
 
 void wlfPanel_AdvSettings::refresh()
 {
-/*// [RLVa:KB] - Checked: 2009-09-19
+// [RLVa:KB] - Checked: 2009-09-19
 	if ( (rlv_handler_t::isEnabled()) && (gSavedSettings.getBOOL("wlfAdvSettingsPopup")) )
 	{
 		childSetEnabled("WLPresetsCombo", !gRlvHandler.hasBehaviour(RLV_BHVR_SETENV));
 	}
-// [/RLVa:KB] */
+// [/RLVa:KB]
 }
 
 void wlfPanel_AdvSettings::fixPanel()

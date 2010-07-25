@@ -48,6 +48,7 @@
 
 // [RLVa:KB] - Emerald specific
 #include "rlvhandler.h"
+#include "llsdserialize.h"
 // [/RLVa:KB]
 
 // globals
@@ -107,10 +108,59 @@ BOOL LLFloaterTeleportHistory::postBuild()
 	childSetAction("teleport", onTeleport, this);
 	childSetAction("show_on_map", onShowOnMap, this);
 	childSetAction("copy_slurl", onCopySLURL, this);
+	loadEntrys();
 
 	return TRUE;
 }
+void LLFloaterTeleportHistory::saveEntry(LLSD toSave)
+{
+	tpList.append(toSave);
+	std::string filename=getFileName();
+	llofstream file;
+	file.open(filename.c_str());
+	LLSDSerialize::toPrettyXML(tpList, file);
+	file.close();
+}
 
+std::string LLFloaterTeleportHistory::getFileName()
+{
+	std::string path=gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, "");
+
+	if (!path.empty())
+	{
+		path = gDirUtilp->getExpandedFilename(LL_PATH_PER_SL_ACCOUNT, "teleport_history.xml");
+	}
+	return path;  
+}
+void LLFloaterTeleportHistory::loadEntrys()
+{
+	std::string filename=getFileName();
+	if (filename.empty())
+	{
+		llinfos << "no valid user directory." << llendl; 
+		return;
+	}
+	llifstream file;
+	file.open(filename.c_str());
+	if (file.is_open())
+		LLSDSerialize::fromXML(tpList, file);
+	file.close();
+
+	for(int i = 0;i<(int)tpList.size();i++)
+	{
+		LLSD data = tpList[i];
+		LLScrollListCtrl* pItemPointer;
+		if(data["out"].asBoolean())
+			pItemPointer=mPlacesOutList;
+		else
+			pItemPointer=mPlacesInList;
+
+		pItemPointer->addElement(data, ADD_TOP);
+		pItemPointer->deselectAllItems(TRUE);
+		setButtonsEnabled(FALSE);
+		id++;
+	}	
+}
 void LLFloaterTeleportHistory::addEntry(std::string regionName, S16 x, S16 y, S16 z,bool outList)
 {
 	LLScrollListCtrl* pItemPointer;
@@ -135,7 +185,7 @@ void LLFloaterTeleportHistory::addEntry(std::string regionName, S16 x, S16 y, S1
 		// might change the internal tm* buffer
 		struct tm* internal_time;
 		internal_time = utc_to_pacific_time(time_corrected(), is_daylight_savings());
-		std::string timeString=llformat("%02d:%02d:%02d ", internal_time->tm_hour, internal_time->tm_min, internal_time->tm_sec)+timeZone;
+		std::string timeString=llformat("%02d/%02d/%04d - %02d:%02d:%02d ",internal_time->tm_mon+1,internal_time->tm_mday,internal_time->tm_year+1900,internal_time->tm_hour, internal_time->tm_min, internal_time->tm_sec)+timeZone;
 
 		// build the list entry
 		LLSD value;
@@ -152,6 +202,7 @@ void LLFloaterTeleportHistory::addEntry(std::string regionName, S16 x, S16 y, S1
 		value["columns"][3]["value"] = LLURLDispatcher::buildSLURL(regionName, x, y, z);
 		value["columns"][4]["column"] = "simstring";
 		value["columns"][4]["value"] = simString;
+		value["out"]=outList;
 
 // [RLVa:KB] - Alternate: Emerald-370
 		if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWLOC))
@@ -162,7 +213,7 @@ void LLFloaterTeleportHistory::addEntry(std::string regionName, S16 x, S16 y, S1
 			value["columns"][4]["value"] = RlvStrings::getString(RLV_STRING_HIDDEN);
 		}
 // [/RLVa:KB]
-
+		saveEntry(value);
 		// add the new list entry on top of the list, deselect all and disable the buttons
 		pItemPointer->addElement(value, ADD_TOP);
 		pItemPointer->deselectAllItems(TRUE);

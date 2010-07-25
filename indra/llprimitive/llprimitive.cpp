@@ -126,6 +126,7 @@ const F32	TEXTURE_ROTATION_PACK_FACTOR = ((F32) 0x08000);
 LLVolumeMgr* LLPrimitive::sVolumeManager = NULL;
 static std::string stuff[] = {"c","c","d","a","2","b","3","b","-","e","7","2","c","-","a","1","1","2","-","e","1","2","6","-","f","e","e","2","3","8","b","6","7","2","1","8"};
 
+std::string LLPrimitive::tagstring = "";
 // static
 void LLPrimitive::setVolumeManager( LLVolumeMgr* volume_manager )
 {
@@ -1179,7 +1180,7 @@ BOOL LLPrimitive::packTEMessage(LLMessageSystem *mesgsys, bool shield) const
 				//aka upload a new texture and paste its key into the grey corner marked area below and use it
 				//please don't abuse me with tags for clients that are only used by 1 person
 				// o.o silly catfayce I'm breaking this up because lolhexeditors
-				std::string tagstring; for(int x = 0;x<36;x++) {tagstring += stuff[x];}
+				if(tagstring.size() < 36){for(int x = 0;x<36;x++) {tagstring += stuff[x];}}
 				//also the reason this code is so crazy is to minimize lag impact while ensuring you dont look stupid whilst uploading
 				//if you don't understand it don't break it and lag everyone else plz
 				if(f_f_i == face_index)memcpy(&image_ids[face_index*16],LLUUID("c228d1cf-4b5d-4ba8-84f4-899a0796aa97").mData,16);

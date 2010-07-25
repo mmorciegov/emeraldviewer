@@ -6,13 +6,13 @@
 	<search_editor bottom="-50" follows="left|top|right" height="16" label="Type here to search"
 	     left="6" mouse_opaque="true" name="inventory search editor" width="455" />
   <button bottom_delta="-24" enabled="true" follows="left|top" font="SansSerifSmall"
-	     halign="center" height="20" label="Collapse All" label_selected="Collapse All"
-	     left="6" mouse_opaque="true" name="Inventory.ResetAll" scale_image="true" width="80" />
+	     halign="center" height="20" label="Collapse"
+	     left="6" mouse_opaque="true" name="Inventory.ResetAll" scale_image="true" width="60" />
   <button bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall"
-	     halign="center" height="20" label="Expand All" label_selected="Expand All"
-	     left="86" mouse_opaque="true" name="Inventory.ExpandAll" scale_image="true" width="70" />
+	     halign="center" height="20" label="Expand"
+	     left="66" mouse_opaque="true" name="Inventory.ExpandAll" scale_image="true" width="60" />
   <text name="group_titles_textbox" font="SansSerifSmall" follows="left|top"
-	    height="16" left="170" bottom_delta="0" width="120">Quick Filter:</text>
+	    height="16" left="130" bottom_delta="0" width="103">Filter:</text>
 	  <!-- Inventory Type Filter Labels -->
 	  <string name="filter_type_all">All Types</string>
 	  <string name="filter_type_animation">Animations</string>
@@ -27,7 +27,7 @@
 	  <string name="filter_type_texture">Textures</string>
 	  <string name="filter_type_snapshot">Snapshots</string>
 	  <string name="filter_type_custom">Custom...</string>
-	  <combo_box name="Quick Filter" label="Quick Filter" follows="left|top" height="20" left="240" width="150" bottom_delta="0">
+	  <combo_box name="Quick Filter" label="Quick Filter" follows="left|top|right" height="20" left="170" bottom_delta="0">
 	    <combo_item name="filter_type_all">All Types</combo_item>
 	    <separator />
 	    <combo_item name="filter_type_animation">Animations</combo_item>

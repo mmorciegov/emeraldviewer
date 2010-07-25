@@ -575,7 +575,6 @@ public:
 	LLViewerJoint mRoot; // avatar skeleton
 	BOOL mIsSitting; // sitting state
 
-	static bool updateClientTags();
 	static bool loadClientTags();
 	//--------------------------------------------------------------------
 	// Private member variables.

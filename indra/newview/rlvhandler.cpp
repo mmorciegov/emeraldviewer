@@ -15,6 +15,7 @@
  */
 
 #include "llviewerprecompiledheaders.h"
+#include "floateravatarlist.h"
 #include "llcallbacklist.h"
 #include "lldrawpoolalpha.h"
 #include "llfloaterbeacons.h"
@@ -311,6 +312,40 @@ void RlvHandler::addAttachmentLock(S32 idxAttachPt, const LLUUID &idRlvObj, ERlv
 	if (eLock & RLV_LOCK_ADD)
 	{
 		m_AttachAdd.insert(std::pair<S32, LLUUID>(idxAttachPt, idRlvObj));
+	}
+}
+
+// Checked: 2010-07-18 (RLVa-1.1.2b) | Added: RLVa-1.1.2a
+void RlvHandler::dumpAttachmentLocks(void*)
+{
+	LLVOAvatar* pAvatar = gAgent.getAvatarObject();
+	if (!pAvatar)
+	{
+		RLV_INFOS << "No avatar object to dump attachments for" << RLV_ENDL;
+		return;
+	}
+
+	RLV_INFOS << "Dumping 'remove' locks:" << RLV_ENDL;
+	for (rlv_attachlock_map_t::iterator itAttachPt = gRlvHandler.m_AttachRem.begin(); 
+			itAttachPt != gRlvHandler.m_AttachRem.end(); ++itAttachPt)
+	{
+		// Grab the attachment on the attachment point that's locked (if there is one)
+		/*const*/ LLViewerJointAttachment* pAttachPt = 
+			get_if_there(pAvatar->mAttachmentPoints, (S32)itAttachPt->first, (LLViewerJointAttachment*)NULL);
+		/*const*/ LLViewerObject* pAttachObj = (pAttachPt) ? pAttachPt->getObject() : NULL;
+		const LLViewerInventoryItem* pAttachItem = (pAttachPt) ? gInventory.getItem(pAttachPt->getItemID()) : NULL;
+
+		// Grab the locking attachment (if we can)
+		/*const*/ LLViewerObject* pRlvObj = gObjectList.findObject(itAttachPt->second);
+		/*const*/ LLViewerJointAttachment* pRlvAttachPt = (pRlvObj) ? pAvatar->getTargetAttachmentPoint(pRlvObj) : NULL;
+		const LLViewerInventoryItem* pRlvItem = (pRlvAttachPt) ? gInventory.getItem(pRlvAttachPt->getItemID()) : NULL;
+
+		std::string strMsg = llformat("'%s' on %s held by '%s' on %s", 
+			((pAttachItem) ? pAttachItem->getName().c_str() : ((pAttachObj) ? pAttachObj->getID().asString().c_str() : "(empty)")),
+			(pAttachPt) ? pAttachPt->getName().c_str() : "(unknown)",
+			((pRlvItem) ? pRlvItem->getName().c_str() : ((pRlvObj) ? pRlvObj->getID().asString().c_str() : "(empty)")),
+			(pRlvAttachPt) ? pRlvAttachPt->getName().c_str() : "(unknown)");
+		RLV_INFOS << strMsg << RLV_ENDL;
 	}
 }
 
@@ -690,7 +725,7 @@ void RlvHandler::initLookupTables()
 	}
 }
 
-// Checked: 2009-11-17 (RLVa-1.1.0d) | Modified: RLVa-1.1.0d
+// Checked: 2010-07-18 (RLVa-1.1.2b) | Modified: RLVa-1.1.2a
 void RlvHandler::onAttach(LLViewerJointAttachment* pAttachPt)
 {
 	// Sanity check - LLVOAvatar::attachObject() should call us *after* calling LLViewerJointAttachment::addObject()
@@ -709,21 +744,21 @@ void RlvHandler::onAttach(LLViewerJointAttachment* pAttachPt)
 	rlv_object_map_t::iterator itObj = m_Objects.find(pObj->getID());
 	if (itObj != m_Objects.end())
 	{
-		// Save the attachment point index
-		itObj->second.m_idxAttachPt = idxAttachPt;
-
-		// If it's an attachment we processed commands for but that only just rezzed in we need to mark it as existing in gObjectList
-		if (!itObj->second.m_fLookup)
+		// Only if we haven't been able to find this object (= attachment that rezzed in) or if it's a rezzed prim attached from in-world
+		if ( (!itObj->second.m_fLookup) || (!itObj->second.m_idxAttachPt) )
+		{
+			// Reset any lookup information we might have for this object
+			itObj->second.m_idxAttachPt = idxAttachPt;
 			itObj->second.m_fLookup = true;
 
-		// In both cases we should check for "@detach=n" and actually lock down the attachment point it got attached to
-		if (itObj->second.hasBehaviour(RLV_BHVR_DETACH, false))
-		{
-			// (Copy/paste from processAddCommand)
-			addAttachmentLock(idxAttachPt, itObj->second.m_UUID, RLV_LOCK_REMOVE);
-
-			if (pObj->isHUDAttachment())
-				LLPipeline::sShowHUDAttachments = TRUE;	// Prevents hiding of locked HUD attachments
+			// In both cases we should check for "@detach=n" and actually lock down the attachment point it got attached to
+			if (itObj->second.hasBehaviour(RLV_BHVR_DETACH, false))
+			{
+				// (Copy/paste from processAddCommand)
+				addAttachmentLock(idxAttachPt, itObj->second.m_UUID, RLV_LOCK_REMOVE);
+				if (pObj->isHUDAttachment())
+					LLPipeline::sShowHUDAttachments = TRUE;	// Prevents hiding of locked HUD attachments
+			}
 		}
 	}
 
@@ -1754,6 +1789,10 @@ ERlvCmdRet RlvHandler::processAddRemCommand(const LLUUID& idObj, const RlvComman
 
 					// Close the "Active Speakers" panel if it's currently visible
 					LLFloaterChat::getInstance()->childSetVisible("active_speakers_panel", false);
+
+					// Close the "Avatar List/Radar" floater if it's currently visible
+					if ( (LLFloaterAvatarList::getInstance()) && (LLFloaterAvatarList::getInstance()->getVisible()) )
+						LLFloaterAvatarList::toggle(NULL);
 				}
 				else
 				{
@@ -1968,7 +2007,7 @@ ERlvCmdRet RlvHandler::onAddRemAttach(const LLUUID& idObj, const RlvCommand& rlv
 	return RLV_RET_SUCCESS;
 }
 
-// Checked: 2009-10-10 (RLVa-1.0.5a) | Added: RLVa-1.0.5a
+// Checked: 2010-07-18 (RLVa-1.1.2b) | Modified: RLVa-1.1.2a
 ERlvCmdRet RlvHandler::onAddRemDetach(const LLUUID& idObj, const RlvCommand& rlvCmd, bool& fRefCount)
 {
 	S32 idxAttachPt = 0;
@@ -1980,7 +2019,7 @@ ERlvCmdRet RlvHandler::onAddRemDetach(const LLUUID& idObj, const RlvCommand& rlv
 		//   * @detach=y: - if it ever rezzed as an attachment we'll have cached its attach point 
 		//                - if it never rezzed as an attachment there won't be a lock to remove
 		rlv_object_map_t::const_iterator itObj = m_Objects.find(idObj);
-		if (itObj != m_Objects.end())
+		if ( (itObj != m_Objects.end()) && (itObj->second.m_fLookup) && (itObj->second.m_idxAttachPt) )
 			idxAttachPt = itObj->second.m_idxAttachPt;
 	}
 	else							// @detach:<attachpt>=n|y

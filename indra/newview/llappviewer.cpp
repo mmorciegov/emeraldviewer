@@ -817,8 +817,6 @@ bool LLAppViewer::init()
 	//
 	initWindow();
 
-	LLVOAvatar::updateClientTags();
-
 	// call all self-registered classes
 	LLInitClassList::instance().fireCallbacks();
 

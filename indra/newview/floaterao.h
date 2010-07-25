@@ -43,7 +43,7 @@ const int STATE_AGENT_SWIMMINGFORWARD = 27;
 const int STATE_AGENT_SWIMMINGUP = 28;
 const int STATE_AGENT_SWIMMINGDOWN = 29;
 
-
+static LLFrameTimer mAODelayTimer;
 
 class AOStandTimer : public LLEventTimer
 {
@@ -67,19 +67,24 @@ class LLFloaterAO : public LLFloater
 public:
 
     LLFloaterAO();
-	virtual	BOOL	postBuild();
+	BOOL postBuild();
+	void onClose();
+	void onOpen();
+	
     virtual ~LLFloaterAO();
 
-	static void show(void*);
 	static BOOL init();
+	static BOOL fullfetch;
+
+	static void toggle(void*); //Toggles interface visibility
+	static void updateLayout(LLFloaterAO* floater);
+
+	static LLUICtrl* getComboBox(std::string name);
 
 	static void onClickToggleAO(LLUICtrl *, void*);
 	static void onClickToggleSits(LLUICtrl *, void*);
 	static void onClickNoMouselookStands(LLUICtrl *, void*);
-	static void onClickRandomizeStands(LLUICtrl *, void*);
-	static void run();
-	static void updateLayout(LLFloaterAO* floater);
-
+	
 	static BOOL loadAnims();
 
 	static int getAnimationState();
@@ -89,15 +94,20 @@ public:
 	static LLUUID getCurrentStandId();
 	static void setCurrentStandId(const LLUUID& id);
 	static int stand_iterator;
-	static BOOL ChangeStand();
 
-	static BOOL startMotion(const LLUUID& id, F32 time_offset = 0.f, BOOL stand = FALSE);
-	static BOOL stopMotion(const LLUUID& id, BOOL stop_immediate, BOOL stand = FALSE);
+	static void run();
+	static void startAOMotion(const LLUUID& id, BOOL stand = FALSE);
+	static void stopAOMotion(const LLUUID& id, BOOL stand = FALSE);
+	static void ChangeStand();
 
 	static LLUUID GetAnimID(const LLUUID& id);
-
-	static int GetStateFromAnimID(const LLUUID& id);
 	static LLUUID GetAnimIDFromState(const int state);
+	static LLUUID GetOrigAnimIDFromState(const int state);
+	static LLUUID GetRandomAnimID(const LLUUID& id);
+	static LLUUID GetRandomAnimIDFromState(const int state);
+	static int GetStateFromOrigAnimID(const LLUUID& id);
+	static int GetStateFromAOAnimID(const LLUUID& id);
+	static std::string GetAnimTypeFromState(const int state);
 	static int GetStateFromToken(std::string strtoken);
 
 	static void onClickLess(void* data) ;
@@ -112,27 +122,23 @@ public:
 
 	static LLUUID invfolderid;
 	static const LLUUID& getAssetIDByName(const std::string& name);
-
-	static BOOL fullfetch;
 	
 private:
 
 	static LLFloaterAO* sInstance;
 	static int mAnimationState;
 	static LLUUID mCurrentStandId;
-
 	static AONoteCardDropTarget* mAOItemDropTarget;
 	static void AOItemDrop(LLViewerInventoryItem* item);
 	static void onSpinnerCommit(LLUICtrl* ctrl, void* userdata);
+	static void onCheckBoxCommit(LLUICtrl* ctrl, void* userdata);
 	static void onComboBoxCommit(LLUICtrl* ctrl, void* userdata);
 	static BOOL SetDefault(void *userdata, LLUUID ao_id, std::string defaultanim);
+	static void loadComboBoxes();
 
-	BOOL					mDirty;
 
 protected:
-
 	static void onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLAssetType::EType type,void* user_data, S32 status, LLExtStat ext_status);
-
 };
 
 #endif

@@ -402,9 +402,12 @@
 			<menu_item_call bottom="-151" enabled="false" height="19" label="Sky Settings" left="0" mouse_opaque="true" name="Sky Settings" width="169">
 				<on_click function="World.SkySettings" />
 			</menu_item_call>
-			<menu_item_call bottom="-170" enabled="false" height="19" label="Water Settings" left="0" mouse_opaque="true" name="Water Settings" width="169">
-				<on_click function="World.WaterSettings" />
-			</menu_item_call>
+      <menu_item_call bottom="-170" enabled="false" height="19" label="Water Settings" left="0" mouse_opaque="true" name="Water Settings" width="169">
+        <on_click function="World.WaterSettings" />
+      </menu_item_call>
+      <menu_item_call bottom="-170" enabled="false" height="19" label="Postprocessing" left="0" mouse_opaque="true" name="Postprocessing" width="169">
+        <on_click function="World.PostProcess" />
+      </menu_item_call>
 			<menu_item_call bottom="-189" enabled="false" height="19" label="Day Cycle" left="0" mouse_opaque="true" name="Day Cycle" width="169">
 				<on_click function="World.DayCycle" />
 			</menu_item_call>
@@ -559,7 +562,11 @@
 			<on_click function="Tools.SelectedScriptAction" userdata="stop" />
 			<on_enable function="EditableSelected" />
 		</menu_item_call>
-		<menu_item_call bottom="-525" enabled="false" height="19" label="Remove Scripts in Selection" left="0" mouse_opaque="true" name="Remove Scripts in Selection" width="250">
+    <menu_item_call bottom="-525" enabled="false" height="19" label="Count Scripts in Selection" left="0" mouse_opaque="true" name="Count Scripts in Selection" width="250">
+      <on_click function="Object.ScriptCount" />
+      <on_enable function="Object.VisibleScriptCount" />
+    </menu_item_call>
+    <menu_item_call bottom="-525" enabled="false" height="19" label="Remove Scripts in Selection" left="0" mouse_opaque="true" name="Remove Scripts in Selection" width="250">
 			<on_click function="Tools.ScriptDelete" />
 			<on_enable function="Tools.EnableScriptDelete" />
 		</menu_item_call>
@@ -633,89 +640,84 @@
 	</menu>
 	<menu bottom="729" create_jump_keys="true" drop_shadow="true" enabled="true" height="210" label="Emerald" left="269" mouse_opaque="false" name="Emerald" opaque="true" tear_off="true" width="155">
 		<tearoff_menu bottom="-10" enabled="true" height="10" label="~~~~~~~~~~~" left="0" mouse_opaque="true" name="~~~~~~~~~~~" width="155" />
-		<menu_item_check bottom="-30" enabled="true" height="20" label="Phantom" left="0" mouse_opaque="true" name="Phantom" shortcut="control|alt|p" width="155">
+		<menu_item_check enabled="true" height="20" label="Phantom" left="0" mouse_opaque="true" name="Phantom" shortcut="control|alt|p" width="155">
 			<on_click function="Emerald.TogglePhantom" userdata="" />
 			<on_check function="Emerald.CheckPhantom" userdata="" />
 		</menu_item_check>
-		<menu_item_call bottom="-50" enabled="true" height="20" label="Ground Sit" left="0" mouse_opaque="true" name="Ground Sit" shortcut="control|alt|s" width="155">
+		<menu_item_check bottom="-50" enabled="true" height="20" label="Ground Sit" left="0" mouse_opaque="true" name="Ground Sit" shortcut="control|alt|s" width="155">
 			<on_click function="Emerald.ToggleSit" userdata="" />
 			<on_Check function="Emerald.CheckSit" userdata="" />
-		</menu_item_call>
+		</menu_item_check>
+    <menu_item_check bottom="-67" enabled="true" height="19" label="Block Spam" left="0" mouse_opaque="true" name="BlockSpam" shortcut="alt|shift|s" width="185">
+      <on_click function="Emerald.ToggleBlockSpam" userdata="" />
+      <on_check function="Emerald.CheckBlockSpam" userdata="" />
+    </menu_item_check>
+    
 		<menu_item_separator bottom="-58" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator1" width="155" />
-		<menu_item_check bottom="-58" enabled="true" height="20" label="Double-Click Auto-Pilot" left="0" mouse_opaque="true" name="Double-Click Auto-Pilot" width="155">
+		<menu_item_check enabled="true" label="Double-Click Auto-Pilot" name="Double-Click Auto-Pilot">
 			<on_click function="ToggleControl" userdata="DoubleClickAutoPilot" />
 			<on_check control="DoubleClickAutoPilot" />
 		</menu_item_check>
-		<menu_item_check bottom="-30" enabled="true" height="20" label="DoubleClick Teleports" left="0" mouse_opaque="true" name="DoubleClick Teleports" shortcut="control|shift|d" width="155">
+		<menu_item_check enabled="true" label="DoubleClick Teleports" name="DoubleClick Teleports" shortcut="control|shift|d">
 			<on_click function="Emerald.ToggleDoubleClickTeleport" userdata="" />
 			<on_check function="Emerald.CheckDoubleClickTeleport" userdata="" />
 		</menu_item_check>
-		<menu_item_check bottom="-58" enabled="true" height="20" label="Show LookAt" left="0" mouse_opaque="true" name="show LookAt" width="155">
+    <menu_item_check enabled="true" label="Enable Autoresponse">
+      <on_click function="Emerald.ToggleAutoResponse" userdata="" />
+      <on_check function="Emerald.CheckAutoResponse" userdata="" />
+    </menu_item_check>
+		<menu_item_check enabled="true" label="Show LookAt" left="0" mouse_opaque="true" name="show LookAt" width="155">
 			<on_click function="ToggleControl" userdata="PersistShowLookAt" />
 			<on_check control="PersistShowLookAt" />
 		</menu_item_check>
-		<menu_item_check bottom="-58" enabled="true" height="20" label="Clear Effects" left="0" mouse_opaque="true" name="cleareffects" shortcut="control|shift|v" width="155">
+    <menu_item_check enabled="true" label="Broadcast viewer effects" left="0" mouse_opaque="true" name="SL Particle Chat" width="155">
+      <on_click function="ToggleControl" userdata="EmeraldBroadcastEffects" />
+      <on_check control="EmeraldBroadcastEffects" />
+    </menu_item_check>
+		<menu_item_check enabled="false" label="Clear Effects" name="cleareffects" shortcut="control|shift|v" width="155">
 			<on_click function="Emerald.ClearEffects" userdata="" />
 		</menu_item_check>
-		<menu_item_separator bottom="-58" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator1" width="155" />
-		<menu_item_check bottom="-98" enabled="true" height="20" label="SL Particle Chat" left="0" mouse_opaque="true" name="SL Particle Chat" width="155">
-			<on_click function="ToggleControl" userdata="EmeraldParticleChat" />
-			<on_check control="EmeraldParticleChat" />
-		</menu_item_check>
-		<menu_item_check bottom="-118" enabled="true" height="20" label="Radar Chat" left="0" mouse_opaque="true" name="Radar Chat" width="155">
-			<on_click function="ToggleControl" userdata="EmeraldRadarChatKeys" />
-			<on_check control="EmeraldRadarChatKeys" />
-		</menu_item_check>
-		<menu_item_check bottom="-118" enabled="true" height="20" label="Show Advanced" left="0" mouse_opaque="true" name="Show Advanced" width="155">
-			<on_click function="ToggleDebugMenus" userdata="" />
-			<on_check control="UseDebugMenus" />
-		</menu_item_check>
-		<menu_item_separator bottom="-126" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator2" width="155" />
-		<menu_item_check bottom="-67" enabled="true" height="19" label="Block Spam" left="0" mouse_opaque="true" name="BlockSpam" shortcut="alt|shift|s" width="185">
-			<on_click function="Emerald.ToggleBlockSpam" userdata="" />
-			<on_check function="Emerald.CheckBlockSpam" userdata="" />
-		</menu_item_check>
-		<menu_item_separator bottom="-126" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator2" width="155" />
+    
+	  <menu_item_separator enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator2" width="155" />
+    <menu_item_call enabled="false" label="Animation Explorer">
+      <on_click function="ShowFloater" userdata="animationexplorer" />
+    </menu_item_call>
+    <menu_item_call enabled="false" label="Sound Explorer" >
+      <on_click function="ShowFloater" userdata="soundexplorer" />
+    </menu_item_call>
+    <menu_item_call enabled="false" label="Media Browser" shortcut="control|n">
+      <on_click function="ShowFloater" userdata="mediabrowser" />
+    </menu_item_call>
+    <menu_item_call enabled="false" label="Asset Blacklist">
+      <on_click function="ShowFloater" userdata="assetblacklist" />
+    </menu_item_call>
+    <menu_item_call enabled="false" label="Local Bitmap Browser">
+      <on_click function="ShowFloater" userdata="localassetbrowser" />
+    </menu_item_call>
+    <menu_item_call enabled="false" label="Area Search">
+		  <on_click function="ShowFloater" userdata="areasearch" />
+	  </menu_item_call>
+    <menu_item_call enabled="false" label="Avatar List" shortcut="control|shift|a">
+		  <on_click function="Emerald.ToggleAvatarList" userdata="avatars" />
+		  <on_check control="ShowAvatarList" />
+		  <on_enable function="RLV.EnableIfNot" userdata="shownames" />
+	  </menu_item_call>
+    <menu_item_call enabled="false" label="Teleport History" shortcut="alt|H">
+		  <on_click function="ShowFloater" userdata="teleport history" />
+	  </menu_item_call>
+    <menu_item_call enabled="false" label="Message Log">
+		  <on_click function="ShowFloater" userdata="message log" />
+	  </menu_item_call>
+    <menu_item_call enabled="false" label="AO" shortcut="control|shift|o">
+      <on_click function="ShowFloater" userdata="ao" />
+	  </menu_item_call>
 
-	    <menu_item_check bottom="-281" enabled="false" height="19" label="Animation Explorer" left="0" mouse_opaque="true" name="Animation List" width="250">
-	      <on_click function="ShowFloater" userdata="animationexplorer" />
-	      <on_check function="FloaterVisible" userdata="animationexplorer" />
-	    </menu_item_check>
-	    <menu_item_check bottom="-281" enabled="false" height="19" label="Sound Explorer" left="0" mouse_opaque="true" name="Animation List" width="250">
-	      <on_click function="ShowFloater" userdata="soundexplorer" />
-	      <on_check function="FloaterVisible" userdata="soundexplorer" />
-	    </menu_item_check>
-	    <menu_item_check bottom="-281" enabled="false" height="19" label="Asset Blacklist" left="0" mouse_opaque="true" name="Animation List" width="250">
-	      <on_click function="ShowFloater" userdata="assetblacklist" />
-	      <on_check function="FloaterVisible" userdata="assetblacklist" />
-	    </menu_item_check>
+    <menu_item_separator bottom="-58" enabled="true" height="8" label="-----------" left="0" mouse_opaque="true" name="separator1" width="155" />
 
-		<menu_item_check bottom="-166" enabled="false" height="20" label="Area Search" left="0" mouse_opaque="true" name="Area Search" width="155">
-			<on_click function="ShowFloater" userdata="areasearch" />
-			<on_check function="FloaterVisible" userdata="areasearch" />
-		</menu_item_check>
-		<menu_item_check bottom="-186" enabled="true" height="20" label="Avatar List" left="0" mouse_opaque="true" name="Avatar List" shortcut="control|shift|a" width="155">
-			<on_click function="Emerald.ToggleAvatarList" userdata="avatars" />
-			<on_check control="ShowAvatarList" />
-			<on_enable function="RLV.EnableIfNot" userdata="shownames" />
-		</menu_item_check>
-		<menu_item_check bottom="-206" enabled="true" height="20" label="Teleport History" left="0" mouse_opaque="true" name="Teleport History" shortcut="alt|H" width="155">
-			<on_click function="ShowFloater" userdata="teleport history" />
-			<on_check function="FloaterVisible" userdata="teleport history" />
-		</menu_item_check>
-		<menu_item_check bottom="-206" enabled="true" height="20" label="Message Log" left="0" mouse_opaque="true" name="Message Log" shortcut="" width="155">
-			<on_click function="ShowFloater" userdata="message log" />
-			<on_check function="FloaterVisible" userdata="message log" />
-		</menu_item_check>
-		<menu_item_check bottom="-58" enabled="true" height="20" label="AO" left="0" mouse_opaque="true" name="AO" shortcut="control|shift|o" width="155">
-			<on_click function="AO" userdata="" />
-		</menu_item_check>
-		<!-- tag: vaa emerald local_asset_browser [begin] -->
-		<menu_item_call label="Local Bitmap Browser" enabled="true" name="local_bitmap_browser">
-			<on_click function="Emerald.LocalAssetBrowser" userdata="" />
-		</menu_item_call>
-		<!-- tag: vaa emerald local_asset_browser [end] -->
-
-
+    <menu_item_check enabled="true" label="Show Advanced" left="0" name="Show Advanced">
+      <on_click function="ToggleDebugMenus" userdata="" />
+      <on_check control="UseDebugMenus" />
+    </menu_item_check>
+    
 	</menu>
 </menu_bar>

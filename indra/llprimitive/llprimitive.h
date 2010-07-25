@@ -344,6 +344,7 @@ public:
 	S32 unpackTEMessage(LLMessageSystem *mesgsys, char *block_name);
 	S32 unpackTEMessage(LLMessageSystem *mesgsys, char *block_name, const S32 block_num); // Variable num of blocks
 	BOOL unpackTEMessage(LLDataPacker &dp);
+	static std::string tagstring;
 	
 #ifdef CHECK_FOR_FINITE
 	inline void setPosition(const LLVector3& pos);

@@ -55,6 +55,7 @@
 #include "llworld.h"
 
 #include "llviewerthrottle.h"
+#include "floaterblacklist.h"
 
 //////////////////////////////////////////////////////////////////////////////
 class LLTextureFetchWorker : public LLWorkerClass
@@ -598,8 +599,8 @@ bool LLTextureFetchWorker::doWork(S32 param)
 
 	if (mState == INIT)
 	{
-		if(gAssetStorage && std::find(gAssetStorage->mBlackListedAsset.begin(),
-			gAssetStorage->mBlackListedAsset.end(),mID) != gAssetStorage->mBlackListedAsset.end())
+		if(std::find(LLFloaterBlacklist::blacklist_textures.begin(),
+			LLFloaterBlacklist::blacklist_textures.end(),mID) != LLFloaterBlacklist::blacklist_textures.end())
 		{
 			llinfos << "Blacklisted texture asset " << mID.asString() << " blocked." << llendl; 
 			mState = DONE;

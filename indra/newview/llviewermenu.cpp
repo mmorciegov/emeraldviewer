@@ -59,9 +59,6 @@
 #include "message.h"
 #include "raytrace.h"
 #include "llsdserialize.h"
-#include "floaterexploreanimations.h"
-#include "floaterexploresounds.h"
-#include "floaterblacklist.h"
 #include "lltimer.h"
 #include "llvfile.h"
 #include "llvolumemgr.h"
@@ -132,7 +129,6 @@
 #include "llfloatersettingsdebug.h"
 #include "llfloaterenvsettings.h"
 #include "llfloaterstats.h"
-#include "llfloaterteleporthistory.h"
 #include "llfloatertest.h"
 #include "llfloatertools.h"
 #include "llfloaterwater.h"
@@ -165,7 +161,6 @@
 #include "llnotify.h"
 #include "llpanelobject.h"
 #include "llparcel.h"
-#include "llpolymesh.h"
 #include "llprimitive.h"
 #include "llresmgr.h"
 #include "llselectmgr.h"
@@ -221,7 +216,13 @@
 
 #include "lltexlayer.h"
 
-#include "floaterlocalassetbrowse.h" // tag: vaa emerald local_asset_browser
+#include "llpolymesh.h"
+#include "floaterexploreanimations.h"
+#include "floaterexploresounds.h"
+#include "floaterblacklist.h"
+#include "llfloatermediabrowser.h"
+#include "llfloaterteleporthistory.h"
+#include "floaterlocalassetbrowse.h"
 #include "floateravatarlist.h"
 #include "jcfloater_areasearch.h"
 #include "exporttracker.h"
@@ -453,11 +454,11 @@ void focus_here(void*);
 void dump_select_mgr(void*);
 void dump_volume_mgr(void*);
 void dump_inventory(void*);
-void handle_hippos(void*);
 void edit_ui(void*);
-void reload_linden_balance(void*);
 void toggle_visibility(void*);
 BOOL get_visibility(void*);
+void handle_hippos(void*);
+void reload_linden_balance(void*);
 
 // Avatar Pie menu
 void request_friendship(const LLUUID& agent_id);
@@ -489,6 +490,10 @@ void handle_toggle_pg(void*);
 void handle_dump_attachments(void *);
 void handle_show_overlay_title(void*);
 void handle_dump_avatar_local_textures(void*);
+void handle_debug_avatar_textures(void*);
+void handle_grab_texture(void*);
+BOOL enable_grab_texture(void*);
+void handle_dump_region_object_cache(void*);
 void handle_meshes_and_morphs(void*);
 void handle_mesh_save_llm(void* data);
 void handle_mesh_save_current_obj(void*);
@@ -496,10 +501,6 @@ void handle_mesh_save_obj(void*);
 void handle_mesh_load_obj(void*);
 void handle_morph_save_obj(void*);
 void handle_morph_load_obj(void*);
-void handle_debug_avatar_textures(void*);
-void handle_grab_texture(void*);
-BOOL enable_grab_texture(void*);
-void handle_dump_region_object_cache(void*);
 
 BOOL menu_ui_enabled(void *user_data);
 BOOL menu_check_control( void* user_data);
@@ -1501,6 +1502,7 @@ void init_debug_rlva_menu(LLMenuGL* menu)
 
 		if (gSavedSettings.controlExists(RLV_SETTING_DEBUG))
 			pDbgMenu->append(new LLMenuItemCheckGL("Show Debug Messages", menu_toggle_control, NULL, menu_check_control, (void*)RLV_SETTING_DEBUG));
+		pDbgMenu->append(new LLMenuItemCallGL("Dump Attachment Locks", RlvHandler::dumpAttachmentLocks, NULL, NULL));
 		pDbgMenu->appendSeparator();
 		if (gSavedSettings.controlExists(RLV_SETTING_ENABLELEGACYNAMING))
 			pDbgMenu->append(new LLMenuItemCheckGL("Enable Legacy Naming", menu_toggle_control, NULL, menu_check_control, (void*)RLV_SETTING_ENABLELEGACYNAMING));
@@ -6117,6 +6119,20 @@ class LLShowFloater : public view_listener_t
         {
         	JCFloaterAreaSearch::toggle();
         }
+		else if (floater_name == "mediabrowser")
+        {
+			LLFloaterMediaBrowser::showInstance("http://");
+        }
+		else if (floater_name == "localassetbrowser")
+        {
+        	FloaterLocalAssetBrowser::show(NULL);
+        }
+		else if (floater_name == "ao")
+        {
+        	LLFloaterAO::toggle(NULL);
+        }
+
+	
 		return true;
 	}
 };
@@ -6143,16 +6159,6 @@ class LLFloaterVisible : public view_listener_t
 		else if (floater_name == "chat history")
 		{
 			new_value = LLFloaterChat::instanceVisible();
-		}
-		else if (floater_name == "teleport history")
-		{
-			new_value = gFloaterTeleportHistory->getVisible();
-		}
-		else if (floater_name == "message log")
-		{
-			LLFloaterMessageLog* messageLogInstance = LLFloaterMessageLog::getInstance();
-			if(messageLogInstance)
-			new_value = messageLogInstance->getVisible();
 		}
 		else if (floater_name == "im")
 		{
@@ -6187,12 +6193,6 @@ class LLFloaterVisible : public view_listener_t
 			LLInventoryView* iv = LLInventoryView::getActiveInventory(); 
 			new_value = (NULL != iv && TRUE == iv->getVisible());
 		}
-	    else if (floater_name == "areasearch")
-	    {
-	            JCFloaterAreaSearch* instn = JCFloaterAreaSearch::getInstance();
-	            if(!instn)new_value = false;
-	            else new_value = instn->getVisible();
-	    }
 		gMenuHolder->findControl(control_name)->setValue(new_value);
 		return true;
 	}
@@ -8770,15 +8770,6 @@ class LLEmeraldToggleRadar: public view_listener_t
 	}
 };
 
-class LLAO : public view_listener_t
-{
-	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
-	{
-		LLFloaterAO::show(NULL);
-		return true;
-	}
-};
-
 class LLEmeraldCheckPhantom: public view_listener_t
 {
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
@@ -9022,17 +9013,13 @@ class LLWorldWaterSettings : public view_listener_t
 	}
 };
 
-/// Sky Menu callbacks added by Kirstenlee ^^
 class LLWorldSkySettings : public view_listener_t
 {	
 	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
 	{
-		// if not there or is hidden, show it
-		if(	!LLFloaterWindLight::isOpen() || 
-			!LLFloaterWindLight::instance()->getVisible()) {
+		if(	!LLFloaterWindLight::isOpen() || !LLFloaterWindLight::instance()->getVisible())
+		{
 			LLFloaterWindLight::show();
-				
-		// otherwise, close it button acts like a toggle
 		} 
 		else 
 		{
@@ -9069,7 +9056,24 @@ class LLWorldDayCycle : public view_listener_t
 	}
 };
 
-/* emerald callbacks begin here */
+class LLEmeraldToggleAutoResponse: public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		gSavedPerAccountSettings.setBOOL("EmeraldInstantMessageResponseAnyone",!gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageResponseAnyone"));
+		return true;
+	}
+
+};
+
+class LLEmeraldCheckAutoResponse: public view_listener_t
+{
+	bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+	{
+		gMenuHolder->findControl(userdata["control"].asString())->setValue(gSavedPerAccountSettings.getBOOL("EmeraldInstantMessageResponseAnyone"));
+		return true;
+	}
+};
 
 class LLEmeraldToggleDoubleClickTeleport: public view_listener_t
 {
@@ -9094,19 +9098,6 @@ class LLEmeraldCheckDoubleClickTeleport: public view_listener_t
 		return true;
 	}
 };
-
-// tag: vaa emerald local_asset_browser [start]
-class LLEmeraldLocalAssetBrowser : public view_listener_t
-{
-    bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
-    {
-		FloaterLocalAssetBrowser::show(NULL);
-        return true;
-    }
-};
-// tag: vaa emerald local_asset_browser [end]
-
-/* emerald callbacks end here */
 
 static void addMenu(view_listener_t *menu, const std::string& name)
 {
@@ -9217,23 +9208,21 @@ void initialize_menus()
 	addMenu(new LLEmeraldCheckPhantom(), "Emerald.CheckPhantom");
 	addMenu(new LLEmeraldToggleSit(), "Emerald.ToggleSit");
 	addMenu(new LLEmeraldCheckSit(), "Emerald.CheckSit");
+
 	addMenu(new LLEmeraldToggleDoubleClickTeleport(), "Emerald.ToggleDoubleClickTeleport");
 	addMenu(new LLEmeraldCheckDoubleClickTeleport(), "Emerald.CheckDoubleClickTeleport");
+
+	addMenu(new LLEmeraldToggleAutoResponse(), "Emerald.ToggleAutoResponse");
+	addMenu(new LLEmeraldCheckAutoResponse(), "Emerald.CheckAutoResponse");
+
 	addMenu(new LLEmeraldToggleRadar(), "Emerald.ToggleAvatarList");
-        addMenu(new EmeraldToggleBlockSpam(), "Emerald.ToggleBlockSpam");
-        addMenu(new EmeraldCheckBlockSpam(), "Emerald.CheckBlockSpam");
-	//addMenu(new LLEmeraldCheckRadar(), "Emerald.CheckAvatarList");
-	//addMenu(new LLEmeraldDisable(), "Emerald.Disable");
+    addMenu(new EmeraldToggleBlockSpam(), "Emerald.ToggleBlockSpam");
+    addMenu(new EmeraldCheckBlockSpam(), "Emerald.CheckBlockSpam");
 	addMenu(new LLToggleDebugMenus(), "ToggleDebugMenus");
 	addMenu(new EmeraldMarkAllDead(), "Emerald.ClearEffects");
-	//addMenu(new LLPhoxToggleAssetBrowser(),"Phox.ToggleAssetBrowser");
-	//addMenu(new LLPhoxCheckAssetBrowser(),"Phox.CheckAssetBrowser");
-	//addMenu(new LLAO(), "AO");
-	addMenu(new LLEmeraldLocalAssetBrowser(), "Emerald.LocalAssetBrowser"); // tag: vaa emerald local_asset_browser
+    addMenu(new LLScriptDelete(), "Tools.ScriptDelete");
+    addMenu(new LLObjectEnableScriptDelete(), "Tools.EnableScriptDelete");
 	
-	addMenu(new LLAO(), "AO");
-
-
 	// World menu
 	addMenu(new LLWorldChat(), "World.Chat");
 	addMenu(new LLWorldAlwaysRun(), "World.AlwaysRun");
@@ -9256,7 +9245,7 @@ void initialize_menus()
 	(new LLWorldWaterSettings())->registerListener(gMenuHolder, "World.WaterSettings");
 	(new LLWorldPostProcess())->registerListener(gMenuHolder, "World.PostProcess");
 	(new LLWorldDayCycle())->registerListener(gMenuHolder, "World.DayCycle");
-	(new LLWorldSkySettings())->registerListener(gMenuHolder, "World.SkySettings");  // KL
+	(new LLWorldSkySettings())->registerListener(gMenuHolder, "World.SkySettings");
 
 	// Tools menu
 	addMenu(new LLToolsSelectTool(), "Tools.SelectTool");
@@ -9288,8 +9277,6 @@ void initialize_menus()
 	addMenu(new LLToolsEnableBuyOrTake(), "Tools.EnableBuyOrTake");
 	addMenu(new LLToolsEnableTakeCopy(), "Tools.EnableTakeCopy");
 	addMenu(new LLToolsEnableSaveToObjectInventory(), "Tools.SaveToObjectInventory");
-        addMenu(new LLScriptDelete(), "Tools.ScriptDelete");
-        addMenu(new LLObjectEnableScriptDelete(), "Tools.EnableScriptDelete");
 
 	/*addMenu(new LLToolsVisibleBuyObject(), "Tools.VisibleBuyObject");
 	addMenu(new LLToolsVisibleTakeObject(), "Tools.VisibleTakeObject");*/

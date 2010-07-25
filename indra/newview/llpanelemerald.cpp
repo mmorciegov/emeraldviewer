@@ -71,6 +71,9 @@
 #include "llspinctrl.h"
 #include "lggautocorrectfloater.h"
 
+#include "llprimitive.h"
+#include "a_modularsystemslink.h"
+
 ////////begin drop utility/////////////
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Class JCInvDropTarget
@@ -176,6 +179,15 @@ void LLPanelEmerald::onClickHelp(void* data)
 BOOL LLPanelEmerald::postBuild()
 {
 	refresh();
+
+	LLComboBox* tagcombo = getChild<LLComboBox>("TagCombo");
+	tagcombo->setCommitCallback(onTagComboBoxCommit);
+	for(LLSD::map_iterator itr = ModularSystemsLink::emerald_tags.beginMap(); itr != ModularSystemsLink::emerald_tags.endMap(); ++itr) 
+	{
+		tagcombo->add(itr->first,itr->second, ADD_BOTTOM, TRUE);
+	}
+	tagcombo->setSimple(gSavedSettings.getString("EmeraldTagColor"));
+
 	getChild<LLComboBox>("material")->setSimple(gSavedSettings.getString("EmeraldBuildPrefs_Material"));
 	getChild<LLComboBox>("combobox shininess")->setSimple(gSavedSettings.getString("EmeraldBuildPrefs_Shiny"));
 	
@@ -577,6 +589,16 @@ void LLPanelEmerald::onSpellEditCustom(void* data)
 void LLPanelEmerald::beamUpdateCall(LLUICtrl* crtl, void* userdata)
 {
 	gLggBeamMaps.forceUpdate();
+}
+void LLPanelEmerald::onTagComboBoxCommit(LLUICtrl* ctrl, void* userdata)
+{
+	LLComboBox* box = (LLComboBox*)ctrl;
+	if(box)
+	{
+		gSavedSettings.setString("EmeraldTagColor",box->getSimple());
+		LLPrimitive::tagstring = ModularSystemsLink::emerald_tags[box->getSimple()].asString();
+		gAgent.sendAgentSetAppearance();
+	}	
 }
 void LLPanelEmerald::onComboBoxCommit(LLUICtrl* ctrl, void* userdata)
 {

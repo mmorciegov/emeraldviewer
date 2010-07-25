@@ -539,6 +539,10 @@ private:
 
 	void speakText(S32 channel, EChatType type, std::string text);
 
+	static void onClickProfile(void *userdata);
+	static void onClickIM(void *userdata);
+	static void onClickTeleportOffer(void *userdata);
+	static void onClickTrack(void *userdata);
 	static void onClickAgeAlert(LLUICtrl* ctrl,void *userdata);
 	static void onClickAgeAlertDays(LLUICtrl* ctrl,void *userdata);
 	static void onCommandCommit(LLUICtrl* ctrl,void *userdata);

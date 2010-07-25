@@ -4148,8 +4148,10 @@ void LLAgent::changeCameraToMouselook(BOOL animate)
 	if( mCameraMode != CAMERA_MODE_MOUSELOOK )
 	{
 		gFocusMgr.setKeyboardFocus( NULL );
-		if (gSavedPerAccountSettings.getBOOL("EmeraldAONoStandsInMouselook"))	LLFloaterAO::stopMotion(LLFloaterAO::getCurrentStandId(), FALSE,TRUE);
-		
+
+		if (gSavedPerAccountSettings.getBOOL("EmeraldAONoStandsInMouselook"))
+			LLFloaterAO::stopAOMotion(LLFloaterAO::getCurrentStandId(), TRUE);
+
 		mLastCameraMode = mCameraMode;
 		mCameraMode = CAMERA_MODE_MOUSELOOK;
 		U32 old_flags = mControlFlags;

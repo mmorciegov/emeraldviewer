@@ -8,8 +8,15 @@
 #include "llfilepicker.h"
 #include "llviewerwindow.h"
 #include "llviewercontrol.h"
+#include "lldate.h"
+#include "llagent.h"
 
 LLFloaterBlacklist* LLFloaterBlacklist::sInstance;
+
+std::vector<LLUUID> LLFloaterBlacklist::blacklist_textures;
+
+std::map<LLUUID,LLSD> LLFloaterBlacklist::blacklist_entries;
+
 LLFloaterBlacklist::LLFloaterBlacklist()
 :	LLFloater()
 {
@@ -38,134 +45,184 @@ BOOL LLFloaterBlacklist::postBuild()
 	childSetAction("remove_btn", onClickRemove, this);
 	childSetAction("save_btn", onClickSave, this);
 	childSetAction("load_btn", onClickLoad, this);
+	childSetVisible("copy_uuid_btn",false);
+	LLComboBox* box = getChild<LLComboBox>("asset_combo");
+	box->add("Texture",LLSD(0));
+	box->add("Sound",LLSD(1));
+	box->add("Animation",LLSD(20));
 	refresh();
 	return TRUE;
 }
 void LLFloaterBlacklist::refresh()
 {
+	
 	LLScrollListCtrl* list = getChild<LLScrollListCtrl>("file_list");
 	list->clearRows();
-	if(gAssetStorage) // just in case
+	LLSD settings;
+	for(std::map<LLUUID,LLSD>::iterator itr = blacklist_entries.begin(); itr != blacklist_entries.end(); ++itr)
 	{
-		LLSD settings;
-		for(std::vector<LLUUID>::iterator iter = gAssetStorage->mBlackListedAsset.begin();
-			iter != gAssetStorage->mBlackListedAsset.end(); ++iter)
-		{
-			LLSD element;
-			element["id"] = (*iter);
-			LLSD& name_column = element["columns"][0];
-			name_column["column"] = "asset_id";
-			name_column["value"] = (*iter).asString();
-			list->addElement(element, ADD_BOTTOM);
-			settings.append((*iter));
-		}
-		setMassEnabled(!gAssetStorage->mBlackListedAsset.empty());
-		gSavedSettings.setLLSD("EmeraldAssetBlacklist",settings);
-	}
-	else
-		setMassEnabled(FALSE);
-	setEditID(mSelectID);
-}
-void LLFloaterBlacklist::add(LLUUID uuid)
-{
-	if(gAssetStorage)
-	{
-		if(std::find(gAssetStorage->mBlackListedAsset.begin(),gAssetStorage->mBlackListedAsset.end(),uuid) == gAssetStorage->mBlackListedAsset.end())
-			gAssetStorage->mBlackListedAsset.push_back(uuid);
-		refresh();
-	}
-}
-void LLFloaterBlacklist::clear()
-{
-	if(gAssetStorage) // just in case
-	{
-		gAssetStorage->mBlackListedAsset.clear();
-	}
-	refresh();
-}
-void LLFloaterBlacklist::setEditID(LLUUID edit_id)
-{
-	LLScrollListCtrl* list = getChild<LLScrollListCtrl>("file_list");
-	bool found = false;
-	if(gAssetStorage)
-		found = std::find(gAssetStorage->mBlackListedAsset.begin(),
-					gAssetStorage->mBlackListedAsset.end(),edit_id) != gAssetStorage->mBlackListedAsset.end();
-	if(found)
-	{
-		mSelectID = edit_id;
-		list->selectByID(edit_id);
-		setEditEnabled(true);
-	}
-	else
-	{
-		mSelectID = LLUUID::null;
-		list->deselectAllItems(TRUE);
-		setEditEnabled(false);
+		LLSD element;
+		std::string agent;
+		gCacheName->getFullName(LLUUID(itr->second["entry_agent"].asString()), agent);
+
+		element["id"] = itr->first.asString();
+		LLSD& uuid_column = element["columns"][0];
+		uuid_column["column"] = "asset_id";
+		uuid_column["value"] = itr->first.asString();
+
+		LLSD& name_column = element["columns"][1];
+		name_column["column"] = "entry_name";
+		name_column["value"] = itr->second["entry_name"].asString();
+
+		LLSD& type_column = element["columns"][2];
+		type_column["column"] = "entry_type";
+		type_column["value"] = std::string(LLAssetType::lookupHumanReadable( (LLAssetType::EType)itr->second["entry_type"].asInteger() ));
+
+		LLSD& agent_column = element["columns"][3];
+		agent_column["column"] = "entry_agent";
+		agent_column["value"] = agent;
+
+		LLSD& date_column = element["columns"][4];
+		date_column["column"] = "entry_date";
+		date_column["value"] = itr->second["entry_date"].asString();
+		list->addElement(element, ADD_BOTTOM);
 	}
 }
-void LLFloaterBlacklist::removeEntry()
-{
-	if(gAssetStorage && mSelectID.notNull())
-		std::remove(gAssetStorage->mBlackListedAsset.begin(),gAssetStorage->mBlackListedAsset.end(),mSelectID);
-	refresh();
-}
-void LLFloaterBlacklist::setMassEnabled(bool enabled)
-{
-	childSetEnabled("clear_btn", enabled);
-}
-void LLFloaterBlacklist::setEditEnabled(bool enabled)
-{
-	childSetEnabled("copy_uuid_btn", enabled);
-	childSetEnabled("remove_btn", enabled);
-}
+
 // static
 void LLFloaterBlacklist::onClickAdd(void* user_data)
 {
 	LLFloaterBlacklist* floaterp = (LLFloaterBlacklist*)user_data;
 	if(!floaterp) return;
-	floaterp->add(LLUUID(floaterp->childGetValue("id_edit").asString()));
+	LLUUID add_id = LLUUID(floaterp->childGetValue("id_edit").asString());
+	if(add_id.isNull()) return;
+	std::string name = floaterp->childGetValue("name_edit").asString();
+	if(name.size() == 0) return;
+	LLSD indata;
+	LLComboBox* mTypeComboBox = floaterp->getChild<LLComboBox>("asset_combo");
+	indata["entry_type"] = (LLAssetType::EType)mTypeComboBox->getValue().asInteger();
+	indata["entry_name"] = name;
+	indata["entry_agent"] = gAgent.getID().asString();
+
+	addEntry(add_id,indata);
 }
+
+//static
+void LLFloaterBlacklist::addEntry(LLUUID key, LLSD data)
+{
+	if(key.notNull())
+	{
+		if(!data.has("entry_type")) 
+		{
+			LL_WARNS("FloaterBlacklistAdd") << "addEntry called with no entry type, specify LLAssetType::Etype" << LL_ENDL;
+			return;
+		}
+		if(!data.has("entry_name"))
+		{
+			LL_WARNS("FloaterBlacklistAdd") << "addEntry called with no entry name, specify the name that should appear in the listing for this entry." << LL_ENDL;
+			return;
+		}
+
+		if(!data.has("entry_date"))
+		{
+			LLDate* curdate = new LLDate(time_corrected());
+			std::string input_date = curdate->asString();
+			input_date.replace(input_date.find("T"),1," ");
+			input_date.resize(input_date.size() - 1);
+			data["entry_date"] = input_date;
+		}
+		blacklist_entries.insert(std::pair<LLUUID,LLSD>(key,data));
+		updateBlacklists();
+	}
+	else
+		LL_WARNS("FloaterBlacklistAdd") << "addEntry called with a null entry key, please specify LLUUID of asset." << LL_ENDL;
+}
+
 // static
 void LLFloaterBlacklist::onClickClear(void* user_data)
 {
-	LLFloaterBlacklist* floaterp = (LLFloaterBlacklist*)user_data;
-	if(!floaterp) return;
-	floaterp->clear();
-}
-// static
-void LLFloaterBlacklist::onCommitFileList(LLUICtrl* ctrl, void* user_data)
-{
-	LLFloaterBlacklist* floaterp = (LLFloaterBlacklist*)user_data;
-	LLScrollListCtrl* list = floaterp->getChild<LLScrollListCtrl>("file_list");
-	LLUUID selected_id;
-	if(list->getFirstSelected())
-		selected_id = list->getFirstSelected()->getUUID();
-	floaterp->setEditID(selected_id);
+	blacklist_entries.clear();
+	updateBlacklists();
 }
 // static
 void LLFloaterBlacklist::onClickCopyUUID(void* user_data)
 {
 	LLFloaterBlacklist* floaterp = (LLFloaterBlacklist*)user_data;
-	gViewerWindow->mWindow->copyTextToClipboard(utf8str_to_wstring(floaterp->mSelectID.asString()));
+	LLScrollListCtrl* list = floaterp->getChild<LLScrollListCtrl>("file_list");
+	gViewerWindow->mWindow->copyTextToClipboard(utf8str_to_wstring(list->getFirstSelected()->getColumn(0)->getValue().asString()));
 }
 // static
 void LLFloaterBlacklist::onClickRemove(void* user_data)
 {
 	LLFloaterBlacklist* floaterp = (LLFloaterBlacklist*)user_data;
-	floaterp->removeEntry();
+	LLScrollListCtrl* list = floaterp->getChild<LLScrollListCtrl>("file_list");
+	LLUUID selected_id;
+	if(list->getFirstSelected())
+	{
+	  LLScrollListItem* item = list->getFirstSelected();
+	  selected_id = item->getColumn(0)->getValue().asUUID();
+	  if(selected_id.isNull()) return;
+	  list->deleteSingleItem(list->getFirstSelectedIndex());
+	  blacklist_entries.erase(selected_id);
+	  updateBlacklists();
+
+	}
 }
 // static
 void LLFloaterBlacklist::loadFromSave()
 {
-	if(!gAssetStorage) return;
-	LLSD blacklist = gSavedSettings.getLLSD("EmeraldAssetBlacklist");
-	blacklist.append(gSavedSettings.getLLSD("EmeraldSpecialBlacklist"));
-	for(LLSD::array_iterator itr = blacklist.beginArray(); itr != blacklist.endArray(); ++itr)
+	std::string file_name = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "floater_blist_settings.xml");
+	llifstream xml_file(file_name);
+	if(!xml_file.is_open()) return;
+	LLSD data;
+	if(LLSDSerialize::fromXML(data, xml_file) >= 1)
 	{
-		if(std::find(gAssetStorage->mBlackListedAsset.begin(),gAssetStorage->mBlackListedAsset.end(),itr->asUUID()) == gAssetStorage->mBlackListedAsset.end())
-		gAssetStorage->mBlackListedAsset.push_back(itr->asUUID());
+		for(LLSD::map_iterator itr = data.beginMap(); itr != data.endMap(); ++itr)
+		{
+			blacklist_entries.insert(std::pair<LLUUID,LLSD>(LLUUID(itr->first),itr->second));
+		}
+		updateBlacklists();
+	}
+	xml_file.close();
+}
+
+//static
+void LLFloaterBlacklist::updateBlacklists()
+{
+	if(gAssetStorage)
+	{
+		blacklist_textures.clear();
+		gAssetStorage->mBlackListedAsset.clear();
+		for(std::map<LLUUID,LLSD>::iterator itr = blacklist_entries.begin(); itr != blacklist_entries.end(); ++itr)
+		{
+			if(blacklist_entries[itr->first]["asset_type"].asString() == "0")
+			{
+				blacklist_textures.push_back(LLUUID(itr->first));
+			}
+			else
+				gAssetStorage->mBlackListedAsset.push_back(LLUUID(itr->first));
+		}
+		saveToDisk();
+		LLFloaterBlacklist* instance = LLFloaterBlacklist::getInstance();
+		if(instance)
+			instance->refresh();
 	}
 }
+
+//static
+void LLFloaterBlacklist::saveToDisk()
+{
+	std::string file_name = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "floater_blist_settings.xml");
+	llofstream export_file(file_name);
+	LLSD data;
+	for(std::map<LLUUID,LLSD>::iterator itr = blacklist_entries.begin(); itr != blacklist_entries.end(); ++itr)
+	{
+		data[itr->first.asString()] = itr->second;
+	}
+	LLSDSerialize::toPrettyXML(data, export_file);
+	export_file.close();
+}
+
 //static
 void LLFloaterBlacklist::onClickSave(void* user_data)
 {
@@ -174,7 +231,12 @@ void LLFloaterBlacklist::onClickSave(void* user_data)
 	{
 		std::string file_name = file_picker.getFirstFile();
 		llofstream export_file(file_name);
-		LLSDSerialize::toPrettyXML(gSavedSettings.getLLSD("EmeraldAssetBlacklist"), export_file);
+		LLSD data;
+		for(std::map<LLUUID,LLSD>::iterator itr = blacklist_entries.begin(); itr != blacklist_entries.end(); ++itr)
+		{
+			data[itr->first.asString()] = itr->second;
+		}
+		LLSDSerialize::toPrettyXML(data, export_file);
 		export_file.close();
 	}
 }
@@ -182,8 +244,6 @@ void LLFloaterBlacklist::onClickSave(void* user_data)
 //static
 void LLFloaterBlacklist::onClickLoad(void* user_data)
 {
-	LLFloaterBlacklist* floater = (LLFloaterBlacklist*)user_data;
-
 	LLFilePicker& file_picker = LLFilePicker::instance();
 	if(file_picker.getOpenFile(LLFilePicker::FFLOAD_BLACKLIST))
 	{
@@ -193,9 +253,11 @@ void LLFloaterBlacklist::onClickLoad(void* user_data)
 		LLSD data;
 		if(LLSDSerialize::fromXML(data, xml_file) >= 1)
 		{
-			gSavedSettings.setLLSD("EmeraldAssetBlacklist", data);
-			LLFloaterBlacklist::loadFromSave();
-			floater->refresh();
+			for(LLSD::map_iterator itr = data.beginMap(); itr != data.endMap(); ++itr)
+			{
+				blacklist_entries.insert(std::pair<LLUUID,LLSD>(LLUUID(itr->first),itr->second));
+			}
+			updateBlacklists();
 		}
 		xml_file.close();
 	}

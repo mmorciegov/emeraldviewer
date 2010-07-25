@@ -9,6 +9,7 @@
 #include "llviewerwindow.h"
 #include "llviewerobjectlist.h"
 #include "llviewerregion.h"
+#include "floaterblacklist.h"
 
 static const size_t num_collision_sounds = 28;
 const LLUUID collision_sounds[num_collision_sounds] =
@@ -77,6 +78,7 @@ BOOL LLFloaterExploreSounds::postBuild(void)
 	childSetAction("play_ambient_btn", handle_play_ambient, this);
 	childSetAction("look_at_btn", handle_look_at, this);
 	childSetAction("stop_btn", handle_stop, this);
+	childSetAction("bl_btn", blacklistSound, this);
 
 	LLScrollListCtrl* list = getChild<LLScrollListCtrl>("sound_list");
 	list->sortByColumn("playing", TRUE);
@@ -383,6 +385,33 @@ void LLFloaterExploreSounds::handle_stop(void* user_data)
 		}
 	}
 }
+void LLFloaterExploreSounds::blacklistSound(void* user_data)
+{
+	LLFloaterBlacklist::show();
+	LLFloaterExploreSounds* floater = (LLFloaterExploreSounds*)user_data;
+	LLScrollListCtrl* list = floater->getChild<LLScrollListCtrl>("sound_list");
+	std::vector<LLScrollListItem*> selection = list->getAllSelected();
+	std::vector<LLScrollListItem*>::iterator selection_iter = selection.begin();
+	std::vector<LLScrollListItem*>::iterator selection_end = selection.end();
+	std::vector<LLUUID> asset_list;
+	for( ; selection_iter != selection_end; ++selection_iter)
+	{
+		LLSoundHistoryItem item = floater->getItem((*selection_iter)->getValue());
+		if(item.mID.isNull()) continue;
 
+		LLSD sound_data;
+		std::string agent;
+		gCacheName->getFullName(item.mOwnerID, agent);
+		LLViewerRegion* cur_region = gAgent.getRegion();
+
+		if(cur_region)
+		  sound_data["entry_name"] = llformat("Sound played by %s in region %s",agent.c_str(),cur_region->getName().c_str());
+		else
+		  sound_data["entry_name"] = llformat("Sound played by %s",agent.c_str());
+		sound_data["entry_type"] = (LLAssetType::EType)item.mType;
+		sound_data["entry_agent"] = gAgent.getID();
+		LLFloaterBlacklist::addEntry(item.mAssetID,sound_data);
+	}
+}
 
 // </edit>

@@ -104,8 +104,7 @@ typedef enum e_radar_alert_type
 } ERadarAlertType;
 void chat_avatar_status(std::string name, LLUUID key, ERadarAlertType type, bool entering)
 {
-	if(gSavedSettings.getBOOL("EmeraldRadarChatAlerts") &&
-		(name.find("(???) (???)")== std::string::npos))
+	if(gSavedSettings.getBOOL("EmeraldRadarChatAlerts"))
 	{
 // [RLVa:KB] - Alternate: Emerald-370
 		if (gRlvHandler.hasBehaviour(RLV_BHVR_SHOWNAMES))
@@ -1018,6 +1017,11 @@ BOOL LLFloaterAvatarList::postBuild()
 
 	childSetAction("say_btn", onClickSayCmd,this);
 	childSetAction("tp_btn", onClickTP,this);
+	childSetAction("profile_btn", onClickProfile, this);
+	childSetAction("im_btn", onClickIM, this);
+	childSetAction("offer_btn", onClickTeleportOffer, this);
+	childSetAction("track_btn", onClickTrack, this);
+
 
 	mInputEditor = getChild<LLLineEditor>("customcommand");
 	childSetCommitCallback("customcommand", onCommandCommit,this);
@@ -1555,6 +1559,71 @@ void LLFloaterAvatarList::refreshAvatarList()
 
 }
 
+// static
+void LLFloaterAvatarList::onClickIM(void* userdata)
+{
+	//llinfos << "LLFloaterFriends::onClickIM()" << llendl;
+	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
+
+	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
+	if(ids.size() > 0)
+	{
+		if(ids.size() == 1)
+		{
+			// Single avatar
+			LLUUID agent_id = ids[0];
+			char buffer[MAX_STRING];
+			snprintf(buffer, MAX_STRING, "%s", avlist->mAvatars[agent_id].getName().c_str());
+			gIMMgr->setFloaterOpen(TRUE);
+			gIMMgr->addSession(
+				buffer,
+				IM_NOTHING_SPECIAL,
+				agent_id);
+		}
+		else
+		{
+			// Group IM
+			LLUUID session_id;
+			session_id.generate();
+			gIMMgr->setFloaterOpen(TRUE);
+			gIMMgr->addSession("Avatars Conference", IM_SESSION_CONFERENCE_START, ids[0], ids);
+		}
+	}
+}
+
+void LLFloaterAvatarList::onClickTeleportOffer(void *userdata)
+{
+	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
+
+	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
+	if(ids.size() > 0)
+	{
+		handle_lure(ids);
+	}
+}
+
+void LLFloaterAvatarList::onClickTrack(void *userdata)
+{
+	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
+	
+ 	LLScrollListItem *item =   avlist->mAvatarList->getFirstSelected();
+	if (!item) return;
+
+	LLUUID agent_id = item->getUUID();
+
+	if ( avlist->mTracking && avlist->mTrackedAvatar == agent_id ) {
+		LLTracker::stopTracking(NULL);
+		avlist->mTracking = FALSE;
+	}
+	else
+	{
+		avlist->mTracking = TRUE;
+		avlist->mTrackByLocation = FALSE;
+		avlist->mTrackedAvatar = agent_id;
+		LLTracker::trackAvatar(agent_id, avlist->mAvatars[agent_id].getName());
+	}
+}
+
 void LLFloaterAvatarList::sendAvatarPropertiesRequest(LLUUID avid)
 {
 	
@@ -2079,6 +2148,12 @@ void LLFloaterAvatarList::callbackIdle(void *userdata) {
 	}
 }
 
+// static
+void LLFloaterAvatarList::onClickProfile(void* userdata)
+{
+	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
+	avlist->doCommand(cmd_profile);
+}
 void LLFloaterAvatarList::checkAnnouncements()
 {
 	LLViewerRegion* regionp = gAgent.getRegion();

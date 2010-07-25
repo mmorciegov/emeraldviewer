@@ -55,6 +55,7 @@ private:
 	static void StopSelected(void *userdata );
 	static void RevokeSelected(void *userdata );
 	static void StopRevokeSelected(void *userdata );
+	static bool isLindenDefaultAnim(std::string anim_id);
 
 	static void handleHistoryChange();
 

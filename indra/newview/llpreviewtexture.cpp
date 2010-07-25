@@ -50,6 +50,8 @@
 #include "lluictrlfactory.h"
 #include "llviewerwindow.h"
 #include "lllineeditor.h"
+#include "llfloateravatarinfo.h"
+
 
 const S32 PREVIEW_TEXTURE_MIN_WIDTH = 300;
 const S32 PREVIEW_TEXTURE_MIN_HEIGHT = 120;
@@ -60,6 +62,8 @@ const F32 PREVIEW_TEXTURE_MIN_ASPECT = 0.005f;
 const S32 CLIENT_RECT_VPAD = 4;
 
 const F32 SECONDS_TO_SHOW_FILE_SAVED_MSG = 8.f;
+
+LLPreviewTexture * LLPreviewTexture::sInstance;
 
 LLPreviewTexture::LLPreviewTexture(const std::string& name,
 								   const LLRect& rect,
@@ -166,13 +170,15 @@ LLPreviewTexture::~LLPreviewTexture()
 
 void LLPreviewTexture::init()
 {
-	LLUICtrlFactory::getInstance()->buildFloater(this,"floater_preview_texture.xml");
+	sInstance = this;
+	LLUICtrlFactory::getInstance()->buildFloater(sInstance,"floater_preview_texture.xml");
 	
 	childSetVisible("desc", !mCopyToInv);	// Hide description field for embedded textures
 	childSetVisible("desc txt", !mCopyToInv);
 	childSetVisible("Copy To Inventory", mCopyToInv);
 	childSetVisible("Keep", mShowKeepDiscard);
 	childSetVisible("Discard", mShowKeepDiscard);
+	childSetAction("openprofile", onClickProfile, this);
 
 	if (mCopyToInv) 
 	{
@@ -230,6 +236,16 @@ void LLPreviewTexture::init()
 	combo->setCurrentByIndex(0);
 }
 
+void LLPreviewTexture::callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
+{
+	LLPreviewTexture* floaterp = LLPreviewTexture::getInstance();
+	if(!floaterp) return;
+
+	std::ostringstream fullname;
+	fullname << first << " " << last;
+	floaterp->childSetText("uploader", fullname.str());
+}
+
 void LLPreviewTexture::draw()
 {
 	updateDimensions();
@@ -266,6 +282,52 @@ void LLPreviewTexture::draw()
 			{
 				//boost the previewed image priority to the highest to make it to get loaded first.
 				mImage->setAdditionalDecodePriority(1.0f) ;
+			}
+
+
+			std::string assetid(mImageID.asString());
+			childSetText("uuid", assetid);
+
+			//Phox: Copy the image comment and set the text
+			std::string decodedComment = mImage->decodedComment;
+			if (uploaderkey.isNull())
+			{
+				S32 string_pos = decodedComment.find("a=");
+				if (string_pos != std::string::npos) 
+				{
+					uploaderkey = LLUUID(decodedComment.substr(string_pos+2,36));
+					childSetText("uploader", uploaderkey.asString());
+					gCacheName->get(uploaderkey, FALSE, callbackLoadAvatarName);
+					
+				}
+			}
+
+			if (color.empty())
+			{
+				S32 string_pos = decodedComment.find("c=");
+				if (string_pos != std::string::npos) 
+				{
+					color = decodedComment.substr(string_pos+2,8);
+				}
+			}
+
+			if (time.empty())
+			{
+				S32 string_pos = decodedComment.find("z=");
+				if (string_pos != std::string::npos) 
+				{
+					time = decodedComment.substr(string_pos+2,14);
+					std::string year = time.substr(0,4);
+					std::string month = time.substr(4,2);
+					std::string day = time.substr(6,2);
+					std::string hour = time.substr(8,2);
+					std::string minute = time.substr(10,2);
+					std::string second = time.substr(12,2);
+
+					time = llformat("%s/%s/%s - %s:%s:%s",year.c_str(),month.c_str(),day.c_str(),hour.c_str(),minute.c_str(),second.c_str());
+
+					childSetText("uploadtime", time);
+				}
 			}
 
 			// Don't bother decoding more than we can display, unless
@@ -566,6 +628,13 @@ bool LLPreviewTexture::setAspectRatio(const F32 width, const F32 height)
 	mAspectRatio = llclamp(ratio, PREVIEW_TEXTURE_MIN_ASPECT, PREVIEW_TEXTURE_MAX_ASPECT);
 	// Return false if we clamped the value, true otherwise
 	return (ratio == mAspectRatio);
+}
+
+void LLPreviewTexture::onClickProfile(void* userdata)
+{
+	LLPreviewTexture* self = (LLPreviewTexture*) userdata;
+	LLUUID key = self->uploaderkey;
+	if (!key.isNull()) LLFloaterAvatarInfo::showFromDirectory(key);
 }
 
 void LLPreviewTexture::onAspectRatioCommit(LLUICtrl* ctrl, void* userdata)

@@ -25,6 +25,7 @@ public:
 	static void handle_open(void* user_data);
 	static void handle_copy_uuid(void* user_data);
 	static void handle_stop(void* user_data);
+	static void blacklistSound(void* user_data);
 
 private:
 	virtual ~LLFloaterExploreSounds();

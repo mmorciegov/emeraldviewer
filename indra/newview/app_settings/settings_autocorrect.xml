@@ -61,7 +61,7 @@
         <key>wordStyle</key>
             <integer>1</integer>
         </map>
-    <key>SpellingCorrections</key>
+    <key>Spelling Corrections</key>
         <map>
         <key>announce</key>
             <integer>0</integer>

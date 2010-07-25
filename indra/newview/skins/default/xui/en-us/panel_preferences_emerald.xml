@@ -95,13 +95,13 @@
         <button bottom="-25" follows="left|top" font="SansSerifSmall" height="18" label="?"
 					 name="EmeraldHelp_Shields" tool_tip="Click here for help regarding the settings in this page."
 					 right="490" width="18"/>
-        <panel name="antispam_options" left="20" width="150" height="90" bottom_delta="-70"
+        <panel name="antispam_options" left="10" width="180" height="90" bottom_delta="-80"
                  border="true" mouse_opaque="true" bevel_style="in" background_visible="true" background_opaque="true"
                  follows="top|left" bg_opaque_color="0,0,0,0.1" bg_alpha_color="blue" can_resize="false">
-          <text bottom_delta="-12" follows="left|top" font="SansSerifSmall" height="10" left_delta="35"
+          <text bottom_delta="-12" follows="left|top" font="SansSerifSmall" height="10" left_delta="0"
                    name="antispam_text" width="512">Spam protection</text>
-          <check_box bottom_delta="-22" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-                   initial_value="false" label="Dialog" left_delta="-30" mouse_opaque="true"
+          <check_box bottom_delta="-26" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+                   initial_value="false" label="Dialog" left_delta="0" mouse_opaque="true"
                    name="dialog_spam_prevention" radio_style="false" width="270" control_name="EmeraldDialogSpamEnabled"/>
           <check_box bottom_delta="-17" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
                    initial_value="false" label="Calling cards" left_delta="0" mouse_opaque="true"
@@ -113,10 +113,10 @@
                    initial_value="false" label="General" left_delta="0" mouse_opaque="true"
                    name="general_spam_prevention" radio_style="false" width="270" control_name="EmeraldGeneralSpamEnabled"/>
         </panel>
-        <panel name="revokeperm_panel" left_delta="-10" width="175" height="100" bottom_delta="-115"
+        <panel name="revokeperm_panel" left_delta="0" width="180" height="100" bottom_delta="-115"
 					 border="true" mouse_opaque="true" bevel_style="in" background_visible="true" background_opaque="true"
 					 follows="top|left" bg_opaque_color="0,0,0,0.1" bg_alpha_color="blue" can_resize="false">
-          <text bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="16" left_delta="35"
+          <text bottom_delta="-20" follows="left|top" font="SansSerifSmall" height="16" left_delta="0"
 						 name="revperm_text" width="512">Revoke Permissions</text>
           <radio_group bottom="-100" draw_border="false" enabled="true" follows="left|top" height="80"
 						 left="2" mouse_opaque="true" name="EmRevPerm-toggle" control_name="EmeraldRevokePerms"
@@ -131,8 +131,11 @@
 							 left_delta="0" mouse_opaque="true" name="3" width="98" tool_tip="Will revoke permissions when you either stand or sit on an object.">            Revoke on SIT and STAND</radio_item>
           </radio_group>
         </panel>
-        <check_box bottom_delta="170" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Show Load URL dialogs" left_delta="180" mouse_opaque="true"
+        <text bottom_delta="190" follows="left|top" font="SansSerifSmall" height="16" left_delta="200" name="tag_text" width="300">Emerald Tag Color</text>
+        <combo_box name="TagCombo" bottom_delta="-20" left_delta="0" follows="left|top" height="18" width="180" max_chars="128" mouse_opaque="true" allow_text_entry="true" tool_tip="Client tag color." />
+        
+        <check_box bottom_delta="-40" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 initial_value="false" label="Show Load URL dialogs" left_delta="0" mouse_opaque="true"
 					 name="EmLoadURL-toggle" control_name="EmeraldLoadURL" radio_style="false" width="270"
                  tool_tip="When unchecked, this prevents scripted objects from sending you dialogs using llLoadURL. This can be used to spam you."/>
 
@@ -195,8 +198,13 @@
 					 initial_value="false" label="Steal focus" left_delta="10" mouse_opaque="true" name="EmeraldInstantMessageAnnounceStealFocus"
 					 radio_style="false" width="270" tool_tip="Forces the IM window to steal focus over all other communication windows when someone starts typing an IM to you. "/>
 
+        <check_box bottom_delta="-30" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 initial_value="false" label="Enable Autoresponse" left_delta="-10" mouse_opaque="true"
+					 name="EmeraldInstantMessageResponseAnyone" radio_style="false" width="270"
+                   tool_tip="Sends a pre made message of your choosing, when people start IM'ing you. (Enter your message in the Response Text. Text area), located below."/>
+
         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Autorespond to non-friends" left_delta="-10" mouse_opaque="true"
+					 initial_value="false" label="Autorespond to non-friends" left_delta="0" mouse_opaque="true"
 					 name="EmeraldInstantMessageResponseFriends" radio_style="false" width="270"
                    tool_tip="Sends a pre made message of your choosing, when people start IM’ing you. (Enter your message in the Response Text. Text area), located below."/>
 
@@ -204,11 +212,6 @@
 					 initial_value="false" label="Autorespond to people you have muted" left_delta="0"
 					 mouse_opaque="true" name="EmeraldInstantMessageResponseMuted" radio_style="false"
 					 width="270" tool_tip="Sends a pre made message of your choosing, when people start IM’ing you. (Enter your message in the Response Text. Text area), located below."/>
-
-        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
-					 initial_value="false" label="Autorespond to anyone" left_delta="0" mouse_opaque="true"
-					 name="EmeraldInstantMessageResponseAnyone" radio_style="false" width="270"
-                   tool_tip="Sends a pre made message of your choosing, when people start IM’ing you. (Enter your message in the Response Text. Text area), located below."/>
 
         <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
 					 initial_value="false" label="Send as soon as they start typing" left_delta="10" mouse_opaque="true"
@@ -543,6 +546,10 @@
 					 initial_value="true" label="Enable selection beam (turning off will hide the beam)"
 					 left="15" mouse_opaque="true" name="SLPartBeam" radio_style="false" width="270"
 					 control_name="ShowSelectionBeam"/>
+        <check_box bottom_delta="-20" enabled="true" follows="left|top" font="SansSerifSmall" height="16"
+					 initial_value="true" label="SL Particle Chat"
+					 left="15" mouse_opaque="true" name="EmeraldParticleChat" radio_style="false" width="270"
+					 control_name="EmeraldParticleChat"/>
         <combo_box allow_text_entry="false" bottom_delta="165" left_delta="50" follows="left|top" height="18"
 					 left="10" max_chars="20" mouse_opaque="true" name="BeamColor_combo" width="170"
 					 control_name="EmeraldBeamColorFile" tool_tip="Select the color preset for the selection beam"/>

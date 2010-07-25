@@ -3147,25 +3147,6 @@ void LLVOAvatar::idleUpdateWindEffect()
 		}
 	}
 }
-bool LLVOAvatar::updateClientTags()
-{
-	std::string client_list_filename = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, "client_list.xml");
-	LLSD response = LLHTTPClient::blockingGet("http://modularsystems.sl/app/client_tags/client_list.xml");
-	if(response.has("body"))
-	{
-		const LLSD &client_list = response["body"];
-
-		if(client_list.has("isComplete"))
-		{
-			llofstream export_file;
-			export_file.open(client_list_filename);
-			LLSDSerialize::toPrettyXML(client_list, export_file);
-			export_file.close();
-			return true;
-		}
-	}
-	return false;
-}
 
 bool LLVOAvatar::loadClientTags()
 {
@@ -3226,11 +3207,59 @@ void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client,
 	}else
 	{
 		//legacy code
-		if(idx == LLUUID("ccda2b3b-e72c-a112-e126-fee238b67218"))
+		if(idx == LLUUID("ccda2b3b-e72c-a112-e126-fee238b67218"))//green
 		{
 			avatar_name_color += LLColor4::green;//emerald
 			avatar_name_color += LLColor4::green;
 			avatar_name_color = avatar_name_color * (F32)0.333333333333;
+			client = "Emerald";
+		}
+		else if(idx == LLUUID("1e0948ab-706a-b309-434c-a694436a79be"))//white
+		{
+			avatar_name_color += LLColor4::white;//emerald
+			avatar_name_color = avatar_name_color * (F32)0.5;
+			client = "Emerald";
+		}
+		else if(idx == LLUUID("072343d0-1ce9-0952-4106-5312af4a789a"))//pink
+		{
+			avatar_name_color += LLColor4::pink;//emerald
+			avatar_name_color += LLColor4::pink;
+			avatar_name_color = avatar_name_color * (F32)0.5;
+			client = "Emerald";
+		}
+		else if(idx == LLUUID("1da8eb54-a70f-bd4a-77e5-c7b815c3b2a2"))//red
+		{
+			avatar_name_color += LLColor4::red;//emerald
+			avatar_name_color += LLColor4::red;
+			avatar_name_color = avatar_name_color * (F32)0.5;
+			client = "Emerald";
+		}
+		else if(idx == LLUUID("e741e2bf-cf8c-191c-97f2-b2709a843dfc"))//orange
+		{
+			avatar_name_color += LLColor4::orange;//emerald
+			avatar_name_color += LLColor4::orange;
+			avatar_name_color = avatar_name_color * (F32)0.5;
+			client = "Emerald";
+		}
+		else if(idx == LLUUID("0ae2f973-98c1-a4e8-9f4b-9db2044ab079")) //purple
+		{
+			avatar_name_color += LLColor4::purple;//emerald
+			avatar_name_color += LLColor4::purple;
+			avatar_name_color = avatar_name_color * (F32)0.5;
+			client = "Emerald";
+		}
+		else if(idx == LLUUID("8078ffb3-840c-d037-caf3-5cd02c2e7040"))//yellow
+		{
+			avatar_name_color += LLColor4::yellow;//emerald
+			avatar_name_color += LLColor4::yellow;
+			avatar_name_color = avatar_name_color * (F32)0.5;
+			client = "Emerald";
+		}
+		else if(idx == LLUUID("4eb67510-0924-ebb1-50ca-8af5694cd267"))//blue
+		{
+			avatar_name_color += LLColor4::blue;//emerald
+			avatar_name_color += LLColor4::blue;
+			avatar_name_color = avatar_name_color * (F32)0.5;
 			client = "Emerald";
 		}
 	}
@@ -5084,9 +5113,9 @@ void LLVOAvatar::processAnimationStateChanges()
 		{
 			if (mIsSelf)
 			{
-				if ((gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled")) && LLFloaterAO::stopMotion(anim_it->first, FALSE)) // if the AO replaced this anim serverside then stop it serverside
+				if (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
 				{
-//					return TRUE; //no local stop needed
+					LLFloaterAO::stopAOMotion(anim_it->first, FALSE);
 				}
 			}
 
@@ -5115,10 +5144,7 @@ void LLVOAvatar::processAnimationStateChanges()
 				{
 					if (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
 					{
-						if (LLFloaterAO::startMotion(anim_it->first, 0,FALSE)) // AO overrides the anim if needed
-						{
-//								return TRUE; // not playing it locally
-						}
+						LLFloaterAO::startAOMotion(anim_it->first, FALSE); // AO overrides the anim if needed
 					}
 				}
 

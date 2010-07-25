@@ -6857,9 +6857,10 @@ The URL you clicked cannot be opened from this web browser.
    icon="alertmodal.tga"
    name="BlockLoginInfo"
    type="alertmodal">
-    This version of the Emerald Viewer is blocked from logging in.
-    This is probably for a good reason; for more information you should check the site at
-    http://modularsystems.sl/
+    [REASON]
+    
+    Download: [UPDATESITE]
+    Blog: [BLOGSITE]
     <form name="form">
       <button
        index="0"

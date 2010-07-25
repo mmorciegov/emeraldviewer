@@ -122,12 +122,12 @@ placeholders are #k = av key, #n = av name
 
     </panel>
   </tab_container>
-  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center"
-	     height="18" label="TP to" label_selected="TP" left="140"
-	     mouse_opaque="true" name="tp_btn" width="42" />
-  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center"
-	     height="18" label="Cmd" label_selected="Run" left_delta="45"
-	     mouse_opaque="true" name="say_btn" width="42" />
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="Profile" left="140" mouse_opaque="true" name="profile_btn" width="52" />
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="IM" left_delta="55" mouse_opaque="true" name="im_btn" width="42" />
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="TP to" left_delta="45" mouse_opaque="true" name="tp_btn" width="42" />
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="TP offer" left_delta="44" mouse_opaque="true" name="offer_btn" width="54" />
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="Track" left_delta="57" mouse_opaque="true" name="track_btn" width="42" />
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="Cmd" left_delta="45" mouse_opaque="true" name="say_btn" width="42" />
 
   <!--
   <combo_box bottom_delta="0" follows="left|bottom" height="16" label="ALT click action" left_delta="40" name="comboactions" width="150" control_name="EmeraldAvatarlistAltClickAction">

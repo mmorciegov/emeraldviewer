@@ -44,6 +44,7 @@ public:
 	static void msdata(U32 status, std::string body);
 	static void msblacklistquery(U32 status, std::string body);
 	static void msblacklist(U32 status, std::string body);
+	static void updateClientTags(U32 status,std::string body);
 	static const U8 EM_SUPPORT		= 0x01;
 	static const U8 EM_DEVELOPER	= 0x02;
 	//static const U8 x = 0x04;
@@ -62,12 +63,13 @@ public:
 	static void callbackEmeraldReqInfo(const LLSD &notification, const LLSD &response);
 	static void sendInfo(LLUUID destination, LLUUID sessionid, std::string myName, EInstantMessage dialog);
 
-
+	static LLSD emerald_tags;
 	std::set<std::string> blocked_versions;
-
+	static LLSD blocked_login_info;
 	std::string ms_motd;
 private:
 	static std::string blacklist_version;
+
 
 };
 

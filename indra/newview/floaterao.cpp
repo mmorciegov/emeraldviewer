@@ -30,13 +30,13 @@
 #include "llinventorybridge.h"
 
 #include "jc_lslviewerbridge.h"
-
+#include "floaterexploreanimations.h"
 #include "llboost.h"
 #include <boost/regex.hpp>
 
 void cmdline_printchat(std::string message);
 
-// -------------------------------------------------------
+// TIMERS -------------------------------------------------------
 
 AOStandTimer* mAOStandTimer;
 
@@ -46,24 +46,18 @@ AOStandTimer::AOStandTimer() : LLEventTimer( gSavedPerAccountSettings.getF32("Em
 }
 AOStandTimer::~AOStandTimer()
 {
-//	llinfos << "dead" << llendl;
 }
 void AOStandTimer::reset()
 {
 	mPeriod = gSavedPerAccountSettings.getF32("EmeraldAOStandInterval");
 	mEventTimer.reset();
-//	llinfos << "reset" << llendl;
 }
 BOOL AOStandTimer::tick()
 {
 	LLFloaterAO::stand_iterator++;
-//	llinfos << "tick" << llendl;
 	LLFloaterAO::ChangeStand();
 	return FALSE;
-//	return LLFloaterAO::ChangeStand(); //timer is always active now ..
 }
-
-// -------------------------------------------------------
 
 AOInvTimer::AOInvTimer() : LLEventTimer( (F32)1.0 )
 {
@@ -79,7 +73,6 @@ BOOL AOInvTimer::tick()
 		LLUUID emerald_category = JCLSLBridge::findCategoryByNameOrCreate(emerald_category_name);
 		if(gInventory.isCategoryComplete(emerald_category))
 		{
-//			cmdline_printchat("Inventory fetched, loading AO.");
 			return LLFloaterAO::init();
 		}
 		else
@@ -124,7 +117,6 @@ AONoteCardDropTarget::~AONoteCardDropTarget()
 
 void AONoteCardDropTarget::doDrop(EDragAndDropType cargo_type, void* cargo_data)
 {
-//	llinfos << "AONoteCardDropTarget::doDrop()" << llendl;
 }
 
 BOOL AONoteCardDropTarget::handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
@@ -156,48 +148,40 @@ BOOL AONoteCardDropTarget::handleDragAndDrop(S32 x, S32 y, MASK mask, BOOL drop,
 
 AONoteCardDropTarget * LLFloaterAO::mAOItemDropTarget;
 
+// -------------------------------------------------------
 
-// STUFF -------------------------------------------------------
+struct struct_anim_types
+{
+	std::string name;
+	int state;
+};
 
-int LLFloaterAO::mAnimationState = 0;
-int LLFloaterAO::stand_iterator = 0;
+std::vector<struct_anim_types> mAnimTypes;
 
-LLUUID LLFloaterAO::invfolderid = LLUUID::null;
-LLUUID LLFloaterAO::mCurrentStandId = LLUUID::null;
+struct struct_combobox
+{
+	LLComboBox* combobox;
+	std::string name;
+	int state;
+};
 
-LLComboBox* mcomboBox_stands;
-LLComboBox* mcomboBox_walks;
-LLComboBox* mcomboBox_runs;
-LLComboBox* mcomboBox_jumps;
-LLComboBox* mcomboBox_sits;
-LLComboBox* mcomboBox_gsits;
-LLComboBox* mcomboBox_crouchs;
-LLComboBox* mcomboBox_cwalks;
-LLComboBox* mcomboBox_falls;
-LLComboBox* mcomboBox_hovers;
-LLComboBox* mcomboBox_flys;
-LLComboBox* mcomboBox_flyslows;
-LLComboBox* mcomboBox_flyups;
-LLComboBox* mcomboBox_flydowns;
-LLComboBox* mcomboBox_lands;
-LLComboBox* mcomboBox_standups;
-LLComboBox* mcomboBox_prejumps;
+std::vector<struct_combobox> mComboBoxes;
 
-LLComboBox* mcomboBox_turnleft;
-LLComboBox* mcomboBox_turnright;
-LLComboBox* mcomboBox_typing;
-LLComboBox* mcomboBox_floating;
-LLComboBox* mcomboBox_swimmingforward;
-LLComboBox* mcomboBox_swimmingup;
-LLComboBox* mcomboBox_swimmingdown;
-
-struct struct_overrides
+struct struct_default_anims
 {
 	LLUUID orig_id;
 	LLUUID ao_id;
 	int state;
 };
-std::vector<struct_overrides> mAOOverrides;
+std::vector<struct_default_anims> mAODefaultAnims;
+
+struct struct_all_anims
+{
+	LLUUID ao_id;
+	std::string anim_name;
+	int state;
+};
+std::vector<struct_all_anims> mAOAllAnims;
 
 struct struct_stands
 {
@@ -213,59 +197,97 @@ struct struct_tokens
 };
 std::vector<struct_tokens> mAOTokens;
 
+struct AOAssetInfo
+{
+	std::string path;
+	std::string name;
+};
+
+//BOOL LLFloaterAO::fullfetch = FALSE;
+
+int LLFloaterAO::mAnimationState = 0;
+int LLFloaterAO::stand_iterator = 0;
+LLComboBox* mcomboBox_stands;
+
+LLUUID LLFloaterAO::invfolderid = LLUUID::null;
+LLUUID LLFloaterAO::mCurrentStandId = LLUUID::null;
+
+LLTabContainer* mTabContainer;
 LLFloaterAO* LLFloaterAO::sInstance = NULL;
 
-LLFloaterAO::LLFloaterAO()
-:LLFloater(std::string("floater_ao"))
+LLFloaterAO::LLFloaterAO():LLFloater(std::string("floater_ao"))
 {
-//	init();
 	llassert_always(sInstance == NULL);
-    LLUICtrlFactory::getInstance()->buildFloater(this, "floater_ao.xml");
 	sInstance = this;
+	LLUICtrlFactory::getInstance()->buildFloater(sInstance, "floater_ao.xml");
+	sInstance->setVisible(FALSE);
+
+	mComboBoxes.clear();
+	struct_combobox loader_combobox;
+	for (std::vector<struct_anim_types>::iterator iter = mAnimTypes.begin(); iter != mAnimTypes.end(); ++iter)
+	{
+		loader_combobox.combobox = getChild<LLComboBox>(iter->name);
+		loader_combobox.name = iter->name;
+		loader_combobox.state = iter->state;
+		mComboBoxes.push_back(loader_combobox);
+	}
+
+	mTabContainer = getChild<LLTabContainer>("tabcontainer");
+	mcomboBox_stands = (LLComboBox*) getComboBox("stand");
+
+	for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
+	{
+		getChild<LLComboBox>(iter->name)->setCommitCallback(onComboBoxCommit);
+		childSetCommitCallback("EmeraldAORandomize"+iter->name,onCheckBoxCommit);
+		childSetValue("EmeraldAORandomize"+iter->name, gSavedPerAccountSettings.getBOOL("EmeraldAORandomize"+iter->name));
+	}
+
+	loadComboBoxes();
+	updateLayout(sInstance);
 }
 
 LLFloaterAO::~LLFloaterAO()
 {
     sInstance=NULL;
-	mcomboBox_stands = 0;
-	mcomboBox_walks = 0;
-	mcomboBox_runs = 0;
-	mcomboBox_jumps = 0;
-	mcomboBox_sits = 0;
-	mcomboBox_gsits = 0;
-	mcomboBox_crouchs = 0;
-	mcomboBox_cwalks = 0;
-	mcomboBox_falls = 0;
-	mcomboBox_hovers = 0;
-	mcomboBox_flys = 0;
-	mcomboBox_flyslows = 0;
-	mcomboBox_flyups = 0;
-	mcomboBox_flydowns = 0;
-	mcomboBox_lands = 0;
-	mcomboBox_standups = 0;
-	mcomboBox_prejumps = 0;
-
-	mcomboBox_turnleft = 0;
-	mcomboBox_turnright = 0;
-	mcomboBox_typing = 0;
-	mcomboBox_floating = 0;
-	mcomboBox_swimmingforward = 0;
-	mcomboBox_swimmingup = 0;
-	mcomboBox_swimmingdown = 0;
-
+	for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
+	{
+		//if (iter->combobox) 
+		iter->combobox = 0;
+	}
 	delete mAOItemDropTarget;
 	mAOItemDropTarget = NULL;
-//	llinfos << "floater destroyed" << llendl;
 }
 
-void LLFloaterAO::show(void*)
+void LLFloaterAO::toggle(void*)
 {
-    if (!sInstance)
-	sInstance = new LLFloaterAO();
-	updateLayout(sInstance);
-	init();
+	if (sInstance)
+	{
+		if(!sInstance->getVisible())
+		{
+			sInstance->open();
+		}
+		else
+		{
+			sInstance->close();
+		}
+	}
+	else
+	{
+		sInstance = new LLFloaterAO();
+		sInstance->setVisible(TRUE);
+	}
+}
 
-	sInstance->open();
+void LLFloaterAO::onOpen()
+{
+	sInstance->setVisible(TRUE);
+	sInstance->setFocus(TRUE);
+}
+
+void LLFloaterAO::onClose()
+{
+	sInstance->setVisible(FALSE);
+	sInstance->setFocus(FALSE);
 }
 
 BOOL LLFloaterAO::postBuild()
@@ -311,265 +333,15 @@ BOOL LLFloaterAO::postBuild()
 	childSetCommitCallback("EmeraldAOEnabled",onClickToggleAO);
 	childSetCommitCallback("EmeraldAOSitsEnabled",onClickToggleSits);
 	childSetCommitCallback("EmeraldAONoStandsInMouselook",onClickNoMouselookStands);
-	childSetCommitCallback("EmeraldAOStandRandomize",onClickRandomizeStands);
 	childSetCommitCallback("standtime",onSpinnerCommit);
-	mcomboBox_stands = getChild<LLComboBox>("stands");
-	mcomboBox_walks = getChild<LLComboBox>("walks");
-	mcomboBox_runs = getChild<LLComboBox>("runs");
-	mcomboBox_jumps = getChild<LLComboBox>("jumps");
-	mcomboBox_sits = getChild<LLComboBox>("sits");
-	mcomboBox_gsits = getChild<LLComboBox>("gsits");
-	mcomboBox_crouchs = getChild<LLComboBox>("crouchs");
-	mcomboBox_cwalks = getChild<LLComboBox>("cwalks");
-	mcomboBox_falls = getChild<LLComboBox>("falls");
-	mcomboBox_hovers = getChild<LLComboBox>("hovers");
-	mcomboBox_flys = getChild<LLComboBox>("flys");
-	mcomboBox_flyslows = getChild<LLComboBox>("flyslows");
-	mcomboBox_flyups = getChild<LLComboBox>("flyups");
-	mcomboBox_flydowns = getChild<LLComboBox>("flydowns");
-	mcomboBox_lands = getChild<LLComboBox>("lands");
-	mcomboBox_standups = getChild<LLComboBox>("standups");
-	mcomboBox_prejumps = getChild<LLComboBox>("prejumps");
-
-	mcomboBox_turnleft = getChild<LLComboBox>("turnleft");
-	mcomboBox_turnright = getChild<LLComboBox>("turnright");
-	mcomboBox_typing = getChild<LLComboBox>("typing");
-	mcomboBox_floating = getChild<LLComboBox>("floating");
-	mcomboBox_swimmingforward = getChild<LLComboBox>("swimmingforward");
-	mcomboBox_swimmingup = getChild<LLComboBox>("swimmingup");
-	mcomboBox_swimmingdown = getChild<LLComboBox>("swimmingdown");
-
-	getChild<LLComboBox>("stands")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("walks")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("runs")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("jumps")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("sits")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("gsits")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("crouchs")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("cwalks")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("falls")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("hovers")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("flys")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("flyslows")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("flyups")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("flydowns")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("lands")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("standups")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("prejumps")->setCommitCallback(onComboBoxCommit);
-
-	getChild<LLComboBox>("turnleft")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("turnright")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("typing")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("floating")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("swimmingforward")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("swimmingup")->setCommitCallback(onComboBoxCommit);
-	getChild<LLComboBox>("swimmingdown")->setCommitCallback(onComboBoxCommit);
 	
 	// Set relevant per-account stuff.
 	childSetValue("EmeraldAOEnabled", gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"));
 	childSetValue("EmeraldAOSitsEnabled", gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled"));
 	childSetValue("EmeraldAONoStandsInMouselook", gSavedPerAccountSettings.getBOOL("EmeraldAONoStandsInMouselook"));
 	childSetValue("standtime", gSavedPerAccountSettings.getF32("EmeraldAOStandInterval"));
-	childSetValue("EmeraldAOStandRandomize", gSavedPerAccountSettings.getBOOL("EmeraldAOStandRandomize"));
 
 	return TRUE;
-}
-
-void LLFloaterAO::onSpinnerCommit(LLUICtrl* ctrl, void* userdata)
-{
-	LLSpinCtrl* spin = (LLSpinCtrl*) ctrl;
-	if(spin)
-	{
-		if (spin->getName() == "standtime")
-		{
-			if (mAOStandTimer) mAOStandTimer->reset();
-			gSavedPerAccountSettings.setF32("EmeraldAOStandInterval", spin->get());
-		}
-	}
-}
-
-void LLFloaterAO::onComboBoxCommit(LLUICtrl* ctrl, void* userdata)
-{
-	LLComboBox* box = (LLComboBox*)ctrl;
-	if(box)
-	{
-		if (box->getName() == "stands")
-		{
-			stand_iterator = box->getCurrentIndex();
-			cmdline_printchat(llformat("Changing stand to %s.",mAOStands[stand_iterator].anim_name.c_str()));
-			ChangeStand();
-		}
-		else
-		{
-			int state = STATE_AGENT_IDLE;
-			std::string stranim = box->getValue().asString();
-//			llinfos << "state " << (gAgent.getAvatarObject()->mIsSitting) << " - " << getAnimationState() << llendl;
-			if (box->getName() == "walks")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_WALK), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultWalk",stranim);
-				state = STATE_AGENT_WALK;
-			}
-			else if (box->getName() == "runs")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_RUN), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultRun",stranim);
-				state = STATE_AGENT_RUN;
-			}
-			else if (box->getName() == "jumps")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_JUMP), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultJump",stranim);
-				state = STATE_AGENT_JUMP;
-			}
-			else if (box->getName() == "sits")
-			{
-				if (gAgent.getAvatarObject() && (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled")) && (gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled")))
-				{
-					if ((gAgent.getAvatarObject()->mIsSitting) && (getAnimationState() == STATE_AGENT_SIT))
-					{
-//						llinfos << "sitting " << GetAnimID(ANIM_AGENT_SIT) << " " << getAssetIDByName(stranim) << llendl;
-						gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SIT), ANIM_REQUEST_STOP);
-						gAgent.sendAnimationRequest(getAssetIDByName(stranim), ANIM_REQUEST_START);
-					}
-				}
-				gSavedPerAccountSettings.setString("EmeraldAODefaultSit",stranim);
-				state = STATE_AGENT_SIT;
-			}
-			else if (box->getName() == "gsits")
-			{
-//				llinfos << "gsitting " << GetAnimID(ANIM_AGENT_SIT_GROUND) << " " << getAssetIDByName(stranim) << llendl;
-				if (gAgent.getAvatarObject())
-				{
-					if ((gAgent.getAvatarObject()->mIsSitting) && (getAnimationState() == STATE_AGENT_GROUNDSIT))
-					{
-//						llinfos << "gsitting " << GetAnimID(ANIM_AGENT_SIT_GROUND) << " " << getAssetIDByName(stranim) << llendl;
-						gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SIT_GROUND), ANIM_REQUEST_STOP);
-						gAgent.sendAnimationRequest(getAssetIDByName(stranim), ANIM_REQUEST_START);
-					}
-				}
-				gSavedPerAccountSettings.setString("EmeraldAODefaultGroundSit",stranim);
-				state = STATE_AGENT_GROUNDSIT;
-			}
-			else if (box->getName() == "crouchs")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_CROUCH), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultCrouch",stranim);
-				state = STATE_AGENT_CROUCH;
-			}
-			else if (box->getName() == "cwalks")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_CROUCHWALK), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultCrouchWalk",stranim);
-				state = STATE_AGENT_CROUCHWALK;
-			}
-			else if (box->getName() == "falls")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_FALLDOWN), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultFall",stranim);
-				state = STATE_AGENT_FALLDOWN;
-			}
-			else if (box->getName() == "hovers")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_HOVER), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultHover",stranim);
-				state = STATE_AGENT_HOVER;
-			}
-			else if (box->getName() == "flys")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_FLY), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultFly",stranim);
-				state = STATE_AGENT_FLY;
-			}
-			else if (box->getName() == "flyslows")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_FLYSLOW), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultFlySlow",stranim);
-				state = STATE_AGENT_FLYSLOW;
-			}
-			else if (box->getName() == "flyups")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_HOVER_UP), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultFlyUp",stranim);
-				state = STATE_AGENT_HOVER_UP;
-			}
-			else if (box->getName() == "flydowns")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_HOVER_DOWN), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultFlyDown",stranim);
-				state = STATE_AGENT_HOVER_DOWN;
-			}
-			else if (box->getName() == "lands")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_LAND), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultLand",stranim);
-				state = STATE_AGENT_LAND;
-			}
-			else if (box->getName() == "standups")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_STAND), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultStandUp",stranim);
-				state = STATE_AGENT_STAND;
-			}
-			else if (box->getName() == "prejumps")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_PRE_JUMP), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultPreJump",stranim);
-				state = STATE_AGENT_PRE_JUMP;
-			}
-			else if (box->getName() == "turnleft")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_TURNLEFT), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultTurnLeft",stranim);
-				state = STATE_AGENT_TURNLEFT;
-			}
-			else if (box->getName() == "turnright")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_TURNRIGHT), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultTurnRight",stranim);
-				state = STATE_AGENT_TURNRIGHT;
-			}
-			else if (box->getName() == "typing")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_TYPE), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultTyping",stranim);
-				state = STATE_AGENT_TYPING;
-			}
-			/*
-			else if (box->getName() == "floating")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_FLOATING), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultFloating",stranim);
-				state = STATE_AGENT_FLOATING;
-			}
-			else if (box->getName() == "swimmingforward")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SWIMMINGFORWARD), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultSwimmingForward",stranim);
-				state = STATE_AGENT_SWIMMINGFORWARD;
-			}
-			else if (box->getName() == "swimmingup")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SWIMMINGUP), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultSwimmingUp",stranim);
-				state = STATE_AGENT_SWIMMINGUP;
-			}
-			else if (box->getName() == "swimmingdown")
-			{
-				gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SWIMMINGDOWN), ANIM_REQUEST_STOP);
-				gSavedPerAccountSettings.setString("EmeraldAODefaultSwimmingDown",stranim);
-				state = STATE_AGENT_SWIMMINGDOWN;
-			}
-			*/
-			for (std::vector<struct_overrides>::iterator iter = mAOOverrides.begin(); iter != mAOOverrides.end(); ++iter)
-			{
-				if (state == iter->state)
-				{
-					iter->ao_id = getAssetIDByName(stranim);
-				}
-			}
-		}
-	}
 }
 
 void LLFloaterAO::updateLayout(LLFloaterAO* floater)
@@ -579,11 +351,11 @@ void LLFloaterAO::updateLayout(LLFloaterAO* floater)
 		BOOL advanced = gSavedSettings.getBOOL("EmeraldAOAdvanced");
 		if (advanced)
 		{
-			floater->reshape(610,380); //view->getRect().getWidth(), view->getUIWinHeightLong());
+			floater->reshape(610,380);
 		}
 		else
 		{
-			floater->reshape(200,300); //view->getRect().getWidth(), view->getUIWinHeightShort());
+			floater->reshape(200,380);
 		}
 		
 		floater->childSetVisible("more_btn", !advanced);
@@ -592,63 +364,53 @@ void LLFloaterAO::updateLayout(LLFloaterAO* floater)
 		floater->childSetVisible("tabcontainer", advanced);
 		floater->childSetVisible("tabdefaultanims", advanced);
 
-		floater->childSetVisible("textdefaultwalk", advanced);
-		floater->childSetVisible("textdefaultrun", advanced);
-		floater->childSetVisible("textdefaultjump", advanced);
-		floater->childSetVisible("textdefaultsit", advanced);
-		floater->childSetVisible("textdefaultgsit", advanced);
-		floater->childSetVisible("textdefaultcrouch", advanced);
-		floater->childSetVisible("textdefaultcrouchwalk", advanced);
-		floater->childSetVisible("textdefaultfall", advanced);
-		floater->childSetVisible("textdefaulthover", advanced);
-		floater->childSetVisible("textdefaultfly", advanced);
-		floater->childSetVisible("textdefaultflyslow", advanced);
-		floater->childSetVisible("textdefaultflyup", advanced);
-		floater->childSetVisible("textdefaultflydown", advanced);
-		floater->childSetVisible("textdefaultland", advanced);
-		floater->childSetVisible("textdefaultstandup", advanced);
-		floater->childSetVisible("textdefaultprejump", advanced);
-		floater->childSetVisible("textdefaultturnleft", advanced);
-		floater->childSetVisible("textdefaultturnright", advanced);
-		floater->childSetVisible("textdefaulttyping", advanced);
-		floater->childSetVisible("textdefaultfloating", advanced);
-		floater->childSetVisible("textdefaultswimmingforward", advanced);
-		floater->childSetVisible("textdefaultswimmingup", advanced);
-		floater->childSetVisible("textdefaultswimmingdown", advanced);
-
-
-		floater->childSetVisible("walks", advanced);
-		floater->childSetVisible("runs", advanced);
-		floater->childSetVisible("jumps", advanced);
-		floater->childSetVisible("sits", advanced);
-		floater->childSetVisible("gsits", advanced);
-		floater->childSetVisible("crouchs", advanced);
-		floater->childSetVisible("crouchwalks", advanced);
-		floater->childSetVisible("falls", advanced);
-		floater->childSetVisible("hovers", advanced);
-		floater->childSetVisible("flys", advanced);
-		floater->childSetVisible("flyslows", advanced);
-		floater->childSetVisible("flyups", advanced);
-		floater->childSetVisible("flydowns", advanced);
-		floater->childSetVisible("lands", advanced);
-		floater->childSetVisible("standups", advanced);
-		floater->childSetVisible("prejumps", advanced);
-		floater->childSetVisible("turnleft", advanced);
-		floater->childSetVisible("turnright", advanced);
-		floater->childSetVisible("typing", advanced);
-		floater->childSetVisible("floating", advanced);
-		floater->childSetVisible("swimmingforward", advanced);
-		floater->childSetVisible("swimmingup", advanced);
-		floater->childSetVisible("swimmingdown", advanced);
+		for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
+		{
+			if (iter->name == "stand") continue;
+			floater->childSetVisible("textdefault"+iter->name, advanced);
+			floater->childSetVisible(iter->name, advanced);
+		}
+		mTabContainer->selectFirstTab();
 	}
 }
+
 BOOL LLFloaterAO::fullfetch = FALSE;
+
 BOOL LLFloaterAO::init()
 {
-	
 	BOOL success = FALSE;
-	LLUUID configncitem = (LLUUID)gSavedPerAccountSettings.getString("EmeraldAOConfigNotecardID");
 
+	mAnimTypes.clear();
+	struct_anim_types loader_anim_types;
+	loader_anim_types.name = "stand";			loader_anim_types.state = STATE_AGENT_STAND;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "walk";				loader_anim_types.state = STATE_AGENT_WALK;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "run";				loader_anim_types.state = STATE_AGENT_RUN;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "jump";				loader_anim_types.state = STATE_AGENT_JUMP;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "sit";				loader_anim_types.state = STATE_AGENT_SIT;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "gsit";				loader_anim_types.state = STATE_AGENT_GROUNDSIT;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "crouch";			loader_anim_types.state = STATE_AGENT_CROUCH;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "cwalk";			loader_anim_types.state = STATE_AGENT_CROUCHWALK;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "fall";				loader_anim_types.state = STATE_AGENT_FALLDOWN;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "hover";			loader_anim_types.state = STATE_AGENT_HOVER;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "fly";				loader_anim_types.state = STATE_AGENT_FLY;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "flyslow";			loader_anim_types.state = STATE_AGENT_FLYSLOW;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "flyup";			loader_anim_types.state = STATE_AGENT_HOVER_UP;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "flydown";			loader_anim_types.state = STATE_AGENT_HOVER_DOWN;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "land";				loader_anim_types.state = STATE_AGENT_LAND;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "standup";			loader_anim_types.state = STATE_AGENT_STANDUP;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "prejump";			loader_anim_types.state = STATE_AGENT_PRE_JUMP;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "turnleft";			loader_anim_types.state = STATE_AGENT_TURNLEFT;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "turnright";		loader_anim_types.state = STATE_AGENT_TURNRIGHT;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "typing";			loader_anim_types.state = STATE_AGENT_TYPING;			mAnimTypes.push_back(loader_anim_types);
+//	loader_anim_types.name = "floating";			loader_anim_types.state = STATE_AGENT_FLOATING;			mAnimTypes.push_back(loader_anim_types);
+//	loader_anim_types.name = "swimmingforward";	loader_anim_types.state = STATE_AGENT_SWIMMINGFORWARD;			mAnimTypes.push_back(loader_anim_types);
+//	loader_anim_types.name = "swimmingup";		loader_anim_types.state = STATE_AGENT_SWIMMINGUP;			mAnimTypes.push_back(loader_anim_types);
+//	loader_anim_types.name = "swimmingdown";		loader_anim_types.state = STATE_AGENT_SWIMMINGDOWN;			mAnimTypes.push_back(loader_anim_types);
+
+    if (!sInstance)
+	sInstance = new LLFloaterAO();
+
+	LLUUID configncitem = (LLUUID)gSavedPerAccountSettings.getString("EmeraldAOConfigNotecardID");
 	if(LLStartUp::getStartupState() >= STATE_INVENTORY_SEND)
 	{
 		LLUUID emerald_category = JCLSLBridge::findCategoryByNameOrCreate(emerald_category_name);
@@ -699,7 +461,7 @@ BOOL LLFloaterAO::init()
 							///////////////////////////
 							mAOStands.clear();
 							mAOTokens.clear();
-							mAOOverrides.clear();
+							mAODefaultAnims.clear();
 
 							struct_tokens tokenloader;
 							tokenloader.token = 
@@ -728,40 +490,40 @@ BOOL LLFloaterAO::init()
 							tokenloader.token = "[ Floating ]";				tokenloader.state = STATE_AGENT_FLOATING; mAOTokens.push_back(tokenloader);             // 24
 							tokenloader.token = "[ Typing ]";				tokenloader.state = STATE_AGENT_TYPING; mAOTokens.push_back(tokenloader); //25
  
-							struct_overrides overrideloader;
-							overrideloader.orig_id = ANIM_AGENT_WALK;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_WALK;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_RUN;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_RUN;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_PRE_JUMP;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_PRE_JUMP;		mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_JUMP;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_JUMP;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_TURNLEFT;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_TURNLEFT;		mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_TURNRIGHT;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_TURNRIGHT;		mAOOverrides.push_back(overrideloader);
+							struct_default_anims default_anims_loader;
+							default_anims_loader.orig_id = ANIM_AGENT_WALK;					default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_WALK;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_RUN;					default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_RUN;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_PRE_JUMP;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_PRE_JUMP;		mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_JUMP;					default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_JUMP;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_TURNLEFT;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_TURNLEFT;		mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_TURNRIGHT;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_TURNRIGHT;		mAODefaultAnims.push_back(default_anims_loader);
 
-							overrideloader.orig_id = ANIM_AGENT_SIT;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_SIT;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_SIT_FEMALE;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_SIT;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_SIT_GENERIC;			overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_SIT;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_SIT_GROUND;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_GROUNDSIT;		mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_SIT_GROUND_CONSTRAINED;	overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_GROUNDSIT;		mAOOverrides.push_back(overrideloader);
+							default_anims_loader.orig_id = ANIM_AGENT_SIT;					default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_SIT;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_SIT_FEMALE;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_SIT;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_SIT_GENERIC;			default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_SIT;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_SIT_GROUND;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_GROUNDSIT;		mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_SIT_GROUND_CONSTRAINED;	default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_GROUNDSIT;		mAODefaultAnims.push_back(default_anims_loader);
 
-							overrideloader.orig_id = ANIM_AGENT_HOVER;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_HOVER;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_HOVER_DOWN;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_HOVER_DOWN;		mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_HOVER_UP;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_HOVER_UP;		mAOOverrides.push_back(overrideloader);
+							default_anims_loader.orig_id = ANIM_AGENT_HOVER;					default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_HOVER;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_HOVER_DOWN;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_HOVER_DOWN;		mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_HOVER_UP;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_HOVER_UP;		mAODefaultAnims.push_back(default_anims_loader);
 
-							overrideloader.orig_id = ANIM_AGENT_CROUCH;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_CROUCH;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_CROUCHWALK;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_CROUCHWALK;		mAOOverrides.push_back(overrideloader);
+							default_anims_loader.orig_id = ANIM_AGENT_CROUCH;					default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_CROUCH;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_CROUCHWALK;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_CROUCHWALK;		mAODefaultAnims.push_back(default_anims_loader);
 
-							overrideloader.orig_id = ANIM_AGENT_FALLDOWN;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_FALLDOWN;		mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_STANDUP;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_STANDUP;		mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_LAND;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_LAND;			mAOOverrides.push_back(overrideloader);
+							default_anims_loader.orig_id = ANIM_AGENT_FALLDOWN;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_FALLDOWN;		mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_STANDUP;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_STANDUP;		mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_LAND;					default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_LAND;			mAODefaultAnims.push_back(default_anims_loader);
 
-							overrideloader.orig_id = ANIM_AGENT_FLY;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_FLY;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = ANIM_AGENT_FLYSLOW;				overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_FLYSLOW;		mAOOverrides.push_back(overrideloader);
+							default_anims_loader.orig_id = ANIM_AGENT_FLY;					default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_FLY;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = ANIM_AGENT_FLYSLOW;				default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_FLYSLOW;		mAODefaultAnims.push_back(default_anims_loader);
 
-							overrideloader.orig_id = ANIM_AGENT_TYPE;					overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_TYPING;			mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_FLOATING;		mAOOverrides.push_back(overrideloader);
+							default_anims_loader.orig_id = ANIM_AGENT_TYPE;					default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_TYPING;			mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_FLOATING;		mAODefaultAnims.push_back(default_anims_loader);
 
-							overrideloader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_SWIMMINGFORWARD;		mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_SWIMMINGUP;		mAOOverrides.push_back(overrideloader);
-							overrideloader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	overrideloader.ao_id = LLUUID::null; overrideloader.state = STATE_AGENT_SWIMMINGDOWN;	mAOOverrides.push_back(overrideloader);
+							default_anims_loader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_SWIMMINGFORWARD;		mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_SWIMMINGUP;		mAODefaultAnims.push_back(default_anims_loader);
+							default_anims_loader.orig_id = LLUUID("159258dc-f57c-4662-8afd-c55b81d13849");	default_anims_loader.ao_id = LLUUID::null; default_anims_loader.state = STATE_AGENT_SWIMMINGDOWN;	mAODefaultAnims.push_back(default_anims_loader);
 							///////////////////////////
 							LLUUID* new_uuid = new LLUUID(configncitem);
 							LLHost source_sim = LLHost::invalid;
@@ -804,47 +566,10 @@ BOOL LLFloaterAO::init()
 		}
 		gSavedPerAccountSettings.setBOOL("EmeraldAOEnabled",FALSE);
 	}
-
-//	mAnimationState = 0;
-//	mCurrentStandId = LLUUID::null;
-//	setAnimationState(STATE_AGENT_IDLE);
 	return success;
 }
 
-void LLFloaterAO::onClickMore(void* data)
-{
-	gSavedSettings.setBOOL( "EmeraldAOAdvanced", TRUE );
-	updateLayout(sInstance);
-}
-void LLFloaterAO::onClickLess(void* data)
-{
-	gSavedSettings.setBOOL( "EmeraldAOAdvanced", FALSE );
-	updateLayout(sInstance);
-}
-
-void LLFloaterAO::onClickToggleAO(LLUICtrl *checkbox, void*)
-{
-	gSavedPerAccountSettings.setBOOL("EmeraldAOEnabled", checkbox->getValue().asBoolean());
-	llinfos << "Save EmeraldAOEnabled: " << checkbox->getValue().asBoolean() << llendl;
-	run();
-}
-
-void LLFloaterAO::onClickToggleSits(LLUICtrl *checkbox, void*)
-{
-	gSavedPerAccountSettings.setBOOL("EmeraldAOSitsEnabled", checkbox->getValue().asBoolean());
-	run();
-}
-
-void LLFloaterAO::onClickNoMouselookStands(LLUICtrl *checkbox, void*)
-{
-	gSavedPerAccountSettings.setBOOL("EmeraldAONoStandsInMouselook", checkbox->getValue().asBoolean());
-}
-
-void LLFloaterAO::onClickRandomizeStands(LLUICtrl *checkbox, void*)
-{
-	gSavedPerAccountSettings.setBOOL("EmeraldAOStandRandomize", checkbox->getValue().asBoolean());
-}
-
+// AO LOGIC -------------------------------------------------------
 
 void LLFloaterAO::run()
 {
@@ -866,7 +591,7 @@ void LLFloaterAO::run()
 		}
 		else
 		{
-			stopMotion(getCurrentStandId(), FALSE, TRUE); //stop stand first then set state
+			stopAOMotion(getCurrentStandId(),TRUE); //stop stand first then set state
 			setAnimationState(STATE_AGENT_IDLE);
 		}
 	}
@@ -875,6 +600,157 @@ void LLFloaterAO::run()
 		if (state == STATE_AGENT_SIT) gAgent.sendAnimationRequest(GetAnimIDFromState(state), (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled") && gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled")) ? ANIM_REQUEST_START : ANIM_REQUEST_STOP);
 		else gAgent.sendAnimationRequest(GetAnimIDFromState(state), gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled") ? ANIM_REQUEST_START : ANIM_REQUEST_STOP);
 	}
+}
+
+void LLFloaterAO::startAOMotion(const LLUUID& id, BOOL stand)
+{
+	int startmotionstate = STATE_AGENT_IDLE;
+
+	if (!stand) // it's a default linden anim uuid
+	{
+		startmotionstate = GetStateFromOrigAnimID(id);
+		if (startmotionstate == STATE_AGENT_IDLE) return;
+	}
+	else // it's an override anim uuid, probably a stand
+	{
+		startmotionstate = GetStateFromAOAnimID(id);
+	}
+//	cmdline_printchat(llformat("stand %s // startmotionstate: %d // %s // %s",stand?"1":"0",startmotionstate,GetAnimTypeFromState(startmotionstate).c_str(),id.asString().c_str()));
+	if (stand)
+	{
+		if (id.notNull())
+		{
+			BOOL sitting = FALSE;
+			if (gAgent.getAvatarObject())
+			{
+				sitting = gAgent.getAvatarObject()->mIsSitting;
+			}
+			if (sitting) return;
+			gAgent.sendAnimationRequest(id, ANIM_REQUEST_START);
+		}
+	}
+	else
+	{
+		if (GetAnimID(id).notNull() && gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
+		{
+			stopAOMotion(getCurrentStandId(), TRUE); //stop stand first then set state 
+			setAnimationState(GetStateFromOrigAnimID(id));
+		
+			if ((GetStateFromOrigAnimID(id) == STATE_AGENT_SIT) && !(gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled"))) return;
+			gAgent.sendAnimationRequest(GetAnimID(id), ANIM_REQUEST_START);
+    
+			if(mAODelayTimer.getElapsedTimeF32() >= F32(1.f))
+			{
+					    // checking for duplicate or stuck anims (packet loss/lag) 
+					    std::list<LLAnimHistoryItem*> history = LLFloaterExploreAnimations::animHistory[gAgent.getID()];
+					    for (std::list<LLAnimHistoryItem*>::iterator iter = history.begin(); iter != history.end(); ++iter)
+					    {
+						    LLAnimHistoryItem* item = (*iter);
+						    int state = GetStateFromAOAnimID(item->mAssetID);
+						    if (!state) continue;
+						    if  ( (item->mPlaying) && (state != getAnimationState()) )
+						    {
+	    //						cmdline_printchat(llformat("stopping duplicate anim: %d // %s // %s",getAnimationState(),GetAnimTypeFromState(getAnimationState()).c_str(),item->mAssetID.asString().c_str()));
+							    gAgent.sendAnimationRequest(item->mAssetID, ANIM_REQUEST_STOP);
+						    }
+					    }
+			    mAODelayTimer.reset();
+			}
+		}
+	}
+}
+
+void LLFloaterAO::stopAOMotion(const LLUUID& id, BOOL stand)
+{
+	int stopmotionstate = STATE_AGENT_IDLE;
+
+	if (!stand)
+	{
+		stopmotionstate = GetStateFromOrigAnimID(id);
+		if (stopmotionstate == STATE_AGENT_IDLE) return;
+	}
+	else
+	{
+		stopmotionstate = GetStateFromAOAnimID(id);
+	}
+
+//	cmdline_printchat(llformat("stand %s // stopmotionstate: %d // %s // %s",stand?"1":"0",stopmotionstate,GetAnimTypeFromState(stopmotionstate).c_str(),id.asString().c_str()));
+
+	if (stand)
+	{
+		setAnimationState(STATE_AGENT_IDLE);
+		gAgent.sendAnimationRequest(id, ANIM_REQUEST_STOP);
+	}
+	else
+	{
+		if (GetAnimID(id).notNull() && gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
+		{
+			if (getAnimationState() == GetStateFromOrigAnimID(id))
+			{
+				setAnimationState(STATE_AGENT_IDLE);
+			}
+			if(!mAODelayTimer.getStarted())
+			{
+			    mAODelayTimer.start();
+			}
+			else
+			{
+			    mAODelayTimer.reset();
+			}
+			ChangeStand();
+			gAgent.sendAnimationRequest(GetAnimID(id), ANIM_REQUEST_STOP);
+		}
+	}
+}
+
+void LLFloaterAO::ChangeStand()
+{
+	if (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
+	{
+		if (gAgent.getAvatarObject())
+		{
+			if (gSavedPerAccountSettings.getBOOL("EmeraldAONoStandsInMouselook") && gAgent.cameraMouselook()) return;
+
+			if (gAgent.getAvatarObject()->mIsSitting)
+			{
+//				stopAOMotion(getCurrentStandId(), FALSE, TRUE); //stop stand first then set state
+//				if (getAnimationState() != STATE_AGENT_GROUNDSIT) setAnimationState(STATE_AGENT_SIT);
+//				setCurrentStandId(LLUUID::null);
+				return;
+			}
+		}
+		if ((getAnimationState() == STATE_AGENT_IDLE) || (getAnimationState() == STATE_AGENT_STAND))// stands have lowest priority
+		{
+			if (!(mAOStands.size() > 0)) return;
+			if (gSavedPerAccountSettings.getBOOL("EmeraldAORandomizestand"))
+			{
+				stand_iterator = ll_rand(mAOStands.size()-1);
+			}
+			if (stand_iterator < 0) stand_iterator = int( mAOStands.size()-stand_iterator);
+			if (stand_iterator > int( mAOStands.size()-1)) stand_iterator = 0;
+
+			int stand_iterator_previous = stand_iterator -1;
+
+			if (stand_iterator_previous < 0) stand_iterator_previous = int( mAOStands.size()-1);
+			
+			if (mAOStands[stand_iterator].ao_id.notNull())
+			{
+				stopAOMotion(getCurrentStandId(), TRUE); //stop stand first then set state
+				startAOMotion(mAOStands[stand_iterator].ao_id, TRUE);
+
+				setAnimationState(STATE_AGENT_STAND);
+				setCurrentStandId(mAOStands[stand_iterator].ao_id);
+				if ((sInstance)&&(mcomboBox_stands)) mcomboBox_stands->selectNthItem(stand_iterator);
+				return;
+			}
+		}
+	} 
+	else
+	{
+		stopAOMotion(getCurrentStandId(), TRUE);
+		return; //stop if ao is off
+	}
+	return;
 }
 
 int LLFloaterAO::getAnimationState()
@@ -910,29 +786,66 @@ void LLFloaterAO::AOItemDrop(LLViewerInventoryItem* item)
 
 LLUUID LLFloaterAO::GetAnimID(const LLUUID& id)
 {
-	for (std::vector<struct_overrides>::iterator iter = mAOOverrides.begin(); iter != mAOOverrides.end(); ++iter)
+	for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
 	{
 		if (iter->orig_id == id) return iter->ao_id;
 	}
 	return LLUUID::null;
 }
 
-int LLFloaterAO::GetStateFromAnimID(const LLUUID& id)
+LLUUID LLFloaterAO::GetAnimIDFromState(const int state)
 {
-	for (std::vector<struct_overrides>::iterator iter = mAOOverrides.begin(); iter != mAOOverrides.end(); ++iter)
+	for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
+	{
+		if (iter->state == state) return iter->ao_id;
+	}
+	return LLUUID::null;
+}
+
+LLUUID LLFloaterAO::GetRandomAnimID(const LLUUID& id)
+{
+	return LLUUID::null;
+}
+
+LLUUID LLFloaterAO::GetRandomAnimIDFromState(const int state)
+{
+	std::vector<struct_all_anims> mAORandomizeAnims;
+	struct_all_anims random_anims_loader;
+	for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
+	{
+		if (iter->state == state)
+		{
+			random_anims_loader.ao_id = iter->ao_id; random_anims_loader.state = iter->state; mAORandomizeAnims.push_back(random_anims_loader);
+		}
+	}
+	return mAORandomizeAnims[ll_rand(mAOAllAnims.size()-1)].ao_id;
+}
+
+LLUUID LLFloaterAO::GetOrigAnimIDFromState(const int state)
+{
+	for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
+	{
+		if (iter->state == state) return iter->orig_id;
+	}
+	return LLUUID::null;
+}
+
+int LLFloaterAO::GetStateFromOrigAnimID(const LLUUID& id)
+{
+	for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
 	{
 		if (iter->orig_id == id) return iter->state;
 	}
 	return STATE_AGENT_IDLE;
 }
 
-LLUUID LLFloaterAO::GetAnimIDFromState(const int state)
+int LLFloaterAO::GetStateFromAOAnimID(const LLUUID& id)
 {
-	for (std::vector<struct_overrides>::iterator iter = mAOOverrides.begin(); iter != mAOOverrides.end(); ++iter)
+	for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
 	{
-		if (iter->state == state) return iter->ao_id;
+		if (iter->ao_id == id) return iter->state;
 	}
-	return LLUUID::null;
+	return STATE_AGENT_IDLE;
 }
 
 int LLFloaterAO::GetStateFromToken(std::string strtoken)
@@ -942,6 +855,145 @@ int LLFloaterAO::GetStateFromToken(std::string strtoken)
 		if (iter->token == strtoken) return iter->state;
 	}
 	return STATE_AGENT_IDLE;
+}
+
+std::string LLFloaterAO::GetAnimTypeFromState(const int state)
+{
+	for (std::vector<struct_anim_types>::iterator iter = mAnimTypes.begin(); iter != mAnimTypes.end(); ++iter)
+	{
+		if (iter->state == state) return iter->name;
+	}
+	return "unknown";
+}
+
+// UI -------------------------------------------------------
+
+LLUICtrl* LLFloaterAO::getComboBox(std::string name)
+{
+	for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
+	{
+		if ((iter->combobox) && (iter->name == name)) return iter->combobox;
+	}
+	return NULL;
+}
+
+void LLFloaterAO::onSpinnerCommit(LLUICtrl* ctrl, void* userdata)
+{
+	LLSpinCtrl* spin = (LLSpinCtrl*) ctrl;
+	if(spin)
+	{
+		if (spin->getName() == "standtime")
+		{
+			gSavedPerAccountSettings.setF32("EmeraldAOStandInterval", spin->get());
+			if (mAOStandTimer) mAOStandTimer->reset();
+		}
+	}
+}
+
+void LLFloaterAO::onCheckBoxCommit(LLUICtrl* ctrl, void* userdata)
+{
+	LLSpinCtrl* checkbox = (LLSpinCtrl*) ctrl;
+	if(checkbox)
+	{
+		gSavedPerAccountSettings.setBOOL(checkbox->getName(), checkbox->getValue().asBoolean());
+	}
+}
+
+void LLFloaterAO::onClickMore(void* data)
+{
+	gSavedSettings.setBOOL( "EmeraldAOAdvanced", TRUE );
+	updateLayout(sInstance);
+}
+void LLFloaterAO::onClickLess(void* data)
+{
+	gSavedSettings.setBOOL( "EmeraldAOAdvanced", FALSE );
+	updateLayout(sInstance);
+}
+
+void LLFloaterAO::onClickToggleAO(LLUICtrl *checkbox, void*)
+{
+	gSavedPerAccountSettings.setBOOL("EmeraldAOEnabled", checkbox->getValue().asBoolean());
+	llinfos << "Save EmeraldAOEnabled: " << checkbox->getValue().asBoolean() << llendl;
+	run();
+}
+
+void LLFloaterAO::onClickToggleSits(LLUICtrl *checkbox, void*)
+{
+	gSavedPerAccountSettings.setBOOL("EmeraldAOSitsEnabled", checkbox->getValue().asBoolean());
+	run();
+}
+
+void LLFloaterAO::onClickNoMouselookStands(LLUICtrl *checkbox, void*)
+{
+	gSavedPerAccountSettings.setBOOL("EmeraldAONoStandsInMouselook", checkbox->getValue().asBoolean());
+}
+
+void LLFloaterAO::onComboBoxCommit(LLUICtrl* ctrl, void* userdata)
+{
+	LLComboBox* box = (LLComboBox*)ctrl;
+	if(box)
+	{
+		if (box->getName() == "stand")
+		{
+			stand_iterator = box->getCurrentIndex();
+			cmdline_printchat(llformat("Changing stand to %s.",mAOStands[stand_iterator].anim_name.c_str()));
+			ChangeStand();
+		}
+		else
+		{
+			int state = STATE_AGENT_IDLE;
+			std::string stranim = box->getValue().asString();
+
+			if (box->getName() == "sit")
+			{
+				if (gAgent.getAvatarObject() && (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled")) && (gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled")))
+				{
+					if ((gAgent.getAvatarObject()->mIsSitting) && (getAnimationState() == STATE_AGENT_SIT))
+					{
+						//llinfos << "sitting " << GetAnimID(ANIM_AGENT_SIT) << " " << getAssetIDByName(stranim) << llendl;
+						gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SIT), ANIM_REQUEST_STOP);
+						gAgent.sendAnimationRequest(getAssetIDByName(stranim), ANIM_REQUEST_START);
+					}
+				}
+				gSavedPerAccountSettings.setString("EmeraldAODefaultsit",stranim);
+				state = STATE_AGENT_SIT;
+			}
+			else if (box->getName() == "gsit")
+			{
+				//llinfos << "gsitting " << GetAnimID(ANIM_AGENT_SIT_GROUND) << " " << getAssetIDByName(stranim) << llendl;
+				if (gAgent.getAvatarObject())
+				{
+					if ((gAgent.getAvatarObject()->mIsSitting) && (getAnimationState() == STATE_AGENT_GROUNDSIT))
+					{
+						//llinfos << "gsitting " << GetAnimID(ANIM_AGENT_SIT_GROUND) << " " << getAssetIDByName(stranim) << llendl;
+						gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SIT_GROUND), ANIM_REQUEST_STOP);
+						gAgent.sendAnimationRequest(getAssetIDByName(stranim), ANIM_REQUEST_START);
+					}
+				}
+				gSavedPerAccountSettings.setString("EmeraldAODefaultgsit",stranim);
+				state = STATE_AGENT_GROUNDSIT;
+			}
+			else
+			{
+				for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
+				{
+					if (box->getName() == iter->name)
+					{
+						gAgent.sendAnimationRequest(GetOrigAnimIDFromState(iter->state), ANIM_REQUEST_STOP);
+						gSavedPerAccountSettings.setString("EmeraldAODefault"+iter->name,stranim);
+						state = iter->state;
+					}
+				}
+				for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
+				{
+					if (state == iter->state)
+					{
+						iter->ao_id = getAssetIDByName(stranim);
+					}
+				}
+			}
+		}
+	}
 }
 
 void LLFloaterAO::onClickPrevStand(void* user_data)
@@ -964,127 +1016,18 @@ void LLFloaterAO::onClickNextStand(void* user_data)
 	ChangeStand();
 }
 
-BOOL LLFloaterAO::ChangeStand()
-{
-	if (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
-	{
-		if (gAgent.getAvatarObject())
-		{
-			if (gSavedPerAccountSettings.getBOOL("EmeraldAONoStandsInMouselook") && gAgent.cameraMouselook()) return FALSE;
-
-			if (gAgent.getAvatarObject()->mIsSitting)
-			{
-//				stopMotion(getCurrentStandId(), FALSE, TRUE); //stop stand first then set state
-//				if (getAnimationState() != STATE_AGENT_GROUNDSIT) setAnimationState(STATE_AGENT_SIT);
-//				setCurrentStandId(LLUUID::null);
-				return FALSE;
-			}
-		}
-		if ((getAnimationState() == STATE_AGENT_IDLE) || (getAnimationState() == STATE_AGENT_STAND))// stands have lowest priority
-		{
-			if (!(mAOStands.size() > 0)) return TRUE;
-			if (gSavedPerAccountSettings.getBOOL("EmeraldAOStandRandomize"))
-			{
-				stand_iterator = ll_rand(mAOStands.size()-1);
-			}
-			if (stand_iterator < 0) stand_iterator = int( mAOStands.size()-stand_iterator);
-			if (stand_iterator > int( mAOStands.size()-1)) stand_iterator = 0;
-
-			int stand_iterator_previous = stand_iterator -1;
-
-			if (stand_iterator_previous < 0) stand_iterator_previous = int( mAOStands.size()-1);
-			
-			if (mAOStands[stand_iterator].ao_id.notNull())
-			{
-				stopMotion(getCurrentStandId(), FALSE, TRUE); //stop stand first then set state
-				startMotion(mAOStands[stand_iterator].ao_id, 0, TRUE);
-
-				setAnimationState(STATE_AGENT_STAND);
-				setCurrentStandId(mAOStands[stand_iterator].ao_id);
-				if ((sInstance)&&(mcomboBox_stands)) mcomboBox_stands->selectNthItem(stand_iterator);
-//				llinfos << "changing stand to " << mAOStands[stand_iterator].anim_name << llendl;
-				return FALSE;
-			}
-		}
-	} 
-	else
-	{
-		stopMotion(getCurrentStandId(), FALSE, TRUE);
-		return TRUE; //stop if ao is off
-	}
-	return TRUE;
-}
-
-
-BOOL LLFloaterAO::startMotion(const LLUUID& id, F32 time_offset, BOOL stand)
-{
-	if (stand)
-	{
-		if (id.notNull())
-		{
-			BOOL sitting = FALSE;
-			if (gAgent.getAvatarObject())
-			{
-				sitting = gAgent.getAvatarObject()->mIsSitting;
-			}
-			if (sitting) return FALSE;
-			gAgent.sendAnimationRequest(id, ANIM_REQUEST_START);
-			return TRUE;
-		}
-	}
-	else
-	{
-		if (GetAnimID(id).notNull() && gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
-		{
-			stopMotion(getCurrentStandId(), FALSE, TRUE); //stop stand first then set state 
-			setAnimationState(GetStateFromAnimID(id));
-		
-//			llinfos << " state " << getAnimationState() << " start anim " << id << " overriding with " << GetAnimID(id) << llendl;
-			if ((GetStateFromAnimID(id) == STATE_AGENT_SIT) && !(gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled"))) return TRUE;
-			gAgent.sendAnimationRequest(GetAnimID(id), ANIM_REQUEST_START);
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-BOOL LLFloaterAO::stopMotion(const LLUUID& id, BOOL stop_immediate, BOOL stand)
-{	
-	if (stand)
-	{
-		setAnimationState(STATE_AGENT_IDLE);
-		gAgent.sendAnimationRequest(id, ANIM_REQUEST_STOP);
-		return TRUE;
-	}
-	else
-	{
-		if (GetAnimID(id).notNull() && gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
-		{
-//			llinfos << "  state " << getAnimationState() << "/" << GetStateFromAnimID(id) << "(now 0)  stop anim " << id << " overriding with " << GetAnimID(id) << llendl;
-			if (getAnimationState() == GetStateFromAnimID(id))
-			{
-				setAnimationState(STATE_AGENT_IDLE);
-			}
-			ChangeStand(); // startMotion(getCurrentStandId(), 0, TRUE);
-			gAgent.sendAnimationRequest(GetAnimID(id), ANIM_REQUEST_STOP);
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
 void LLFloaterAO::onClickReloadCard(void* user_data)
 {
-	if(gInventory.isEverythingFetched())
-	{
+//	if(gInventory.isEverythingFetched())
+//	{
 		LLFloaterAO::init();
-	}
+//	}
 }
 
 void LLFloaterAO::onClickOpenCard(void* user_data)
 {
-	if(gInventory.isEverythingFetched())
-	{
+//	if(gInventory.isEverythingFetched())
+//	{
 		LLUUID configncitem = (LLUUID)gSavedPerAccountSettings.getString("EmeraldAOConfigNotecardID");
 		if (configncitem.notNull())
 		{
@@ -1095,18 +1038,64 @@ void LLFloaterAO::onClickOpenCard(void* user_data)
 				{
 					if(!item->getAssetUUID().isNull())
 					open_notecard((LLViewerInventoryItem*)item, std::string("Note: ") + item->getName(), LLUUID::null, FALSE);
-	//				open_notecard((LLViewerInventoryItem*)item, std::string("Note: ") + item->getName(), LLUUID::null, FALSE, LLUUID::null, FALSE);
+				}
+			}
+		}
+//	}
+}
+
+void LLFloaterAO::loadComboBoxes()
+{
+	if (sInstance)
+	{
+		// empty
+		for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
+		{
+			if (iter->combobox)
+			{
+				iter->combobox->clear();
+				iter->combobox->removeall();
+			}
+		}
+
+		// fill
+		for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
+		{
+			/*
+			if ( && (mcomboBox_stands) && (iter->state == STATE_AGENT_STAND))
+			{
+				mcomboBox_stands->add(iter->anim_name.c_str(), ADD_BOTTOM, TRUE);
+			}
+			*/
+			for (std::vector<struct_combobox>::iterator comboiter = mComboBoxes.begin(); comboiter != mComboBoxes.end(); ++comboiter)
+			{
+				if ((comboiter->combobox) && (comboiter->state == iter->state))
+				{
+					if (!(comboiter->combobox->selectByValue(iter->anim_name.c_str()))) //check if exists then add
+					{
+						comboiter->combobox->add(iter->anim_name.c_str(), ADD_BOTTOM, TRUE); 
+					}
+				}
+			}
+
+		}
+
+		// reading default anim settings and updating combobox selections
+		for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
+		{
+			if (iter->state == STATE_AGENT_STAND) continue; // there is no default stand o.o
+			for (std::vector<struct_combobox>::iterator comboiter = mComboBoxes.begin(); comboiter != mComboBoxes.end(); ++comboiter)
+			{
+				if (iter->state == comboiter->state)
+				{
+					std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefault"+comboiter->name);
+					if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
+					if (comboiter->combobox) SetDefault(comboiter->combobox,iter->ao_id,defaultanim);
 				}
 			}
 		}
 	}
 }
-
-struct AOAssetInfo
-{
-	std::string path;
-	std::string name;
-};
 
 void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLAssetType::EType type,void* user_data, S32 status, LLExtStat ext_status)
 {
@@ -1125,37 +1114,12 @@ void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLA
 				std::string card = edit->getText();
 				edit->die();
 
-				if (mcomboBox_stands)
-				{
-					mcomboBox_stands->clear();
-					mcomboBox_stands->removeall();
-				}
-				if (mcomboBox_walks) mcomboBox_walks->clear();
-				if (mcomboBox_runs) mcomboBox_runs->clear();
-				if (mcomboBox_jumps) mcomboBox_jumps->clear();
-				if (mcomboBox_sits) mcomboBox_sits->clear();
-				if (mcomboBox_gsits) mcomboBox_gsits->clear();
-				if (mcomboBox_crouchs) mcomboBox_cwalks->clear();
-				if (mcomboBox_cwalks) mcomboBox_cwalks->clear();
-				if (mcomboBox_falls) mcomboBox_falls->clear();
-				if (mcomboBox_hovers) mcomboBox_hovers->clear();
-				if (mcomboBox_flys) mcomboBox_flys->clear();
-				if (mcomboBox_flyslows) mcomboBox_flyslows->clear();
-				if (mcomboBox_flyups) mcomboBox_flyups->clear();
-				if (mcomboBox_flydowns) mcomboBox_flydowns->clear();
-				if (mcomboBox_lands) mcomboBox_lands->clear();
-				if (mcomboBox_standups) mcomboBox_standups->clear();
-				if (mcomboBox_prejumps) mcomboBox_prejumps->clear();
+				mAOAllAnims.clear();
+				mAOStands.clear();
+				//mAODefaultAnims.clear();
 
-				if (mcomboBox_typing) mcomboBox_typing->clear();
-				if (mcomboBox_floating) mcomboBox_floating->clear();
-				if (mcomboBox_turnleft) mcomboBox_turnleft->clear();
-				if (mcomboBox_turnright) mcomboBox_turnright->clear();
-				if (mcomboBox_swimmingforward) mcomboBox_swimmingforward->clear();
-				if (mcomboBox_swimmingup) mcomboBox_swimmingup->clear();
-				if (mcomboBox_swimmingdown) mcomboBox_swimmingdown->clear();
-
-				struct_stands loader;
+				struct_stands standsloader;
+				struct_all_anims all_anims_loader;
 
 				typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 				boost::char_separator<char> sep("\n");
@@ -1163,9 +1127,7 @@ void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLA
 
 				for (tokenizer::iterator line = tokline.begin(); line != tokline.end(); ++line)
 				{
-//					llinfos << *line << llendl;
 					std::string strline(*line);
-//					llinfos << "uncommented line: " << strline << llendl;
 
 					boost::regex type("^(\\s*)(\\[ )(.*)( \\])");
 					boost::smatch what; 
@@ -1181,211 +1143,26 @@ void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLA
 						{
 							std::string strtoken(what[0]);
 							std::string stranim(*anim);
+							int state = GetStateFromToken(strtoken.c_str());
 							LLUUID animid(getAssetIDByName(stranim));
 
-//							llinfos << invfolderid.asString().c_str() << llendl;
-//							llinfos << "anim: " << stranim.c_str() << " assetid: " << animid << llendl;
 							if (!(animid.notNull()))
 							{
 								cmdline_printchat(llformat("Warning: animation '%s' could not be found (Section: %s).",stranim.c_str(),strtoken.c_str()));
 							}
 							else
 							{
-								switch(GetStateFromToken(strtoken.c_str()))
+								all_anims_loader.ao_id = animid; all_anims_loader.anim_name = stranim.c_str(); all_anims_loader.state = state; mAOAllAnims.push_back(all_anims_loader);
+
+								if (state == STATE_AGENT_STAND)
 								{
-								case STATE_AGENT_STAND:
-										loader.ao_id = animid; loader.anim_name = stranim.c_str(); mAOStands.push_back(loader);
-										if(mcomboBox_stands != NULL) mcomboBox_stands->add(stranim.c_str(), ADD_BOTTOM, TRUE);
-										break;
-								case STATE_AGENT_WALK:
-										{
-											if (sInstance && (mcomboBox_walks != NULL))
-											{
-												//llinfos << "1 anim: " << stranim.c_str() << " assetid: " << animid << llendl;
-												if (!(mcomboBox_walks->selectByValue(stranim.c_str()))) mcomboBox_walks->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										}
-										break;
-								case STATE_AGENT_RUN:
-										{
-											if (sInstance && (mcomboBox_runs != NULL))
-											{
-												if (!(mcomboBox_runs->selectByValue(stranim.c_str()))) mcomboBox_runs->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										}
-										break;
-								case STATE_AGENT_JUMP:
-										 {
-											if (sInstance && (mcomboBox_jumps != NULL))
-											{
-												if (!(mcomboBox_jumps->selectByValue(stranim.c_str()))) mcomboBox_jumps->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_SIT:
-										 {
-											if (sInstance && (mcomboBox_sits != NULL))
-											{
-												if (!(mcomboBox_sits->selectByValue(stranim.c_str()))) mcomboBox_sits->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_GROUNDSIT:
-										 {
-											if (sInstance && (mcomboBox_gsits != NULL))
-											{
-												if (!(mcomboBox_gsits->selectByValue(stranim.c_str()))) mcomboBox_gsits->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_CROUCH:
-										 {
-											if (sInstance && (mcomboBox_crouchs != NULL))
-											{
-												if (!(mcomboBox_crouchs->selectByValue(stranim.c_str()))) mcomboBox_crouchs->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_CROUCHWALK:
-										 {
-											if (sInstance && (mcomboBox_cwalks != NULL))
-											{
-												if (!(mcomboBox_cwalks->selectByValue(stranim.c_str()))) mcomboBox_cwalks->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_FALLDOWN:
-										 {
-											if (sInstance && (mcomboBox_falls != NULL))
-											{
-												if (!(mcomboBox_falls->selectByValue(stranim.c_str()))) mcomboBox_falls->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_HOVER:
-										 {
-											if (sInstance && (mcomboBox_hovers != NULL))
-											{
-												if (!(mcomboBox_hovers->selectByValue(stranim.c_str()))) mcomboBox_hovers->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_FLY:
-										 {
-											if (sInstance && (mcomboBox_flys != NULL))
-											{
-												if (!(mcomboBox_flys->selectByValue(stranim.c_str()))) mcomboBox_flys->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_FLYSLOW:
-										 {
-											if (sInstance && (mcomboBox_flyslows != NULL))
-											{
-												if (!(mcomboBox_flyslows->selectByValue(stranim.c_str()))) mcomboBox_flyslows->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_HOVER_UP:
-										 {
-											if (sInstance && (mcomboBox_flyups != NULL))
-											{
-												if (!(mcomboBox_flyups->selectByValue(stranim.c_str()))) mcomboBox_flyups->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										break;
-								case STATE_AGENT_HOVER_DOWN:
-										 {
-											if (sInstance && (mcomboBox_flydowns != NULL))
-											{
-												if (!(mcomboBox_flydowns->selectByValue(stranim.c_str()))) mcomboBox_flydowns->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_LAND:
-										 {
-											if (sInstance && (mcomboBox_lands != NULL))
-											{
-												if (!(mcomboBox_lands->selectByValue(stranim.c_str()))) mcomboBox_lands->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_STANDUP:
-										 {
-											if (sInstance && (mcomboBox_standups != NULL))
-											{
-												if (!(mcomboBox_standups->selectByValue(stranim.c_str()))) mcomboBox_standups->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_PRE_JUMP:
-										 {
-											if (sInstance && (mcomboBox_prejumps != NULL))
-											{
-												if (!(mcomboBox_prejumps->selectByValue(stranim.c_str()))) mcomboBox_prejumps->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_TURNLEFT:
-										 {
-											if (sInstance && (mcomboBox_turnleft != NULL))
-											{
-												if (!(mcomboBox_turnleft->selectByValue(stranim.c_str()))) mcomboBox_turnleft->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_TURNRIGHT:
-										 {
-											if (sInstance && (mcomboBox_turnright != NULL))
-											{
-												if (!(mcomboBox_turnright->selectByValue(stranim.c_str()))) mcomboBox_turnright->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_TYPING:
-										 {
-											if (sInstance && (mcomboBox_typing != NULL))
-											{
-												if (!(mcomboBox_typing->selectByValue(stranim.c_str()))) mcomboBox_typing->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_FLOATING:
-										 {
-											if (sInstance && (mcomboBox_floating != NULL))
-											{
-												if (!(mcomboBox_floating->selectByValue(stranim.c_str()))) mcomboBox_floating->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_SWIMMINGFORWARD:
-										 {
-											if (sInstance && (mcomboBox_swimmingforward != NULL))
-											{
-												if (!(mcomboBox_swimmingforward->selectByValue(stranim.c_str()))) mcomboBox_swimmingforward->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_SWIMMINGUP:
-										 {
-											if (sInstance && (mcomboBox_swimmingup != NULL))
-											{
-												if (!(mcomboBox_swimmingup->selectByValue(stranim.c_str()))) mcomboBox_swimmingup->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
-								case STATE_AGENT_SWIMMINGDOWN:
-										 {
-											if (sInstance && (mcomboBox_swimmingdown != NULL))
-											{
-												if (!(mcomboBox_swimmingdown->selectByValue(stranim.c_str()))) mcomboBox_swimmingdown->add(stranim.c_str(), ADD_BOTTOM, TRUE); //check if exist
-											}
-										 }
-										 break;
+									standsloader.ao_id = animid; standsloader.anim_name = stranim.c_str(); mAOStands.push_back(standsloader);
+									continue;
 								}
-								for (std::vector<struct_overrides>::iterator iter = mAOOverrides.begin(); iter != mAOOverrides.end(); ++iter)
+
+								for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
 								{
-									if (GetStateFromToken(strtoken.c_str()) == iter->state)
+									if (state == iter->state)
 									{
 										iter->ao_id = animid;
 									}
@@ -1396,174 +1173,8 @@ void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLA
 				}
 				llinfos << "ao nc read sucess" << llendl;
 
-				for (std::vector<struct_overrides>::iterator iter = mAOOverrides.begin(); iter != mAOOverrides.end(); ++iter)
-				{
-					switch(iter->state)
-					{
+				loadComboBoxes();
 
-					case STATE_AGENT_WALK:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultWalk");
-							SetDefault(mcomboBox_walks,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_RUN:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultRun");
-							SetDefault(mcomboBox_runs,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_JUMP:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultJump");
-							SetDefault(mcomboBox_jumps,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						break;
-					case STATE_AGENT_SIT:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultSit");
-							SetDefault(mcomboBox_sits,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_CROUCH:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultCrouch");
-							SetDefault(mcomboBox_crouchs,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_GROUNDSIT:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultGroundSit");
-							SetDefault(mcomboBox_gsits,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_CROUCHWALK:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultCrouchWalk");
-							SetDefault(mcomboBox_cwalks,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_FALLDOWN:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultFall");
-							SetDefault(mcomboBox_falls,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_HOVER:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultHover");
-							SetDefault(mcomboBox_hovers,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_FLY:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultFly");
-							SetDefault(mcomboBox_flys,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_HOVER_UP:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultFlyUp");
-							SetDefault(mcomboBox_flyups,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_FLYSLOW:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultFlySlow");
-							SetDefault(mcomboBox_flyslows,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_HOVER_DOWN:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultFlyDown");
-							SetDefault(mcomboBox_flydowns,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_LAND:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultLand");
-							SetDefault(mcomboBox_lands,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_STANDUP:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultStandUp");
-							SetDefault(mcomboBox_standups,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_PRE_JUMP:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultPreJump");
-							SetDefault(mcomboBox_prejumps,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_TURNLEFT:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultTurnLeft");
-							SetDefault(mcomboBox_turnleft,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_TURNRIGHT:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultTurnRight");
-							SetDefault(mcomboBox_turnright,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_TYPING:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultTyping");
-							SetDefault(mcomboBox_typing,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_FLOATING:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultFloating");
-							SetDefault(mcomboBox_floating,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_SWIMMINGFORWARD:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultSwimmingForward");
-							SetDefault(mcomboBox_swimmingforward,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_SWIMMINGUP:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultSwimmingUp");
-							SetDefault(mcomboBox_swimmingup,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					case STATE_AGENT_SWIMMINGDOWN:
-						{
-							std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefaultSwimmingDown");
-							SetDefault(mcomboBox_swimmingdown,iter->ao_id,defaultanim);
-							if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
-						}
-						 break;
-					}
-				}
 				run();
 			}
 			else

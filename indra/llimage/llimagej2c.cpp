@@ -425,6 +425,20 @@ BOOL LLImageJ2C::decodeChannels(LLImageRaw *raw_imagep, F32 decode_time, S32 fir
 			img_data.mDiscard = getRawDiscardLevel();
 			img_data.mHeight = getHeight();
 			img_data.mWidth = getWidth();
+			if(emImpl->getMetaComment(&img_data))
+			{
+				
+				char wat [67];
+				memcpy(&wat[0],img_data.mData,img_data.mLength);
+				raw_imagep->decodedImageComment = wat;
+				img_data.mComponents = max_channel_count;
+				img_data.mFirstComp = first_channel;
+				img_data.mData = getData();
+				img_data.mLength = (U32)getDataSize();
+				img_data.mDiscard = getRawDiscardLevel();
+				img_data.mHeight = getHeight();
+				img_data.mWidth = getWidth();
+			}
 			res = emImpl->decodeData(&img_data);
 			if((img_data.mData != getData()) &&
 				(img_data.mWidth > 0) && (img_data.mHeight > 0)

@@ -96,6 +96,7 @@ private:
 	static void onCommitAvatarModifier(LLUICtrl* ctrl, void* userdata);
 	static void onTexturePickerCommit(LLUICtrl* ctrl, void* userdata);
 	static void onComboBoxCommit(LLUICtrl* ctrl, void* userdata);
+	static void onTagComboBoxCommit(LLUICtrl* ctrl, void* userdata);
 	static void onSpellBaseComboBoxCommit(LLUICtrl* ctrl, void* userdata);	
 	static void beamUpdateCall(LLUICtrl* ctrl, void* userdata);
 	static void onClickSetMirror(void*);

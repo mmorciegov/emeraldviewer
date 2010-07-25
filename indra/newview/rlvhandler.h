@@ -79,6 +79,7 @@ public:
 
 	// Adds an eLock type lock (held by idRlvObj) for the specified attachment point
 	void addAttachmentLock(S32 idxAttachPt, const LLUUID& idRlvObj, ERlvLockMask eLock);
+	static void dumpAttachmentLocks(void*);
 	// Returns TRUE if there is at least 1 eLock type locked attachment (RLV_LOCK_ANY = RLV_LOCK_ADD *or* RLV_LOCK_REMOVE)
 	bool hasLockedAttachment(ERlvLockMask eLock) const;
 	// Returns TRUE if there is at least 1 non-detachable HUD attachment

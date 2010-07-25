@@ -73,6 +73,10 @@ class LLFloaterTeleportHistory : public LLFloater
 		/// @brief: enables or disables the "Teleport", "Show On Map" and "Copy To SLURL" buttons **/
 		void setButtonsEnabled(BOOL on);
 
+		void loadEntrys();
+		void saveEntry(LLSD toSave);
+		std::string getFileName();
+
 		LLScrollListCtrl* mPlacesInList;
 		LLScrollListCtrl* mPlacesOutList;
 		LLScrollListItem* pItem;
@@ -80,6 +84,7 @@ class LLFloaterTeleportHistory : public LLFloater
 
 		/// @brief: to see if this was the first time setVisible() was called (at program startup)
 		BOOL firstRun;
+		LLSD tpList;
 };
 
 // globals

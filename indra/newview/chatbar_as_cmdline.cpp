@@ -379,7 +379,7 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 					if (status == "on" )
 					{
 						gSavedPerAccountSettings.setBOOL("EmeraldAOEnabled",TRUE);
-						LLFloaterAO::init();
+//						LLFloaterAO::init();
 						LLFloaterAO::run();
 					}
 					else if (status == "off" )

@@ -88,17 +88,30 @@
 			<key>Value</key>
 			<real>20</real>
 		</map>
-		<key>EmeraldAOStandRandomize</key>
-		<map>
-			<key>Comment</key>
-			<string>Randomize stand anims</string>
-			<key>Persist</key>
-			<integer>1</integer>
-			<key>Type</key>
-			<string>Boolean</string>
-			<key>Value</key>
-			<integer>0</integer>
-		</map>
+      <key>EmeraldAOStandRandomize</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize stand anims</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeWalk</key>
+      <map>
+        <key>Comment</key>
+        <string>random</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      
+      
 <key>EmeraldInstantMessageAnnounceIncoming</key>
 	<map>
 	<key>Comment</key>
@@ -346,7 +359,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultWalk</key>
+  <key>EmeraldAODefaultwalk</key>
   <map>
     <key>Comment</key>
     <string>Default walk anim</string>
@@ -357,7 +370,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultSit</key>
+  <key>EmeraldAODefaultsit</key>
   <map>
     <key>Comment</key>
     <string>Default sit anim</string>
@@ -368,7 +381,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultRun</key>
+  <key>EmeraldAODefaultrun</key>
   <map>
     <key>Comment</key>
     <string>Default run anim</string>
@@ -379,7 +392,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultJump</key>
+  <key>EmeraldAODefaultjump</key>
   <map>
     <key>Comment</key>
     <string>Default jump anim</string>
@@ -390,7 +403,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultGroundSit</key>
+  <key>EmeraldAODefaultgsit</key>
   <map>
     <key>Comment</key>
     <string>Default groundsit anim</string>
@@ -401,7 +414,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultCrouch</key>
+  <key>EmeraldAODefaultcrouch</key>
   <map>
     <key>Comment</key>
     <string>Default crouch anim</string>
@@ -412,7 +425,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultCrouchWalk</key>
+  <key>EmeraldAODefaultcwalk</key>
   <map>
     <key>Comment</key>
     <string>Default crouchwalk anim</string>
@@ -423,7 +436,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultFall</key>
+  <key>EmeraldAODefaultfall</key>
   <map>
     <key>Comment</key>
     <string>Default fall anim</string>
@@ -434,7 +447,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultHover</key>
+  <key>EmeraldAODefaulthover</key>
   <map>
     <key>Comment</key>
     <string>Default hover anim</string>
@@ -445,7 +458,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultFly</key>
+  <key>EmeraldAODefaultfly</key>
   <map>
     <key>Comment</key>
     <string>Default fly anim</string>
@@ -456,7 +469,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultFlySlow</key>
+  <key>EmeraldAODefaultflyslow</key>
   <map>
     <key>Comment</key>
     <string>Default flyslow anim</string>
@@ -467,7 +480,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultFlyUp</key>
+  <key>EmeraldAODefaultflyup</key>
   <map>
     <key>Comment</key>
     <string>Default flyup anim</string>
@@ -478,7 +491,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultFlyDown</key>
+  <key>EmeraldAODefaultflydown</key>
   <map>
     <key>Comment</key>
     <string>Default flydown anim</string>
@@ -489,7 +502,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultLand</key>
+  <key>EmeraldAODefaultland</key>
   <map>
     <key>Comment</key>
     <string>Default land anim</string>
@@ -500,7 +513,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultStandUp</key>
+  <key>EmeraldAODefaultstandup</key>
   <map>
     <key>Comment</key>
     <string>Default standup anim</string>
@@ -511,7 +524,7 @@
     <key>Value</key>
     <string></string>
   </map>
-  <key>EmeraldAODefaultPreJump</key>
+  <key>EmeraldAODefaultprejump</key>
   <map>
     <key>Comment</key>
     <string>Default prejump anim</string>
@@ -522,116 +535,380 @@
     <key>Value</key>
     <string></string>
   </map>
-      <key>EmeraldAODefaultTurnLeft</key>
+  <key>EmeraldAODefaultturnleft</key>
+  <map>
+    <key>Comment</key>
+    <string>anim</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string></string>
+  </map>
+  <key>EmeraldAODefaultturnright</key>
+  <map>
+    <key>Comment</key>
+    <string>anim</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string></string>
+  </map>
+  <key>EmeraldAODefaulttyping</key>
+  <map>
+    <key>Comment</key>
+    <string>anim</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string></string>
+  </map>
+  <key>EmeraldAODefaultfloating</key>
+  <map>
+    <key>Comment</key>
+    <string>anim</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string></string>
+  </map>
+  <key>EmeraldAODefaultswimmingforwards</key>
+  <map>
+    <key>Comment</key>
+    <string>anim</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string></string>
+  </map>
+  <key>EmeraldAODefaultswimmingup</key>
+  <map>
+    <key>Comment</key>
+    <string>anim</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string></string>
+  </map>
+  <key>EmeraldAODefaultswimmingdown</key>
+  <map>
+    <key>Comment</key>
+    <string>anim</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>String</string>
+    <key>Value</key>
+    <string></string>
+  </map>
+      <key>EmeraldAORandomizestand</key>
       <map>
         <key>Comment</key>
-        <string>anim</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>String</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <string></string>
+        <integer>0</integer>
       </map>
-      <key>EmeraldAODefaultTurnRight</key>
+      <key>EmeraldAORandomizewalk</key>
       <map>
         <key>Comment</key>
-        <string>anim</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>String</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <string></string>
+        <integer>0</integer>
       </map>
-      <key>EmeraldAODefaultTyping</key>
+      <key>EmeraldAORandomizesit</key>
       <map>
         <key>Comment</key>
-        <string>anim</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>String</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <string></string>
+        <integer>0</integer>
       </map>
-      <key>EmeraldAODefaultFloating</key>
+      <key>EmeraldAORandomizerun</key>
       <map>
         <key>Comment</key>
-        <string>anim</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>String</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <string></string>
+        <integer>0</integer>
       </map>
-      <key>EmeraldAODefaultSwimmingForward</key>
+      <key>EmeraldAORandomizejump</key>
       <map>
         <key>Comment</key>
-        <string>anim</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>String</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <string></string>
+        <integer>0</integer>
       </map>
-      <key>EmeraldAODefaultSwimmingUp</key>
+      <key>EmeraldAORandomizegsit</key>
       <map>
         <key>Comment</key>
-        <string>anim</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>String</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <string></string>
+        <integer>0</integer>
       </map>
-      <key>EmeraldAODefaultSwimmingDown</key>
+      <key>EmeraldAORandomizecrouch</key>
       <map>
         <key>Comment</key>
-        <string>anim</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>String</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <string></string>
+        <integer>0</integer>
       </map>
-      <key>EmeraldAvatarXModifier</key>
+      <key>EmeraldAORandomizecwalk</key>
       <map>
         <key>Comment</key>
-        <string>wat</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>F32</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <real>0.0</real>
+        <integer>0</integer>
       </map>
-      <key>EmeraldAvatarYModifier</key>
+      <key>EmeraldAORandomizefall</key>
       <map>
         <key>Comment</key>
-        <string>wat</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>F32</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <real>0.0</real>
+        <integer>0</integer>
       </map>
-      <key>EmeraldAvatarZModifier</key>
+      <key>EmeraldAORandomizehover</key>
       <map>
         <key>Comment</key>
-        <string>wat</string>
+        <string>Randomize</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
-        <string>F32</string>
+        <string>Boolean</string>
         <key>Value</key>
-        <real>0.0</real>
+        <integer>0</integer>
       </map>
+      <key>EmeraldAORandomizefly</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeflyslow</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeflyup</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeflydown</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeland</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizestandup</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeprejump</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeturnleft</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeturnright</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizetyping</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizefloating</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeswimmingforwards</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeswimmingup</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+      <key>EmeraldAORandomizeswimmingdown</key>
+      <map>
+        <key>Comment</key>
+        <string>Randomize</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+      </map>
+  <key>EmeraldAvatarXModifier</key>
+  <map>
+    <key>Comment</key>
+    <string>wat</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.0</real>
+  </map>
+  <key>EmeraldAvatarYModifier</key>
+  <map>
+    <key>Comment</key>
+    <string>wat</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.0</real>
+  </map>
+  <key>EmeraldAvatarZModifier</key>
+  <map>
+    <key>Comment</key>
+    <string>wat</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.0</real>
+  </map>
   <key>RLVaLoginLastLocation</key>
   <map>
     <key>Comment</key>
