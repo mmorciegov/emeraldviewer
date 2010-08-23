@@ -34,7 +34,7 @@
 #ifndef LLBASE64_H
 #define LLBASE64_h
 
-class LLBase64
+class LL_COMMON_API LLBase64
 {
 public:
 	/**

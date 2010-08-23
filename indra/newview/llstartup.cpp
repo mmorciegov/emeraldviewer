@@ -214,7 +214,7 @@
 
 #include "floaterao.h"
 
-#include "a_modularsystemslink.h"
+#include "a_emeraldviewerlink.h"
 
 #include "growlmanager.h"
 #include "streamtitledisplay.h"
@@ -447,7 +447,7 @@ bool idle_startup()
 
 		GrowlManager::InitiateManager();
 
-		ModularSystemsLink::getInstance()->start_download();
+		EmeraldViewerLink::getInstance()->start_download();
 
 		LGGAutoCorrect::getInstance()->loadFromDisk();
 
@@ -1191,6 +1191,7 @@ bool idle_startup()
 		requested_options.push_back("buddy-list");
 		requested_options.push_back("ui-config");
 #endif
+		requested_options.push_back("map-server-url");
 		requested_options.push_back("tutorial_setting");
 		requested_options.push_back("login-flags");
 		requested_options.push_back("global-textures");
@@ -1653,8 +1654,8 @@ bool idle_startup()
 				gAgent.setHomePosRegion(region_handle, position);
 			}
 
-			if(ModularSystemsLink::getInstance()->ms_motd == "")gAgent.mMOTD = LLUserAuth::getInstance()->getResponse("message");
-			else gAgent.mMOTD = ModularSystemsLink::getInstance()->ms_motd;
+			if(EmeraldViewerLink::getInstance()->ms_motd == "")gAgent.mMOTD = LLUserAuth::getInstance()->getResponse("message");
+			else gAgent.mMOTD = EmeraldViewerLink::getInstance()->ms_motd;
 			LLUserAuth::options_t options;
 			if(LLUserAuth::getInstance()->getOptions("inventory-root", options))
 			{
@@ -1740,6 +1741,11 @@ bool idle_startup()
 				}
 			}
 
+			std::string map_server_url = LLUserAuth::getInstance()->getResponse("map-server-url");
+			if(!map_server_url.empty())
+			{
+				gSavedSettings.setString("MapServerURL", map_server_url);
+			}
 			// Override grid info with anything sent in the login response
 			std::string tmp = LLUserAuth::getInstance()->getResponse("gridname");
 			if (!tmp.empty()) gHippoGridManager->getConnectedGrid()->setGridName(tmp);
@@ -3793,30 +3799,22 @@ void apply_udp_blacklist(const std::string& csv)
 
 bool LLStartUp::handleSocksProxy(bool reportOK)
 {
-	bool use_http_proxy = gSavedSettings.getBOOL("BrowserProxyEnabled");
-	if (use_http_proxy)
-	{
-		std::string httpProxyType = gSavedSettings.getString("Socks5HttpProxyType");
+	std::string httpProxyType = gSavedSettings.getString("Socks5HttpProxyType");
 
-		// Determine the http proxy type (if any)
-		if (httpProxyType.compare("Web") == 0)
-		{
-			LLHost httpHost;
-			httpHost.setHostByName(gSavedSettings.getString("BrowserProxyAddress"));
-			httpHost.setPort(gSavedSettings.getS32("BrowserProxyPort"));
-			LLSocks::getInstance()->EnableHttpProxy(httpHost,LLPROXY_HTTP);
-		}
-		else if (httpProxyType.compare("Socks") == 0)
-		{
-			LLHost httpHost;
-			httpHost.setHostByName(gSavedSettings.getString("Socks5ProxyHost"));
-			httpHost.setPort(gSavedSettings.getS32("Socks5ProxyPort"));
-			LLSocks::getInstance()->EnableHttpProxy(httpHost,LLPROXY_SOCKS);
-		}
-		else
-		{
-			LLSocks::getInstance()->DisableHttpProxy();
-		}
+	// Determine the http proxy type (if any)
+	if ((httpProxyType.compare("Web") == 0) && gSavedSettings.getBOOL("BrowserProxyEnabled"))
+	{
+		LLHost httpHost;
+		httpHost.setHostByName(gSavedSettings.getString("BrowserProxyAddress"));
+		httpHost.setPort(gSavedSettings.getS32("BrowserProxyPort"));
+		LLSocks::getInstance()->EnableHttpProxy(httpHost,LLPROXY_HTTP);
+	}
+	else if ((httpProxyType.compare("Socks") == 0) && gSavedSettings.getBOOL("Socks5ProxyEnabled"))
+	{
+		LLHost httpHost;
+		httpHost.setHostByName(gSavedSettings.getString("Socks5ProxyHost"));
+		httpHost.setPort(gSavedSettings.getU32("Socks5ProxyPort"));
+		LLSocks::getInstance()->EnableHttpProxy(httpHost,LLPROXY_SOCKS);
 	}
 	else
 	{

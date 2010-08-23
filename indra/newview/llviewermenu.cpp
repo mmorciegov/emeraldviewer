@@ -1364,7 +1364,7 @@ void init_debug_rendering_menu(LLMenuGL* menu)
 			'R', MASK_CONTROL|MASK_SHIFT));
 
 	LLMenuItemCheckGL* item;
-	item = new LLMenuItemCheckGL("Object-Object Occlusion", menu_toggle_control, NULL, menu_check_control, (void*)"UseOcclusion", 'O', MASK_CONTROL|MASK_SHIFT);
+	item = new LLMenuItemCheckGL("Object-Object Occlusion", menu_toggle_control, NULL, menu_check_control, (void*)"UseOcclusion", 'O', MASK_CONTROL|MASK_ALT|MASK_SHIFT);
 	item->setEnabled(gGLManager.mHasOcclusionQuery && LLFeatureManager::getInstance()->isFeatureAvailable("UseOcclusion"));
 	menu->append(item);
 

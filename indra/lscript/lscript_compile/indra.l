@@ -322,9 +322,9 @@ extern "C" { int yyerror(const char *fmt, ...); }
 "LAND_NOISE"		{ count(); yylval.ival = E_LANDBRUSH_NOISE; return(INTEGER_CONSTANT); }
 "LAND_REVERT"		{ count(); yylval.ival = E_LANDBRUSH_REVERT; return(INTEGER_CONSTANT); }
 	
-"LAND_SMALL_BRUSH"	{ count(); yylval.ival = 0; return(INTEGER_CONSTANT); }
-"LAND_MEDIUM_BRUSH"	{ count(); yylval.ival = 1; return(INTEGER_CONSTANT); }
-"LAND_LARGE_BRUSH"	{ count(); yylval.ival = 2; return(INTEGER_CONSTANT); }
+"LAND_SMALL_BRUSH"	{ count(); yylval.ival = 1; return(INTEGER_CONSTANT); }
+"LAND_MEDIUM_BRUSH"	{ count(); yylval.ival = 2; return(INTEGER_CONSTANT); }
+"LAND_LARGE_BRUSH"	{ count(); yylval.ival = 3; return(INTEGER_CONSTANT); }
 	
 "DATA_ONLINE"		{ count(); yylval.ival = 1; return(INTEGER_CONSTANT); }
 "DATA_NAME"			{ count(); yylval.ival = 2; return(INTEGER_CONSTANT); }

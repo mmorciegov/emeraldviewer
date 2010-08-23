@@ -211,6 +211,14 @@ class WindowsManifest(ViewerManifest):
         # For using FMOD for sound... DJS
         self.path("fmod.dll")
 
+        # Get llcommon and deps.
+        if self.prefix(src=self.args['configuration'], dst=""):
+            self.path('libapr-1.dll')
+            self.path('libaprutil-1.dll')
+            self.path('libapriconv-1.dll')
+            self.path('llcommon.dll')
+            self.end_prefix()
+
         # For textures
         if self.prefix(src="../../libraries/i686-win32/lib/release", dst=""):
             self.path("openjpeg.dll")
@@ -526,16 +534,29 @@ class DarwinManifest(ViewerManifest):
                 self.path("vivox-runtime/universal-darwin/libvivoxsdk.dylib", "libvivoxsdk.dylib")
                 self.path("vivox-runtime/universal-darwin/SLVoice", "SLVoice")
 
+                libdir = "../../libraries/universal-darwin/lib_release"
+                dylibs = {}
+
                 # need to get the kdu dll from any of the build directories as well
+                for lib in "llkdu", "llcommon":
+                    libfile = "lib%s.dylib" % lib
                 try:
-                    self.path(self.find_existing_file('../llkdu/%s/libllkdu.dylib' % self.args['configuration'],
-                        '../../build-darwin-universal-Release/llkdu/Release/libllkdu.dylib',
-                        "../../libraries/universal-darwin/lib_release/libllkdu.dylib"),
-                        dst='libllkdu.dylib')
-                    pass
-                except:
-                    print "Skipping libllkdu.dylib"
-                    pass
+                    self.path(self.find_existing_file(os.path.join(os.pardir,
+                                                                       lib,
+                                                                       self.args['configuration'],
+                                                                       libfile),
+                                                          os.path.join(libdir, libfile)),
+                                  dst=libfile)
+                except RuntimeError:
+                    print "Skipping %s" % libfile
+                    dylibs[lib] = False
+                else:
+                    dylibs[lib] = True
+
+                for libfile in ("libapr-1.0.3.7.dylib",
+                                "libaprutil-1.0.3.8.dylib",
+                                "libexpat.0.5.0.dylib"):
+                    self.path(os.path.join(libdir, libfile), libfile)
                 
                 #libfmodwrapper.dylib
                 self.path(self.args['configuration'] + "/libfmodwrapper.dylib", "libfmodwrapper.dylib")
@@ -543,6 +564,23 @@ class DarwinManifest(ViewerManifest):
                 # our apps
                 self.path("../mac_crash_logger/" + self.args['configuration'] + "/mac-crash-logger.app", "mac-crash-logger.app")
                 self.path("../mac_updater/" + self.args['configuration'] + "/mac-updater.app", "mac-updater.app")
+
+                # our apps dependencies on shared libs
+                mac_crash_logger_res_path = self.dst_path_of("mac-crash-logger.app/Contents/Resources")
+                mac_updater_res_path = self.dst_path_of("mac-updater.app/Contents/Resources")
+                for libfile in ("libllcommon.dylib",
+                                "libapr-1.0.3.7.dylib",
+                                "libaprutil-1.0.3.8.dylib",
+                                "libexpat.0.5.0.dylib"):
+                    target_lib = os.path.join('../../..', libfile)
+                    self.run_command("ln -sf %(target)r %(link)r" %
+                                     {'target': target_lib,
+                                      'link' : os.path.join(mac_crash_logger_res_path, libfile)}
+                                     )
+                    self.run_command("ln -sf %(target)r %(link)r" %
+                                     {'target': target_lib,
+                                      'link' : os.path.join(mac_updater_res_path, libfile)}
+                                     )
 
                 # plugin launcher
                 self.path("../llplugin/slplugin/" + self.args['configuration'] + "/SLPlugin", "SLPlugin")
@@ -722,6 +760,8 @@ class LinuxManifest(ViewerManifest):
 
         # Per platform MIME config on the cheap.  See SNOW-307 / DEV-41388
         self.path("skins/default/xui/en-us/mime_types_linux.xml", "skins/default/xui/en-us/mime_types.xml")
+
+        self.path("../llcommon/libllcommon.so", "lib/libllcommon.so")
 
         self.path("featuretable_linux.txt")
 

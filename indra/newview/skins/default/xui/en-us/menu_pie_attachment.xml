@@ -17,14 +17,18 @@
 			<on_click function="Object.ScriptCount" />
 			<on_visible function="Object.VisibleScriptCount" />
 		</menu_item_call>
-	<menu_item_call enabled="false" label="Touch" mouse_opaque="true" name="Attachment Object Touch">
-		<on_click function="Object.Touch" />
-		<on_enable function="Object.EnableTouch" userdata="Touch" name="EnableTouch"/>
-	</menu_item_call>
+		<menu_item_call enabled="false" label="Touch" mouse_opaque="true" name="Attachment Object Touch">
+			<on_click function="Object.Touch" />
+			<on_enable function="Object.EnableTouch" userdata="Touch" name="EnableTouch"/>
+		</menu_item_call>
 		<menu_item_call enabled="true" label="Derender" mouse_opaque="true" name="Derender">
 		    <on_click function="Object.DERENDER" />
- 		    <on_enable function="Object.EnableDerender" />
+		    <on_enable function="Object.EnableDerender" />
 		</menu_item_call>
+	    <menu_item_call enabled="true" label="Inspect" mouse_opaque="true" name="Object Inspect">
+	      <on_click function="Object.Inspect" />
+	      <on_enable function="Object.EnableInspect" />
+	    </menu_item_call>
 	</pie_menu>
 	<menu_item_call enabled="true" label="Sit Here" name="Self Sit Attachment">
 		<on_click function="Self.SitOrStand" userdata="" />

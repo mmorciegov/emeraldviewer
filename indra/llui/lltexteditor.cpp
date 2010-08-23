@@ -5013,6 +5013,12 @@ BOOL LLTextEditor::findHTML(const std::string &line, S32 *begin, S32 *end, std::
 		
 		if (strpos < 0)
 		{
+			slurlID="maps.secondlife.com/secondlife/";
+			strpos = url.find(slurlID);
+		}
+	
+		if (strpos < 0)
+		{
 			slurlID="secondlife://";
 			strpos = url.find(slurlID);
 		}

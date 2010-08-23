@@ -67,9 +67,9 @@ class LLFloaterAO : public LLFloater
 public:
 
     LLFloaterAO();
-	BOOL postBuild();
-	void onClose();
-	void onOpen();
+	virtual BOOL postBuild();
+	virtual void onClose(bool app_quitting);
+	virtual void onOpen();
 	
     virtual ~LLFloaterAO();
 
@@ -96,18 +96,21 @@ public:
 	static int stand_iterator;
 
 	static void run();
-	static void startAOMotion(const LLUUID& id, BOOL stand = FALSE);
-	static void stopAOMotion(const LLUUID& id, BOOL stand = FALSE);
-	static void ChangeStand();
+	static void startAOMotion(const LLUUID& id, const BOOL stand, const BOOL announce);
+	static void stopAOMotion(const LLUUID& id, const BOOL stand);
+	static void ChangeStand(const BOOL announce);
 
 	static LLUUID GetAnimID(const LLUUID& id);
 	static LLUUID GetAnimIDFromState(const int state);
+	static LLUUID GetAnimIDByName(const std::string name);
 	static LLUUID GetOrigAnimIDFromState(const int state);
 	static LLUUID GetRandomAnimID(const LLUUID& id);
 	static LLUUID GetRandomAnimIDFromState(const int state);
+	static int modifyUnderwaterState(const int state);
 	static int GetStateFromOrigAnimID(const LLUUID& id);
 	static int GetStateFromAOAnimID(const LLUUID& id);
 	static std::string GetAnimTypeFromState(const int state);
+	static BOOL isRandom(const int state);
 	static int GetStateFromToken(std::string strtoken);
 
 	static void onClickLess(void* data) ;

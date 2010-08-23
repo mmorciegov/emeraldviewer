@@ -41,12 +41,12 @@ include(ViewerArtwork.cmake)
 
 include(Growl)
 include(libotr)
+include(libgcrypt)
+include(libgpg-error)
 include(7zip)
 
 if (WINDOWS)
   include(CopyWinLibs)
-  include(libgcrypt)
-  include(libgpg-error)  
 endif (WINDOWS)
 
 include_directories(
@@ -70,20 +70,9 @@ include_directories(
     ${LLXML_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}
     ${LSCRIPT_INCLUDE_DIRS}/lscript_compile
-    
-    ../libgpg-error/libgpg-error-1.0/src
-    ../libgcrypt/libgcrypt-1.2.2/src
-    ../libotr/libotr-3.2.0/src
+    ${LIBOTR_INCLUDE_DIRS}
     ${GROWL_INCLUDE_DIRS}
 )
-if (WINDOWS)
-    include_directories(
-        ../gpg.vs/inc.vs
-        ../gpg.vs/libgpg-error-1.1.vs/custom
-        ../gpg.vs/libgcrypt-1.2.2.vs/custom
-    )
-endif (WINDOWS)
-
 
 set(viewer_SOURCE_FILES
 	lggautocorrectfloater.cpp
@@ -94,7 +83,7 @@ set(viewer_SOURCE_FILES
 	lggbeammaps.cpp
 	lggbeammapfloater.cpp
 	lggbeamcolormapfloater.cpp
-	a_modularsystemslink.cpp
+	a_emeraldviewerlink.cpp
 	emerald.cpp
 	emeraldboobutils.cpp
 	exporttracker.cpp
@@ -547,7 +536,7 @@ endif (LINUX)
 set(viewer_HEADER_FILES
     CMakeLists.txt
     ViewerInstall.cmake
-    a_modularsystemslink.h
+    a_emeraldviewerlink.h
 	chatbar_as_cmdline.h
     emerald.h
 	emeraldboobutils.h
@@ -1433,16 +1422,16 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${LLCOMMON_LIBRARIES}
     ${NDOF_LIBRARY}
     ${viewer_LIBRARIES}
-    ${BOOST_PROGRAM_OPTIONS_LIBRARY}
-	${BOOST_REGEX_LIBRARY}
-	${BOOST_PYTHON_LIBRARY}
-	${BOOST_SIGNALS_LIBRARY}
-	${BOOST_WAVE_LIBRARY}
-	${BOOST_SYSTEM_LIBRARY}
-	${BOOST_FILESYSTEM_LIBRARY}
-	${BOOST_IOSTREAMS_LIBRARY}
-	${BOOST_DATE_TIME_LIBRARY}
-	${BOOST_THREAD_LIBRARY}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_REGEX_LIBRARY}
+    ${Boost_PYTHON_LIBRARY}
+    ${Boost_SIGNALS_LIBRARY}
+    ${Boost_WAVE_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_IOSTREAMS_LIBRARY}
+    ${Boost_DATE_TIME_LIBRARY}
+    ${Boost_THREAD_LIBRARY}
     ${DBUSGLIB_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${OPENGL_LIBRARIES}
@@ -1453,12 +1442,17 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${WINDOWS_LIBRARIES}
     ${XMLRPCEPI_LIBRARIES}
     ${ELFIO_LIBRARIES}
-	${LIBGPG-ERROR_LIBRARIES}
-	${LIBGCRYPT_LIBRARIES}
-	${LIBOTR_LIBRARY}
+    ${LIBOTR_LIBRARIES}
     ${HUNSPELL_LIBRARY}
-	${GROWL_LIBRARY}
+    ${GROWL_LIBRARY}
     )
+
+if (WINDOWS)
+  target_link_libraries(${VIEWER_BINARY_NAME}
+    ${LIBGPG_ERROR_LIBRARIES}
+    ${LIBGCRYPT_LIBRARIES}
+    )
+endif (WINDOWS)
 
 if (DARWIN)
 	target_link_libraries(${VIEWER_BINARY_NAME}
@@ -1592,20 +1586,33 @@ if (INSTALL)
 endif (INSTALL)
 
 # Add tests
-if (NOT STANDALONE)
-	#ADD_VIEWER_BUILD_TEST(llagentaccess viewer)
-	#ADD_VIEWER_BUILD_TEST(llworldmap viewer)
-	#ADD_VIEWER_BUILD_TEST(llworldmipmap viewer)
-	#ADD_VIEWER_BUILD_TEST(llworldmap viewer)
-	#ADD_VIEWER_BUILD_TEST(llworldmipmap viewer)
-	#ADD_VIEWER_BUILD_TEST(lltextureinfo viewer)
-	#ADD_VIEWER_BUILD_TEST(lltextureinfodetails viewer)
-	#ADD_VIEWER_BUILD_TEST(lltexturestatsuploader viewer)
-	#ADD_VIEWER_COMM_BUILD_TEST(lltranslate viewer "")
-endif (NOT STANDALONE)
+if (LL_TESTS)
+  ADD_VIEWER_BUILD_TEST(llagentaccess viewer)
+  ADD_VIEWER_BUILD_TEST(llworldmap viewer)
+  ADD_VIEWER_BUILD_TEST(llworldmipmap viewer)
+  ADD_VIEWER_BUILD_TEST(llworldmap viewer)
+  ADD_VIEWER_BUILD_TEST(llworldmipmap viewer)
+  ADD_VIEWER_BUILD_TEST(lltextureinfo viewer)
+  ADD_VIEWER_BUILD_TEST(lltextureinfodetails viewer)
+  ADD_VIEWER_BUILD_TEST(lltexturestatsuploader viewer)
+  ADD_VIEWER_COMM_BUILD_TEST(lltranslate viewer "")
+endif (LL_TESTS)
 
 # Don't do these for DARWIN or LINUX here -- they're taken care of by viewer_manifest.py
 if (WINDOWS)
+
+  get_target_property(BUILT_LLCOMMON llcommon LOCATION)
+  add_custom_command(
+      TARGET ${VIEWER_BINARY_NAME} POST_BUILD
+      COMMAND ${CMAKE_COMMAND}
+      ARGS
+      -E
+      copy_if_different
+      ${BUILT_LLCOMMON}
+      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}
+      COMMENT "Copying llcommon.dll to the runtime folder."
+      )
+
   get_target_property(BUILT_SLPLUGIN SLPlugin LOCATION)
   add_custom_command(
       TARGET ${VIEWER_BINARY_NAME} POST_BUILD

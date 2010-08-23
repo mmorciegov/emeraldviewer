@@ -76,7 +76,7 @@
 #include "lltrans.h"
 #include "llversionviewer.h"
 #include "mfdkeywordfloater.h" //Emerald KeywordAlert
-#include "a_modularsystemslink.h"
+#include "a_emeraldviewerlink.h"
 
 // [RLVa:KB]
 #include "rlvhandler.h"
@@ -1229,7 +1229,7 @@ void LLFloaterIMPanel::init(const std::string& session_label)
 
 	if (LL_CHANNEL != EMERALD_RELEASE_CHANNEL && mDialog == IM_NOTHING_SPECIAL)
 	{
-		if(ModularSystemsLink::is_support(mOtherParticipantUUID))
+		if(EmeraldViewerLink::is_support(mOtherParticipantUUID))
 		{
 			addHistoryLine(getString("emerald_no_support_available"),
 						   gSavedSettings.getColor4("SystemChatColor"),
@@ -2355,16 +2355,6 @@ void LLFloaterIMPanel::doOtrMenu()
             {
                 doOtrAuth();
             }
-            /*else if (getString("otr_help") == choice)
-            {
-                llinfos << "$PLOTR$ otr help" << llendl;
-                LLWeb::loadURL("http://www.cypherpunks.ca/otr/");
-            }
-            else if (getString("otr_levels") == choice)
-            {
-                llinfos << "$PLOTR$ otr levels help" << llendl;
-                LLWeb::loadURL("http://www.cypherpunks.ca/otr/help/3.2.0/levels.php");
-            }*/
             else
             {
                 llwarns << "$PLOTR$ unknown menu item" << llendl;
@@ -2434,8 +2424,6 @@ void LLFloaterIMPanel::showOtrStatus()
                 combo->add(getString("otr_start"),   ADD_BOTTOM, TRUE); // to tell them where to turn it back on
                 combo->add(getString("otr_stop"),    ADD_BOTTOM, FALSE);
                 combo->add(getString("otr_auth"),    ADD_BOTTOM, FALSE);
-                combo->add(getString("otr_help"),    ADD_BOTTOM, TRUE);
-                combo->add(getString("otr_levels"),  ADD_BOTTOM, TRUE);
                 combo->setLabel(getString("otr_not_private"));
             }
             else if (context && (OTRL_MSGSTATE_ENCRYPTED == context->msgstate))
@@ -2444,8 +2432,6 @@ void LLFloaterIMPanel::showOtrStatus()
                 combo->add(getString("otr_refresh"), ADD_BOTTOM, TRUE);
                 combo->add(getString("otr_stop"),    ADD_BOTTOM, TRUE);
                 combo->add(getString("otr_auth"),    ADD_BOTTOM, TRUE);
-                combo->add(getString("otr_help"),    ADD_BOTTOM, TRUE);
-                combo->add(getString("otr_levels"),  ADD_BOTTOM, TRUE);
                 if (otherIsOtrAuthenticated())
                     combo->setLabel(getString("otr_private"));
                 else
@@ -2464,8 +2450,6 @@ void LLFloaterIMPanel::showOtrStatus()
                 combo->add(getString("otr_restart"), ADD_BOTTOM, TRUE);
                 combo->add(getString("otr_stop"),    ADD_BOTTOM, TRUE);
                 combo->add(getString("otr_auth"),    ADD_BOTTOM, FALSE);
-                combo->add(getString("otr_help"),    ADD_BOTTOM, TRUE);
-                combo->add(getString("otr_levels"),  ADD_BOTTOM, TRUE);
                 combo->setLabel(getString("otr_finished"));
 				//this shouldn't be done here but there are multiple ways we can end up at this point and this is the easiest way to deal with them all.
 				//If the state is finished we can't send message, so lets just stop it, this will fix the online status bug where you get stuck in an OTR loop
@@ -2477,8 +2461,6 @@ void LLFloaterIMPanel::showOtrStatus()
                 combo->add(getString("otr_start"),   ADD_BOTTOM, TRUE);
                 combo->add(getString("otr_stop"),    ADD_BOTTOM, FALSE);
                 combo->add(getString("otr_auth"),    ADD_BOTTOM, FALSE);
-                combo->add(getString("otr_help"),    ADD_BOTTOM, TRUE);
-                combo->add(getString("otr_levels"),  ADD_BOTTOM, TRUE);
                 combo->setLabel(getString("otr_not_private"));
             }
             if (context)
@@ -2913,7 +2895,7 @@ void LLFloaterIMPanel::sendMsg()
 				std::string my_name;
 				gAgent.buildFullname(my_name);
 				//utf8_text = "Sending my system information:";
-				ModularSystemsLink::sendInfo(mOtherParticipantUUID,mSessionUUID,my_name,mDialog);
+				EmeraldViewerLink::sendInfo(mOtherParticipantUUID,mSessionUUID,my_name,mDialog);
 				return;
 			}
 			// Convert MU*s style poses into IRC emotes here.

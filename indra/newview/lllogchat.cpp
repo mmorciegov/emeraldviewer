@@ -32,16 +32,32 @@
 
 #include "llviewerprecompiledheaders.h"
 
+#include <ctime>
 #include "lllogchat.h"
-#include "llviewercontrol.h"
 #include "llappviewer.h"
 #include "llfloaterchat.h"
+#include "llviewercontrol.h"
 
 const S32 LOG_RECALL_SIZE = 2048;
 
 //static
 std::string LLLogChat::makeLogFileName(std::string filename)
 {
+	if (gSavedPerAccountSettings.getBOOL("LogFileNamewithDate"))
+	{
+		time_t now; 
+		time(&now); 
+		char dbuffer[20];               /* Flawfinder: ignore */ 
+		if (filename == "chat") 
+		{ 
+			strftime(dbuffer, 20, "-%Y-%m-%d", localtime(&now)); 
+		} 
+		else 
+		{ 
+			strftime(dbuffer, 20, "-%Y-%m", localtime(&now)); 
+		} 
+		filename += dbuffer; 
+	}
 	filename = cleanFileName(filename);
 	filename = gDirUtilp->getExpandedFilename(LL_PATH_PER_ACCOUNT_CHAT_LOGS,filename);
 	filename += ".txt";
@@ -83,9 +99,9 @@ std::string LLLogChat::timestamp(bool withdate)
 	else
 	{
 		if (withdate)
-			text = llformat("[%d/%02d/%02d %d:%02d]  ", (timep->tm_year-100)+2000, timep->tm_mon+1, timep->tm_mday, timep->tm_hour, timep->tm_min);
+			text = llformat("[%d/%02d/%02d %02d:%02d]  ", (timep->tm_year-100)+2000, timep->tm_mon+1, timep->tm_mday, timep->tm_hour, timep->tm_min);
 		else
-			text = llformat("[%d:%02d]  ", timep->tm_hour, timep->tm_min);
+			text = llformat("[%02d:%02d]  ", timep->tm_hour, timep->tm_min);
 	}
 	
 	return text;

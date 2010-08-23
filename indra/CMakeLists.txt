@@ -43,13 +43,6 @@ if(NOT STANDALONE)
   set(prepare_depends ${CMAKE_BINARY_DIR}/prepare/prebuilt)
 endif(NOT STANDALONE)
 add_custom_target(prepare DEPENDS ${prepare_depends})
-    if (WINDOWS)
-      add_subdirectory(${LIBS_OPEN_PREFIX}gpg.vs)
-      add_subdirectory(${LIBS_OPEN_PREFIX}libgcrypt)
-      add_subdirectory(${LIBS_OPEN_PREFIX}libgpg-error)
-      add_subdirectory(${LIBS_OPEN_PREFIX}libotr)
-    endif (WINDOWS)
-
 
 add_subdirectory(cmake)
 add_subdirectory(${LIBS_OPEN_PREFIX}llaudio)
@@ -81,6 +74,18 @@ if (VIEWER)
   add_subdirectory(${LIBS_OPEN_PREFIX}llcrashlogger)
   add_subdirectory(${LIBS_OPEN_PREFIX}llplugin)
   add_subdirectory(${LIBS_OPEN_PREFIX}llui)
+
+  # viewer otr support
+  if (WINDOWS)
+    add_subdirectory(${LIBS_OPEN_PREFIX}gpg.vs)
+    add_subdirectory(${LIBS_OPEN_PREFIX}libgcrypt)
+    add_subdirectory(${LIBS_OPEN_PREFIX}libgpg-error)
+    add_subdirectory(${LIBS_OPEN_PREFIX}libotr)
+  endif (WINDOWS)
+
+  if (STANDALONE)
+    add_subdirectory(${LIBS_OPEN_PREFIX}libotr)
+  endif (STANDALONE)
 
   # viewer media plugins
   add_subdirectory(${LIBS_OPEN_PREFIX}media_plugins)

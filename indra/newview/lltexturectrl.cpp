@@ -1038,6 +1038,7 @@ LLTextureCtrl::LLTextureCtrl(
 	mNeedsRawImageData( FALSE ),
 	mValid( TRUE ),
 	mDirty( FALSE ),
+	mIsMasked( FALSE),
 	mShowLoadingPlaceholder( TRUE )
 {
 	mCaption = new LLTextBox( label, 
@@ -1151,6 +1152,11 @@ LLView* LLTextureCtrl::fromXML(LLXMLNodePtr node, LLView *parent, LLUICtrlFactor
 void LLTextureCtrl::setShowLoadingPlaceholder(BOOL showLoadingPlaceholder)
 {
 	mShowLoadingPlaceholder = showLoadingPlaceholder;
+}
+
+void LLTextureCtrl::setIsMasked(BOOL masked)
+{
+	mIsMasked = masked;
 }
 
 void LLTextureCtrl::setCaption(const std::string& caption)
@@ -1497,6 +1503,11 @@ void LLTextureCtrl::draw()
 		
 		gl_draw_scaled_image( interior.mLeft, interior.mBottom, interior.getWidth(), interior.getHeight(), mTexturep);
 		mTexturep->addTextureStats( (F32)(interior.getWidth() * interior.getHeight()) );
+		if( mIsMasked )
+		{
+			gl_rect_2d( interior, LLColor4(0.5,0.5,0.5,0.44), TRUE); // LLColor4::smoke, TRUE );
+			gl_draw_x( interior, LLColor4::black );
+		}
 	}
 	else
 	{
@@ -1505,7 +1516,6 @@ void LLTextureCtrl::draw()
 		// Draw X
 		gl_draw_x( interior, LLColor4::black );
 	}
-
 	mTentativeLabel->setVisible( !mTexturep.isNull() && getTentative() );
 	
 	

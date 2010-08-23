@@ -94,6 +94,7 @@ public:
 	virtual void	resetDirty();
 
 	void			setValid(BOOL valid);
+	void			setIsMasked(BOOL masked);
 
 	// LLUICtrl interface
 	virtual void	clear();
@@ -187,6 +188,7 @@ private:
 	LLViewBorder*			 mBorder;
 	BOOL					 mValid;
 	BOOL					 mDirty;
+	BOOL					 mIsMasked;
 	BOOL					 mShowLoadingPlaceholder;
 	std::string				 mLoadingPlaceholderString;
 };

@@ -74,6 +74,7 @@ BOOL LLFloaterAvatarTextures::postBuild()
 	{
 		const std::string tex_name = LLVOAvatarDictionary::getInstance()->getTexture(ETextureIndex(i))->mName;
 		mTextures[i] = getChild<LLTextureCtrl>(tex_name);
+		mTextures[i]->setIsMasked(TRUE);
 	}
 	mTitle = getTitle();
 

@@ -165,6 +165,7 @@ LLPreviewTexture::~LLPreviewTexture()
 		mImage->destroySavedRawImage() ;
 	}
 	mImage = NULL;
+	sInstance = NULL;
 }
 
 
@@ -238,12 +239,10 @@ void LLPreviewTexture::init()
 
 void LLPreviewTexture::callbackLoadAvatarName(const LLUUID& id, const std::string& first, const std::string& last, BOOL is_group, void* data)
 {
-	LLPreviewTexture* floaterp = LLPreviewTexture::getInstance();
-	if(!floaterp) return;
-
+	if (!sInstance) return;
 	std::ostringstream fullname;
 	fullname << first << " " << last;
-	floaterp->childSetText("uploader", fullname.str());
+	sInstance->childSetText("uploader", fullname.str());
 }
 
 void LLPreviewTexture::draw()
@@ -286,48 +285,51 @@ void LLPreviewTexture::draw()
 
 
 			std::string assetid(mImageID.asString());
-			childSetText("uuid", assetid);
+			if (mIsCopyable) childSetText("uuid", assetid);
 
-			//Phox: Copy the image comment and set the text
-			std::string decodedComment = mImage->decodedComment;
-			if (uploaderkey.isNull())
+			if(LLImageJ2C::useEMKDU)
 			{
-				S32 string_pos = decodedComment.find("a=");
-				if (string_pos != std::string::npos) 
-				{
-					uploaderkey = LLUUID(decodedComment.substr(string_pos+2,36));
-					childSetText("uploader", uploaderkey.asString());
-					gCacheName->get(uploaderkey, FALSE, callbackLoadAvatarName);
-					
-				}
-			}
+			  //Phox: Copy the image comment and set the text
+			  std::string decodedComment = mImage->decodedComment;
+			  if (uploaderkey.isNull())
+			  {
+				  S32 string_pos = decodedComment.find("a=");
+				  if (string_pos != std::string::npos) 
+				  {
+					  uploaderkey = LLUUID(decodedComment.substr(string_pos+2,36));
+					  childSetText("uploader", uploaderkey.asString());
+					  gCacheName->get(uploaderkey, FALSE, callbackLoadAvatarName);
+					  
+				  }
+			  }
 
-			if (color.empty())
-			{
-				S32 string_pos = decodedComment.find("c=");
-				if (string_pos != std::string::npos) 
-				{
-					color = decodedComment.substr(string_pos+2,8);
-				}
-			}
+			  if (color.empty())
+			  {
+				  S32 string_pos = decodedComment.find("c=");
+				  if (string_pos != std::string::npos) 
+				  {
+					  color = decodedComment.substr(string_pos+2,8);
+				  }
+			  }
 
-			if (time.empty())
-			{
-				S32 string_pos = decodedComment.find("z=");
-				if (string_pos != std::string::npos) 
-				{
-					time = decodedComment.substr(string_pos+2,14);
-					std::string year = time.substr(0,4);
-					std::string month = time.substr(4,2);
-					std::string day = time.substr(6,2);
-					std::string hour = time.substr(8,2);
-					std::string minute = time.substr(10,2);
-					std::string second = time.substr(12,2);
+			  if (time.empty())
+			  {
+				  S32 string_pos = decodedComment.find("z=");
+				  if (string_pos != std::string::npos) 
+				  {
+					  time = decodedComment.substr(string_pos+2,14);
+					  std::string year = time.substr(0,4);
+					  std::string month = time.substr(4,2);
+					  std::string day = time.substr(6,2);
+					  std::string hour = time.substr(8,2);
+					  std::string minute = time.substr(10,2);
+					  std::string second = time.substr(12,2);
 
-					time = llformat("%s/%s/%s - %s:%s:%s",year.c_str(),month.c_str(),day.c_str(),hour.c_str(),minute.c_str(),second.c_str());
+					  time = llformat("%s/%s/%s - %s:%s:%s",year.c_str(),month.c_str(),day.c_str(),hour.c_str(),minute.c_str(),second.c_str());
 
-					childSetText("uploadtime", time);
-				}
+					  childSetText("uploadtime", time);
+				  }
+			  }
 			}
 
 			// Don't bother decoding more than we can display, unless

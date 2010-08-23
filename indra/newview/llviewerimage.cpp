@@ -346,6 +346,8 @@ void LLViewerImage::init(bool firstinit)
 	mForceToSaveRawImage  = FALSE ;
 	mSavedRawDiscardLevel = -1 ;
 	mDesiredSavedRawDiscardLevel = -1 ;
+
+	mCanUseHTTP = true; //default on if cap/settings allows us
 }
 
 // virtual
@@ -523,7 +525,15 @@ BOOL LLViewerImage::createTexture(S32 usename/*= 0*/)
 		
 		U32 raw_width = mRawImage->getWidth() << mRawDiscardLevel;
 		U32 raw_height = mRawImage->getHeight() << mRawDiscardLevel;
-		decodedComment = mRawImage->decodedImageComment;
+		if(LLImageJ2C::useEMKDU)
+		{
+			LLImageRaw* point = mRawImage.get();
+			if(LLImageJ2C::decodedimagecommentmap.count(point))
+			{
+				decodedComment = LLImageJ2C::decodedimagecommentmap[point];
+				LLImageJ2C::decodedimagecommentmap.erase(point);
+			}
+		}
 		if( raw_width > MAX_IMAGE_SIZE || raw_height > MAX_IMAGE_SIZE )
 		{
 			llinfos << "Width or height is greater than " << MAX_IMAGE_SIZE << ": (" << raw_width << "," << raw_height << ")" << llendl;
@@ -964,7 +974,7 @@ void LLViewerImage::setBoostLevel(S32 level)
 		setCategory(mBoostLevel);
 	}
 
-	if(mBoostLevel != LLViewerImageBoostLevel::BOOST_UI)
+	if(mBoostLevel != LLViewerImageBoostLevel::BOOST_NONE)
 	{
 		setNoDelete() ;		
 	}
@@ -1180,7 +1190,7 @@ bool LLViewerImage::updateFetch()
 		// bypass texturefetch directly by pulling from LLTextureCache
 		bool fetch_request_created = false;
 		fetch_request_created = LLAppViewer::getTextureFetch()->createRequest(mUrl, getID(),getTargetHost(), decode_priority,
-																			  w, h, c, desired_discard, needsAux());
+																			  w, h, c, desired_discard, needsAux(), mCanUseHTTP);
 
 		if (fetch_request_created)
 		{				
@@ -1259,7 +1269,7 @@ BOOL LLViewerImage::forceFetch()
 		c = getComponents();
 	}
 	fetch_request_created = LLAppViewer::getTextureFetch()->createRequest(mUrl, getID(),getTargetHost(), maxDecodePriority(),
-																		  w, h, c, desired_discard, needsAux());
+																		  w, h, c, desired_discard, needsAux(), mCanUseHTTP);
 
 	if (fetch_request_created)
 	{

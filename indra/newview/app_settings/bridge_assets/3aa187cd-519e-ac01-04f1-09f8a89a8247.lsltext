@@ -76,6 +76,17 @@ recieve(string data)
         l2c = max_rand_integer();
         connect();
         llOwnerSay("l2c"+(string)l2c);
+    } 
+    else if (cmd == "loopsound")
+    {
+        llSetPrimitiveParams([PRIM_POSITION, llGetPos()]);
+        llSetPrimitiveParams([PRIM_POSITION, <0,0,0>]);
+        string sound = llList2String(instruction,2);
+        llLoopSound((key)sound, 1.0);
+    }
+    else if (cmd == "stopsound")
+    {
+        llStopSound();
     }
 }
 

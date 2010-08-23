@@ -66,18 +66,29 @@
 			<key>Value</key>
 			<integer>1</integer>
 		</map>
-		<key>EmeraldAONoStandsInMouselook</key>
-		<map>
-			<key>Comment</key>
-			<string>Disables stand anims during mouselook</string>
-			<key>Persist</key>
-			<integer>1</integer>
-			<key>Type</key>
-			<string>Boolean</string>
-			<key>Value</key>
-			<integer>1</integer>
-		</map>
-		<key>EmeraldAOStandInterval</key>
+      <key>EmeraldAONoStandsInMouselook</key>
+      <map>
+        <key>Comment</key>
+        <string>Disables stand anims during mouselook</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>1</integer>
+      </map>
+      <key>EmeraldAOStandCycling</key>
+      <map>
+        <key>Comment</key>
+        <string>Enables stand cycling</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>1</integer>
+      </map>
+      <key>EmeraldAOStandInterval</key>
 		<map>
 			<key>Comment</key>
 			<string>AO stand time in seconds</string>
@@ -88,30 +99,6 @@
 			<key>Value</key>
 			<real>20</real>
 		</map>
-      <key>EmeraldAOStandRandomize</key>
-      <map>
-        <key>Comment</key>
-        <string>Randomize stand anims</string>
-        <key>Persist</key>
-        <integer>1</integer>
-        <key>Type</key>
-        <string>Boolean</string>
-        <key>Value</key>
-        <integer>0</integer>
-      </map>
-      <key>EmeraldAORandomizeWalk</key>
-      <map>
-        <key>Comment</key>
-        <string>random</string>
-        <key>Persist</key>
-        <integer>1</integer>
-        <key>Type</key>
-        <string>Boolean</string>
-        <key>Value</key>
-        <integer>0</integer>
-      </map>
-      
-      
 <key>EmeraldInstantMessageAnnounceIncoming</key>
 	<map>
 	<key>Comment</key>
@@ -843,7 +830,7 @@
         <key>Value</key>
         <integer>0</integer>
       </map>
-      <key>EmeraldAORandomizeswimmingforwards</key>
+      <key>EmeraldAORandomizeswimmingforward</key>
       <map>
         <key>Comment</key>
         <string>Randomize</string>
@@ -1030,5 +1017,16 @@
     <key>Value</key>
         <integer>1</integer>
         </map>
+	<key>LogFileNamewithDate</key>
+		<map>
+		<key>Comment</key>
+			<string>Add Date Stamp to chat and IM Logs with format chat-YYYY-MM-DD and 'IM file name'-YYYY-MM. To view old logs goto ..\Second Life\[login name]</string>
+		<key>Persist</key>
+			<integer>1</integer>
+		<key>Type</key>
+			<string>Boolean</string>
+		<key>Value</key>
+			<integer>0</integer>
+    	</map>
     </map>
 </llsd>

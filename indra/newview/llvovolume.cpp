@@ -540,9 +540,9 @@ void LLVOVolume::updateTextureVirtualSize()
 
 			if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_SCULPTED))
 			{
-				setDebugText(llformat("T%d C%d V%d\n%dx%d",
+				setDebugText(llformat("T%d C%d V%d\n%dx%d SA%f",
 										  texture_discard, current_discard, getVolume()->getSculptLevel(),
-										  mSculptTexture->getHeight(), mSculptTexture->getWidth()));
+										  mSculptTexture->getHeight(), mSculptTexture->getWidth(), mSculptSurfaceArea));
 			}
 		}
 	}
@@ -688,11 +688,13 @@ BOOL LLVOVolume::setVolume(const LLVolumeParams &volume_params, const S32 detail
 			{
 				sculpt();
 				mSculptLevel = getVolume()->getSculptLevel();
+				mSculptSurfaceArea = getVolume()->sculptGetSurfaceArea();
 			}
 		}
 		else
 		{
 			mSculptTexture = NULL;
+			mSculptSurfaceArea = 0.0;
 		}
 
 		return TRUE;
@@ -2262,6 +2264,18 @@ void LLVolumeGeometryManager::rebuildGeom(LLSpatialGroup* group)
 		}
 
 		LLVOVolume* vobj = drawablep->getVOVolume();
+		
+		static F32* sSculptSurfaceAreaThreshold = rebind_llcontrol<F32>("ZwagothSculptSAThresh", &gSavedSettings, true);
+		static F32* sSculptSurfaceAreaMax = rebind_llcontrol<F32>("ZwagothSculptSAMax", &gSavedSettings, true);
+		if (vobj->mSculptSurfaceArea > (*sSculptSurfaceAreaThreshold))
+		{
+		    LLPipeline::sSculptSurfaceAreaFrame += vobj->mSculptSurfaceArea;
+		    if(LLPipeline::sSculptSurfaceAreaFrame > (*sSculptSurfaceAreaMax))
+		    {
+		      continue;
+		    }
+		}
+		
 		llassert_always(vobj);
 		vobj->updateTextureVirtualSize();
 		vobj->preRebuild();

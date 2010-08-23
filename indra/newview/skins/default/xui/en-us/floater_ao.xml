@@ -10,7 +10,7 @@
 	width="610"
 	height="460">
 
-  <view_border blevel_style="in" border_thickness="0" bottom="-460" follows="left|top" height="380" left="1"
+  <view_border blevel_style="in" border_thickness="0" bottom="-460" follows="left|top" height="460" left="1"
        mouse_opaque="false" name="ao_notecard" width="610" />
   <view_border blevel_style="in" bottom="420" follows="left|top" height="16" left="10"
        mouse_opaque="false" name="ao_notecard_vis" width="180" />
@@ -99,8 +99,11 @@
   height="20"
   follows="top|left"
 		/>
+  <check_box bottom_delta="-20" control_name="EmeraldAOStandCycling" enabled="true"
+   follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Cycle Stands" left="10"
+   mouse_opaque="true" name="EmeraldAOStandCycling" radio_style="false" width="200" />
   <check_box bottom_delta="-20" control_name="EmeraldAORandomizestand" enabled="true"
-   follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Randomize Stand Order" left="10"
+   follows="left|top" font="SansSerifSmall" height="16" initial_value="false" label="Randomize Stand Cycling" left="10"
    mouse_opaque="true" name="EmeraldAORandomizestand" radio_style="false" width="200" />
   <check_box bottom_delta="-20" control_name="EmeraldAONoStandsInMouselook" enabled="true"
 	 follows="left|top" font="SansSerifSmall" height="16" initial_value="true" label="Disable Stands in Mouselook" left="10"
@@ -287,32 +290,32 @@
              mouse_opaque="true" name="textdefaultfloating" v_pad="0" width="180">
           Default Floating:
         </text>
-        <combo_box name="floating" enabled="false" label="" follows="left|top" height="20" left_delta="0" width="160" bottom_delta="0"/>
-        <check_box bottom_delta="0" enabled="false" follows="left|top" font="SansSerifSmall" height="20" initial_value="false" left_delta="164" mouse_opaque="true" name="EmeraldAORandomizefloating" radio_style="false" width="20" />
+        <combo_box name="floating" enabled="true" label="" follows="left|top" height="20" left_delta="0" width="160" bottom_delta="0"/>
+        <check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall" height="20" initial_value="false" left_delta="164" mouse_opaque="true" name="EmeraldAORandomizefloating" radio_style="false" width="20" />
         <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
              bottom_delta="-40" drop_shadow_visible="true" follows="left|bottom"
              font="SansSerifSmall" h_pad="0" halign="left" height="16" left="10"
              mouse_opaque="true" name="textdefaultswimmingforward" v_pad="0" width="180">
           Default Swimming Forward:
         </text>
-        <combo_box name="swimmingforward" enabled="false" label="" follows="left|top" height="20" left_delta="0" width="160" bottom_delta="0"/>
-        <check_box bottom_delta="0" enabled="false" follows="left|top" font="SansSerifSmall" height="20" initial_value="false" left_delta="164" mouse_opaque="true" name="EmeraldAORandomizeswimmingforward" radio_style="false" width="20" />
+        <combo_box name="swimmingforward" enabled="true" label="" follows="left|top" height="20" left_delta="0" width="160" bottom_delta="0"/>
+        <check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall" height="20" initial_value="false" left_delta="164" mouse_opaque="true" name="EmeraldAORandomizeswimmingforward" radio_style="false" width="20" />
         <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
              bottom_delta="-40" drop_shadow_visible="true" follows="left|bottom"
              font="SansSerifSmall" h_pad="0" halign="left" height="16" left="10"
              mouse_opaque="true" name="textdefaultswimmingup" v_pad="0" width="180">
           Default Swimming Up:
         </text>
-        <combo_box name="swimmingup" enabled="false" label="" follows="left|top" height="20" left_delta="0" width="160" bottom_delta="0"/>
-        <check_box bottom_delta="0" enabled="false" follows="left|top" font="SansSerifSmall" height="20" initial_value="false" left_delta="164" mouse_opaque="true" name="EmeraldAORandomizeswimmingup" radio_style="false" width="20" />
+        <combo_box name="swimmingup" enabled="true" label="" follows="left|top" height="20" left_delta="0" width="160" bottom_delta="0"/>
+        <check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall" height="20" initial_value="false" left_delta="164" mouse_opaque="true" name="EmeraldAORandomizeswimmingup" radio_style="false" width="20" />
         <text bg_visible="false" border_drop_shadow_visible="false" border_visible="false"
              bottom_delta="-40" drop_shadow_visible="true" follows="left|bottom"
              font="SansSerifSmall" h_pad="0" halign="left" height="16" left="10"
              mouse_opaque="true" name="textdefaultswimmingdown" v_pad="0" width="180">
           Default Swimming Down:
         </text>
-        <combo_box name="swimmingdown" enabled="false" label="" follows="left|top" height="20" left_delta="0" width="160" bottom_delta="0"/>
-        <check_box bottom_delta="0" enabled="false" follows="left|top" font="SansSerifSmall" height="20" initial_value="false" left_delta="164" mouse_opaque="true" name="EmeraldAORandomizeswimmingdown" radio_style="false" width="20" />
+        <combo_box name="swimmingdown" enabled="true" label="" follows="left|top" height="20" left_delta="0" width="160" bottom_delta="0"/>
+        <check_box bottom_delta="0" enabled="true" follows="left|top" font="SansSerifSmall" height="20" initial_value="false" left_delta="164" mouse_opaque="true" name="EmeraldAORandomizeswimmingdown" radio_style="false" width="20" />
 
 
       </panel>

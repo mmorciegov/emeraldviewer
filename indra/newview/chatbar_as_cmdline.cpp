@@ -645,11 +645,25 @@ bool cmd_line_chat(std::string revised_text, EChatType type)
 				std::string info = revised_text.substr((*sEmeraldCmdLineAutocorrect).length()+1);
 				//addac list name|wrong word|right word
 				int bar = info.find("|");
+				if (bar==std::string::npos)
+				{
+					cmdline_printchat("Wrong usage, correct usage is"+
+				*sEmeraldCmdLineAutocorrect+" list Name|wrong word|right word.");
+					return false;
+				}
+				
 
 				std::string listName = info.substr(0,bar);
 				info = info.substr(bar+1);
 				
 				bar = info.find("|");
+				if (bar==std::string::npos)
+				{
+					cmdline_printchat("Wrong usage, correct usage is"+
+						*sEmeraldCmdLineAutocorrect+" list Name|wrong word|right word.");
+					return false;
+				}
+
 				std::string wrong = info.substr(0,bar);
 				std::string right = info.substr(bar+1);
 				if(LGGAutoCorrect::getInstance()->addEntryToList(wrong,right,listName))

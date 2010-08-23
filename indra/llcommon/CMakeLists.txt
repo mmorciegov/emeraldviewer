@@ -3,8 +3,9 @@
 project(llcommon)
 
 include(00-Common)
-include(Utils)
 include(LLCommon)
+include(Utils)
+include(Linking)
 
 include_directories(
     ${EXPAT_INCLUDE_DIRS}
@@ -13,6 +14,8 @@ include_directories(
     )
 
 set(llcommon_SOURCE_FILES
+	imageids.cpp
+	indra_constants.cpp
     llapp.cpp
     llapr.cpp
     llassettype.cpp
@@ -199,9 +202,10 @@ configure_files(llcommon_GENERATED_HEADER_FILES
     )
 set_source_files_properties(${llcommon_GENERATED_HEADER_FILES}
                             PROPERTIES HEADER_FILE_ONLY TRUE)
+
 list(APPEND llcommon_SOURCE_FILES ${llcommon_GENERATED_HEADER_FILES})
 
-add_library (llcommon ${llcommon_SOURCE_FILES})
+add_library (llcommon SHARED ${llcommon_SOURCE_FILES})
 add_dependencies(llcommon prepare)
 target_link_libraries(
     llcommon
@@ -209,24 +213,15 @@ target_link_libraries(
     ${APR_LIBRARIES}
     ${EXPAT_LIBRARIES}
     ${ZLIB_LIBRARIES}
+	${WINDOWS_LIBRARIES}
     )
 
-if(HAVE_64_BIT)
-	add_library (llcommonPIC ${llcommon_SOURCE_FILES})
-	add_dependencies(llcommonPIC prepare)
-
-	if(WINDOWS)
-		add_definitions(/FIXED:NO)
-	else(WINDOWS) # not windows therefore gcc LINUX and DARWIN
-		add_definitions(-fPIC)
-	endif(WINDOWS)
-	
-	target_link_libraries(
-		llcommonPIC
-		${APRUTIL_LIBRARIES}
-		${APR_LIBRARIES}
-		${EXPAT_LIBRARIES}
-		${ZLIB_LIBRARIES}
+if (DARWIN)
+    # Don't embed a full path in the library's install name
+    set_target_properties(
+        llcommon
+        PROPERTIES
+        BUILD_WITH_INSTALL_RPATH 1
+        INSTALL_NAME_DIR "@executable_path/../Resources"
 		)
-endif(HAVE_64_BIT)
-
+endif (DARWIN)

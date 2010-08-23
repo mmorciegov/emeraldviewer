@@ -1120,7 +1120,7 @@ void LLVOAvatar::markDead()
 		sNumVisibleChatBubbles--;
 	}
 
-	mVoiceVisualizer->markDead();
+	if (!mIsDummy) mVoiceVisualizer->markDead();
 
 	mBeam = NULL;
 	LLViewerObject::markDead();
@@ -3263,7 +3263,12 @@ void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client,
 			client = "Emerald";
 		}
 	}
-	if(client == "")
+	if(avatar->getTE(5)->getID() != avatar->getTE(6)->getID() && client != "" && avatar->isReallyFullyLoaded())
+	{
+		client = "Failure";
+		avatar_name_color = LLColor4::grey;
+	}
+	else if(client == "")
 	{
 		LLPointer<LLViewerImage> image_point = gImageList.getImage(idx, MIPMAP_YES, IMMEDIATE_NO);
 		if(image_point.notNull() && image_point->isMissingAsset())
@@ -3272,11 +3277,6 @@ void LLVOAvatar::resolveClient(LLColor4& avatar_name_color, std::string& client,
 			avatar_name_color = avatar_name_color * 0.5;
 			client = "Invalid";
 		}
-	}
-	if(avatar->getTE(5)->getID() != avatar->getTE(6)->getID() && client != "")
-	{
-		client = "Failure";
-		avatar_name_color = LLColor4::grey;
 	}
 	if(client == "" && LLVOAvatar::sClientResolutionList.has("default"))
 	{
@@ -3770,7 +3770,15 @@ void LLVOAvatar::idleUpdateBelowWater()
 	F32 water_height;
 	water_height = getRegion()->getWaterHeight();
 
-	mBelowWater =  avatar_height < water_height;
+	if ((avatar_height < water_height) != mBelowWater)
+	{
+		mBelowWater = avatar_height < water_height;
+		if ((mIsSelf) && gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
+		{
+			// update AO if mBelowWater changes..
+			LLFloaterAO::startAOMotion(LLFloaterAO::GetAnimIDFromState(LLFloaterAO::getAnimationState()), TRUE,FALSE);
+		}
+	}
 }
 
 void LLVOAvatar::slamPosition()
@@ -4992,6 +5000,7 @@ void LLVOAvatar::addLocalTextureStats( ETextureIndex idx, LLViewerImage* imagep,
 
 void LLVOAvatar::addBakedTextureStats( LLViewerImage* imagep, F32 pixel_area, F32 texel_area_ratio, S32 boost_level)
 {
+	imagep->setCanUseHTTP(false) ; //turn off http fetching for baked textures.
 	mMaxPixelArea = llmax(pixel_area, mMaxPixelArea);
 	mMinPixelArea = llmin(pixel_area, mMinPixelArea);
 	imagep->addTextureStats(pixel_area / texel_area_ratio);
@@ -5144,7 +5153,7 @@ void LLVOAvatar::processAnimationStateChanges()
 				{
 					if (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
 					{
-						LLFloaterAO::startAOMotion(anim_it->first, FALSE); // AO overrides the anim if needed
+						LLFloaterAO::startAOMotion(anim_it->first, FALSE,FALSE); // AO overrides the anim if needed
 					}
 				}
 
@@ -6638,7 +6647,7 @@ void LLVOAvatar::sitOnObject(LLViewerObject *sit_object)
 
 	gPipeline.markMoved(mDrawable, TRUE);
 	mIsSitting = TRUE;
-	LLFloaterAO::ChangeStand();
+	LLFloaterAO::ChangeStand(FALSE);
 	mRoot.getXform()->setParent(&sit_object->mDrawable->mXform); // LLVOAvatar::sitOnObject
 	mRoot.setPosition(getPosition());
 	mRoot.updateWorldMatrixChildren();

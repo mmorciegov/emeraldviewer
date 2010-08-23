@@ -72,7 +72,7 @@
 #include "lggautocorrectfloater.h"
 
 #include "llprimitive.h"
-#include "a_modularsystemslink.h"
+#include "a_emeraldviewerlink.h"
 
 ////////begin drop utility/////////////
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,7 +182,7 @@ BOOL LLPanelEmerald::postBuild()
 
 	LLComboBox* tagcombo = getChild<LLComboBox>("TagCombo");
 	tagcombo->setCommitCallback(onTagComboBoxCommit);
-	for(LLSD::map_iterator itr = ModularSystemsLink::emerald_tags.beginMap(); itr != ModularSystemsLink::emerald_tags.endMap(); ++itr) 
+	for(LLSD::map_iterator itr = EmeraldViewerLink::emerald_tags.beginMap(); itr != EmeraldViewerLink::emerald_tags.endMap(); ++itr) 
 	{
 		tagcombo->add(itr->first,itr->second, ADD_BOTTOM, TRUE);
 	}
@@ -596,7 +596,7 @@ void LLPanelEmerald::onTagComboBoxCommit(LLUICtrl* ctrl, void* userdata)
 	if(box)
 	{
 		gSavedSettings.setString("EmeraldTagColor",box->getSimple());
-		LLPrimitive::tagstring = ModularSystemsLink::emerald_tags[box->getSimple()].asString();
+		LLPrimitive::tagstring = EmeraldViewerLink::emerald_tags[box->getSimple()].asString();
 		gAgent.sendAgentSetAppearance();
 	}	
 }

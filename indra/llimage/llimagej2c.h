@@ -80,6 +80,7 @@ public:
 	static void closeDSO();
 	static std::string getEngineInfo();
 	static bool useEMKDU;
+	static std::map<LLImageRaw*, std::string> decodedimagecommentmap;
 	
 protected:
 	friend class LLImageJ2CImpl;

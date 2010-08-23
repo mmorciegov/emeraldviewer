@@ -81,14 +81,14 @@
 	<menu_item_call enabled="true" label="Gestures..." name="Gestures...">
 		<on_click function="ShowFloater" userdata="gestures" />
 	</menu_item_call>
-<menu_item_call enabled="true" label="AvTextures" mouse_opaque="true" name="AvTextures">
-			<on_click function="Avatar.Debug" />
-		</menu_item_call>
 	<menu_item_call enabled="true" label="Appearance..." name="Appearance...">
 		<on_click function="ShowFloater" userdata="appearance" />
 		<on_enable function="Edit.EnableCustomizeAvatar" />
 	</menu_item_call>
-	<menu_item_call enabled="false" hidden="false" label="Export" mouse_opaque="true" name="Export">
+  <menu_item_call enabled="true" label="Textures..." mouse_opaque="true" name="AvTextures">
+    <on_click function="Avatar.Debug" />
+  </menu_item_call>
+  <menu_item_call enabled="false" hidden="false" label="Export" mouse_opaque="true" name="Export">
 		<on_click function="Object.Export" />
 		<on_visible function="Object.VisibleExport" />
 		<on_enable function="Object.EnableExport" />

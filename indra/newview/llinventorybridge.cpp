@@ -91,7 +91,7 @@
 #include "lluictrlfactory.h"
 #include "llselectmgr.h"
 #include "llfloateropenobject.h"
-
+#include "jc_lslviewerbridge.h"
 #include "exporttracker.h"
 
 // [RLVa:KB]
@@ -811,6 +811,22 @@ void LLItemBridge::performAction(LLFolderView* folder, LLInventoryModel* model, 
 		asset_id.toString(buffer);
 
 		gViewerWindow->mWindow->copyTextToClipboard(utf8str_to_wstring(buffer));
+		return;
+	}
+	else if ("loopsound" == action)
+	{
+		// Single item only
+		LLInventoryItem* item = model->getItem(mUUID);
+		if(!item) return;
+		LLUUID asset_id = item->getAssetUUID();
+		std::string buffer;
+		asset_id.toString(buffer);
+		JCLSLBridge::bridgetolsl(llformat("loopsound|%s",buffer.c_str()),NULL);
+		return;
+	}
+	else if ("stopsound" == action)
+	{
+		JCLSLBridge::bridgetolsl(std::string("stopsound") ,NULL);
 		return;
 	}
 	else if ("copy" == action)
@@ -2636,6 +2652,8 @@ void LLSoundBridge::buildContextMenu(LLMenuGL& menu, U32 flags)
 
 	items.push_back(std::string("Sound Separator"));
 	items.push_back(std::string("Sound Play"));
+	items.push_back(std::string("Sound Loop"));
+	items.push_back(std::string("Stop Loop"));
 
 	hideContextEntries(menu, items, disabled_items);
 }

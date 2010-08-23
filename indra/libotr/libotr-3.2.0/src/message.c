@@ -1211,18 +1211,25 @@ int otrl_message_receiving(OtrlUserState us, const OtrlMessageAppOps *ops,
 
 	    /* In any event, display the error message, with the
 	     * display_otr_message callback, if possible */
-	    if (ops->display_otr_message) {
-		const char *otrerror = strstr(message, "?OTR Error:");
-		if (otrerror) {
-		    /* Skip the leading '?' */
-		    ++otrerror;
-		} else {
-		    otrerror = message;
-		}
-		if (!ops->display_otr_message(opdata, accountname, protocol,
-			    sender, otrerror)) { 
-		    edata.ignore_message = 1;
-		}
+	    if (ops->display_otr_message) 
+		{
+			const char *otrerror = strstr(message, "?OTR Error:");
+			if (otrerror) 
+			{
+				/* Skip the leading '?' */
+				++otrerror;
+			}	
+			else 
+			{
+				otrerror = message;
+			}
+			/*Phox - Don't display OTR messages, but pretend we did, 
+			otherwise OTR will automatically display it inline as a 
+			received message*/
+			//if (!ops->display_otr_message(opdata, accountname, protocol, sender, otrerror)) 
+			{ 
+				edata.ignore_message = 1;
+			}
 	    }
 	    break;
 

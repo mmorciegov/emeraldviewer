@@ -59,12 +59,8 @@ Hover your mouse over the options for more help.
 	     height="22" label="Detailed View" label_selected="Detailed View"
 	     left_delta="0" mouse_opaque="true" name="info_button" width="128" />
 	<text bottom_delta="-16" font="SansSerif" name="text_owners_and_visible_members">
-		Owners &amp; Visible Members
-	</text>
-	<text bottom_delta="-16" font="SansSerifSmall" left_delta="0"
-	     name="text_owners_are_shown_in_bold">
-		(Owners are shown in bold)
-	</text>
+		Owners &amp; Visible Members (Owners are shown in bold)
+  </text>
 	<name_list allow_calling_card_drop="false" background_visible="true" bottom_delta="-88"
 	     column_padding="0" draw_border="true" draw_heading="true"
 	     follows="left|top" heading_font="SansSerifSmall" heading_height="14"

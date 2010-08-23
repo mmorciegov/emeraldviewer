@@ -75,7 +75,6 @@ BOOL LLFloaterExploreSounds::postBuild(void)
 	childSetDoubleClickCallback("sound_list", handle_play_locally, this);
 
 	childSetAction("play_locally_btn", handle_play_locally, this);
-	childSetAction("play_ambient_btn", handle_play_ambient, this);
 	childSetAction("look_at_btn", handle_look_at, this);
 	childSetAction("stop_btn", handle_stop, this);
 	childSetAction("bl_btn", blacklistSound, this);
@@ -256,7 +255,7 @@ BOOL LLFloaterExploreSounds::tick()
 
 		LLSD& sound_column = element["columns"][3];
 		sound_column["column"] = "sound";
-		sound_column["value"] = item.mAssetID.asString();
+		sound_column["value"] = item.mAssetID.asString().substr(0,16);
 
 		list->addElement(element, ADD_BOTTOM);
 	}
@@ -284,44 +283,10 @@ void LLFloaterExploreSounds::handle_play_locally(void* user_data)
 		if(std::find(asset_list.begin(), asset_list.end(), item.mAssetID) == asset_list.end())
 		{
 			asset_list.push_back(item.mAssetID);
-			gAudiop->triggerSound(item.mAssetID, LLUUID::null, 1.0f, LLAudioEngine::AUDIO_TYPE_UI);
+			gAudiop->triggerSound(item.mAssetID, gAgent.getID(), 1.0f, LLAudioEngine::AUDIO_TYPE_UI);
 		}
 	}
 }
-
-// static
-void LLFloaterExploreSounds::handle_play_ambient(void* user_data)
-{
-	LLFloaterExploreSounds* floater = (LLFloaterExploreSounds*)user_data;
-	LLScrollListCtrl* list = floater->getChild<LLScrollListCtrl>("sound_list");
-	std::vector<LLScrollListItem*> selection = list->getAllSelected();
-	std::vector<LLScrollListItem*>::iterator selection_iter = selection.begin();
-	std::vector<LLScrollListItem*>::iterator selection_end = selection.end();
-	for( ; selection_iter != selection_end; ++selection_iter)
-	{
-		LLSoundHistoryItem item = floater->getItem((*selection_iter)->getValue());
-		if(item.mID.isNull()) continue;
-		int gain = 0.01f;
-		for(int i = 0; i < 2; i++)
-		{
-			gMessageSystem->newMessageFast(_PREHASH_SoundTrigger);
-			gMessageSystem->nextBlockFast(_PREHASH_SoundData);
-			gMessageSystem->addUUIDFast(_PREHASH_SoundID, item.mAssetID);
-			gMessageSystem->addUUIDFast(_PREHASH_OwnerID, LLUUID::null);
-			gMessageSystem->addUUIDFast(_PREHASH_ObjectID, LLUUID::null);
-			gMessageSystem->addUUIDFast(_PREHASH_ParentID, LLUUID::null);
-			gMessageSystem->addU64Fast(_PREHASH_Handle, gAgent.getRegion()->getHandle());
-			LLVector3d	pos = -from_region_handle(gAgent.getRegion()->getHandle());
-			gMessageSystem->addVector3Fast(_PREHASH_Position, (LLVector3)pos);
-			gMessageSystem->addF32Fast(_PREHASH_Gain, gain);
-
-			gMessageSystem->sendReliable(gAgent.getRegionHost());
-
-			gain = 1.0f;
-		}
-	}
-}
-
 
 // static
 void LLFloaterExploreSounds::handle_look_at(void* user_data)

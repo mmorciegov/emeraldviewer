@@ -5765,7 +5765,7 @@ class LLAgentDropGroupViewerNode : public LLHTTPNode
 			!input.has("body") )
 		{
 			//what to do with badly formed message?
-			response->status(400);
+			response->statusUnknownError(400);
 			response->result(LLSD("Invalid message parameters"));
 		}
 
@@ -5838,7 +5838,7 @@ class LLAgentDropGroupViewerNode : public LLHTTPNode
 		else
 		{
 			//what to do with badly formed message?
-			response->status(400);
+			response->statusUnknownError(400);
 			response->result(LLSD("Invalid message parameters"));
 		}
 	}
@@ -7656,8 +7656,7 @@ void LLAgent::sendAgentSetAppearance()
 	// is texture data current relative to wearables?
 	// KLW - TAT this will probably need to check the local queue.
 	BOOL textures_current = !mAvatarObject->hasPendingBakedUploads() && mWearablesLoaded;
-	std::vector<U8> unavailable;
-	unavailable.clear();
+
 	for(U8 baked_index = 0; baked_index < BAKED_NUM_INDICES; baked_index++ )
 	{
 		const ETextureIndex texture_index = getTextureIndex((EBakedTextureIndex)baked_index);
@@ -7671,23 +7670,13 @@ void LLAgent::sendAgentSetAppearance()
 		// IMG_DEFAULT_AVATAR means not baked
 		if (!mAvatarObject->isTextureDefined(texture_index))
 		{
-			// TODO: itoa is not a standard function of C.
-			/*
-			char lol[16];
-			itoa(texture_index,lol,10);
-			llinfos << lol << " isn't defined" << llendl;
-			*/
-
-			//FUCK baking problems, we'll just send whatever's available immediately
-			//textures_current = FALSE;
-			unavailable.push_back(texture_index);
-			//break;
+			textures_current = FALSE;
+			break;
 		}
-		
 	}
 
 	// only update cache entries if we have all our baked textures
-	if(textures_current)
+	if (textures_current)
 	{
 		llinfos << "TAT: Sending cached texture data" << llendl;
 		for (U8 baked_index = 0; baked_index < BAKED_NUM_INDICES; baked_index++)
@@ -7708,7 +7697,9 @@ void LLAgent::sendAgentSetAppearance()
 			{
 				hash ^= wearable_dict->mHashID;
 			}
+
 			const ETextureIndex texture_index = getTextureIndex((EBakedTextureIndex)baked_index);
+
 			msg->nextBlockFast(_PREHASH_WearableData);
 			msg->addUUIDFast(_PREHASH_CacheID, hash);
 			msg->addU8Fast(_PREHASH_TextureIndex, (U8)texture_index);
@@ -7717,44 +7708,12 @@ void LLAgent::sendAgentSetAppearance()
 		mAvatarObject->packTEMessage( gMessageSystem, TRUE );
 	}
 	else
-	{//Do everything anyway because of stupid bakes not working
-		llinfos << "TAT: Sending cached texture data" << llendl;
-		for (U8 baked_index = 0; baked_index < BAKED_NUM_INDICES; baked_index++)
-		{
-			if(std::find(unavailable.begin(),unavailable.end(),baked_index) != unavailable.end())
-			{
-				const LLVOAvatarDictionary::WearableDictionaryEntry *wearable_dict = LLVOAvatarDictionary::getInstance()->getWearable((EBakedTextureIndex)baked_index);
-				LLUUID hash;
-				for (U8 i=0; i < wearable_dict->mWearablesVec.size(); i++)
-				{
-					// EWearableType wearable_type = gBakedWearableMap[baked_index][wearable_num];
-					const EWearableType wearable_type = wearable_dict->mWearablesVec[i];
-					const LLWearable* wearable = getWearable(wearable_type);
-					if (wearable)
-					{
-						hash ^= wearable->getID();
-					}
-				}
-				if (hash.notNull())
-				{
-					hash ^= wearable_dict->mHashID;
-				}
-
-				const ETextureIndex texture_index = getTextureIndex((EBakedTextureIndex)baked_index);
-
-				msg->nextBlockFast(_PREHASH_WearableData);
-				msg->addUUIDFast(_PREHASH_CacheID, hash);
-				msg->addU8Fast(_PREHASH_TextureIndex, (U8)texture_index);
-			}
-		}
-		msg->nextBlockFast(_PREHASH_ObjectData);
-		mAvatarObject->packTEMessage( gMessageSystem, TRUE );
-
-		/*// If the textures aren't baked, send NULL for texture IDs
+	{
+		// If the textures aren't baked, send NULL for texture IDs
 		// This means the baked texture IDs on the server will be untouched.
 		// Once all textures are baked, another AvatarAppearance message will be sent to update the TEs
 		msg->nextBlockFast(_PREHASH_ObjectData);
-		gMessageSystem->addBinaryDataFast(_PREHASH_TextureEntry, NULL, 0);*/
+		gMessageSystem->addBinaryDataFast(_PREHASH_TextureEntry, NULL, 0);
 	}
 
 

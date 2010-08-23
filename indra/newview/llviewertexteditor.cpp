@@ -1229,9 +1229,9 @@ std::string LLViewerTextEditor::appendTime(bool prepend_newline)
 	std::string text;
 	
 	if (gSavedSettings.getBOOL("EmeraldAddSecondsInHistory"))
-		text = llformat("[%d:%02d:%02d]  ", timep->tm_hour, timep->tm_min, timep->tm_sec);
+		text = llformat("[%02d:%02d:%02d]  ", timep->tm_hour, timep->tm_min, timep->tm_sec);
 	else
-		text = llformat("[%d:%02d]  ", timep->tm_hour, timep->tm_min, timep->tm_sec);
+		text = llformat("[%02d:%02d]  ", timep->tm_hour, timep->tm_min);
 	
 	appendColoredText(text, false, prepend_newline, LLColor4::grey);
 

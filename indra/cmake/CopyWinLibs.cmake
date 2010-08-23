@@ -40,6 +40,9 @@ set(all_targets ${all_targets} ${out_targets})
 
 set(debug_src_dir "${CMAKE_SOURCE_DIR}/../libraries/i686-win32/lib/debug")
 set(debug_files
+    libapr-1.dll
+    libaprutil-1.dll
+    libapriconv-1.dll
     openjpegd.dll
     libhunspell.dll
     lgggrowl++.dll
@@ -225,6 +228,9 @@ set(all_targets ${all_targets} ${out_targets})
 
 set(release_src_dir "${CMAKE_SOURCE_DIR}/../libraries/i686-win32/lib/release")
 set(release_files
+    libapr-1.dll
+    libaprutil-1.dll
+    libapriconv-1.dll
     openjpeg.dll
     libhunspell.dll
     lgggrowl++.dll

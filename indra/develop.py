@@ -76,10 +76,12 @@ class PlatformSetup(object):
     build_type = build_types['release']
     standalone = 'OFF'
     unattended = 'OFF'
+    universal = 'OFF'
     project_name = 'SecondLife'
     distcc = True
     cmake_opts = []
     word_size = 32
+    using_express = False
 
     def __init__(self):
         self.script_dir = os.path.realpath(
@@ -238,6 +240,7 @@ class UnixSetup(PlatformSetup):
 
     def run(self, command, name=None):
         '''Run a program.  If the program fails, raise an exception.'''
+        sys.stdout.flush()
         ret = os.system(command)
         if ret:
             if name is None:
@@ -392,8 +395,8 @@ class LinuxSetup(UnixSetup):
                     hosts, job_count = mk_distcc_hosts('eniac', 71, 2)
                     os.environ['DISTCC_HOSTS'] = hosts
             # This is just silly. [Disc]
-			#if job_count > 4:
-                #job_count = 4;
+      #if job_count > 4:
+               #job_count = 4;
             opts.extend(['-j', str(job_count)])
 
         if targets:
@@ -416,7 +419,7 @@ class DarwinSetup(UnixSetup):
         return 'darwin'
 
     def arch(self):
-        if self.unattended == 'ON':
+        if self.universal == 'ON':
             return 'universal'
         else:
             return UnixSetup.arch(self)
@@ -430,10 +433,10 @@ class DarwinSetup(UnixSetup):
             word_size=self.word_size,
             unattended=self.unattended,
             project_name=self.project_name,
-            universal='',
+            universal=self.universal,
             type=self.build_type.upper(),
             )
-        if self.unattended == 'ON':
+        if self.universal == 'ON':
             args['universal'] = '-DCMAKE_OSX_ARCHITECTURES:STRING=\'i386;ppc\''
         #if simple:
         #    return 'cmake %(opts)s %(dir)r' % args
@@ -498,8 +501,16 @@ class WindowsSetup(PlatformSetup):
                     print 'Building with ', self.gens[version]['gen']
                     break
             else:
-                print >> sys.stderr, 'Cannot find a Visual Studio installation!'
-                sys.exit(1)
+                    print >> sys.stderr, 'Cannot find a Visual Studio installation, testing for express editions'
+                    for version in 'vc80 vc90 vc71'.split():
+                        if self.find_visual_studio_express(version):
+                            self._generator = version
+                            self.using_express = True
+                            print 'Building with ', self.gens[version]['gen'] , "Express edition"
+                            break
+                        else:
+                            print >> sys.stderr, 'Cannot find any Visual Studio installation'
+                            sys.exit(1)
         return self._generator
 
     def _set_generator(self, gen):
@@ -559,7 +570,27 @@ class WindowsSetup(PlatformSetup):
             return self.get_HKLM_registry_value(key_str, value_str)
         except:
             print >> sys.stderr, "Didn't find ", self.gens[gen]['gen']
+        return ''
             
+    def find_visual_studio_express(self, gen=None):
+        if gen is None:
+            gen = self._generator
+        gen = gen.lower()
+        try:
+            import _winreg
+            key_str = (r'SOFTWARE\Microsoft\VCEXpress\%s\Setup\VC' %
+                       self.gens[gen]['ver'])
+            value_str = (r'ProductDir')
+            print ('Reading VS environment from HKEY_LOCAL_MACHINE\%s\%s' %
+                   (key_str, value_str))
+            print key_str
+            reg = _winreg.ConnectRegistry(None, _winreg.HKEY_LOCAL_MACHINE)
+            key = _winreg.OpenKey(reg, key_str)
+            value = _winreg.QueryValueEx(key, value_str)[0]+"IDE"
+            print 'Found: %s' % value
+            return value
+        except WindowsError, err:
+            print >> sys.stderr, "Didn't find ", self.gens[gen]['gen']
         return ''
 
     def get_build_cmd(self):
@@ -569,6 +600,17 @@ class WindowsSetup(PlatformSetup):
                 config = '\"%s|Win32\"' % config
 
             return "buildconsole %s.sln /build %s" % (self.project_name, config)
+        environment = self.find_visual_studio()
+        if environment == '':
+            environment = self.find_visual_studio_express()
+            if environment == '':
+                 print >> sys.stderr, "Something went very wrong during build stage, could not find a Visual Studio?"
+            else:
+                 build_dirs=self.build_dirs()
+                 print >> sys.stderr, "\nSolution generation complete, it can can now be found in:", build_dirs[0]    
+                 print >> sys.stderr, "\nAs you are using an Express Visual Studio, the build step cannot be automated"
+                 print >> sys.stderr, "\nPlease see https://wiki.secondlife.com/wiki/Microsoft_Visual_Studio#Extra_steps_for_Visual_Studio_Express_editions for Visual Studio Express specific information"
+                 exit(0)
 
         # devenv.com is CLI friendly, devenv.exe... not so much.
         return ('"%sdevenv.com" %s.sln /build %s' % 
@@ -592,7 +634,8 @@ class WindowsSetup(PlatformSetup):
         '''Override to add the vstool.exe call after running cmake.'''
         PlatformSetup.run_cmake(self, args)
         if self.unattended == 'OFF':
-            self.run_vstool()
+            if self.using_express == False:
+                self.run_vstool()
 
     def run_vstool(self):
         for build_dir in self.build_dirs():
@@ -673,6 +716,7 @@ Options:
        --standalone     build standalone, without Linden prebuild libraries
        --unattended     build unattended, do not invoke any tools requiring
                         a human response
+       --universal      build a universal binary on Mac OS X (unsupported)
   -t | --type=NAME      build type ("Debug", "Release", or "RelWithDebInfo")
   -m32 | -m64           build architecture (32-bit or 64-bit)
   -N | --no-distcc      disable use of distcc
@@ -686,7 +730,8 @@ Options:
 Commands:
   build      configure and build default target
   clean      delete all build directories, does not affect sources
-  configure  configure project by running cmake (default command if none given)
+  configure       configure project by running cmake (default if none given)
+  printbuilddirs  print the build directory that will be used
 
 Command-options for "configure":
   We use cmake variables to change the build configuration.
@@ -704,15 +749,6 @@ Examples:
 '''
 
 def main(arguments):
-    if os.getenv('DISTCC_DIR') is None:
-        distcc_dir = os.path.join(getcwd(), '.distcc')
-        if not os.path.exists(distcc_dir):
-            os.mkdir(distcc_dir)
-        print "setting DISTCC_DIR to %s" % distcc_dir
-        os.environ['DISTCC_DIR'] = distcc_dir
-    else:
-        print "DISTCC_DIR is set to %s" % os.getenv('DISTCC_DIR')
- 
     setup = setup_platform[sys.platform]()
     try:
         opts, args = getopt.getopt(
@@ -772,6 +808,14 @@ For example: develop.py configure -DSERVER:BOOL=OFF"""
         if cmd in ('cmake', 'configure'):
             setup.run_cmake(args)
         elif cmd == 'build':
+            if os.getenv('DISTCC_DIR') is None:
+                distcc_dir = os.path.join(getcwd(), '.distcc')
+                if not os.path.exists(distcc_dir):
+                    os.mkdir(distcc_dir)
+                print "setting DISTCC_DIR to %s" % distcc_dir
+                os.environ['DISTCC_DIR'] = distcc_dir
+            else:
+                print "DISTCC_DIR is set to %s" % os.getenv('DISTCC_DIR')
             for d in setup.build_dirs():
                 if not os.path.exists(d):
                     raise CommandError('run "develop.py cmake" first')
@@ -782,6 +826,9 @@ For example: develop.py configure -DSERVER:BOOL=OFF"""
             if args:
                 raise CommandError('clean takes no arguments')
             setup.cleanup()
+        elif cmd == 'printbuilddirs':
+            for d in setup.build_dirs():
+                print >> sys.stdout, d
         else:
             print >> sys.stderr, 'Error: unknown subcommand', repr(cmd)
             print >> sys.stderr, "(run 'develop.py --help' for help)"

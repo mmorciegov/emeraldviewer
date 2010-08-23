@@ -34,6 +34,7 @@
 #define LL_LLWINDOWMACOSX_H
 
 #include "llwindow.h"
+#include "lltimer.h"
 
 #include <Carbon/Carbon.h>
 #include <AGL/agl.h>
@@ -47,7 +48,6 @@
 class LLWindowMacOSX : public LLWindow
 {
 public:
-	/*virtual*/ void setWindowTitle(std::string &title);
 	/*virtual*/ void show();
 	/*virtual*/ void hide();
 	/*virtual*/ void close();
@@ -113,7 +113,6 @@ public:
 	/*virtual*/ void allowLanguageTextInput(LLPreeditor *preeditor, BOOL b);
 	/*virtual*/ void interruptLanguageTextInput();
 	/*virtual*/ void spawnWebBrowser(const std::string& escaped_url);
-	/*virtual*/ void openFile(const std::string& file_name);
 
 	static std::vector<std::string> getDynamicFallbackFontList();
 

@@ -553,6 +553,7 @@ public:
 	LLPointer<LLHUDIcon> mIcon;
 
 	static			BOOL		sUseSharedDrawables;
+	F32		mSculptSurfaceArea;
 
 protected:
 	// delete an item in the inventory, but don't tell the

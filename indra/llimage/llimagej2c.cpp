@@ -393,8 +393,7 @@ BOOL LLImageJ2C::decode(LLImageRaw *raw_imagep, F32 decode_time)
 {
 	return decodeChannels(raw_imagep, decode_time, 0, 4);
 }
-
-
+std::map<LLImageRaw*, std::string> LLImageJ2C::decodedimagecommentmap;
 // Returns TRUE to mean done, whether successful or not.
 BOOL LLImageJ2C::decodeChannels(LLImageRaw *raw_imagep, F32 decode_time, S32 first_channel, S32 max_channel_count )
 {
@@ -417,6 +416,15 @@ BOOL LLImageJ2C::decodeChannels(LLImageRaw *raw_imagep, F32 decode_time, S32 fir
 		mDecoding = TRUE;
 		if(useEMKDU)
 		{
+			EMImageData comment_data;
+			comment_data.mData = getData();
+			comment_data.mLength = (U32)getDataSize();
+			if(emImpl->getMetaComment(&comment_data))
+			{
+				char wat [67];
+				memcpy(wat,comment_data.mData,67);
+				decodedimagecommentmap[raw_imagep] = std::string(wat);
+			}
 			EMImageData img_data;
 			img_data.mComponents = max_channel_count;
 			img_data.mFirstComp = first_channel;
@@ -425,20 +433,6 @@ BOOL LLImageJ2C::decodeChannels(LLImageRaw *raw_imagep, F32 decode_time, S32 fir
 			img_data.mDiscard = getRawDiscardLevel();
 			img_data.mHeight = getHeight();
 			img_data.mWidth = getWidth();
-			if(emImpl->getMetaComment(&img_data))
-			{
-				
-				char wat [67];
-				memcpy(&wat[0],img_data.mData,img_data.mLength);
-				raw_imagep->decodedImageComment = wat;
-				img_data.mComponents = max_channel_count;
-				img_data.mFirstComp = first_channel;
-				img_data.mData = getData();
-				img_data.mLength = (U32)getDataSize();
-				img_data.mDiscard = getRawDiscardLevel();
-				img_data.mHeight = getHeight();
-				img_data.mWidth = getWidth();
-			}
 			res = emImpl->decodeData(&img_data);
 			if((img_data.mData != getData()) &&
 				(img_data.mWidth > 0) && (img_data.mHeight > 0)

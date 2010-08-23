@@ -318,12 +318,6 @@ LLWindowMacOSX::LLWindowMacOSX(const std::string& title, const std::string& name
 	stop_glerror();
 }
 
-void LLWindowMacOSX::setWindowTitle(std::string &title)
-{
-	CFStringRef string = CFStringCreateWithCString(NULL, title.c_str(), kCFStringEncodingUTF8);
-	SetWindowTitleWithCFString(mWindow, string);
-}
-
 BOOL LLWindowMacOSX::createContext(int x, int y, int width, int height, int bits, BOOL fullscreen, BOOL disable_vsync)
 {
 	OSStatus		err;
@@ -3137,18 +3131,6 @@ S32 OSMessageBoxMacOSX(const std::string& text, const std::string& caption, U32 
 	}
 
 	return result;
-}
-
-void LLWindowMacOSX::openFile(const std::string& file_name)
-{
-	// Open with whatever the system feels like opening with.
-	llinfos << "Opening " << file_name << " in external editor." << llendl;
-	CFStringRef strPath = CFStringCreateWithCString(kCFAllocatorDefault, file_name.c_str(), kCFStringEncodingUTF8);
-	FSRef ref;
-	FSPathMakeRef((UInt8*)file_name.c_str(), &ref, NULL);
-	FSRef pathArray[1] = { ref };
-	LSOpenItemsWithRole(pathArray, 1, kLSRolesEditor, NULL, NULL, NULL, 0);
-	CFRelease(strPath);
 }
 
 // Open a URL with the user's default web browser.

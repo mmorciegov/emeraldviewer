@@ -115,7 +115,7 @@
 		font="SansSerifSmall" 
 		follows="left|top" bg_visible="false" border_visible="false" mouse_opaque="true"
 	    drop_shadow_visible="true" border_drop_shadow_visible="false">
-		Helper URI:
+		Helper URL:
 	</text>
 	<line_editor max_length="254" enabled="true" name="helperuri" 
 		handle_edit_keys_directly="true" 

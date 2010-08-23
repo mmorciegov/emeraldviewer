@@ -464,7 +464,7 @@ BOOL LLMessageLogFilterApply::tick()
 			return TRUE;
 		}
 		
-		LLFloaterMessageLog::sInstance->conditionalLog(LLFloaterMessageLogItem((*mIter)));
+			LLFloaterMessageLog::sInstance->conditionalLog(LLFloaterMessageLogItem((*mIter)));
 		
 		mIter++;
 		mProgress++;
@@ -918,6 +918,8 @@ void LLFloaterMessageLog::onClickClearLog(void* user_data)
 {
 	LLFloaterMessageLog* floaterp = (LLFloaterMessageLog*)user_data;
 	floaterp->stopApplyingFilter();
+	if(floaterp->mMessageLogFilterApply)
+		return;
 	floaterp->getChild<LLScrollListCtrl>("message_log")->clearRows();
 	floaterp->setNetInfoMode(NI_NET);
 	sMessageLogEntries.clear();

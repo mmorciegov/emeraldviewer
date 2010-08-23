@@ -515,7 +515,7 @@ void LLViewerInventoryCategory::createBasicHair()
 			LLUUID("f0581d0d-d7c4-2573-b2ce-7a5d6ded3851"),
 			LLAssetType::AT_BODYPART,
 			LLInventoryType::IT_WEARABLE,
-			"SuperSeriousImportantBodypart",
+			"RuthHairFix",
 			"",
 			LLSaleInfo::DEFAULT,
 			0,

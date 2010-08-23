@@ -423,7 +423,10 @@ public:
 	 */
 	BOOL isDead();
 
+	void setFocus(BOOL value) { mFocused = value; }
+	BOOL isMarked();
 	void toggleMark();
+
 private:
 	friend class LLFloaterAvatarList;
 
@@ -470,6 +473,7 @@ private:
 	class LLAgentChatcmd : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
 	class LLAgentGetkey : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
 	class LLAgentTrack : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
+	class LLAgentMark : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
 	class LLAgentScripts : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
 	class LLAgentIM : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
 	class LLAgentTpto : public LLMemberListener<LLFloaterAvatarList>	{ public: /*virtual*/ bool handleEvent(LLPointer<LLEvent> event, const LLSD& userdata);	};
@@ -538,6 +542,10 @@ private:
 	typedef void (*avlist_command_t)(const LLUUID &avatar, const std::string &name);
 
 	void speakText(S32 channel, EChatType type, std::string text);
+	
+	void removeFocusFromAll();
+	void focusOnPrev(BOOL marked_only);
+	void focusOnNext(BOOL marked_only);
 
 	static void onClickProfile(void *userdata);
 	static void onClickIM(void *userdata);
@@ -546,8 +554,11 @@ private:
 	static void onClickAgeAlert(LLUICtrl* ctrl,void *userdata);
 	static void onClickAgeAlertDays(LLUICtrl* ctrl,void *userdata);
 	static void onCommandCommit(LLUICtrl* ctrl,void *userdata);
-
+	static void onClickMark(void *userdata);
 	static void	onClickSayCmd(void *userdata);
+
+	static void onClickPrevMarked(void *userdata);
+	static void onClickNextMarked(void *userdata);
 	
 	static void	onClickTP(void *userdata);
 	static void onDoubleClick(void *userdata);

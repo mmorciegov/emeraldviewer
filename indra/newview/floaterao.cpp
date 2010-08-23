@@ -2,6 +2,8 @@
  * @file llfloaterao.cpp
  * @brief clientside animation overrider
  * by Skills Hak
+ * rewritten by Skills
+ * and again
  */
 
 #include "llviewerprecompiledheaders.h"
@@ -54,8 +56,11 @@ void AOStandTimer::reset()
 }
 BOOL AOStandTimer::tick()
 {
-	LLFloaterAO::stand_iterator++;
-	LLFloaterAO::ChangeStand();
+	if (gSavedPerAccountSettings.getBOOL("EmeraldAOStandCycling"))
+	{
+		LLFloaterAO::stand_iterator++;
+		LLFloaterAO::ChangeStand(FALSE);
+	}
 	return FALSE;
 }
 
@@ -67,7 +72,10 @@ AOInvTimer::~AOInvTimer()
 }
 BOOL AOInvTimer::tick()
 {
-	if (!(gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))) return TRUE;
+	//todo: find a better way to preload the AO on login even though it is disabled 
+	if (!(gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))) return TRUE; 
+
+
 	if(LLStartUp::getStartupState() >= STATE_INVENTORY_SEND)
 	{
 		LLUUID emerald_category = JCLSLBridge::findCategoryByNameOrCreate(emerald_category_name);
@@ -178,6 +186,7 @@ std::vector<struct_default_anims> mAODefaultAnims;
 struct struct_all_anims
 {
 	LLUUID ao_id;
+	BOOL isPlaying;
 	std::string anim_name;
 	int state;
 };
@@ -221,25 +230,15 @@ LLFloaterAO::LLFloaterAO():LLFloater(std::string("floater_ao"))
 	sInstance = this;
 	LLUICtrlFactory::getInstance()->buildFloater(sInstance, "floater_ao.xml");
 	sInstance->setVisible(FALSE);
-
-	mComboBoxes.clear();
-	struct_combobox loader_combobox;
-	for (std::vector<struct_anim_types>::iterator iter = mAnimTypes.begin(); iter != mAnimTypes.end(); ++iter)
-	{
-		loader_combobox.combobox = getChild<LLComboBox>(iter->name);
-		loader_combobox.name = iter->name;
-		loader_combobox.state = iter->state;
-		mComboBoxes.push_back(loader_combobox);
-	}
-
 	mTabContainer = getChild<LLTabContainer>("tabcontainer");
-	mcomboBox_stands = (LLComboBox*) getComboBox("stand");
 
-	for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
+	if (mAOAllAnims.empty()) // ao hasn't been loaded yet (login with ao off) do it now
 	{
-		getChild<LLComboBox>(iter->name)->setCommitCallback(onComboBoxCommit);
-		childSetCommitCallback("EmeraldAORandomize"+iter->name,onCheckBoxCommit);
-		childSetValue("EmeraldAORandomize"+iter->name, gSavedPerAccountSettings.getBOOL("EmeraldAORandomize"+iter->name));
+		LLUUID emerald_category = JCLSLBridge::findCategoryByNameOrCreate(emerald_category_name);
+		if((LLStartUp::getStartupState() >= STATE_INVENTORY_SEND) && gInventory.isCategoryComplete(emerald_category))
+		{
+			LLFloaterAO::init();
+		}
 	}
 
 	loadComboBoxes();
@@ -284,7 +283,7 @@ void LLFloaterAO::onOpen()
 	sInstance->setFocus(TRUE);
 }
 
-void LLFloaterAO::onClose()
+void LLFloaterAO::onClose(bool app_quitting)
 {
 	sInstance->setVisible(FALSE);
 	sInstance->setFocus(FALSE);
@@ -330,17 +329,13 @@ BOOL LLFloaterAO::postBuild()
 	childSetAction("opencard",onClickOpenCard,this);
 	childSetAction("prevstand",onClickPrevStand,this);
 	childSetAction("nextstand",onClickNextStand,this);
+	
 	childSetCommitCallback("EmeraldAOEnabled",onClickToggleAO);
 	childSetCommitCallback("EmeraldAOSitsEnabled",onClickToggleSits);
+	childSetCommitCallback("EmeraldAOStandCycling",onCheckBoxCommit);
 	childSetCommitCallback("EmeraldAONoStandsInMouselook",onClickNoMouselookStands);
 	childSetCommitCallback("standtime",onSpinnerCommit);
 	
-	// Set relevant per-account stuff.
-	childSetValue("EmeraldAOEnabled", gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"));
-	childSetValue("EmeraldAOSitsEnabled", gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled"));
-	childSetValue("EmeraldAONoStandsInMouselook", gSavedPerAccountSettings.getBOOL("EmeraldAONoStandsInMouselook"));
-	childSetValue("standtime", gSavedPerAccountSettings.getF32("EmeraldAOStandInterval"));
-
 	return TRUE;
 }
 
@@ -363,6 +358,13 @@ void LLFloaterAO::updateLayout(LLFloaterAO* floater)
 
 		floater->childSetVisible("tabcontainer", advanced);
 		floater->childSetVisible("tabdefaultanims", advanced);
+
+		// Set relevant per-account stuff.
+		floater->childSetValue("EmeraldAOEnabled", gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"));
+		floater->childSetValue("EmeraldAOSitsEnabled", gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled"));
+		floater->childSetValue("EmeraldAOStandCycling", gSavedPerAccountSettings.getBOOL("EmeraldAOStandCycling"));
+		floater->childSetValue("EmeraldAONoStandsInMouselook", gSavedPerAccountSettings.getBOOL("EmeraldAONoStandsInMouselook"));
+		floater->childSetValue("standtime", gSavedPerAccountSettings.getF32("EmeraldAOStandInterval"));
 
 		for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
 		{
@@ -402,10 +404,10 @@ BOOL LLFloaterAO::init()
 	loader_anim_types.name = "turnleft";			loader_anim_types.state = STATE_AGENT_TURNLEFT;			mAnimTypes.push_back(loader_anim_types);
 	loader_anim_types.name = "turnright";		loader_anim_types.state = STATE_AGENT_TURNRIGHT;			mAnimTypes.push_back(loader_anim_types);
 	loader_anim_types.name = "typing";			loader_anim_types.state = STATE_AGENT_TYPING;			mAnimTypes.push_back(loader_anim_types);
-//	loader_anim_types.name = "floating";			loader_anim_types.state = STATE_AGENT_FLOATING;			mAnimTypes.push_back(loader_anim_types);
-//	loader_anim_types.name = "swimmingforward";	loader_anim_types.state = STATE_AGENT_SWIMMINGFORWARD;			mAnimTypes.push_back(loader_anim_types);
-//	loader_anim_types.name = "swimmingup";		loader_anim_types.state = STATE_AGENT_SWIMMINGUP;			mAnimTypes.push_back(loader_anim_types);
-//	loader_anim_types.name = "swimmingdown";		loader_anim_types.state = STATE_AGENT_SWIMMINGDOWN;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "floating";			loader_anim_types.state = STATE_AGENT_FLOATING;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "swimmingforward";	loader_anim_types.state = STATE_AGENT_SWIMMINGFORWARD;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "swimmingup";		loader_anim_types.state = STATE_AGENT_SWIMMINGUP;			mAnimTypes.push_back(loader_anim_types);
+	loader_anim_types.name = "swimmingdown";		loader_anim_types.state = STATE_AGENT_SWIMMINGDOWN;			mAnimTypes.push_back(loader_anim_types);
 
     if (!sInstance)
 	sInstance = new LLFloaterAO();
@@ -575,149 +577,185 @@ void LLFloaterAO::run()
 {
 	setAnimationState(STATE_AGENT_IDLE); // reset state
 	int state = getAnimationState(); // check if sitting or hovering
-	if ((state == STATE_AGENT_IDLE) || (state == STATE_AGENT_STAND))
+	if (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
 	{
-		if (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
+		//if we are sitting but sits are disabled, dont play any anims but start the stand timer in the background
+		//otherwise just start overriding
+		if (!((state == STATE_AGENT_SIT) && !gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled")))
+		startAOMotion(GetAnimIDFromState(state),TRUE, FALSE);
+
+		if (mAOStandTimer)
 		{
-			if (mAOStandTimer)
-			{
-				mAOStandTimer->reset();
-				ChangeStand();
-			}
-			else
-			{
-				mAOStandTimer =	new AOStandTimer();
-			}
+			mAOStandTimer->reset();
+			ChangeStand(FALSE);
 		}
 		else
 		{
-			stopAOMotion(getCurrentStandId(),TRUE); //stop stand first then set state
-			setAnimationState(STATE_AGENT_IDLE);
+			mAOStandTimer =	new AOStandTimer();
 		}
 	}
 	else
 	{
-		if (state == STATE_AGENT_SIT) gAgent.sendAnimationRequest(GetAnimIDFromState(state), (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled") && gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled")) ? ANIM_REQUEST_START : ANIM_REQUEST_STOP);
-		else gAgent.sendAnimationRequest(GetAnimIDFromState(state), gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled") ? ANIM_REQUEST_START : ANIM_REQUEST_STOP);
+		//ao is off so stop everything
+		for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
+		{
+			if (iter->isPlaying)
+			{
+				stopAOMotion(iter->ao_id,TRUE);
+			}
+		}
+
 	}
 }
 
-void LLFloaterAO::startAOMotion(const LLUUID& id, BOOL stand)
+void LLFloaterAO::startAOMotion(const LLUUID& id, const BOOL stand, const BOOL announce)
 {
 	int startmotionstate = STATE_AGENT_IDLE;
+	LLUUID override_id;
+	BOOL sitting = FALSE;
+	BOOL underwater = FALSE;
 
-	if (!stand) // it's a default linden anim uuid
+	if (gAgent.getAvatarObject())
+	{
+		sitting = gAgent.getAvatarObject()->mIsSitting;
+		underwater = gAgent.getAvatarObject()->mBelowWater;
+	}
+
+	if (!stand) // we are moving, it's a default linden anim uuid, try to override it
 	{
 		startmotionstate = GetStateFromOrigAnimID(id);
-		if (startmotionstate == STATE_AGENT_IDLE) return;
+
+		// if under water, modify states to underwater behaviour
+		if (underwater) startmotionstate = modifyUnderwaterState(startmotionstate);
+
+		// is this anim category marked as random?
+		if (isRandom(startmotionstate) && !announce)
+		{
+			override_id = GetRandomAnimIDFromState(startmotionstate);
+		}
+		else
+		{
+			if (underwater) override_id = GetAnimIDFromState(startmotionstate);
+			else override_id = GetAnimID(id);
+		}
 	}
 	else // it's an override anim uuid, probably a stand
 	{
 		startmotionstate = GetStateFromAOAnimID(id);
-	}
-//	cmdline_printchat(llformat("stand %s // startmotionstate: %d // %s // %s",stand?"1":"0",startmotionstate,GetAnimTypeFromState(startmotionstate).c_str(),id.asString().c_str()));
-	if (stand)
-	{
-		if (id.notNull())
+
+		// if under water, modify states to underwater behaviour
+		if (underwater) startmotionstate = modifyUnderwaterState(startmotionstate);
+
+		// is this anim category marked as random?
+		if (isRandom(startmotionstate) && !announce)
 		{
-			BOOL sitting = FALSE;
-			if (gAgent.getAvatarObject())
-			{
-				sitting = gAgent.getAvatarObject()->mIsSitting;
-			}
-			if (sitting) return;
-			gAgent.sendAnimationRequest(id, ANIM_REQUEST_START);
+			override_id = GetRandomAnimIDFromState(startmotionstate);
+		}
+		else
+		{
+			if (underwater) override_id = GetAnimIDFromState(startmotionstate);
+			else override_id = id;
 		}
 	}
-	else
+
+	if ((sitting) && (startmotionstate != STATE_AGENT_SIT) && (startmotionstate != STATE_AGENT_GROUNDSIT)) return;
+//	if ((!sitting) && ((startmotionstate == STATE_AGENT_SIT) || (startmotionstate == STATE_AGENT_GROUNDSIT))) return;
+	if (startmotionstate == STATE_AGENT_IDLE) return;
+	if ((startmotionstate == STATE_AGENT_SIT) && !(gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled"))) return;
+	if (override_id.isNull() || !gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled")) return;
+
+	for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
 	{
-		if (GetAnimID(id).notNull() && gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
+		if ((iter->isPlaying) && (iter->ao_id != override_id)) //(iter->state != startmotionstate) && 
 		{
-			stopAOMotion(getCurrentStandId(), TRUE); //stop stand first then set state 
-			setAnimationState(GetStateFromOrigAnimID(id));
-		
-			if ((GetStateFromOrigAnimID(id) == STATE_AGENT_SIT) && !(gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled"))) return;
-			gAgent.sendAnimationRequest(GetAnimID(id), ANIM_REQUEST_START);
-    
-			if(mAODelayTimer.getElapsedTimeF32() >= F32(1.f))
-			{
-					    // checking for duplicate or stuck anims (packet loss/lag) 
-					    std::list<LLAnimHistoryItem*> history = LLFloaterExploreAnimations::animHistory[gAgent.getID()];
-					    for (std::list<LLAnimHistoryItem*>::iterator iter = history.begin(); iter != history.end(); ++iter)
-					    {
-						    LLAnimHistoryItem* item = (*iter);
-						    int state = GetStateFromAOAnimID(item->mAssetID);
-						    if (!state) continue;
-						    if  ( (item->mPlaying) && (state != getAnimationState()) )
-						    {
-	    //						cmdline_printchat(llformat("stopping duplicate anim: %d // %s // %s",getAnimationState(),GetAnimTypeFromState(getAnimationState()).c_str(),item->mAssetID.asString().c_str()));
-							    gAgent.sendAnimationRequest(item->mAssetID, ANIM_REQUEST_STOP);
-						    }
-					    }
-			    mAODelayTimer.reset();
-			}
+			iter->isPlaying = FALSE;
+			//cmdline_printchat(llformat("startmotionstate animtypefromstate %s stopping %s",GetAnimTypeFromState(startmotionstate).c_str(),iter->ao_id.asString().c_str()));
+			gAgent.sendAnimationRequest(iter->ao_id, ANIM_REQUEST_STOP);
 		}
+		else if ((!iter->isPlaying) && (iter->ao_id == override_id))
+		{
+			iter->isPlaying = TRUE;
+			//cmdline_printchat(llformat("startmotionstate: %d stand %d / isRandom %d / sitting %d // animtypefromstate %s // id %s",startmotionstate,stand,isRandom(startmotionstate),sitting,GetAnimTypeFromState(startmotionstate).c_str(),override_id.asString().c_str()));
+			if (announce) cmdline_printchat(llformat("Changing animation to %s.",iter->anim_name.c_str()));
+			if ((startmotionstate == STATE_AGENT_STAND)&&(sInstance)&&(mcomboBox_stands)) mcomboBox_stands->selectByValue(iter->anim_name.c_str());
+
+			gAgent.sendAnimationRequest(override_id, ANIM_REQUEST_START);
+			setAnimationState(startmotionstate);
+		}
+	}
+	// cleanup timer checking for duplicate or stuck anims due to packet loss/lag
+	if(mAODelayTimer.getElapsedTimeF32() >= F32(1.f))
+	{
+	    std::list<LLAnimHistoryItem*> history = LLFloaterExploreAnimations::animHistory[gAgent.getID()];
+	    for (std::list<LLAnimHistoryItem*>::iterator iter = history.begin(); iter != history.end(); ++iter)
+	    {
+		    LLAnimHistoryItem* item = (*iter);
+		    int state = GetStateFromAOAnimID(item->mAssetID);
+		    if (!state) continue;
+		    if  ( (item->mPlaying) && (state != getAnimationState()) )
+		    {
+				//cmdline_printchat(llformat("stopping duplicate anim: %d // %s // %s",getAnimationState(),GetAnimTypeFromState(getAnimationState()).c_str(),item->mAssetID.asString().c_str()));
+			    gAgent.sendAnimationRequest(item->mAssetID, ANIM_REQUEST_STOP);
+		    }
+	    }
+	    mAODelayTimer.reset();
 	}
 }
 
-void LLFloaterAO::stopAOMotion(const LLUUID& id, BOOL stand)
+void LLFloaterAO::stopAOMotion(const LLUUID& id, const BOOL stand)
 {
 	int stopmotionstate = STATE_AGENT_IDLE;
+	LLUUID override_id;
 
 	if (!stand)
 	{
+		override_id = GetAnimID(id);
 		stopmotionstate = GetStateFromOrigAnimID(id);
-		if (stopmotionstate == STATE_AGENT_IDLE) return;
 	}
 	else
 	{
+		override_id = id;
 		stopmotionstate = GetStateFromAOAnimID(id);
 	}
 
-//	cmdline_printchat(llformat("stand %s // stopmotionstate: %d // %s // %s",stand?"1":"0",stopmotionstate,GetAnimTypeFromState(stopmotionstate).c_str(),id.asString().c_str()));
+	if (stopmotionstate == STATE_AGENT_IDLE) return;
+	if (override_id.isNull()) return; //|| !gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled") //always stop, enabled or not
 
-	if (stand)
+	BOOL stopped = FALSE;
+	for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
 	{
-		setAnimationState(STATE_AGENT_IDLE);
-		gAgent.sendAnimationRequest(id, ANIM_REQUEST_STOP);
-	}
-	else
-	{
-		if (GetAnimID(id).notNull() && gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
+		if ((iter->isPlaying) && (iter->state == stopmotionstate)) // let's see if this works properly with both random and normal anims
+		// if ((iter->isPlaying) && (iter->ao_id == override_id))  // used to be this 
 		{
-			if (getAnimationState() == GetStateFromOrigAnimID(id))
-			{
-				setAnimationState(STATE_AGENT_IDLE);
-			}
-			if(!mAODelayTimer.getStarted())
-			{
-			    mAODelayTimer.start();
-			}
-			else
-			{
-			    mAODelayTimer.reset();
-			}
-			ChangeStand();
-			gAgent.sendAnimationRequest(GetAnimID(id), ANIM_REQUEST_STOP);
+			iter->isPlaying = FALSE;
+			//cmdline_printchat(llformat("stopmotionstate: %d stand %d / isRandom %d / sitting %d // animtypefromstate %s // id %s",stopmotionstate,stand,isRandom(stopmotionstate),0,GetAnimTypeFromState(stopmotionstate).c_str(),iter->ao_id.asString().c_str()));
+			gAgent.sendAnimationRequest(iter->ao_id, ANIM_REQUEST_STOP);
+			setAnimationState(STATE_AGENT_IDLE);
+			stopped = TRUE;
 		}
+	}
+	if (stopped)
+	{
+		if(!mAODelayTimer.getStarted())
+		{
+			mAODelayTimer.start();
+		}
+		else
+		{
+			mAODelayTimer.reset();
+		}
+		ChangeStand(FALSE);
 	}
 }
 
-void LLFloaterAO::ChangeStand()
+void LLFloaterAO::ChangeStand(const BOOL announce)
 {
 	if (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled"))
 	{
 		if (gAgent.getAvatarObject())
 		{
 			if (gSavedPerAccountSettings.getBOOL("EmeraldAONoStandsInMouselook") && gAgent.cameraMouselook()) return;
-
-			if (gAgent.getAvatarObject()->mIsSitting)
-			{
-//				stopAOMotion(getCurrentStandId(), FALSE, TRUE); //stop stand first then set state
-//				if (getAnimationState() != STATE_AGENT_GROUNDSIT) setAnimationState(STATE_AGENT_SIT);
-//				setCurrentStandId(LLUUID::null);
-				return;
-			}
+			if (gAgent.getAvatarObject()->mIsSitting) return;
 		}
 		if ((getAnimationState() == STATE_AGENT_IDLE) || (getAnimationState() == STATE_AGENT_STAND))// stands have lowest priority
 		{
@@ -735,30 +773,38 @@ void LLFloaterAO::ChangeStand()
 			
 			if (mAOStands[stand_iterator].ao_id.notNull())
 			{
-				stopAOMotion(getCurrentStandId(), TRUE); //stop stand first then set state
-				startAOMotion(mAOStands[stand_iterator].ao_id, TRUE);
+				startAOMotion(mAOStands[stand_iterator].ao_id, TRUE, announce);
 
 				setAnimationState(STATE_AGENT_STAND);
 				setCurrentStandId(mAOStands[stand_iterator].ao_id);
-				if ((sInstance)&&(mcomboBox_stands)) mcomboBox_stands->selectNthItem(stand_iterator);
-				return;
 			}
 		}
 	} 
 	else
 	{
-		stopAOMotion(getCurrentStandId(), TRUE);
-		return; //stop if ao is off
+		stopAOMotion(getCurrentStandId(), TRUE); //stop if ao is off
 	}
-	return;
 }
 
 int LLFloaterAO::getAnimationState()
 {
 	if (gAgent.getAvatarObject())
 	{
-		if (gAgent.getAvatarObject()->mIsSitting) setAnimationState(STATE_AGENT_SIT);
-		else if (gAgent.getFlying()) setAnimationState(STATE_AGENT_HOVER);
+		if (gAgent.getAvatarObject()->mBelowWater)
+		{
+			setAnimationState(STATE_AGENT_FLOATING);
+		}
+		else if (gAgent.getFlying()) 
+		{
+			setAnimationState(STATE_AGENT_HOVER);
+		}
+		else if (gAgent.getAvatarObject()->mIsSitting) 
+		{
+			if (mAnimationState != STATE_AGENT_GROUNDSIT)
+			{
+				setAnimationState(STATE_AGENT_SIT);
+			}
+		}
 	}
 	return mAnimationState;
 }
@@ -802,6 +848,18 @@ LLUUID LLFloaterAO::GetAnimIDFromState(const int state)
 	return LLUUID::null;
 }
 
+LLUUID LLFloaterAO::GetAnimIDByName(std::string name)
+{
+	for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
+	{
+		if (iter->anim_name == name)
+		{
+			return iter->ao_id;
+		}
+	}
+	return LLUUID::null;
+}
+
 LLUUID LLFloaterAO::GetRandomAnimID(const LLUUID& id)
 {
 	return LLUUID::null;
@@ -811,15 +869,80 @@ LLUUID LLFloaterAO::GetRandomAnimIDFromState(const int state)
 {
 	std::vector<struct_all_anims> mAORandomizeAnims;
 	struct_all_anims random_anims_loader;
-	for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
+	if (!mAOAllAnims.empty())
 	{
-		if (iter->state == state)
+		for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
 		{
-			random_anims_loader.ao_id = iter->ao_id; random_anims_loader.state = iter->state; mAORandomizeAnims.push_back(random_anims_loader);
+			if (iter->state == state)
+			{
+				random_anims_loader.ao_id = iter->ao_id; mAORandomizeAnims.push_back(random_anims_loader);
+			}
 		}
+		return mAORandomizeAnims[ll_rand(mAORandomizeAnims.size()-1)].ao_id;
 	}
-	return mAORandomizeAnims[ll_rand(mAOAllAnims.size()-1)].ao_id;
+	else
+	{
+		return LLUUID::null;
+	}
 }
+
+int LLFloaterAO::modifyUnderwaterState(const int state)
+{
+	int modifiedstate;
+	switch (state)
+	{
+		case STATE_AGENT_STANDUP:
+		case STATE_AGENT_LAND:
+		case STATE_AGENT_CROUCH:
+		case STATE_AGENT_CROUCHWALK:
+		case STATE_AGENT_PRE_JUMP:
+		case STATE_AGENT_JUMP:
+		case STATE_AGENT_TURNLEFT:
+		case STATE_AGENT_TURNRIGHT:
+		case STATE_AGENT_STAND:
+		case STATE_AGENT_FLY:
+		case STATE_AGENT_HOVER:
+		case STATE_AGENT_FLOATING: 
+			modifiedstate = STATE_AGENT_FLOATING; 
+			break;
+
+		case STATE_AGENT_FLYSLOW:
+		case STATE_AGENT_WALK:
+		case STATE_AGENT_RUN:
+		case STATE_AGENT_SWIMMINGFORWARD: 
+			modifiedstate = STATE_AGENT_SWIMMINGFORWARD; 
+			break;
+
+		case STATE_AGENT_HOVER_UP:
+		case STATE_AGENT_SWIMMINGUP: 
+			modifiedstate = STATE_AGENT_SWIMMINGUP; 
+			break;
+
+		case STATE_AGENT_FALLDOWN:
+		case STATE_AGENT_HOVER_DOWN:
+		case STATE_AGENT_SWIMMINGDOWN: 
+			modifiedstate = STATE_AGENT_SWIMMINGDOWN; 
+			break;
+
+		case STATE_AGENT_SIT:
+			modifiedstate = STATE_AGENT_SIT; 
+			break;
+		case STATE_AGENT_GROUNDSIT:
+			modifiedstate = STATE_AGENT_GROUNDSIT; 
+			break;
+
+		case STATE_AGENT_TYPING:
+			modifiedstate = STATE_AGENT_TYPING; 
+			break;
+
+		case STATE_AGENT_IDLE:
+		default:
+			modifiedstate = STATE_AGENT_IDLE; //wot
+		break;
+	}
+	return modifiedstate;
+}
+
 
 LLUUID LLFloaterAO::GetOrigAnimIDFromState(const int state)
 {
@@ -864,6 +987,16 @@ std::string LLFloaterAO::GetAnimTypeFromState(const int state)
 		if (iter->state == state) return iter->name;
 	}
 	return "unknown";
+}
+
+BOOL LLFloaterAO::isRandom(const int state)
+{
+	for (std::vector<struct_anim_types>::iterator iter = mAnimTypes.begin(); iter != mAnimTypes.end(); ++iter)
+	{
+		if (iter->state == state) 
+			return gSavedPerAccountSettings.getBOOL("EmeraldAORandomize"+iter->name);
+	}
+	return FALSE;
 }
 
 // UI -------------------------------------------------------
@@ -936,59 +1069,31 @@ void LLFloaterAO::onComboBoxCommit(LLUICtrl* ctrl, void* userdata)
 		if (box->getName() == "stand")
 		{
 			stand_iterator = box->getCurrentIndex();
-			cmdline_printchat(llformat("Changing stand to %s.",mAOStands[stand_iterator].anim_name.c_str()));
-			ChangeStand();
+			if (mAOStandTimer) mAOStandTimer->reset();
+			ChangeStand(TRUE);
 		}
 		else
 		{
-			int state = STATE_AGENT_IDLE;
 			std::string stranim = box->getValue().asString();
 
-			if (box->getName() == "sit")
+			for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
 			{
-				if (gAgent.getAvatarObject() && (gSavedPerAccountSettings.getBOOL("EmeraldAOEnabled")) && (gSavedPerAccountSettings.getBOOL("EmeraldAOSitsEnabled")))
+				if (box->getName() == iter->name)
 				{
-					if ((gAgent.getAvatarObject()->mIsSitting) && (getAnimationState() == STATE_AGENT_SIT))
+					gSavedPerAccountSettings.setString("EmeraldAODefault"+iter->name,stranim);
+					int boxstate = iter->state;
+
+					for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
 					{
-						//llinfos << "sitting " << GetAnimID(ANIM_AGENT_SIT) << " " << getAssetIDByName(stranim) << llendl;
-						gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SIT), ANIM_REQUEST_STOP);
-						gAgent.sendAnimationRequest(getAssetIDByName(stranim), ANIM_REQUEST_START);
-					}
-				}
-				gSavedPerAccountSettings.setString("EmeraldAODefaultsit",stranim);
-				state = STATE_AGENT_SIT;
-			}
-			else if (box->getName() == "gsit")
-			{
-				//llinfos << "gsitting " << GetAnimID(ANIM_AGENT_SIT_GROUND) << " " << getAssetIDByName(stranim) << llendl;
-				if (gAgent.getAvatarObject())
-				{
-					if ((gAgent.getAvatarObject()->mIsSitting) && (getAnimationState() == STATE_AGENT_GROUNDSIT))
-					{
-						//llinfos << "gsitting " << GetAnimID(ANIM_AGENT_SIT_GROUND) << " " << getAssetIDByName(stranim) << llendl;
-						gAgent.sendAnimationRequest(GetAnimID(ANIM_AGENT_SIT_GROUND), ANIM_REQUEST_STOP);
-						gAgent.sendAnimationRequest(getAssetIDByName(stranim), ANIM_REQUEST_START);
-					}
-				}
-				gSavedPerAccountSettings.setString("EmeraldAODefaultgsit",stranim);
-				state = STATE_AGENT_GROUNDSIT;
-			}
-			else
-			{
-				for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
-				{
-					if (box->getName() == iter->name)
-					{
-						gAgent.sendAnimationRequest(GetOrigAnimIDFromState(iter->state), ANIM_REQUEST_STOP);
-						gSavedPerAccountSettings.setString("EmeraldAODefault"+iter->name,stranim);
-						state = iter->state;
-					}
-				}
-				for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
-				{
-					if (state == iter->state)
-					{
-						iter->ao_id = getAssetIDByName(stranim);
+						if (boxstate == iter->state)
+						{
+							iter->ao_id = GetAnimIDByName(stranim);
+							if (getAnimationState() == boxstate) // only play anim for the current state, change sits for example
+							{
+								startAOMotion(iter->ao_id,TRUE,TRUE);
+							}
+							return;
+						}
 					}
 				}
 			}
@@ -1002,8 +1107,8 @@ void LLFloaterAO::onClickPrevStand(void* user_data)
 	stand_iterator=stand_iterator-1;
 	if (stand_iterator < 0) stand_iterator = int( mAOStands.size()-stand_iterator);
 	if (stand_iterator > int( mAOStands.size()-1)) stand_iterator = 0;
-	cmdline_printchat(llformat("Changing stand to %s.",mAOStands[stand_iterator].anim_name.c_str()));
-	ChangeStand();
+	if (mAOStandTimer) mAOStandTimer->reset();
+	ChangeStand(TRUE);
 }
 
 void LLFloaterAO::onClickNextStand(void* user_data)
@@ -1012,8 +1117,8 @@ void LLFloaterAO::onClickNextStand(void* user_data)
 	stand_iterator=stand_iterator+1;
 	if (stand_iterator < 0) stand_iterator = int( mAOStands.size()-stand_iterator);
 	if (stand_iterator > int( mAOStands.size()-1)) stand_iterator = 0;
-	cmdline_printchat(llformat("Changing stand to %s.",mAOStands[stand_iterator].anim_name.c_str()));
-	ChangeStand();
+	if (mAOStandTimer) mAOStandTimer->reset();
+	ChangeStand(TRUE);
 }
 
 void LLFloaterAO::onClickReloadCard(void* user_data)
@@ -1058,15 +1163,28 @@ void LLFloaterAO::loadComboBoxes()
 			}
 		}
 
+		mComboBoxes.clear();
+		struct_combobox loader_combobox;
+		for (std::vector<struct_anim_types>::iterator iter = mAnimTypes.begin(); iter != mAnimTypes.end(); ++iter)
+		{
+			loader_combobox.combobox = sInstance->getChild<LLComboBox>(iter->name);
+			loader_combobox.name = iter->name;
+			loader_combobox.state = iter->state;
+			mComboBoxes.push_back(loader_combobox);
+		}
+
+		mcomboBox_stands = (LLComboBox*) getComboBox("stand");
+
+		for (std::vector<struct_combobox>::iterator iter = mComboBoxes.begin(); iter != mComboBoxes.end(); ++iter)
+		{
+			sInstance->getChild<LLComboBox>(iter->name)->setCommitCallback(onComboBoxCommit);
+			sInstance->childSetCommitCallback("EmeraldAORandomize"+iter->name,onCheckBoxCommit);
+			sInstance->childSetValue("EmeraldAORandomize"+iter->name, gSavedPerAccountSettings.getBOOL("EmeraldAORandomize"+iter->name));
+		}
+
 		// fill
 		for (std::vector<struct_all_anims>::iterator iter = mAOAllAnims.begin(); iter != mAOAllAnims.end(); ++iter)
 		{
-			/*
-			if ( && (mcomboBox_stands) && (iter->state == STATE_AGENT_STAND))
-			{
-				mcomboBox_stands->add(iter->anim_name.c_str(), ADD_BOTTOM, TRUE);
-			}
-			*/
 			for (std::vector<struct_combobox>::iterator comboiter = mComboBoxes.begin(); comboiter != mComboBoxes.end(); ++comboiter)
 			{
 				if ((comboiter->combobox) && (comboiter->state == iter->state))
@@ -1089,7 +1207,7 @@ void LLFloaterAO::loadComboBoxes()
 				if (iter->state == comboiter->state)
 				{
 					std::string defaultanim = gSavedPerAccountSettings.getString("EmeraldAODefault"+comboiter->name);
-					if (getAssetIDByName(defaultanim) != LLUUID::null) iter->ao_id = getAssetIDByName(defaultanim);
+					if (GetAnimIDByName(defaultanim) != LLUUID::null) iter->ao_id = GetAnimIDByName(defaultanim);
 					if (comboiter->combobox) SetDefault(comboiter->combobox,iter->ao_id,defaultanim);
 				}
 			}
@@ -1133,9 +1251,6 @@ void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLA
 					boost::smatch what; 
 					if (boost::regex_search(strline, what, type)) 
 					{
-//						llinfos << "type: " << what[0] << llendl;
-//						llinfos << "anims in type: " << boost::regex_replace(strline, type, "") << llendl;
-
 						boost::char_separator<char> sep("|,");
 						std::string stranimnames(boost::regex_replace(strline, type, ""));
 						tokenizer tokanimnames(stranimnames, sep);
@@ -1162,10 +1277,7 @@ void LLFloaterAO::onNotecardLoadComplete(LLVFS *vfs,const LLUUID& asset_uuid,LLA
 
 								for (std::vector<struct_default_anims>::iterator iter = mAODefaultAnims.begin(); iter != mAODefaultAnims.end(); ++iter)
 								{
-									if (state == iter->state)
-									{
-										iter->ao_id = animid;
-									}
+									if (state == iter->state) iter->ao_id = animid;
 								}
 							}
 						}

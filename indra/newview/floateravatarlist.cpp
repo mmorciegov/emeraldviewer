@@ -331,6 +331,16 @@ BOOL LLAvatarListEntry::getAlert()
 	return mAlert;
 }
 
+void LLAvatarListEntry::toggleMark()
+{
+	mMarked = !mMarked;
+}
+
+BOOL LLAvatarListEntry::isMarked()
+{
+	return mMarked;
+}
+
 class LggPosCallback : public JCBridgeCallback
 {
 	public:
@@ -367,6 +377,7 @@ LLFloaterAvatarList::LLFloaterAvatarList() :  LLFloater(std::string("avatar list
 	(new LLAgentChatcmd())->registerListener(this, "Avatarlist.Chatcmd");
 	(new LLAgentGetkey())->registerListener(this, "Avatarlist.Getkey");
 	(new LLAgentTrack())->registerListener(this, "Avatarlist.Track");
+	(new LLAgentMark())->registerListener(this, "Avatarlist.Mark");
 	(new LLAgentIM())->registerListener(this, "Avatarlist.IM");
 	(new LLAgentScripts())->registerListener(this, "Avatarlist.Scripts");
 	(new LLAgentTpto())->registerListener(this, "Avatarlist.Tpto");
@@ -553,6 +564,23 @@ bool LLFloaterAvatarList::LLAgentTrack::handleEvent(LLPointer<LLEvent> event, co
 		avlist->mTrackByLocation = FALSE;
 		avlist->mTrackedAvatar = agent_id;
 		LLTracker::trackAvatar(agent_id, avlist->mAvatars[agent_id].getName());
+	}
+	return true;
+}
+
+bool LLFloaterAvatarList::LLAgentMark::handleEvent(LLPointer<LLEvent> event, const LLSD& userdata)
+{
+	LLFloaterAvatarList* avlist = getInstance();
+	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
+
+	for(LLDynamicArray<LLUUID>::iterator itr = ids.begin(); itr != ids.end(); ++itr)
+	{
+		LLUUID avid = *itr;
+		LLAvatarListEntry *ent = avlist->getAvatarEntry(avid);
+		if ( ent != NULL )
+		{
+			ent->toggleMark();
+		}
 	}
 	return true;
 }
@@ -1022,6 +1050,10 @@ BOOL LLFloaterAvatarList::postBuild()
 	childSetAction("offer_btn", onClickTeleportOffer, this);
 	childSetAction("track_btn", onClickTrack, this);
 
+	childSetAction("mark_btn", onClickMark, this);
+	childSetAction("prev_marked_btn", onClickPrevMarked, this);
+	childSetAction("next_marked_btn", onClickNextMarked, this);
+
 
 	mInputEditor = getChild<LLLineEditor>("customcommand");
 	childSetCommitCallback("customcommand", onCommandCommit,this);
@@ -1267,6 +1299,7 @@ void LLFloaterAvatarList::refreshAvatarList()
 	static BOOL *sEmeraldAvatarListColorEntries = rebind_llcontrol<BOOL>("EmeraldAvatarListColorEntries", &gSavedSettings, true);
 	LLColor4 friend_color;
 	LLColor4 muted_color;
+	LLColor4 marked_color = LLColor4::cyan.getValue();
 	if(*sEmeraldAvatarListColorEntries)
 	{
 		static LLColor4* sMapFriend = rebind_llcontrol<LLColor4>("MapFriend", &gColors, true);
@@ -1342,6 +1375,11 @@ void LLFloaterAvatarList::refreshAvatarList()
 			if ( is_agent_friend(av_id)) av_color = friend_color;
 			else if (LLMuteList::getInstance()->isMuted(av_id)) av_color = muted_color;
 			else av_color = (*sDefaultListText).getValue();
+
+			if ( ent->isMarked() )
+			{
+				av_color = marked_color;
+			}
 		}
 		else
 		{
@@ -1559,12 +1597,117 @@ void LLFloaterAvatarList::refreshAvatarList()
 
 }
 
+//static
+void LLFloaterAvatarList::onClickMark(void *userdata)
+{
+	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
+	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
+
+	for(LLDynamicArray<LLUUID>::iterator itr = ids.begin(); itr != ids.end(); ++itr)
+	{
+		LLUUID avid = *itr;
+		LLAvatarListEntry *ent = avlist->getAvatarEntry(avid);
+		if ( ent != NULL )
+		{
+			ent->toggleMark();
+		}
+	}
+}
+
+void LLFloaterAvatarList::removeFocusFromAll()
+{
+	std::map<LLUUID, LLAvatarListEntry>::iterator iter;
+
+	for(iter = mAvatars.begin(); iter != mAvatars.end(); iter++)
+	{
+		LLAvatarListEntry *ent = &iter->second;
+		ent->setFocus(FALSE);
+	}
+}
+
+void LLFloaterAvatarList::focusOnPrev(BOOL marked_only)
+{
+	std::map<LLUUID, LLAvatarListEntry>::iterator iter;
+	LLAvatarListEntry *prev = NULL;
+	LLAvatarListEntry *ent;
+
+	if ( mAvatars.size() == 0 ) return;
+	for(iter = mAvatars.begin(); iter != mAvatars.end(); iter++)
+	{
+		ent = &iter->second;
+		if ( ent->isDead() ) continue;
+		if ( (ent->getID() == mFocusedAvatar) && (prev != NULL)  )
+		{
+			removeFocusFromAll();
+			prev->setFocus(TRUE);
+			mFocusedAvatar = prev->getID();
+			gAgent.lookAtObject(mFocusedAvatar, CAMERA_POSITION_OBJECT);
+			return;
+		}
+		if ( (!marked_only) || ent->isMarked() ) prev = ent;
+	}
+	if (prev != NULL && ((!marked_only) || prev->isMarked()) )
+	{
+		removeFocusFromAll();
+		prev->setFocus(TRUE);
+		mFocusedAvatar = prev->getID();
+		gAgent.lookAtObject(mFocusedAvatar, CAMERA_POSITION_OBJECT);
+	}
+}
+
+void LLFloaterAvatarList::focusOnNext(BOOL marked_only)
+{
+	std::map<LLUUID, LLAvatarListEntry>::iterator iter;
+	BOOL found = FALSE;
+	LLAvatarListEntry *first = NULL;
+	LLAvatarListEntry *ent;
+
+	if ( mAvatars.size() == 0 ) return;
+
+	for(iter = mAvatars.begin(); iter != mAvatars.end(); iter++)
+	{
+		ent = &iter->second;
+		if ( ent->isDead() ) continue;
+		if ( NULL == first && ((!marked_only) || ent->isMarked())) first = ent;
+		if ( found && ((!marked_only) || ent->isMarked()) )
+		{
+			removeFocusFromAll();
+			ent->setFocus(TRUE);
+			mFocusedAvatar = ent->getID();
+			gAgent.lookAtObject(mFocusedAvatar, CAMERA_POSITION_OBJECT);
+			return;
+		}
+		if ( ent->getID() == mFocusedAvatar ) found = TRUE;
+	}
+
+	if (first != NULL && ((!marked_only) || first->isMarked()))
+	{
+		removeFocusFromAll();
+		first->setFocus(TRUE);
+		mFocusedAvatar = first->getID();
+		gAgent.lookAtObject(mFocusedAvatar, CAMERA_POSITION_OBJECT);
+	}
+}
+
+//static
+void LLFloaterAvatarList::onClickPrevMarked(void *userdata)
+{
+	LLFloaterAvatarList *self = (LLFloaterAvatarList*)userdata;
+	self->focusOnPrev(TRUE);
+}
+
+//static
+void LLFloaterAvatarList::onClickNextMarked(void *userdata)
+{
+	LLFloaterAvatarList *self = (LLFloaterAvatarList*)userdata;
+	self->focusOnNext(TRUE);
+}
+
+
 // static
 void LLFloaterAvatarList::onClickIM(void* userdata)
 {
-	//llinfos << "LLFloaterFriends::onClickIM()" << llendl;
 	LLFloaterAvatarList *avlist = (LLFloaterAvatarList*)userdata;
-
 	LLDynamicArray<LLUUID> ids = avlist->mAvatarList->getSelectedIDs();
 	if(ids.size() > 0)
 	{

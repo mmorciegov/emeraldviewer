@@ -261,6 +261,6 @@
 		</menu>
 		<menu_item_call label="출시 정보" name="Release Notes..." />
 		<menu_item_separator label="-----------" name="separator6" />
-		<menu_item_call label="세컨드라이프 정보" name="About Second Life..." />
+		<menu_item_call label="에 대한 뷰어를 에메랄드" name="About Second Life..." />
 	</menu>
 </menu_bar>

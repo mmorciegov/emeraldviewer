@@ -2,10 +2,6 @@
 
 project(media_plugin_gstreamer010)
 
-if(HAVE_64_BIT)
-	set(REQUIRE_PIC)
-endif(HAVE_64_BIT)
-
 include(00-Common)
 include(LLCommon)
 include(LLImage)
@@ -34,14 +30,6 @@ include_directories(
 
 ### media_plugin_gstreamer010
 
-if(HAVE_64_BIT)
-	if(WINDOWS)
-		add_definitions(/FIXED:NO)
-	else(WINDOWS) # not windows therefore gcc LINUX and DARWIN
-		add_definitions(-fPIC)
-	endif(WINDOWS)
-endif (HAVE_64_BIT)
-
 set(media_plugin_gstreamer010_SOURCE_FILES
     media_plugin_gstreamer010.cpp
     llmediaimplgstreamer_syms.cpp
@@ -53,13 +41,6 @@ set(media_plugin_gstreamer010_HEADER_FILES
     llmediaimplgstreamer_syms.h
     llmediaimplgstreamertriviallogging.h
     )
-
-if (${CXX_VERSION} MATCHES "4[23].")
-    # Work around a bad interaction between broken gstreamer headers and
-    # g++ 4.3's increased strictness.
-    set_source_files_properties(llmediaimplgstreamervidplug.cpp PROPERTIES
-                                COMPILE_FLAGS -Wno-write-strings)
-endif (${CXX_VERSION} MATCHES "4[23].")
 
 add_library(media_plugin_gstreamer010
     SHARED

@@ -209,6 +209,7 @@ void LLFloaterInspect::onSelectObject(LLUICtrl* ctrl, void* user_data)
 	{
 		sInstance->getChild<LLTextureCtrl>(llformat("tex%d",i))->setImageAssetID(LLUUID::null);
 		sInstance->getChild<LLTextureCtrl>(llformat("tex%d",i))->setEnabled(FALSE);
+		sInstance->getChild<LLTextureCtrl>(llformat("tex%d",i))->setIsMasked(TRUE);
 		sInstance->childSetText(llformat("line1_%d",i),std::string(""));
 		sInstance->childSetText(llformat("line2_%d",i),std::string(""));
 		sInstance->childSetText(llformat("line3_%d",i),std::string(""));
@@ -262,6 +263,7 @@ void LLFloaterInspect::onSelectObject(LLUICtrl* ctrl, void* user_data)
 				loader_tex.texpanel->setVisible(TRUE);
 				loader_tex.ctrl = sInstance->getChild<LLTextureCtrl>(llformat("tex%d",j));
 				loader_tex.ctrl->setEnabled(FALSE);
+				loader_tex.ctrl->setIsMasked(TRUE);
 
 //				sInstance->childGetRect(llformat("texpanel%d",j), loader_tex.texpanel_rect);
 				loader_tex.line1 = sInstance->getChild<LLTextBox>(llformat("line1_%d",j));
@@ -295,6 +297,7 @@ void LLFloaterInspect::onSelectObject(LLUICtrl* ctrl, void* user_data)
 				//loader_tex.texpanel->setVisible(TRUE);
 				loader_tex.ctrl = sInstance->getChild<LLTextureCtrl>("texs");
 				loader_tex.ctrl->setEnabled(FALSE);
+				loader_tex.ctrl->setIsMasked(TRUE);
 
 //				sInstance->childGetRect("texpanels", loader_tex.texpanel_rect);
 				loader_tex.line1 = sInstance->getChild<LLTextBox>("line1_s");
@@ -331,6 +334,7 @@ void LLFloaterInspect::onSelectObject(LLUICtrl* ctrl, void* user_data)
 				//loader_tex.texpanel->setVisible(TRUE);
 				loader_tex.ctrl = sInstance->getChild<LLTextureCtrl>("texp");
 				loader_tex.ctrl->setEnabled(FALSE);
+				loader_tex.ctrl->setIsMasked(TRUE);
 
 //				sInstance->childGetRect("texpanelp", loader_tex.texpanel_rect);
 				loader_tex.line1 = sInstance->getChild<LLTextBox>("line1_p");
@@ -372,46 +376,51 @@ void LLFloaterInspect::drawTextureEntry(const LLViewerImage* img, const U8 i)
 		mTex[i].blacklistbtn->setVisible(TRUE);
 		if (mTex[i].ctrl)
 		{
-			std::string decodedComment = img->decodedComment;
-			if (!decodedComment.empty())
+			if(LLImageJ2C::useEMKDU)
 			{
-				S32 string_pos = decodedComment.find("a=");
-				if (string_pos != std::string::npos) 
-				{
-					//mTex[i].line2->setText(std::string("no upload info"));
-					mTex[i].uploaderkey = LLUUID(decodedComment.substr(string_pos+2,36));
-					gCacheName->get(mTex[i].uploaderkey, FALSE, callbackLoadAvatarName, mTex[i].line2);
-				}
+			  std::string decodedComment = img->decodedComment;
+			  if (!decodedComment.empty())
+			  {
+				  S32 string_pos = decodedComment.find("a=");
+				  if (string_pos != std::string::npos) 
+				  {
+					  mTex[i].line2->setText(std::string("(waiting)"));
+					  mTex[i].uploaderkey = LLUUID(decodedComment.substr(string_pos+2,36));
+					  gCacheName->get(mTex[i].uploaderkey, FALSE, callbackLoadAvatarName, mTex[i].line2);
+				  }
 
-				string_pos = decodedComment.find("z=");
-				if (string_pos != std::string::npos) 
-				{
-					std::string strtime;
+				  string_pos = decodedComment.find("z=");
+				  if (string_pos != std::string::npos) 
+				  {
+					  std::string strtime;
 
-					strtime = decodedComment.substr(string_pos+2,14);
-					std::string year = strtime.substr(0,4);
-					std::string month = strtime.substr(4,2);
-					std::string day = strtime.substr(6,2);
-					std::string hour = strtime.substr(8,2);
-					std::string minute = strtime.substr(10,2);
-					std::string second = strtime.substr(12,2);
-					mTex[i].time = llformat("%s/%s/%s - %s:%s:%s",year.c_str(),month.c_str(),day.c_str(),hour.c_str(),minute.c_str(),second.c_str());
-//					mTex[i].blacklistbtn->setVisible(TRUE);
-					mTex[i].profilebtn->setVisible(TRUE);
-				}
-				else
-				{
-					mTex[i].time = std::string("");
-//					mTex[i].blacklistbtn->setVisible(FALSE);
-					mTex[i].profilebtn->setVisible(FALSE);
-				}
-				mTex[i].line3->setText(std::string(mTex[i].time));
+					  strtime = decodedComment.substr(string_pos+2,14);
+					  std::string year = strtime.substr(0,4);
+					  std::string month = strtime.substr(4,2);
+					  std::string day = strtime.substr(6,2);
+					  std::string hour = strtime.substr(8,2);
+					  std::string minute = strtime.substr(10,2);
+					  std::string second = strtime.substr(12,2);
+					  mTex[i].time = llformat("%s/%s/%s - %s:%s:%s",year.c_str(),month.c_str(),day.c_str(),hour.c_str(),minute.c_str(),second.c_str());
+  //					mTex[i].blacklistbtn->setVisible(TRUE);
+					  mTex[i].profilebtn->setVisible(TRUE);
+				  }
+				  else
+				  {
+					  mTex[i].time = std::string("");
+  //					mTex[i].blacklistbtn->setVisible(FALSE);
+					  mTex[i].profilebtn->setVisible(FALSE);
+				  }
+				  mTex[i].line3->setText(std::string(mTex[i].time));
+			  }
+			  else
+			  {
+  //				mTex[i].blacklistbtn->setVisible(FALSE);
+				  mTex[i].profilebtn->setVisible(FALSE);
+			  }
 			}
 			else
-			{
-//				mTex[i].blacklistbtn->setVisible(FALSE);
-				mTex[i].profilebtn->setVisible(FALSE);
-			}
+			  mTex[i].profilebtn->setVisible(FALSE);
 
 			mTex[i].ctrl->setImageAssetID(image_id);
 
@@ -431,9 +440,9 @@ void LLFloaterInspect::drawTextureEntry(const LLViewerImage* img, const U8 i)
 // static
 void LLFloaterInspect::onClickBlacklist(void* user_data)
 {
-	llinfos << (int) user_data << llendl;
-	int j = 0;
-	if ((int) user_data <= 12) j = (int) user_data;
+	llinfos << (intptr_t) user_data << llendl;
+	intptr_t j = 0;
+	if ((intptr_t) user_data <= 12) j = (intptr_t) user_data;
 
 	LLFloaterBlacklist::show();
 	std::string entry_name, owner_name;
@@ -463,8 +472,8 @@ void LLFloaterInspect::onClickBlacklist(void* user_data)
 void LLFloaterInspect::onClickProfile(void* user_data)
 {
 //	llinfos << (int) user_data << llendl;
-	int j = 0;
-	if ((int) user_data <= 12) j = (int) user_data;
+	intptr_t j = 0;
+	if ((intptr_t) user_data <= 12) j = (intptr_t) user_data;
 	if (!mTex[j].uploaderkey.isNull())
 	{
 		LLFloaterAvatarInfo::showFromDirectory(mTex[j].uploaderkey);

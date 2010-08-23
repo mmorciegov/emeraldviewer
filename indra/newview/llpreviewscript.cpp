@@ -1686,7 +1686,7 @@ void LLPreviewLSL::saveIfNeeded()
 		mPendingUploads++;
 		if (!url.empty())
 		{
-			uploadAssetViaCaps(url, filename, mItemUUID);
+			uploadAssetViaCaps(url, filename, mItemUUID,domono);
 		}
 		else if (gAssetStorage)
 		{

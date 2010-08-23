@@ -160,7 +160,7 @@ extern LLMap< const LLUUID, LLFloaterAvatarInfo* > gAvatarInfoInstances; // Only
 
 // [$PLOTR$]
 #include "otr_wrapper.h"
-#include "a_modularsystemslink.h"
+#include "a_emeraldviewerlink.h"
 // [/$PLOTR$]
 //
 //silly spam define D:
@@ -1274,6 +1274,33 @@ bool LLOfferInfo::inventory_offer_callback(const LLSD& notification, const LLSD&
 		}	// end switch (mIM)
 		break;
 
+	case -2: // decline silently
+	{
+		log_message = "You silently decline " + mDesc + " from " + mFromName + ".";
+		chat.mText = log_message;
+		LLFloaterChat::addChatHistory(chat);
+	}
+	break;
+	case -1: // accept silently
+	{
+		// wat
+		LLInventoryFetchObserver::item_ref_t items;
+		items.push_back(mObjectID);
+		LLOpenAgentOffer* open_agent_offer = new LLOpenAgentOffer(from_string);
+		open_agent_offer->fetchItems(items);
+		if(catp || (itemp && itemp->isComplete()))
+		{
+			open_agent_offer->done();
+		}
+		else
+		{
+			opener = open_agent_offer;
+		}
+		log_message = "You silently accept " + mDesc + " from " + mFromName + ".";
+		chat.mText = log_message;
+		LLFloaterChat::addChatHistory(chat);
+	}
+	break;
 	case IOR_BUSY:
 		//Busy falls through to decline.  Says to make busy message.
 		busy=TRUE;
@@ -1360,10 +1387,19 @@ void inventory_offer_handler(LLOfferInfo* info, BOOL from_task)
 	}
 
 	// Avoid the Accept/Discard dialog if the user so desires. JC
-	if (gSavedSettings.getBOOL("AutoAcceptNewInventory")
+	if ((gSavedSettings.getBOOL("AutoAcceptNewInventory")
 		&& (info->mType == LLAssetType::AT_NOTECARD
 			|| info->mType == LLAssetType::AT_LANDMARK
-			|| info->mType == LLAssetType::AT_TEXTURE))
+			|| info->mType == LLAssetType::AT_TEXTURE))||
+			(gSavedSettings.getBOOL("AutoAcceptNewObjects")
+			&& ((info->mType == LLAssetType::AT_OBJECT)||
+				(info->mType == LLAssetType::AT_CLOTHING)||
+				(info->mType == LLAssetType::AT_BODYPART)||
+				(info->mType == LLAssetType::AT_GESTURE)||
+				(info->mType == LLAssetType::AT_ANIMATION)||
+				(info->mType == LLAssetType::AT_SCRIPT)||
+				(info->mType == LLAssetType::AT_SOUND)||
+				(info->mType == LLAssetType::AT_LANDMARK))))
 	{
 		// For certain types, just accept the items into the inventory,
 		// and possibly open them on receipt depending upon "ShowNewInventory".
@@ -1374,6 +1410,11 @@ void inventory_offer_handler(LLOfferInfo* info, BOOL from_task)
 	// Strip any SLURL from the message display. (DEV-2754)
 	std::string msg = info->mDesc;
 	int indx = msg.find(" ( http://slurl.com/secondlife/");
+	if(indx == std::string::npos)
+	{
+		// try to find new slurl host
+		indx = msg.find(" ( http://maps.secondlife.com/secondlife/");
+	}
 	if(indx >= 0)
 	{
 		LLStringUtil::truncate(msg, indx);
@@ -2147,7 +2188,7 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 			if (!is_muted || is_linden)
 			{
 				//lgg - prompt user to send info if requested
-				message = ModularSystemsLink::processRequestForInfo(from_id,message,name,session_id);
+				message = EmeraldViewerLink::processRequestForInfo(from_id,message,name,session_id);
 				buffer = separator_string + saved  + message.substr(message_offset);
 
 				gIMMgr->addMessage(

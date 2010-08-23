@@ -1,21 +1,24 @@
 # -*- cmake -*-
-include(Prebuilt)
 
-use_prebuilt_binary(otr)
+include(libgpg-error)
+include(libgcrypt)
 
-#set(OTR_LIBRARY otr)
-#set(LIBOTR_LIBRARY otr)
-#if (NOT LINUX)
-if (WINDOWS)
-	set(GCRYPT_LIBRARY libgcrypt)
-	set(GPG-ERROR_LIBRARY libgpg-error)
-	set(LIBOTR_LIBRARY libotr)
-#endif (NOT LINUX)
-else (WINDOWS)
-	set(LIBOTR_LIBRARY otr)
-endif (WINDOWS)
+if (STANDALONE)
+    set(LIBOTR_LIBRARIES libotr)
+else (STANDALONE)
+    include(Prebuilt)
+    use_prebuilt_binary(otr)
+    if (WINDOWS)
+	set(LIBOTR_LIBRARIES libotr)
+    else (WINDOWS)
+	set(LIBOTR_LIBRARIES otr)
+    endif (WINDOWS)
+endif (STANDALONE)
 
 set(LIBOTR_INCLUDE_DIRS
+    ${LIBS_OPEN_DIR}/libotr/libotr-3.2.0/src
+    ${LIBGPG_ERROR_INCLUDE_DIRS}
+    ${LIBGCRYPT_INCLUDE_DIRS}
     )
 
 

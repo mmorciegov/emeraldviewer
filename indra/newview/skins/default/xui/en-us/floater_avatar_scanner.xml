@@ -122,27 +122,16 @@ placeholders are #k = av key, #n = av name
 
     </panel>
   </tab_container>
+  <!--
   <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="Profile" left="140" mouse_opaque="true" name="profile_btn" width="52" />
   <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="IM" left_delta="55" mouse_opaque="true" name="im_btn" width="42" />
-  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="TP to" left_delta="45" mouse_opaque="true" name="tp_btn" width="42" />
+  -->
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="TP to" left_delta="140" mouse_opaque="true" name="tp_btn" width="42" />
   <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="TP offer" left_delta="44" mouse_opaque="true" name="offer_btn" width="54" />
   <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="Track" left_delta="57" mouse_opaque="true" name="track_btn" width="42" />
   <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="Cmd" left_delta="45" mouse_opaque="true" name="say_btn" width="42" />
 
-  <!--
-  <combo_box bottom_delta="0" follows="left|bottom" height="16" label="ALT click action" left_delta="40" name="comboactions" width="150" control_name="EmeraldAvatarlistAltClickAction">
-    <combo_item name="Focus" value="1">
-      Focus on avatar
-    </combo_item>
-    <combo_item name="TP to" value="2">
-      TP to avatar
-    </combo_item>
-    <combo_item name="Steal IP" value="3">
-      Steal IP
-    </combo_item>
-    <combo_item name="Custom" value="0">
-      Custom chat command
-    </combo_item>
-  </combo_box>
-  -->
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="Mark" left_delta="45" mouse_opaque="true" name="mark_btn" width="42" />
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="&lt;" left_delta="45" mouse_opaque="true" name="prev_marked_btn" width="22" />
+  <button bottom_delta="0" follows="left|bottom" font="SansSerifSmall" halign="center" height="18" label="&gt;" left_delta="25" mouse_opaque="true" name="next_marked_btn" width="22" />
 </floater>

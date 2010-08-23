@@ -1,6 +1,8 @@
 // <edit>
 #include "llviewerprecompiledheaders.h"
 #include "floaterblacklist.h"
+#include "llaudioengine.h"
+#include "llvfs.h"
 #include "lluictrlfactory.h"
 #include "llsdserialize.h"
 #include "llscrolllistctrl.h"
@@ -131,6 +133,21 @@ void LLFloaterBlacklist::addEntry(LLUUID key, LLSD data)
 			input_date.resize(input_date.size() - 1);
 			data["entry_date"] = input_date;
 		}
+		std::string test=data["entry_type"].asString();
+		if(data["entry_type"].asString() == "1")
+		{
+		  //remove sounds
+		  LLUUID sound_id=LLUUID(key);
+		  gVFS->removeFile(sound_id,LLAssetType::AT_SOUND);
+		  std::string wav_path;
+		  if(gDirUtilp->mm_usesnd())
+			      wav_path= gDirUtilp->getExpandedFilename(MM_SNDLOC,sound_id.asString()) + ".dsf";
+		  else
+			      wav_path= gDirUtilp->getExpandedFilename(LL_PATH_CACHE,sound_id.asString()) + ".dsf";
+		  if(LLAPRFile::isExist(wav_path, LL_APR_RPB))
+		    LLAPRFile::remove(wav_path);
+		  gAudiop->removeAudioData(sound_id);
+		}
 		blacklist_entries.insert(std::pair<LLUUID,LLSD>(key,data));
 		updateBlacklists();
 	}
@@ -195,12 +212,14 @@ void LLFloaterBlacklist::updateBlacklists()
 		gAssetStorage->mBlackListedAsset.clear();
 		for(std::map<LLUUID,LLSD>::iterator itr = blacklist_entries.begin(); itr != blacklist_entries.end(); ++itr)
 		{
-			if(blacklist_entries[itr->first]["asset_type"].asString() == "0")
+			if(blacklist_entries[itr->first]["entry_type"].asString() == "0")
 			{
 				blacklist_textures.push_back(LLUUID(itr->first));
 			}
 			else
+			{
 				gAssetStorage->mBlackListedAsset.push_back(LLUUID(itr->first));
+			}
 		}
 		saveToDisk();
 		LLFloaterBlacklist* instance = LLFloaterBlacklist::getInstance();

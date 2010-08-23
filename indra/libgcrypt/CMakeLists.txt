@@ -13,6 +13,7 @@ if (WINDOWS)
 	)
 else (WINDOWS)
     include_directories(
+	../libgpg-error/libgpg-error-1.0/src
 	libgcrypt-1.2.2/src
 	libgcrypt-1.2.2/mpi
 	libgcrypt-1.2.2/mpi/generic

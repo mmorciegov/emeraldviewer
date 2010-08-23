@@ -42,6 +42,7 @@
 #include "llstring.h"
 #include "lldir.h"
 #include "llfindlocale.h"
+#include "lltimer.h"
 
 #include "indra_constants.h"
 
@@ -412,11 +413,6 @@ static int x11_detect_VRAM_kb()
 }
 #endif // LL_X11
 
-void LLWindowSDL::setWindowTitle(std::string &title)
-{
-	SDL_WM_SetCaption(title.c_str(), title.c_str());
-}
-
 BOOL LLWindowSDL::createContext(int x, int y, int width, int height, int bits, BOOL fullscreen, BOOL disable_vsync)
 {
 	//bool			glneedsinit = false;
@@ -624,6 +620,15 @@ BOOL LLWindowSDL::createContext(int x, int y, int width, int height, int bits, B
 			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 			mWindow = SDL_SetVideoMode(width, height, bits, sdlflags);
 		}
+
+		if (!mWindow && mFSAASamples > 0)
+		{
+			llwarns << "Window creating is failing, disabling FSAA and trying again"<<llendl;
+			SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+			SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
+			mWindow = SDL_SetVideoMode(width, height, bits, sdlflags);
+		}
+
 
 		if (!mWindow)
 		{
@@ -1874,11 +1879,6 @@ void LLWindowSDL::setCursor(ECursorType cursor)
 		}
 		mCurrentCursor = cursor;
 	}
-}
-
-ECursorType LLWindowSDL::getCursor()
-{
-	return mCurrentCursor;
 }
 
 void LLWindowSDL::initCursors()
